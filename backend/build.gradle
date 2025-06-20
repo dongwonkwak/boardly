@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+}
+
+group = 'com.boardly'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation libs.bundles.spring.boot.dependencies
+    testImplementation libs.bundles.spring.test.dependencies
+
+    // h2
+    runtimeOnly(libs.h2)
+
+    // postgres
+    runtimeOnly(libs.postgres)
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

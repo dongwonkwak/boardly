@@ -1,0 +1,33 @@
+[versions]
+# Spring Boot 관련 버전
+spring-boot = "3.5.3"
+spring-dependency-management = "1.1.7"
+
+# Java 버전
+java = "21"
+
+h2 = "2.3.232"
+postgres = "42.7.5"
+
+[libraries]
+# Spring Boot Starters
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf", version.ref = "spring-boot" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+
+[bundles]
+spring-boot-dependencies = [
+  "spring-boot-starter-web",
+  "spring-boot-starter-thymeleaf",
+]
+
+spring-test-dependencies = [
+  "spring-boot-starter-test",
+]

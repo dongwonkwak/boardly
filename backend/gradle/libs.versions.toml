@@ -7,16 +7,28 @@ spring-dependency-management = "1.1.7"
 java = "21"
 
 h2 = "2.3.232"
-postgres = "42.7.5"
+postgres = "42.7.7"
+lombok = "1.18.38"
+lombok-mapstruct-binding = "0.2.0"
+spring-security-test = "6.5.1"
+commons-lang3 = "3.17.0"
+vavr = "0.10.6"
 
 [libraries]
 # Spring Boot Starters
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
 spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf", version.ref = "spring-boot" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
+spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
+spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security-test" }
 
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-binding", version.ref = "lombok-mapstruct-binding" }
+commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+vavr = { module = "io.vavr:vavr", version.ref = "vavr" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
@@ -26,8 +38,16 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 spring-boot-dependencies = [
   "spring-boot-starter-web",
   "spring-boot-starter-thymeleaf",
+  "spring-boot-starter-data-jpa",
+  "spring-boot-starter-security"
 ]
 
 spring-test-dependencies = [
   "spring-boot-starter-test",
+  "spring-security-test"
+]
+
+common-dependencies = [
+  "commons-lang3",
+  "vavr"
 ]

@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
     implementation libs.bundles.spring.boot.dependencies
+    implementation libs.bundles.common.dependencies
     testImplementation libs.bundles.spring.test.dependencies
 
     // h2
@@ -26,6 +27,11 @@ dependencies {
 
     // postgres
     runtimeOnly(libs.postgres)
+
+    // lombok
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    annotationProcessor(libs.lombok.mapstruct.binding)
 }
 
 tasks.named('test') {

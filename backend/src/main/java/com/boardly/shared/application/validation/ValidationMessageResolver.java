@@ -1,8 +1,6 @@
 package com.boardly.shared.application.validation;
 
-import java.text.MessageFormat;
 import java.util.Locale;
-import java.util.ResourceBundle;
 
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;

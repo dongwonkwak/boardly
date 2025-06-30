@@ -1,6 +1,6 @@
 spring:
   datasource:
-    name: bo-app
+    name: boardly-app
     url: jdbc:h2:mem:boardly-app;DB_CLOSE_DELAY=-1;IGNORECASE=TRUE;DATABASE_TO_UPPER=false;MODE=PostgreSQL
     driver-class-name: org.h2.Driver
     username: sa

@@ -21,12 +21,14 @@ public final class FieldValidators {
     "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
   );
 
+  // 영문 대소문자, 숫자, 특수문자 조합 8자 이상 20자 이하
   private static final Pattern PASSWORD_PATTERN = Pattern.compile(
     "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
   );
 
+  // 한글 영문만 허용
   private static final Pattern NAME_PATTERN = Pattern.compile(
-    "^[a-zA-Z가-힣\\s]+$"
+    "^[a-zA-Z가-힣]+$"
   );
 
   private static final Pattern HEX_COLOR_PATTERN = Pattern.compile(
@@ -128,12 +130,26 @@ public final class FieldValidators {
     );
   }
 
+  /**
+   * 선택적 문자열 검증
+   * 
+   * @param maxLength 최대 길이
+   * @return 선택적 문자열 검증자
+   */
   public CompositeFieldValidator<String> optionalString(int maxLength) {
     return CompositeFieldValidator.of(
       validationRules.maxLength(maxLength)
     );
   }
 
+  /**
+   * 커스텀 패턴 검증
+   * 
+   * @param pattern 패턴
+   * @param messageKey 메시지 키
+   * @param maxLength 최대 길이
+   * @return 커스텀 패턴 검증자
+   */
   public CompositeFieldValidator<String> customPattern(Pattern pattern, String messageKey, int maxLength) {
     return CompositeFieldValidator.of(
       validationRules.required(),

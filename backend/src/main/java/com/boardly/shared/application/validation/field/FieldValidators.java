@@ -22,7 +22,7 @@ public final class FieldValidators {
   );
 
   private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-    "^(?=.*[a-zA-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
+    "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
   );
 
   private static final Pattern NAME_PATTERN = Pattern.compile(

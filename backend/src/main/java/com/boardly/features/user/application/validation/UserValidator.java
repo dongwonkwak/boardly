@@ -1,11 +1,13 @@
 package com.boardly.features.user.application.validation;
 
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import com.boardly.shared.application.validation.ValidationResult;
 import org.springframework.stereotype.Component;
 
 import com.boardly.features.user.application.usecase.RegisterUserCommand;
+import com.boardly.features.user.application.usecase.UpdateUserCommand;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.Validator;
 
@@ -41,12 +43,28 @@ public class UserValidator {
     return getUserRegistrationValidator().validate(command);
   }
 
+  /**
+   * 사용자 업데이트 검증
+   * @param command 업데이트 명령
+   * @return 검증 결과
+   */
+  public ValidationResult<UpdateUserCommand> validateUserUpdate(UpdateUserCommand command) {
+    return getUserUpdateValidator().validate(command);
+  }
+
   private Validator<RegisterUserCommand> getUserRegistrationValidator() {
     return Validator.combine(
             getEmailValidator(),
             getPasswordValidator(),
-            getFirstNameValidator(),
-            getLastNameValidator()
+            createFirstNameValidator(RegisterUserCommand::firstName),
+            createLastNameValidator(RegisterUserCommand::lastName)
+    );
+  }
+
+  private Validator<UpdateUserCommand> getUserUpdateValidator() {
+    return Validator.combine(
+            createFirstNameValidator(UpdateUserCommand::firstName),
+            createLastNameValidator(UpdateUserCommand::lastName)
     );
   }
 
@@ -125,11 +143,11 @@ public class UserValidator {
 
   // 이름 검증자 (순차적 검증 - 하나의 에러만 리턴)
   // 우선순위: 필수 입력 > 길이 > 형식
-  private Validator<RegisterUserCommand> getFirstNameValidator() {
+  private <T> Validator<T> createFirstNameValidator(Function<T, String> getter) {
     return Validator.chain(
             // 필수 입력 검증
             Validator.fieldWithMessage(
-                    RegisterUserCommand::firstName,
+                    getter,
                     firstName -> firstName != null && !firstName.trim().isEmpty(),
                     "firstName",
                     "validation.user.firstName.required",
@@ -138,7 +156,7 @@ public class UserValidator {
 
             // 길이 검증
             Validator.fieldWithMessage(
-                    RegisterUserCommand::firstName,
+                    getter,
                     firstName -> firstName == null || (!firstName.isEmpty() && firstName.length() <= 50),
                     "firstName",
                     "validation.common.length.range",
@@ -148,7 +166,7 @@ public class UserValidator {
 
             // 패턴 검증 (한글/영문만)
             Validator.fieldWithMessage(
-                    RegisterUserCommand::firstName,
+                    getter,
                     firstName -> firstName == null || NAME_PATTERN.matcher(firstName).matches(),
                     "firstName",
                     "validation.user.firstName.pattern",
@@ -159,11 +177,11 @@ public class UserValidator {
 
   // 성 검증자 (순차적 검증 - 하나의 에러만 리턴)
   // 우선순위: 필수 입력 > 길이 > 형식
-  private Validator<RegisterUserCommand> getLastNameValidator() {
+  private <T> Validator<T> createLastNameValidator(Function<T, String> getter) {
     return Validator.chain(
             // 필수 입력 검증
             Validator.fieldWithMessage(
-                    RegisterUserCommand::lastName,
+                    getter,
                     lastName -> lastName != null && !lastName.trim().isEmpty(),
                     "lastName",
                     "validation.user.lastName.required",
@@ -172,7 +190,7 @@ public class UserValidator {
 
             // 길이 검증
             Validator.fieldWithMessage(
-                    RegisterUserCommand::lastName,
+                    getter,
                     lastName -> lastName == null || (!lastName.isEmpty() && lastName.length() <= 50),
                     "lastName",
                     "validation.common.length.range",
@@ -182,7 +200,7 @@ public class UserValidator {
 
             // 패턴 검증 (한글/영문만)
             Validator.fieldWithMessage(
-                    RegisterUserCommand::lastName,
+                    getter,
                     lastName -> lastName == null || NAME_PATTERN.matcher(lastName).matches(),
                     "lastName",
                     "validation.user.lastName.pattern",

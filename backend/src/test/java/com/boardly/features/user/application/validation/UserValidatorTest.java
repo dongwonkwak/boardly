@@ -1,6 +1,7 @@
 package com.boardly.features.user.application.validation;
 
 import com.boardly.features.user.application.usecase.RegisterUserCommand;
+import com.boardly.features.user.application.usecase.UpdateUserCommand;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -293,5 +294,122 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(4);
         assertThat(result.getErrors()).extracting("field").containsExactlyInAnyOrder("email", "password", "firstName", "lastName");
+    }
+
+    // =================================================================
+    //                    User Update Validation Tests
+    // =================================================================
+
+    private UpdateUserCommand createValidUpdateCommand() {
+        return new UpdateUserCommand(null, "Gildong", "Hong");
+    }
+
+    @Test
+    @DisplayName("유효한 사용자 수정 정보는 검증을 통과해야 한다")
+    void validateUserUpdate_withValidData_shouldBeValid() {
+        // given
+        UpdateUserCommand command = createValidUpdateCommand();
+
+        // when
+        ValidationResult<UpdateUserCommand> result = userValidator.validateUserUpdate(command);
+
+        // then
+        assertThat(result.isValid()).isTrue();
+    }
+
+    @Test
+    @DisplayName("수정 시 이름(firstName)이 null이면 검증에 실패해야 한다")
+    void validateUserUpdate_withNullFirstName_shouldBeInvalid() {
+        // given
+        UpdateUserCommand command = new UpdateUserCommand(null, null, "Hong");
+        
+        // when
+        ValidationResult<UpdateUserCommand> result = userValidator.validateUserUpdate(command);
+        
+        // then
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors()).hasSize(1);
+        assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.firstName.required");
+    }
+
+    @Test
+    @DisplayName("수정 시 이름(firstName)에 허용되지 않은 문자가 포함되면 검증에 실패해야 한다")
+    void validateUserUpdate_withInvalidFirstNamePattern_shouldBeInvalid() {
+        // given
+        UpdateUserCommand command = new UpdateUserCommand(null, "Gildong1", "Hong");
+
+        // when
+        ValidationResult<UpdateUserCommand> result = userValidator.validateUserUpdate(command);
+
+        // then
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors()).hasSize(1);
+        assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.firstName.pattern");
+    }
+
+    @Test
+    @DisplayName("수정 시 이름(firstName)이 50자를 초과하면 검증에 실패해야 한다")
+    void validateUserUpdate_withTooLongFirstName_shouldBeInvalid() {
+        // given
+        String longFirstName = "a".repeat(51);
+        UpdateUserCommand command = new UpdateUserCommand(null, longFirstName, "Hong");
+
+        // when
+        ValidationResult<UpdateUserCommand> result = userValidator.validateUserUpdate(command);
+
+        // then
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors()).hasSize(1);
+        assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.common.length.range 1 50");
+    }
+
+    @Test
+    @DisplayName("수정 시 성(lastName)이 null이면 검증에 실패해야 한다")
+    void validateUserUpdate_withNullLastName_shouldBeInvalid() {
+        // given
+        UpdateUserCommand command = new UpdateUserCommand(null, "Gildong", null);
+        
+        // when
+        ValidationResult<UpdateUserCommand> result = userValidator.validateUserUpdate(command);
+        
+        // then
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors()).hasSize(1);
+        assertThat(result.getErrors().get(0).field()).isEqualTo("lastName");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.lastName.required");
+    }
+
+    @Test
+    @DisplayName("수정 시 성(lastName)에 허용되지 않은 문자가 포함되면 검증에 실패해야 한다")
+    void validateUserUpdate_withInvalidLastNamePattern_shouldBeInvalid() {
+        // given
+        UpdateUserCommand command = new UpdateUserCommand(null, "Gildong", "Hong1");
+
+        // when
+        ValidationResult<UpdateUserCommand> result = userValidator.validateUserUpdate(command);
+
+        // then
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors()).hasSize(1);
+        assertThat(result.getErrors().get(0).field()).isEqualTo("lastName");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.lastName.pattern");
+    }
+
+    @Test
+    @DisplayName("수정 시 여러 필드가 유효하지 않으면 모든 오류를 반환해야 한다")
+    void validateUserUpdate_withMultipleInvalidFields_shouldReturnAllErrors() {
+        // given
+        UpdateUserCommand command = new UpdateUserCommand(null, "Gildong1", "Hong1");
+
+        // when
+        ValidationResult<UpdateUserCommand> result = userValidator.validateUserUpdate(command);
+
+        // then
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors()).hasSize(2);
+        assertThat(result.getErrors()).extracting("field").containsExactlyInAnyOrder("firstName", "lastName");
     }
 }

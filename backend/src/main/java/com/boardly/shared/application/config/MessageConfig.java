@@ -13,7 +13,10 @@ public class MessageConfig {
   @Bean
   public MessageSource messageSource() {
     ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
-    messageSource.setBasename("classpath:messages/ValidationMessages");
+    messageSource.setBasenames(
+            "classpath:messages/ValidationMessages",
+            "classpath:messages/messages"
+            );
     messageSource.setDefaultEncoding("UTF-8");
     messageSource.setDefaultLocale(Locale.US);
     return messageSource;

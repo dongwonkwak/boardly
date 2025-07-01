@@ -1,14 +1,12 @@
 package com.boardly.features.user.application.usecase;
 
 
+import com.boardly.features.user.domain.model.User;
+import com.boardly.shared.domain.common.Failure;
+import io.vavr.control.Either;
+
 public interface RegisterUserUseCase {
 
-  void register(RegisterUserCommand command);
+  Either<Failure, User> register(RegisterUserCommand command);
 
-  record RegisterUserCommand(
-    String email,
-    String password,
-    String firstName,
-    String lastName
-  ) {}
 }

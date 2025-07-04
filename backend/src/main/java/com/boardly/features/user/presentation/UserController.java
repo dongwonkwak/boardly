@@ -6,13 +6,19 @@ import com.boardly.features.user.application.usecase.RegisterUserUseCase;
 import com.boardly.features.user.application.usecase.UpdateUserUseCase;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.presentation.request.RegisterUserRequest;
+import com.boardly.features.user.presentation.request.UpdateUserRequest;
+import com.boardly.features.user.presentation.response.UserResponse;
 import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.presentation.ApiFailureHandler;
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Slf4j
 @RestController
@@ -24,7 +30,7 @@ public class UserController {
     private final UpdateUserUseCase updateUserUseCase;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterUserRequest request) {
+    public ResponseEntity<?> registerUser(@RequestBody RegisterUserRequest request, HttpServletRequest httpRequest) {
         log.info("사용자 등록 요청: email={}", request.email());
 
         RegisterUserCommand command = new RegisterUserCommand(
@@ -37,14 +43,14 @@ public class UserController {
         Either<Failure, User> result = registerUserUseCase.register(command);
 
         return result.fold(
-                failure -> handleFailure(failure),
+                failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
                 user -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(UserResponse.from(user))
         );
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody UpdateUserRequest request, HttpServletRequest httpRequest) {
         log.info("사용자 업데이트 요청: userId={}", userId);
 
         UpdateUserCommand command = new UpdateUserCommand(
@@ -56,69 +62,8 @@ public class UserController {
         Either<Failure, User> result = updateUserUseCase.update(command);
 
         return result.fold(
-                failure -> handleFailure(failure),
+                failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
                 user -> ResponseEntity.ok(UserResponse.from(user))
         );
-    }
-
-    private ResponseEntity<?> handleFailure(Failure failure) {
-        return switch (failure) {
-            case Failure.ValidationFailure validationFailure -> 
-                ResponseEntity.badRequest().body(ErrorResponse.validation(validationFailure));
-            case Failure.ConflictFailure conflictFailure -> 
-                ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.conflict(conflictFailure));
-            case Failure.InternalServerError internalServerError -> 
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.internal(internalServerError));
-            default -> 
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다.")));
-        };
-    }
-
-    // DTO 클래스들
-    public record RegisterUserRequest(
-            String email,
-            String password,
-            String firstName,
-            String lastName
-    ) {}
-
-    public record UpdateUserRequest(
-            String firstName,
-            String lastName
-    ) {}
-
-    public record UserResponse(
-            String userId,
-            String email,
-            String firstName,
-            String lastName,
-            boolean isActive
-    ) {
-        public static UserResponse from(User user) {
-            return new UserResponse(
-                    user.getUserId().getId(),
-                    user.getEmail(),
-                    user.getUserProfile().firstName(),
-                    user.getUserProfile().lastName(),
-                    user.isActive()
-            );
-        }
-    }
-
-    public record ErrorResponse(
-            String message,
-            Object details
-    ) {
-        public static ErrorResponse validation(Failure.ValidationFailure failure) {
-            return new ErrorResponse(failure.message(), failure.violations());
-        }
-
-        public static ErrorResponse conflict(Failure.ConflictFailure failure) {
-            return new ErrorResponse(failure.message(), null);
-        }
-
-        public static ErrorResponse internal(Failure.InternalServerError failure) {
-            return new ErrorResponse("서버 내부 오류가 발생했습니다.", null);
-        }
     }
 } 

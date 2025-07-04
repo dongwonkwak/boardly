@@ -1,4 +1,4 @@
-package com.boardly.features.user.application.usecase;
+package com.boardly.features.user.application.port.input;
 
 public record RegisterUserCommand(
   String email,

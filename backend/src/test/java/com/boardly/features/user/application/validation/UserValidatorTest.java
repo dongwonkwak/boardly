@@ -1,7 +1,7 @@
 package com.boardly.features.user.application.validation;
 
-import com.boardly.features.user.application.usecase.RegisterUserCommand;
-import com.boardly.features.user.application.usecase.UpdateUserCommand;
+import com.boardly.features.user.application.port.input.RegisterUserCommand;
+import com.boardly.features.user.application.port.input.UpdateUserCommand;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,4 @@
-package com.boardly.features.user.application.usecase;
+package com.boardly.features.user.application.port.input;
 
 import com.boardly.features.user.domain.model.UserId;
 

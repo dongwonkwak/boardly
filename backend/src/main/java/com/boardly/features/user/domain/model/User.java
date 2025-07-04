@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import com.boardly.shared.domain.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +17,7 @@ public class User extends BaseEntity {
 
     private UserId userId;
     private String email;
+    @JsonIgnore
     private String hashedPassword;
     private UserProfile userProfile;
     private boolean isActive;

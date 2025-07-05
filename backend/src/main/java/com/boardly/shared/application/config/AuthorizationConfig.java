@@ -23,26 +23,28 @@ public class AuthorizationConfig {
                 OAuth2AuthorizationServerConfigurer.authorizationServer();
 
         http
-                .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-                .with(authorizationServerConfigurer, authorizationServer ->
-                        authorizationServer
-                                .oidc(Customizer.withDefaults())
-                )
-                .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().authenticated())
-                .cors(Customizer.withDefaults())
-                .exceptionHandling(exceptions -> exceptions
-                        .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
-                                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                        ));
+            .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+            .with(authorizationServerConfigurer, authorizationServer ->
+                authorizationServer
+                        .oidc(Customizer.withDefaults())
+            )
+            .authorizeHttpRequests(authorize -> authorize
+                .anyRequest().authenticated())
+            .cors(Customizer.withDefaults())
+            .exceptionHandling(exceptions -> exceptions
+                .defaultAuthenticationEntryPointFor(
+                    new LoginUrlAuthenticationEntryPoint("/login"),
+                    new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                ));
         return http.build();
     }
 
     @Bean
     WebSecurityCustomizer webSecurityCustomizer() {
         return web -> web.ignoring().requestMatchers(
-                "/h2-console/**", "/favicon.ico", "/images/**", "/css/**", "/error/**");
+                "/h2-console/**", "/favicon.ico",
+                "/images/**", "/css/**",
+                "/error/**");
     }
 
     @Bean

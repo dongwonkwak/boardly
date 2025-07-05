@@ -43,12 +43,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @Tag(name = "User", description = "사용자 관리 API")
 public class UserController {
 
-    private final String TAGS = "User";
+    private static final String TAGS = "User";
 
     private final RegisterUserUseCase registerUserUseCase;
     private final UpdateUserUseCase updateUserUseCase;
 
-    @Operation(summary = "사용자 등록", description = "사용자를 등록합니다.", 
+    @Operation(
+        summary = "사용자 등록",
+        description = "사용자를 등록합니다.",
         security = {},
         tags = {TAGS})
     @ApiResponses(value = {
@@ -63,6 +65,7 @@ public class UserController {
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(
+            @Parameter(description = "회원가입 요청 정보", required = true)
             @RequestBody RegisterUserRequest request,
             HttpServletRequest httpRequest) {
         log.info("사용자 등록 요청: email={}", request.email());
@@ -83,9 +86,11 @@ public class UserController {
         );
     }
 
-    @Operation(summary = "사용자 업데이트", description = "사용자를 업데이트합니다.", 
+    @Operation(
+        summary = "사용자 업데이트",
+        description = "사용자를 업데이트합니다.",
         tags = {TAGS},
-        security = @SecurityRequirement(name = "oauth2", scopes = {"write"}))
+        security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "사용자 업데이트 성공",
             content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponse.class))),
@@ -96,9 +101,10 @@ public class UserController {
         @ApiResponse(responseCode = "500", description = "서버 오류",
             content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PreAuthorize("hasAuthority('write')")
+    @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
     @PutMapping
     public ResponseEntity<?> updateUser(
+            @Parameter(description = "사용자 업데이트 요청 정보", required = true)
             @RequestBody UpdateUserRequest request,
             HttpServletRequest httpRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {

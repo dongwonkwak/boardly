@@ -27,13 +27,8 @@ public class SecurityConfig {
     private final CorsConfigurationSource corsConfigurationSource;
 
     private static final RequestMatcher[] PUBLIC_MATCHERS = {
-            PathPatternRequestMatcher.withDefaults().matcher("/login"),
-            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/.well-known/appspecific/com.chrome.devtools.json"),
             // register user
             PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, Path.USERS + "/register"),
-            PathPatternRequestMatcher.withDefaults().matcher("/api-docs/**"),
-            PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui/**"),
-            PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui.html")
     };
 
     @Bean
@@ -44,7 +39,8 @@ public class SecurityConfig {
                     .ignoringRequestMatchers(PUBLIC_MATCHERS))
             .authorizeHttpRequests(authorize -> authorize
                     .requestMatchers(PUBLIC_MATCHERS).permitAll()
-                    .anyRequest().authenticated())
+                    .requestMatchers(Path.PREFIX + "/**").authenticated()
+                    .anyRequest().permitAll())
             .cors(cors -> cors
                     .configurationSource(corsConfigurationSource))
             .oauth2ResourceServer(oauth2 -> oauth2

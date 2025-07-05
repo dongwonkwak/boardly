@@ -15,6 +15,7 @@ commons-lang3 = "3.17.0"
 vavr = "0.10.6"
 
 springdoc-openapi-starter-webmvc-ui = "2.8.9"
+openapi-gradle-plugin = "1.9.0"
 
 [libraries]
 # Spring Boot Starters
@@ -37,6 +38,7 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+openapi-gradle-plugin = { id = "org.springdoc.openapi-gradle-plugin", version.ref = "openapi-gradle-plugin" }
 
 [bundles]
 spring-boot-dependencies = [

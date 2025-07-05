@@ -10,3 +10,53 @@ spring:
       enabled: true
       settings:
         web-allow-others: true
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          boardly-client:
+            registration:
+              client-id: "boardly-client"
+              client-secret: "{noop}secret"
+              client-authentication-methods:
+                - "client_secret_basic"
+              authorization-grant-types:
+                - "authorization_code"
+                - "refresh_token"
+              redirect-uris:
+                - "${app.frontend.url}/callback"
+              post-logout-redirect-uris:
+                - "${app.frontend.url}/"
+              scopes:
+                - "openid"
+                - "read"
+                - "write"
+
+            require-authorization-consent: false
+            require-proof-key: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    oauth:
+      client-id: "boardly-client"
+      client-secret: "{noop}secret"
+      scopes:
+        - read
+        - write
+        - openid
+      use-pkce-with-authorization-code-grant: true
+app:
+  cors:
+    allowed-origins:
+      - "${app.frontend.url}"
+  frontend:
+    url: http://localhost:5173
+
+logging:
+  level:
+    org.springframework.security: trace

@@ -14,6 +14,8 @@ spring-security-test = "6.5.1"
 commons-lang3 = "3.17.0"
 vavr = "0.10.6"
 
+springdoc-openapi-starter-webmvc-ui = "2.8.9"
+
 [libraries]
 # Spring Boot Starters
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
@@ -21,6 +23,7 @@ spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
+spring-boot-starter-oauth2-authorization-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-authorization-server", version.ref = "spring-boot" }
 spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security-test" }
 
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
@@ -29,6 +32,7 @@ lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-binding", version.ref = "lombok-mapstruct-binding" }
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 vavr = { module = "io.vavr:vavr", version.ref = "vavr" }
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi-starter-webmvc-ui" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
@@ -39,7 +43,8 @@ spring-boot-dependencies = [
   "spring-boot-starter-web",
   "spring-boot-starter-thymeleaf",
   "spring-boot-starter-data-jpa",
-  "spring-boot-starter-security"
+  "spring-boot-starter-security",
+  "spring-boot-starter-oauth2-authorization-server"
 ]
 
 spring-test-dependencies = [
@@ -50,4 +55,8 @@ spring-test-dependencies = [
 common-dependencies = [
   "commons-lang3",
   "vavr"
+]
+
+springdoc-dependencies = [
+  "springdoc-openapi-starter-webmvc-ui"
 ]

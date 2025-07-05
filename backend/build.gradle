@@ -28,6 +28,9 @@ dependencies {
     // postgres
     runtimeOnly(libs.postgres)
 
+    // springdoc
+    implementation(libs.bundles.springdoc.dependencies)
+
     // lombok
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)

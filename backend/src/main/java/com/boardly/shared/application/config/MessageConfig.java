@@ -14,8 +14,8 @@ public class MessageConfig {
   public MessageSource messageSource() {
     ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
     messageSource.setBasenames(
-            "classpath:messages/ValidationMessages",
-            "classpath:messages/messages"
+            "messages/ValidationMessages",
+            "messages/messages"
             );
     messageSource.setDefaultEncoding("UTF-8");
     messageSource.setDefaultLocale(Locale.US);

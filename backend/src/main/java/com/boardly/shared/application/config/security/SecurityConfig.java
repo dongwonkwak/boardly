@@ -1,4 +1,4 @@
-package com.boardly.shared.application.config;
+package com.boardly.shared.application.config.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
+import com.boardly.shared.application.config.security.handler.CustomAuthenticationFailureHandler;
 import com.boardly.shared.presentation.Path;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -25,15 +26,17 @@ import org.springframework.web.cors.CorsConfigurationSource;
 public class SecurityConfig {
 
     private final CorsConfigurationSource corsConfigurationSource;
+    private final CustomAuthenticationProvider customAuthenticationProvider;
+    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
 
     private static final RequestMatcher[] PUBLIC_MATCHERS = {
-            // register user
-            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, Path.USERS + "/register"),
+        // register user
+        PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, Path.USERS + "/register"),
     };
 
     @Bean
     @Order(2)
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf
                     .ignoringRequestMatchers(PUBLIC_MATCHERS))
@@ -43,6 +46,11 @@ public class SecurityConfig {
                     .anyRequest().permitAll())
             .cors(cors -> cors
                     .configurationSource(corsConfigurationSource))
+            .formLogin(form -> form
+                .loginPage("/login")
+                .failureHandler(customAuthenticationFailureHandler)
+        .       permitAll())
+            .authenticationProvider(customAuthenticationProvider)
             .oauth2ResourceServer(oauth2 -> oauth2
                     .jwt(Customizer.withDefaults()))
             ;

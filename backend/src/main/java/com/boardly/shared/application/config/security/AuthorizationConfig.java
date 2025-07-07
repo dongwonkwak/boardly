@@ -1,4 +1,4 @@
-package com.boardly.shared.application.config;
+package com.boardly.shared.application.config.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

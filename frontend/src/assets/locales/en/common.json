@@ -1,0 +1,22 @@
+{
+  "nav": {
+    "logo": "Kanban",
+    "login": "Login",
+    "register": "Register"
+  },
+  "footer": {
+    "copyright": "© 2025 Kanban. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Kanban",
+    "description": "Organize your tasks and projects efficiently",
+    "feature_label": "Kanban Board",
+    "feature_title": "Watch your tasks board-style with Kanban Board",
+    "feature_desc": "This module lets you see all the tasks of a project and organize them in different boards according to their status, just like Trello.",
+    "get_now": "Get Now →",
+    "documentation": "Documentation"
+  }
+} 

@@ -25,12 +25,17 @@ export type UserResponse = {
     lastName?: string;
     isActive?: boolean;
 };
+export type FieldViolation = {
+    field?: string;
+    message?: string;
+    rejectedValue?: unknown;
+};
 export type ErrorResponse = {
     message?: string;
     errorCode?: string;
     timestamp?: string;
     path?: string;
-    details?: unknown;
+    details?: FieldViolation[];
 };
 export type RegisterUserRequest = {
     email?: string;

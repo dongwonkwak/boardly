@@ -7,17 +7,19 @@ import type { ComponentProps } from "react";
 type ButtonProps = ComponentProps<typeof Button>;
 
 interface LoadingButtonProps extends ButtonProps {
-  loading?: boolean;
-  children: React.ReactNode;
+	loading?: boolean;
+	children: React.ReactNode;
 }
 
-export default function LoadingButton({ loading, children, ...props }: LoadingButtonProps) {
-  return (
-    <Button disabled={loading || props.disabled} {...props}>
-      {loading && (
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-      )}
-      {children}
-    </Button>
-  );
-} 
+export default function LoadingButton({
+	loading,
+	children,
+	...props
+}: LoadingButtonProps) {
+	return (
+		<Button disabled={loading || props.disabled} {...props}>
+			{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+			{children}
+		</Button>
+	);
+}

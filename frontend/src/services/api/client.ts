@@ -14,10 +14,6 @@ const oazapfts = Oazapfts.runtime(defaults);
 export const servers = {
     server1: "http://localhost:8080"
 };
-export type UpdateUserRequest = {
-    firstName?: string;
-    lastName?: string;
-};
 export type UserResponse = {
     userId?: string;
     email?: string;
@@ -37,12 +33,33 @@ export type ErrorResponse = {
     path?: string;
     details?: FieldViolation[];
 };
+export type UpdateUserRequest = {
+    firstName?: string;
+    lastName?: string;
+};
 export type RegisterUserRequest = {
     email?: string;
     password?: string;
     firstName?: string;
     lastName?: string;
 };
+/**
+ * 내 정보 조회
+ */
+export function getUser(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: UserResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>("/api/users", {
+        ...opts
+    });
+}
 /**
  * 사용자 업데이트
  */

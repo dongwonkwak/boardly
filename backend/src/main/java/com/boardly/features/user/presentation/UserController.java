@@ -2,6 +2,7 @@ package com.boardly.features.user.presentation;
 
 import com.boardly.features.user.application.port.input.RegisterUserCommand;
 import com.boardly.features.user.application.port.input.UpdateUserCommand;
+import com.boardly.features.user.application.usecase.GetUserUseCase;
 import com.boardly.features.user.application.usecase.RegisterUserUseCase;
 import com.boardly.features.user.application.usecase.UpdateUserUseCase;
 import com.boardly.features.user.domain.model.User;
@@ -47,6 +48,7 @@ public class UserController {
 
     private final RegisterUserUseCase registerUserUseCase;
     private final UpdateUserUseCase updateUserUseCase;
+    private final GetUserUseCase getUserUseCase;
 
     @Operation(
         summary = "사용자 등록",
@@ -126,6 +128,38 @@ public class UserController {
                 failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
                 user -> {
                     log.info("사용자 업데이트 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
+                    return ResponseEntity.ok(UserResponse.from(user));
+                }
+        );
+    }
+
+    @Operation(
+        summary = "내 정보 조회",
+        description = "내 정보를 조회합니다.",
+        tags = {TAGS},
+        security = @SecurityRequirement(name = "oauth2", scopes = {"read", "openid"}))
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "내 정보 조회 성공",
+            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponse.class))),
+        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
+            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "서버 오류",
+            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasAuthority('SCOPE_read') and hasAuthority('SCOPE_openid')")
+    @GetMapping
+    public ResponseEntity<?> getUser(
+            HttpServletRequest httpRequest,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject();
+        log.info("내 정보 조회 요청: userId={}", userId);
+
+        Either<Failure, User> result = getUserUseCase.get(new UserId(userId));
+
+        return result.fold(
+                failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+                user -> {
+                    log.info("내 정보 조회 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
                     return ResponseEntity.ok(UserResponse.from(user));
                 }
         );

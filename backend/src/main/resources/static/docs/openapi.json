@@ -213,7 +213,24 @@
           "path": {
             "type": "string"
           },
-          "details": {}
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldViolation"
+            }
+          }
+        }
+      },
+      "FieldViolation": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "rejectedValue": {}
         }
       },
       "RegisterUserRequest": {

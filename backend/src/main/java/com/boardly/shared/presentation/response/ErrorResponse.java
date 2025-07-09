@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * API 오류 응답을 위한 공통 클래스
@@ -18,7 +19,7 @@ public record ErrorResponse(
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime timestamp,
         String path,
-        Object details
+        List<Failure.FieldViolation> details
 ) {
     
     public static ErrorResponse of(Failure failure) {
@@ -61,7 +62,7 @@ public record ErrorResponse(
                 .errorCode("VALIDATION_ERROR")
                 .timestamp(LocalDateTime.now())
                 .path(path)
-                .details(failure.violations())
+                .details(failure.violations().stream().toList())
                 .build();
     }
 
@@ -150,11 +151,11 @@ public record ErrorResponse(
                 .build();
     }
 
-    public static ErrorResponse custom(String message, String errorCode, Object details) {
+    public static ErrorResponse custom(String message, String errorCode, List<Failure.FieldViolation> details) {
         return custom(message, errorCode, details, null);
     }
 
-    public static ErrorResponse custom(String message, String errorCode, Object details, String path) {
+    public static ErrorResponse custom(String message, String errorCode, List<Failure.FieldViolation> details, String path) {
         return ErrorResponse.builder()
                 .message(message)
                 .errorCode(errorCode)

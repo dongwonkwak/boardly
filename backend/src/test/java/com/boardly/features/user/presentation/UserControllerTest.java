@@ -124,7 +124,7 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                     new RegisterUserRequest("", "password", "홍", "길동"))))
-                    .andExpect(status().isBadRequest())
+                    .andExpect(status().isUnprocessableEntity())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.message").value("입력 값이 유효하지 않습니다."))
                     .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
@@ -351,7 +351,7 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(
                                     new UpdateUserRequest("", "순신"))))
-                    .andExpect(status().isBadRequest())
+                    .andExpect(status().isUnprocessableEntity())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.message").value("입력 값이 유효하지 않습니다."))
                     .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))

@@ -20,7 +20,7 @@ public class ApiFailureHandler {
     public static ResponseEntity<?> handleFailure(Failure failure, String path) {
         return switch (failure) {
             case Failure.ValidationFailure validationFailure -> 
-                ResponseEntity.badRequest().body(ErrorResponse.validation(validationFailure, path));
+                ResponseEntity.unprocessableEntity().body(ErrorResponse.validation(validationFailure, path));
             case Failure.ConflictFailure conflictFailure -> 
                 ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.conflict(conflictFailure, path));
             case Failure.NotFoundFailure notFoundFailure -> 

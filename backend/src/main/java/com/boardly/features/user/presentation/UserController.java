@@ -81,8 +81,11 @@ public class UserController {
 
         return result.fold(
                 failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
-                user -> ResponseEntity.status(HttpStatus.CREATED)
-                        .body(UserResponse.from(user))
+                user -> {
+                    log.info("사용자 등록 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
+                    return ResponseEntity.status(HttpStatus.CREATED)
+                            .body(UserResponse.from(user));
+                }
         );
     }
 
@@ -121,7 +124,10 @@ public class UserController {
 
         return result.fold(
                 failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
-                user -> ResponseEntity.ok(UserResponse.from(user))
+                user -> {
+                    log.info("사용자 업데이트 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
+                    return ResponseEntity.ok(UserResponse.from(user));
+                }
         );
     }
 } 

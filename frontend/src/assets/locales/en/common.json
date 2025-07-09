@@ -18,5 +18,22 @@
     "feature_desc": "This module lets you see all the tasks of a project and organize them in different boards according to their status, just like Trello.",
     "get_now": "Get Now →",
     "documentation": "Documentation"
+  },
+  "register": {
+    "title": "Sign Up",
+    "email": "Email",
+    "lastName": "Last Name",
+    "firstName": "First Name",
+    "password": "Password",
+    "passwordConfirm": "Confirm Password",
+    "submit": "Sign Up",
+    "error": "An unknown error occurred.",
+    "validation": {
+      "email": "Please enter a valid email address.",
+      "lastName": "Please enter your last name.",
+      "firstName": "Please enter your first name.",
+      "password": "Password must be at least 8 characters.",
+      "passwordConfirm": "Passwords do not match."
+    }
   }
 } 

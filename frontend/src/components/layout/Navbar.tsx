@@ -22,9 +22,11 @@ export default function Navbar() {
           <Button variant="ghost" size="sm" className="cursor-pointer">
             {t('nav.login')}
           </Button>
-          <Button size="sm" className="cursor-pointer">
-            {t('nav.register')}
-          </Button>
+          <Link to="/register">
+            <Button size="sm" className="cursor-pointer">
+              {t('nav.register')}
+            </Button>
+          </Link>
         </div>
       </div>
     </nav>

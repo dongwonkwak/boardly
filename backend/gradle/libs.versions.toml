@@ -16,6 +16,7 @@ vavr = "0.10.6"
 
 springdoc-openapi-starter-webmvc-ui = "2.8.9"
 openapi-gradle-plugin = "1.9.0"
+ulid-creator = "5.2.3"
 
 [libraries]
 # Spring Boot Starters
@@ -34,6 +35,7 @@ lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-bindin
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
 vavr = { module = "io.vavr:vavr", version.ref = "vavr" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi-starter-webmvc-ui" }
+ulid-creator = { module = "com.github.f4b6a3:ulid-creator", version.ref = "ulid-creator" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
@@ -56,7 +58,8 @@ spring-test-dependencies = [
 
 common-dependencies = [
   "commons-lang3",
-  "vavr"
+  "vavr",
+  "ulid-creator"
 ]
 
 springdoc-dependencies = [

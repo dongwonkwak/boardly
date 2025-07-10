@@ -15,9 +15,4 @@ public class UserId extends EntityId {
     public UserId() {
         super();
     }
-
-    @Override
-    public String toString() {
-        return String.format("UserId{userId=%s}", super.toString());
-    }
 }

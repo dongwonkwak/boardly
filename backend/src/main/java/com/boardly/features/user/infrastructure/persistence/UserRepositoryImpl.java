@@ -27,9 +27,10 @@ public class UserRepositoryImpl implements UserRepository {
             // 새로운 객체인지 기존 객체인지 판단
             if (user.isNew()) {
                 // 새로운 객체 저장
-                log.debug("새로운 사용자 저장: email={}", user.getEmail());
+                log.debug("새로운 사용자 저장: userId={}, email={}", user.getUserId().getId(), user.getEmail());
                 UserEntity userEntity = UserEntity.fromDomainEntity(user);
                 savedEntity = userJpaRepository.save(userEntity);
+                log.debug("새로운 사용자 저장 완료: userId={}, email={}", savedEntity.getUserId(), savedEntity.getEmail());
             } else {
                 // 기존 객체 업데이트
                 log.debug("기존 사용자 업데이트: userId={}, email={}", user.getUserId().getId(), user.getEmail());
@@ -57,6 +58,7 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findById(UserId userId) {
+        log.debug("findById: userId={}", userId.getId());
         return userJpaRepository.findById(userId.getId())
                 .map(UserEntity::toDomainEntity);
     }

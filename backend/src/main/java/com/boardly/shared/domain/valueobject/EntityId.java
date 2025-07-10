@@ -1,13 +1,11 @@
 package com.boardly.shared.domain.valueobject;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 
-import java.util.UUID;
 
 @Getter
-@ToString
 @EqualsAndHashCode
 public class EntityId {
 
@@ -18,6 +16,11 @@ public class EntityId {
     }
 
     protected EntityId() {
-        this.id = UUID.randomUUID().toString();
+        this.id = UlidCreator.getUlid().toString();
+    }
+
+    @Override
+    public String toString() {
+        return id;
     }
 }

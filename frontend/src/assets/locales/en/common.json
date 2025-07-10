@@ -10,14 +10,10 @@
 		"terms": "Terms of Service"
 	},
 	"dashboard": {
-		"title": "Dashboard",
-		"welcome": "Welcome to Boardly",
-		"description": "Organize your tasks and projects efficiently",
 		"feature_label": "Boardly",
 		"feature_title": "Watch your tasks board-style with Kanban Board",
 		"feature_desc": "This module lets you see all the tasks of a project and organize them in different boards according to their status, just like Trello.",
-		"get_now": "Get Now →",
-		"documentation": "Documentation"
+		"get_now": "Get Now →"
 	},
 	"register": {
 		"title": "Sign Up",
@@ -51,5 +47,10 @@
 			"title": "Success!",
 			"confirm": "OK"
 		}
+	},
+	"auth": {
+		"checking": "Checking authentication...",
+		"login_required": "Login Required",
+		"login_required_desc": "Please log in to access this page."
 	}
 }

@@ -2,7 +2,11 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
-export default function Navbar() {
+interface NavbarProps {
+	onLogin?: () => void;
+}
+
+export default function Navbar({ onLogin }: NavbarProps) {
 	const { t } = useTranslation("common");
 
 	return (
@@ -19,7 +23,7 @@ export default function Navbar() {
 
 				{/* Auth Buttons */}
 				<div className="flex items-center gap-4">
-					<Button variant="ghost" size="sm" className="cursor-pointer">
+					<Button variant="ghost" size="sm" className="cursor-pointer" onClick={onLogin}>
 						{t("nav.login")}
 					</Button>
 					<Link to="/register">

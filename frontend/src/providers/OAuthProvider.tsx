@@ -51,4 +51,4 @@ function AuthRedirectHandler() {
   }, [isAuthenticated, isLoading, currentPath]);
 
   return null;
-} 
+}

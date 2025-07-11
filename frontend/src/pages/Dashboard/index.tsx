@@ -1,9 +1,14 @@
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { useOAuth } from "@/hooks/useAuth";
+import { useUser, useUserLoading, useUserError } from "@/store/userStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
-  const { user } = useOAuth();
+  const { user: oauthUser } = useOAuth();
+  const user = useUser();
+  const isLoading = useUserLoading();
+  const error = useUserError();
+
 
   return (
     <ProtectedRoute>
@@ -16,11 +21,20 @@ export default function Dashboard() {
               <CardTitle>사용자 정보</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <p><strong>이름:</strong> {user?.profile.name || "N/A"}</p>
-                <p><strong>이메일:</strong> {user?.profile.email || "N/A"}</p>
-                <p><strong>ID:</strong> {user?.profile.sub || "N/A"}</p>
-              </div>
+              {isLoading ? (
+                <p className="text-gray-500">로딩 중...</p>
+              ) : error ? (
+                <p className="text-red-500">오류: {error}</p>
+              ) : user ? (
+                <div className="space-y-2">
+                  <p><strong>이름:</strong> {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : "N/A"}</p>
+                  <p><strong>이메일:</strong> {user.email || "N/A"}</p>
+                  <p><strong>사용자 ID:</strong> {user.userId || "N/A"}</p>
+                  <p><strong>활성 상태:</strong> {user.isActive ? "활성" : "비활성"}</p>
+                </div>
+              ) : (
+                <p className="text-gray-500">사용자 정보를 불러올 수 없습니다.</p>
+              )}
             </CardContent>
           </Card>
 
@@ -30,8 +44,8 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <p><strong>토큰 만료:</strong> {user?.expires_at ? new Date(user.expires_at * 1000).toLocaleString() : "N/A"}</p>
-                <p><strong>스코프:</strong> {user?.scope || "N/A"}</p>
+                <p><strong>토큰 만료:</strong> {oauthUser?.expires_at ? new Date(oauthUser.expires_at * 1000).toLocaleString() : "N/A"}</p>
+                <p><strong>스코프:</strong> {oauthUser?.scope || "N/A"}</p>
               </div>
             </CardContent>
           </Card>
@@ -42,7 +56,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 break-all">
-                {user?.access_token ? `${user.access_token.substring(0, 50)}...` : "N/A"}
+                {oauthUser?.access_token ? `${oauthUser.access_token.substring(0, 50)}...` : "N/A"}
               </p>
             </CardContent>
           </Card>

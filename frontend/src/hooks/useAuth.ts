@@ -23,6 +23,7 @@ export function useOAuth() {
   const isAuthenticated = auth.isAuthenticated;
   const user = auth.user;
   const isLoading = auth.isLoading;
+  const events = auth.events;
 
   return {
     login,
@@ -31,5 +32,6 @@ export function useOAuth() {
     user,
     isLoading,
     auth,
+    events,
   };
 } 

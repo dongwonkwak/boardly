@@ -17,7 +17,7 @@ erDiagram
     BOARD {
         varchar board_id PK "UUID, 보드 고유 식별자"
         varchar user_id FK "NOT NULL, 보드 소유자"
-        varchar title "NOT NULL, 보드 제목 (1-100자)"
+        varchar title "NOT NULL, 보드 제목 (1-50자)"
         text description "보드 설명 (최대 500자)"
         datetime created_at "NOT NULL, 생성일시"
         datetime updated_at "NOT NULL, 수정일시"

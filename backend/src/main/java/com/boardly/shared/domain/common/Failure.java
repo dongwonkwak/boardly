@@ -23,6 +23,10 @@ public interface Failure {
     return new NotFoundFailure(message);
   }
 
+  static Failure ofUnAuthorized(String message) {
+    return new Unauthorized(message);
+  }
+
   record ValidationFailure(String message, Collection<FieldViolation> violations) implements Failure {
   }
 
@@ -33,6 +37,9 @@ public interface Failure {
   }
 
   record InternalServerError(String message) implements Failure {
+  }
+
+  record Unauthorized(String message) implements Failure {
   }
 
   @Builder

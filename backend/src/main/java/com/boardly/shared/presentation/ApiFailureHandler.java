@@ -27,6 +27,8 @@ public class ApiFailureHandler {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.notFound(notFoundFailure, path));
             case Failure.InternalServerError internalServerError -> 
                 ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.internal(internalServerError, path));
+            case Failure.Unauthorized unauthorized ->
+                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.unauthorized(unauthorized, path));
             default -> 
                 ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다."), path));
         };

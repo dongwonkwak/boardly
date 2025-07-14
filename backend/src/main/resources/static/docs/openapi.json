@@ -25,6 +25,10 @@
   ],
   "tags": [
     {
+      "name": "Board",
+      "description": "Board API"
+    },
+    {
       "name": "User",
       "description": "사용자 관리 API"
     }
@@ -148,6 +152,117 @@
         ]
       }
     },
+    "/api/boards/{boardId}": {
+      "put": {
+        "tags": [
+          "Board"
+        ],
+        "summary": "보드 업데이트",
+        "description": "기존 보드의 제목과 설명을 업데이트합니다.",
+        "operationId": "updateBoard",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "업데이트할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBoardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "보드 업데이트 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "보드 수정 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "아카이브된 보드는 수정 불가",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
     "/api/users/register": {
       "post": {
         "tags": [
@@ -208,6 +323,228 @@
             }
           }
         }
+      }
+    },
+    "/api/boards": {
+      "post": {
+        "tags": [
+          "Board"
+        ],
+        "summary": "보드 생성",
+        "description": "새로운 보드를 생성합니다.",
+        "operationId": "createBoard",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBoardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "보드 생성 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/boards/{boardId}/unarchive": {
+      "post": {
+        "tags": [
+          "Board"
+        ],
+        "summary": "보드 언아카이브",
+        "description": "보드를 언아카이브합니다. 언아카이브된 보드는 다시 활성 상태가 되며, 내용 수정이 가능합니다.",
+        "operationId": "unarchiveBoard",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "언아카이브할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "보드 언아카이브 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "보드 언아카이브 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 활성화된 보드",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/boards/{boardId}/archive": {
+      "post": {
+        "tags": [
+          "Board"
+        ],
+        "summary": "보드 아카이브",
+        "description": "보드를 아카이브합니다. 아카이브된 보드는 읽기 전용이 되며, 내용 수정이 불가능합니다.",
+        "operationId": "archiveBoard",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "아카이브할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "보드 아카이브 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "보드 아카이브 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 아카이브된 보드",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
       }
     }
   },
@@ -281,6 +618,46 @@
           "rejectedValue": {}
         }
       },
+      "UpdateBoardRequest": {
+        "type": "object",
+        "description": "보드 업데이트 요청 정보",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "BoardResponse": {
+        "type": "object",
+        "properties": {
+          "boardId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "isArchived": {
+            "type": "boolean"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "RegisterUserRequest": {
         "type": "object",
         "description": "회원가입 요청 정보",
@@ -295,6 +672,18 @@
             "type": "string"
           },
           "lastName": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateBoardRequest": {
+        "type": "object",
+        "description": "보드 생성 요청 정보",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           }
         }

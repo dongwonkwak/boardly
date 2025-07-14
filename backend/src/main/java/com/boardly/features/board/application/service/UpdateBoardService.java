@@ -68,7 +68,7 @@ public class UpdateBoardService implements UpdateBoardUseCase {
         if (!existingBoard.getOwnerId().equals(command.requestedBy())) {
             log.warn("보드 수정 권한 없음: boardId={}, ownerId={}, requestedBy={}", 
                     command.boardId().getId(), existingBoard.getOwnerId().getId(), command.requestedBy().getId());
-            return Either.left(Failure.ofUnAuthorized(messageResolver.getMessage("validation.board.modification.access.denied")));
+            return Either.left(Failure.ofForbidden(messageResolver.getMessage("validation.board.modification.access.denied")));
         }
 
         // 4. 아카이브된 보드 수정 제한 확인

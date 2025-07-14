@@ -264,7 +264,7 @@ class UpdateBoardServiceTest {
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.Unauthorized.class);
+        assertThat(result.getLeft()).isInstanceOf(Failure.ForbiddenFailure.class);
         assertThat(result.getLeft().message()).isEqualTo("보드 수정 권한이 없습니다.");
 
         verify(boardValidator).validate(command);

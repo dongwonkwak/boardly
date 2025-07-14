@@ -93,7 +93,7 @@ public class ArchiveBoardService implements ArchiveBoardUseCase {
         if (!existingBoard.getOwnerId().equals(command.requestedBy())) {
             log.warn("보드 아카이브 권한 없음: boardId={}, ownerId={}, requestedBy={}", 
                     command.boardId().getId(), existingBoard.getOwnerId().getId(), command.requestedBy().getId());
-            return Either.left(Failure.ofUnAuthorized(messageResolver.getMessage("validation.board.archive.access.denied")));
+            return Either.left(Failure.ofForbidden(messageResolver.getMessage("validation.board.archive.access.denied")));
         }
 
         // 4. 상태 변경 필요 여부 확인

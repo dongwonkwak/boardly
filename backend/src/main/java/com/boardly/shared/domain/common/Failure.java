@@ -27,6 +27,10 @@ public interface Failure {
     return new Unauthorized(message);
   }
 
+  static Failure ofForbidden(String message) {
+    return new ForbiddenFailure(message);
+  }
+
   record ValidationFailure(String message, Collection<FieldViolation> violations) implements Failure {
   }
 
@@ -40,6 +44,9 @@ public interface Failure {
   }
 
   record Unauthorized(String message) implements Failure {
+  }
+
+  public record ForbiddenFailure(String message) implements Failure {
   }
 
   @Builder

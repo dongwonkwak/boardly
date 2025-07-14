@@ -34,6 +34,8 @@ public record ErrorResponse(
                 internal(internalServerError);
             case Failure.Unauthorized unauthorizedFailure ->
                 unauthorized(unauthorizedFailure);
+            case Failure.ForbiddenFailure forbiddenFailure -> 
+                forbidden(forbiddenFailure);
             default -> 
                 internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다."));
         };
@@ -49,6 +51,8 @@ public record ErrorResponse(
                 notFound(notFoundFailure, path);
             case Failure.InternalServerError internalServerError -> 
                 internal(internalServerError, path);
+            case Failure.ForbiddenFailure forbiddenFailure -> 
+                forbidden(forbiddenFailure, path);
             default -> 
                 internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다."), path);
         };
@@ -178,6 +182,20 @@ public record ErrorResponse(
                 .timestamp(LocalDateTime.now())
                 .path(path)
                 .details(details)
+                .build();
+    }
+
+    public static ErrorResponse forbidden(Failure.ForbiddenFailure failure) {
+        return forbidden(failure, null);
+    }
+
+    public static ErrorResponse forbidden(Failure.ForbiddenFailure failure, String path) {
+        return ErrorResponse.builder()
+                .message(failure.message())
+                .errorCode("FORBIDDEN")
+                .timestamp(LocalDateTime.now())
+                .path(path)
+                .details(null)
                 .build();
     }
 } 

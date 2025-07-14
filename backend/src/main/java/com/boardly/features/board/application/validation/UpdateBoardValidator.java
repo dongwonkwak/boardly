@@ -22,7 +22,7 @@ public class UpdateBoardValidator {
   private Validator<UpdateBoardCommand> getValidator() {
     return Validator.combine(
       BoardValidationRules.boardIdValidator(UpdateBoardCommand::boardId, messageResolver),
-      BoardValidationRules.requestedByValidator(UpdateBoardCommand::requestedBy, messageResolver),
+      BoardValidationRules.userIdValidator(UpdateBoardCommand::requestedBy, messageResolver),
       BoardValidationRules.titleValidator(UpdateBoardCommand::title, messageResolver),
       BoardValidationRules.descriptionValidator(UpdateBoardCommand::description, messageResolver)
     );

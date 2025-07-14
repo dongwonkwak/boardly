@@ -218,7 +218,7 @@ class UpdateBoardValidatorTest {
         // then
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
-        assertThat(result.getErrors().get(0).field()).isEqualTo("requestedBy");
+        assertThat(result.getErrors().get(0).field()).isEqualTo("userId");
         assertThat(result.getErrors().get(0).message()).isEqualTo("User ID is required");
     }
 
@@ -352,7 +352,7 @@ class UpdateBoardValidatorTest {
         
         // 필드별 오류 확인
         assertThat(result.getErrors()).extracting("field")
-            .containsExactlyInAnyOrder("boardId", "requestedBy", "title", "description");
+            .containsExactlyInAnyOrder("boardId", "userId", "title", "description");
     }
 
     // ==================== 경계값 테스트 ====================

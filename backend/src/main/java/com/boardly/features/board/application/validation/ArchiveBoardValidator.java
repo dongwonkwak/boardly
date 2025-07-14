@@ -22,7 +22,7 @@ public class ArchiveBoardValidator {
   private Validator<ArchiveBoardCommand> getValidator() {
     return Validator.combine(
       BoardValidationRules.boardIdValidator(ArchiveBoardCommand::boardId, messageResolver),
-      BoardValidationRules.requestedByValidator(ArchiveBoardCommand::requestedBy, messageResolver)
+      BoardValidationRules.userIdValidator(ArchiveBoardCommand::requestedBy, messageResolver)
     );
   }
 }

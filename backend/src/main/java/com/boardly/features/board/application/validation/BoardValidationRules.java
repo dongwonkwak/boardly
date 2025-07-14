@@ -74,11 +74,11 @@ public final class BoardValidationRules {
     );
   }
 
-  public static <T> Validator<T> requestedByValidator(Function<T, UserId> requestedByExtractor, ValidationMessageResolver messageResolver) {
+  public static <T> Validator<T> userIdValidator(Function<T, UserId> requestedByExtractor, ValidationMessageResolver messageResolver) {
     return Validator.fieldWithMessage(
       requestedByExtractor,
       requestedBy -> requestedBy != null,
-      "requestedBy",
+      "userId",
       "validation.user.id.required",
       messageResolver
     );

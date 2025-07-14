@@ -4,8 +4,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,9 +17,11 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
+import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
 import com.boardly.features.board.application.usecase.CreateBoardUseCase;
 import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
 import com.boardly.features.board.application.usecase.ArchiveBoardUseCase;
+import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
@@ -31,6 +35,7 @@ import com.boardly.shared.presentation.response.ErrorResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -41,6 +46,8 @@ import io.vavr.control.Either;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -56,6 +63,52 @@ public class BoardController {
   private final CreateBoardUseCase createBoardUseCase;
   private final UpdateBoardUseCase updateBoardUseCase;
   private final ArchiveBoardUseCase archiveBoardUseCase;
+  private final GetUserBoardsUseCase getUserBoardsUseCase;
+
+  @Operation(
+    summary = "내 보드 목록 조회",
+    description = "현재 사용자가 소유한 보드 목록을 조회합니다. 쿼리 파라미터로 아카이브된 보드 포함 여부를 설정할 수 있습니다.",
+    tags = {TAGS},
+    security = @SecurityRequirement(name = "oauth2", scopes = {"read", "openid"}))
+  @ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "보드 목록 조회 성공",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, 
+        array = @ArraySchema(schema = @Schema(implementation = BoardResponse.class)))),
+    @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "500", description = "서버 오류",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  @PreAuthorize("hasAuthority('SCOPE_read') and hasAuthority('SCOPE_openid')")
+  @GetMapping
+  public ResponseEntity<?> getMyBoards(
+    @Parameter(description = "아카이브된 보드 포함 여부 (기본값: false)", required = false)
+    @RequestParam(defaultValue = "false") boolean includeArchived,
+    HttpServletRequest httpRequest,
+    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+    
+    String userId = jwt.getSubject();
+    log.info("사용자 보드 목록 조회 요청: userId={}, includeArchived={}", userId, includeArchived);
+    
+    GetUserBoardsCommand command = new GetUserBoardsCommand(
+      new UserId(userId),
+      includeArchived
+    );
+    
+    Either<Failure, List<Board>> result = getUserBoardsUseCase.getUserBoards(command);
+    
+    return result.fold(
+      failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+      boards -> {
+        log.info("사용자 보드 목록 조회 성공: userId={}, boardCount={}, includeArchived={}", 
+                userId, boards.size(), includeArchived);
+        List<BoardResponse> responses = boards.stream()
+                .map(BoardResponse::from)
+                .toList();
+        return ResponseEntity.ok(responses);
+      }
+    );
+  }
 
   @Operation(
     summary = "보드 생성",

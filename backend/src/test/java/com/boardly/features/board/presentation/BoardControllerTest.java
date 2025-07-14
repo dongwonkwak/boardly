@@ -3,9 +3,11 @@ package com.boardly.features.board.presentation;
 import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
+import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
 import com.boardly.features.board.application.usecase.CreateBoardUseCase;
 import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
 import com.boardly.features.board.application.usecase.ArchiveBoardUseCase;
+import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
@@ -53,14 +55,21 @@ class BoardControllerTest {
     @MockitoBean
     private ArchiveBoardUseCase archiveBoardUseCase;
 
+    @MockitoBean
+    private GetUserBoardsUseCase getUserBoardsUseCase;
+
     @Autowired
     private ObjectMapper objectMapper;
 
     private CreateBoardRequest createBoardRequest;
     private UpdateBoardRequest updateBoardRequest;
     private Board testBoard;
+    private Board testBoard2;
+    private Board archivedBoard;
     private final String TEST_USER_ID = "test-user-id";
     private final String TEST_BOARD_ID = "test-board-id";
+    private final String TEST_BOARD_ID_2 = "test-board-id-2";
+    private final String ARCHIVED_BOARD_ID = "archived-board-id";
 
     @BeforeEach
     void setUp() {
@@ -74,14 +83,36 @@ class BoardControllerTest {
             "Updated Description"
         );
         
+        LocalDateTime now = LocalDateTime.now();
+        
         testBoard = Board.builder()
             .boardId(new BoardId(TEST_BOARD_ID))
             .title("Test Board")
             .description("Test Description")
             .isArchived(false)
             .ownerId(new UserId(TEST_USER_ID))
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
+            .createdAt(now.minusHours(2))
+            .updatedAt(now.minusMinutes(30))
+            .build();
+            
+        testBoard2 = Board.builder()
+            .boardId(new BoardId(TEST_BOARD_ID_2))
+            .title("Test Board 2")
+            .description("Test Description 2")
+            .isArchived(false)
+            .ownerId(new UserId(TEST_USER_ID))
+            .createdAt(now.minusHours(1))
+            .updatedAt(now) // 가장 최근 수정
+            .build();
+            
+        archivedBoard = Board.builder()
+            .boardId(new BoardId(ARCHIVED_BOARD_ID))
+            .title("Archived Board")
+            .description("Archived Description")
+            .isArchived(true)
+            .ownerId(new UserId(TEST_USER_ID))
+            .createdAt(now.minusHours(3))
+            .updatedAt(now.minusHours(1))
             .build();
     }
 
@@ -510,18 +541,169 @@ class BoardControllerTest {
     }
 
     @Nested
-    @DisplayName("HTTP 메서드 테스트")
-    class HttpMethodTests {
+    @DisplayName("내 보드 목록 조회 테스트")
+    class GetMyBoardsTests {
 
         @Test
-        @DisplayName("보드 생성 - GET 메서드 사용 시 405 Method Not Allowed")
-        void createBoard_GetMethod_MethodNotAllowed() throws Exception {
+        @DisplayName("활성 보드만 조회 성공")
+        void getMyBoards_ActiveOnly_Success() throws Exception {
+            // given
+            List<Board> activeBoards = List.of(testBoard2, testBoard); // 최신 수정 순
+            given(getUserBoardsUseCase.getUserBoards(any(GetUserBoardsCommand.class)))
+                .willReturn(Either.right(activeBoards));
+
             // when & then
             mockMvc.perform(get(Path.BOARDS)
-                    .with(csrf())
-                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid"))))
-                .andExpect(status().isMethodNotAllowed());
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid"))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].boardId").value(TEST_BOARD_ID_2))
+                .andExpect(jsonPath("$[0].title").value("Test Board 2"))
+                .andExpect(jsonPath("$[0].isArchived").value(false))
+                .andExpect(jsonPath("$[1].boardId").value(TEST_BOARD_ID))
+                .andExpect(jsonPath("$[1].title").value("Test Board"))
+                .andExpect(jsonPath("$[1].isArchived").value(false));
         }
+
+        @Test
+        @DisplayName("모든 보드 조회 성공 (아카이브 포함)")
+        void getMyBoards_IncludeArchived_Success() throws Exception {
+            // given
+            List<Board> allBoards = List.of(testBoard2, testBoard, archivedBoard); // 최신 수정 순
+            given(getUserBoardsUseCase.getUserBoards(any(GetUserBoardsCommand.class)))
+                .willReturn(Either.right(allBoards));
+
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .param("includeArchived", "true")
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid"))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0].boardId").value(TEST_BOARD_ID_2))
+                .andExpect(jsonPath("$[0].isArchived").value(false))
+                .andExpect(jsonPath("$[1].boardId").value(TEST_BOARD_ID))
+                .andExpect(jsonPath("$[1].isArchived").value(false))
+                .andExpect(jsonPath("$[2].boardId").value(ARCHIVED_BOARD_ID))
+                .andExpect(jsonPath("$[2].isArchived").value(true));
+        }
+
+        @Test
+        @DisplayName("빈 목록 조회 성공")
+        void getMyBoards_EmptyList_Success() throws Exception {
+            // given
+            given(getUserBoardsUseCase.getUserBoards(any(GetUserBoardsCommand.class)))
+                .willReturn(Either.right(List.of()));
+
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid"))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+        }
+
+        @Test
+        @DisplayName("보드 목록 조회 실패 - 인증 없음")
+        void getMyBoards_Unauthorized() throws Exception {
+            // when & then
+            mockMvc.perform(get(Path.BOARDS))
+                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("보드 목록 조회 실패 - read 권한 없음")
+        void getMyBoards_Forbidden_NoReadScope() throws Exception {
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid"))))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("보드 목록 조회 실패 - openid 권한 없음")
+        void getMyBoards_Forbidden_NoOpenidScope() throws Exception {
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read"))))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("보드 목록 조회 실패 - 유효성 검증 실패")
+        void getMyBoards_ValidationFailure() throws Exception {
+            // given
+            given(getUserBoardsUseCase.getUserBoards(any(GetUserBoardsCommand.class)))
+                .willReturn(Either.left(new Failure.ValidationFailure("INVALID_INPUT", List.of())));
+
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid"))))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("INVALID_INPUT"));
+        }
+
+        @Test
+        @DisplayName("보드 목록 조회 실패 - 서버 오류")
+        void getMyBoards_InternalServerError() throws Exception {
+            // given
+            given(getUserBoardsUseCase.getUserBoards(any(GetUserBoardsCommand.class)))
+                .willReturn(Either.left(new Failure.InternalServerError("Database connection failed")));
+
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid"))))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("Database connection failed"));
+        }
+
+        @Test
+        @DisplayName("includeArchived 파라미터 기본값 테스트")
+        void getMyBoards_DefaultIncludeArchived() throws Exception {
+            // given
+            List<Board> activeBoards = List.of(testBoard);
+            given(getUserBoardsUseCase.getUserBoards(any(GetUserBoardsCommand.class)))
+                .willReturn(Either.right(activeBoards));
+
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid"))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].isArchived").value(false));
+        }
+
+        @Test
+        @DisplayName("includeArchived=false 명시적 설정 테스트")
+        void getMyBoards_ExplicitIncludeArchivedFalse() throws Exception {
+            // given
+            List<Board> activeBoards = List.of(testBoard);
+            given(getUserBoardsUseCase.getUserBoards(any(GetUserBoardsCommand.class)))
+                .willReturn(Either.right(activeBoards));
+
+            // when & then
+            mockMvc.perform(get(Path.BOARDS)
+                    .param("includeArchived", "false")
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid"))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].isArchived").value(false));
+        }
+    }
+
+    @Nested
+    @DisplayName("HTTP 메서드 테스트")
+    class HttpMethodTests {
 
         @Test
         @DisplayName("보드 업데이트 - POST 메서드 사용 시 405 Method Not Allowed")

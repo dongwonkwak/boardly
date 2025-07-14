@@ -1,0 +1,160 @@
+package com.boardly.features.board.application.service;
+
+import com.boardly.features.board.application.port.input.UpdateBoardCommand;
+import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
+import com.boardly.features.board.application.validation.UpdateBoardValidator;
+import com.boardly.features.board.domain.model.Board;
+import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.application.validation.ValidationResult;
+import com.boardly.shared.domain.common.Failure;
+import io.vavr.control.Either;
+import io.vavr.control.Try;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+/**
+ * 보드 업데이트 서비스
+ * 
+ * <p>보드의 제목과 설명 수정 관련 비즈니스 로직을 처리하는 애플리케이션 서비스입니다.
+ * 입력 검증, 권한 확인, 도메인 로직 실행, 저장 등의 전체 보드 업데이트 프로세스를 관리합니다.
+ * 
+ *
+ * @since 1.0.0
+ */
+@Slf4j
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class UpdateBoardService implements UpdateBoardUseCase {
+
+    private final UpdateBoardValidator boardValidator;
+    private final BoardRepository boardRepository;
+    private final ValidationMessageResolver messageResolver;
+
+    /**
+     * 보드를 업데이트합니다.
+     * 
+     * @param command 보드 업데이트 명령
+     * @return 업데이트 결과 (성공 시 업데이트된 보드, 실패 시 실패 정보)
+     */
+    @Override
+    public Either<Failure, Board> updateBoard(UpdateBoardCommand command) {
+        log.info("보드 업데이트 시작: boardId={}, title={}, description={}, requestedBy={}", 
+                command.boardId().getId(), command.title(), command.description(), command.requestedBy().getId());
+
+        // 1. 입력 검증
+        ValidationResult<UpdateBoardCommand> validationResult = boardValidator.validate(command);
+        if (validationResult.isInvalid()) {
+            log.warn("보드 업데이트 검증 실패: boardId={}, violations={}", 
+                    command.boardId().getId(), validationResult.getErrorsAsCollection());
+            return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+        }
+
+        // 2. 기존 보드 조회
+        Optional<Board> existingBoardOpt = boardRepository.findById(command.boardId());
+        if (existingBoardOpt.isEmpty()) {
+            log.warn("보드를 찾을 수 없음: boardId={}", command.boardId().getId());
+            return Either.left(Failure.ofNotFound(messageResolver.getMessage("validation.board.not.found")));
+        }
+
+        Board existingBoard = existingBoardOpt.get();
+
+        // 3. 권한 확인 (요청자가 보드 소유자인지 확인)
+        if (!existingBoard.getOwnerId().equals(command.requestedBy())) {
+            log.warn("보드 수정 권한 없음: boardId={}, ownerId={}, requestedBy={}", 
+                    command.boardId().getId(), existingBoard.getOwnerId().getId(), command.requestedBy().getId());
+            return Either.left(Failure.ofUnAuthorized(messageResolver.getMessage("validation.board.modification.access.denied")));
+        }
+
+        // 4. 아카이브된 보드 수정 제한 확인
+        if (existingBoard.isArchived()) {
+            log.warn("아카이브된 보드의 수정 시도: boardId={}, requestedBy={}", 
+                    command.boardId().getId(), command.requestedBy().getId());
+            return Either.left(Failure.ofConflict(messageResolver.getMessage("validation.board.archived.modification.denied")));
+        }
+
+        // 5. 변경 사항이 있는지 확인
+        if (isNoChangesApplied(existingBoard, command)) {
+            log.info("보드 변경 사항 없음: boardId={}", command.boardId().getId());
+            return Either.right(existingBoard);
+        }
+
+        // 6. 변경 사항 적용
+        try {
+            applyChanges(existingBoard, command);
+            log.debug("보드 변경 사항 적용 완료: boardId={}", command.boardId().getId());
+        } catch (Exception e) {
+            log.error("보드 변경 중 오류 발생: boardId={}, error={}", 
+                    command.boardId().getId(), e.getMessage(), e);
+            return Either.left(Failure.ofInternalServerError(messageResolver.getMessage("validation.board.modification.error")));
+        }
+
+        // 7. 업데이트된 보드 저장
+        return Try.of(() -> boardRepository.save(existingBoard))
+            .fold(
+                throwable -> {
+                    log.error("보드 업데이트 중 예외 발생: boardId={}, error={}", 
+                            command.boardId().getId(), throwable.getMessage(), throwable);
+                    return Either.left(Failure.ofInternalServerError(messageResolver.getMessage("validation.board.update.error")));
+                },
+                saveResult -> {
+                    if (saveResult.isRight()) {
+                        log.info("보드 업데이트 완료: boardId={}, title={}", 
+                                saveResult.get().getBoardId().getId(), saveResult.get().getTitle());
+                    } else {
+                        log.error("보드 저장 실패: boardId={}, error={}", 
+                                command.boardId().getId(), saveResult.getLeft().message());
+                    }
+                    return saveResult;
+                }
+            );
+    }
+
+    /**
+     * 보드에 변경 사항을 적용합니다.
+     * 
+     * @param board 기존 보드 객체
+     * @param command 업데이트 명령
+     */
+    private void applyChanges(Board board, UpdateBoardCommand command) {
+        // 제목 업데이트 (null이 아닌 경우에만)
+        if (command.title() != null) {
+            board.updateTitle(command.title());
+            log.debug("보드 제목 업데이트: boardId={}, newTitle={}", 
+                    board.getBoardId().getId(), command.title());
+        }
+
+        // 설명 업데이트 (null이 아닌 경우에만)
+        if (command.description() != null) {
+            board.updateDescription(command.description());
+            log.debug("보드 설명 업데이트: boardId={}, descriptionLength={}", 
+                    board.getBoardId().getId(), command.description().length());
+        }
+    }
+
+    /**
+     * 변경 사항이 실제로 적용되었는지 확인합니다.
+     * 
+     * @param board 기존 보드 객체
+     * @param command 업데이트 명령
+     * @return 변경 사항이 없으면 true, 있으면 false
+     */
+    private boolean isNoChangesApplied(Board board, UpdateBoardCommand command) {
+        // 제목 변경 확인
+        if (command.title() != null && !command.title().equals(board.getTitle())) {
+            return false;
+        }
+
+        // 설명 변경 확인
+        if (command.description() != null && !command.description().equals(board.getDescription())) {
+            return false;
+        }
+
+        return true;
+    }
+} 

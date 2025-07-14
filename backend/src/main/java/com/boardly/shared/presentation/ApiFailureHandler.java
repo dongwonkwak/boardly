@@ -27,8 +27,6 @@ public class ApiFailureHandler {
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.notFound(notFoundFailure, path));
             case Failure.InternalServerError internalServerError -> 
                 ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.internal(internalServerError, path));
-            case Failure.Unauthorized unauthorized ->
-                ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.unauthorized(unauthorized, path));
             case Failure.ForbiddenFailure forbiddenFailure -> 
                 ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.forbidden(forbiddenFailure, path));
             default -> 

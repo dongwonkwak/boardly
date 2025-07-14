@@ -32,8 +32,6 @@ public record ErrorResponse(
                 notFound(notFoundFailure);
             case Failure.InternalServerError internalServerError -> 
                 internal(internalServerError);
-            case Failure.Unauthorized unauthorizedFailure ->
-                unauthorized(unauthorizedFailure);
             case Failure.ForbiddenFailure forbiddenFailure -> 
                 forbidden(forbiddenFailure);
             default -> 
@@ -129,20 +127,6 @@ public record ErrorResponse(
                 .build();
     }
 
-    public static ErrorResponse unauthorized(String message) {
-        return unauthorized(message, null);
-    }
-
-    public static ErrorResponse unauthorized(String message, String path) {
-        return ErrorResponse.builder()
-                .message(message)
-                .errorCode("UNAUTHORIZED")
-                .timestamp(LocalDateTime.now())
-                .path(path)
-                .details(null)
-                .build();
-    }
-
     public static ErrorResponse forbidden(String message) {
         return forbidden(message, null);
     }
@@ -151,20 +135,6 @@ public record ErrorResponse(
         return ErrorResponse.builder()
                 .message(message)
                 .errorCode("FORBIDDEN")
-                .timestamp(LocalDateTime.now())
-                .path(path)
-                .details(null)
-                .build();
-    }
-
-    public static ErrorResponse unauthorized(Failure.Unauthorized failure) {
-        return unauthorized(failure, null);
-    }
-    
-    public static ErrorResponse unauthorized(Failure.Unauthorized failure, String path) {
-        return ErrorResponse.builder()
-                .message(failure.message())
-                .errorCode("UNAUTHORIZED")
                 .timestamp(LocalDateTime.now())
                 .path(path)
                 .details(null)

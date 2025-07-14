@@ -23,10 +23,6 @@ public interface Failure {
     return new NotFoundFailure(message);
   }
 
-  static Failure ofUnAuthorized(String message) {
-    return new Unauthorized(message);
-  }
-
   static Failure ofForbidden(String message) {
     return new ForbiddenFailure(message);
   }
@@ -41,9 +37,6 @@ public interface Failure {
   }
 
   record InternalServerError(String message) implements Failure {
-  }
-
-  record Unauthorized(String message) implements Failure {
   }
 
   public record ForbiddenFailure(String message) implements Failure {

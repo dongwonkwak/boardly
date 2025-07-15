@@ -4,6 +4,124 @@
 		"login": "로그인",
 		"register": "회원가입"
 	},
+	"header": {
+		"features": "기능",
+		"testimonials": "후기",
+		"pricing": "요금제",
+		"login": "로그인",
+		"freeStart": "무료 시작",
+		"freeStartShort": "시작"
+	},
+	"hero": {
+		"title": "프로젝트 관리를\n더 스마트하게",
+		"description": "Boardly는 개인과 팀이 작업을 시각적으로 관리하고 협업할 수 있는 직관적인 칸반 보\n드 플랫폼입니다. 드래그 앤 드롭으로 간편하게 작업을 관리하세요.",
+		"freeStart": "무료로 시작하기",
+		"watchDemo": "데모 보기",
+		"kanban": {
+			"todo": "할 일",
+			"inProgress": "진행 중",
+			"done": "완료",
+			"tasks": {
+				"uiDesign": "UI 디자인",
+				"apiDesign": "API 설계",
+				"loginFeature": "로그인 기능",
+				"dashboard": "대시보드",
+				"projectSetup": "프로젝트 설정"
+			}
+		}
+	},
+	"features": {
+		"title": "왜 Boardly를 선택해야 할까요?",
+		"subtitle": "개발자와 팀을 위해 특별히 설계된 강력하면서도 간단한 프로젝트 관리 도구입니다.",
+		"teamwork": {
+			"title": "팀 협업",
+			"description": "실시간으로 팀원들과 함께 작업하고 진행\n상황을 공유하세요"
+		},
+		"fastManagement": {
+			"title": "빠른 작업 관리",
+			"description": "드래그 앤 드롭으로 카드를 이동하고 즉시\n작업 상태를 변경하세요"
+		},
+		"secureData": {
+			"title": "안전한 데이터",
+			"description": "강력한 보안으로 프로젝트 데이터를 안전\n하게 보호합니다"
+		}
+	},
+	"testimonials": {
+		"title": "사용자들의 이야기",
+		"subtitle": "이미 많은 개발자와 팀이 Boardly로 생산성을 향상시키고 있습니다.",
+		"users": {
+			"developer": {
+				"name": "김개발",
+				"role": "프론트엔드 개발자",
+				"company": "테크스타트업",
+				"content": "Boardly 덕분에 개인 프로젝트 관리가 훨\n씬 체계적이 되었어요. 특히 드래그 앤 드\n롭 기능이 정말 직관적입니다.",
+				"avatar": "김"
+			},
+			"manager": {
+				"name": "이기획",
+				"role": "프로덕트 매니저",
+				"company": "스타트업코리아",
+				"content": "팀 프로젝트 진행 상황을 실시간으로 확인\n할 수 있어서 정말 편해요. 마크다운 지원\n도 개발자들이 좋아합니다.",
+				"avatar": "이"
+			},
+			"student": {
+				"name": "박학생",
+				"role": "컴퓨터공학과 학생",
+				"company": "한국대학교",
+				"content": "스터디 그룹에서 과제 진행 상황을 관리하\n는데 완벽해요. 무료로 이런 기능들을 쓸\n수 있어서 감사합니다.",
+				"avatar": "박"
+			}
+		}
+	},
+	"pricing": {
+		"title": "모든 규모의 팀을 위한 요금제",
+		"subtitle": "개인부터 기업까지, 필요에 맞는 플랜을 선택하세요. 언제든지 업그레이드 가능합니다.",
+		"popularBadge": "가장 인기",
+		"plans": {
+			"personal": {
+				"name": "개인",
+				"price": "무료",
+				"description": "개인 프로젝트와 소규모 팀을 위한\n기본 기능",
+				"features": [
+					"최대 5개 보드",
+					"무제한 카드",
+					"기본 템플릿",
+					"모바일 앱",
+					"커뮤니티 지원"
+				],
+				"button": "시작하기"
+			},
+			"team": {
+				"name": "팀",
+				"price": "₩9,900",
+				"period": "월",
+				"description": "성장하는 팀을 위한 고급 협업 기\n능",
+				"features": [
+					"무제한 보드",
+					"팀 멤버 초대",
+					"고급 권한 관리",
+					"활동 로그",
+					"우선 지원",
+					"데이터 내보내기"
+				],
+				"button": "무료 체험"
+			},
+			"enterprise": {
+				"name": "기업",
+				"price": "문의",
+				"description": "대규모 조직을 위한 엔터프라이즈\n솔루션",
+				"features": [
+					"무제한 모든 기능",
+					"SSO 통합",
+					"고급 보안",
+					"전담 지원",
+					"맞춤형 워크플로우",
+					"API 접근"
+				],
+				"button": "문의하기"
+			}
+		}
+	},
 	"footer": {
 		"copyright": "© 2025 Boardly. 모든 권리 보유.",
 		"privacy": "개인정보처리방침",

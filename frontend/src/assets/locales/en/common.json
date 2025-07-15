@@ -4,6 +4,124 @@
 		"login": "Login",
 		"register": "Register"
 	},
+	"header": {
+		"features": "Features",
+		"testimonials": "Testimonials",
+		"pricing": "Pricing",
+		"login": "Login",
+		"freeStart": "Get Started",
+		"freeStartShort": "Start"
+	},
+	"hero": {
+		"title": "Manage Projects\nSmarter",
+		"description": "Boardly is an intuitive Kanban board platform where individuals and teams can visually manage\nwork and collaborate. Manage your tasks effortlessly with drag and drop.",
+		"freeStart": "Get Started for Free",
+		"watchDemo": "Watch Demo",
+		"kanban": {
+			"todo": "To Do",
+			"inProgress": "In Progress",
+			"done": "Done",
+			"tasks": {
+				"uiDesign": "UI Design",
+				"apiDesign": "API Design",
+				"loginFeature": "Login Feature",
+				"dashboard": "Dashboard",
+				"projectSetup": "Project Setup"
+			}
+		}
+	},
+	"features": {
+		"title": "Why Choose Boardly?",
+		"subtitle": "A powerful yet simple project management tool specifically designed for developers and teams.",
+		"teamwork": {
+			"title": "Team Collaboration",
+			"description": "Work with team members in real-time and\nshare progress updates"
+		},
+		"fastManagement": {
+			"title": "Fast Task Management",
+			"description": "Move cards with drag and drop and\ninstantly change task status"
+		},
+		"secureData": {
+			"title": "Secure Data",
+			"description": "Protect your project data safely with\nrobust security"
+		}
+	},
+	"testimonials": {
+		"title": "User Stories",
+		"subtitle": "Many developers and teams are already improving their productivity with Boardly.",
+		"users": {
+			"developer": {
+				"name": "Kim Developer",
+				"role": "Frontend Developer",
+				"company": "Tech Startup",
+				"content": "Thanks to Boardly, my personal project\nmanagement has become much more organized.\nThe drag-and-drop feature is really intuitive.",
+				"avatar": "K"
+			},
+			"manager": {
+				"name": "Lee Manager",
+				"role": "Product Manager",
+				"company": "Startup Korea",
+				"content": "It's really convenient to check team project\nprogress in real-time. Developers also love\nthe markdown support.",
+				"avatar": "L"
+			},
+			"student": {
+				"name": "Park Student",
+				"role": "Computer Science Student",
+				"company": "Korea University",
+				"content": "Perfect for managing assignment progress\nin study groups. Grateful to use these\nfeatures for free.",
+				"avatar": "P"
+			}
+		}
+	},
+	"pricing": {
+		"title": "Pricing Plans for Teams of All Sizes",
+		"subtitle": "From individuals to enterprises, choose the plan that fits your needs. Upgrade anytime.",
+		"popularBadge": "Most Popular",
+		"plans": {
+			"personal": {
+				"name": "Personal",
+				"price": "Free",
+				"description": "Basic features for personal projects\nand small teams",
+				"features": [
+					"Up to 5 boards",
+					"Unlimited cards",
+					"Basic templates",
+					"Mobile app",
+					"Community support"
+				],
+				"button": "Get Started"
+			},
+			"team": {
+				"name": "Team",
+				"price": "$9.90",
+				"period": "/month",
+				"description": "Advanced collaboration features\nfor growing teams",
+				"features": [
+					"Unlimited boards",
+					"Team member invites",
+					"Advanced permissions",
+					"Activity logs",
+					"Priority support",
+					"Data export"
+				],
+				"button": "Start Free Trial"
+			},
+			"enterprise": {
+				"name": "Enterprise",
+				"price": "Contact us",
+				"description": "Enterprise solution for\nlarge organizations",
+				"features": [
+					"All unlimited features",
+					"SSO integration",
+					"Advanced security",
+					"Dedicated support",
+					"Custom workflows",
+					"API access"
+				],
+				"button": "Contact Sales"
+			}
+		}
+	},
 	"footer": {
 		"copyright": "© 2025 Boardly. All rights reserved.",
 		"privacy": "Privacy Policy",

@@ -7,18 +7,5 @@ alwaysApply: false
 
 ## UI Framework
 
-- Shadcn UI와 Tailwind를 사용해서 components 생성
-
-## 신규 Shadcn component 만들기
-
-```sh
-pnpm dlx shadcn@latest add COMPONENT
-```
-
-예제:
-
-```sh
-pnpm dlx shadcn@latest add progress
-```
-
+- lucide-react를 사용해서 components 생성
 - 모든 Component는 국제회 요구 사항을 고려합니다.

@@ -21,6 +21,7 @@ export default function LanguageSelector() {
       try {
         const initialLanguage = getInitialLanguage();
         setCurrentLanguage(initialLanguage);
+        console.log('initialLanguage', initialLanguage);
         await i18n.changeLanguage(initialLanguage);
         setIsInitialized(true);
       } catch (error) {

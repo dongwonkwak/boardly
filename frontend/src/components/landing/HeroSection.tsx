@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 interface HeroSectionProps {
   onLogin?: () => void;
@@ -9,6 +10,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({ onLogin, onDemo }: HeroSectionProps) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 pt-16 flex items-center">
       <div className="container mx-auto px-4 py-24">
@@ -28,7 +30,7 @@ export default function HeroSection({ onLogin, onDemo }: HeroSectionProps) {
             <Button 
               size="lg" 
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-medium"
-              onClick={onLogin}
+              onClick={() => navigate("/register")}
             >
               {t("hero.freeStart")} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

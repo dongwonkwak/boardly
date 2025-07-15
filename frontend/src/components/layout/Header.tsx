@@ -56,8 +56,10 @@ export default function Header({ onLogin, showNavigation = true }: HeaderProps) 
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-4 md:px-6"
             onClick={onLogin}
           >
-            <span className="hidden sm:inline">{t("header.freeStart")}</span>
-            <span className="sm:hidden">{t("header.freeStartShort")}</span>
+            <Link to="/register">
+              <span className="hidden sm:inline">{t("header.freeStart")}</span>
+              <span className="sm:hidden">{t("header.freeStartShort")}</span>
+            </Link>
           </Button>
         </div>
       </div>

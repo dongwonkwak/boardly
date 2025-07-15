@@ -135,28 +135,90 @@
 	},
 	"register": {
 		"title": "Sign Up",
-		"email": "Email",
+		"email": "Email Address",
 		"lastName": "Last Name",
 		"firstName": "First Name",
 		"password": "Password",
 		"passwordConfirm": "Confirm Password",
+		"language": "Default Language",
 		"submit": "Sign Up",
+		"nextStep": "Next Step",
+		"previous": "Previous",
+		"createAccount": "Create Account",
+		"login": "Login",
+		"hasAccount": "Already have an account?",
+		"backConfirm": "Registration is in progress. Are you sure you want to leave?",
 		"error": "An unknown error occurred.",
 		"emailAlreadyExists": "This email is already registered.",
 		"emailError": "An email-related error occurred.",
 		"validationError": "Please check your input information.",
 		"serverError": "A server error occurred.",
+		"emailPlaceholder": "your@email.com",
+		"passwordPlaceholder": "Enter a secure password",
+		"passwordConfirmPlaceholder": "Re-enter your password",
+		"lastNamePlaceholder": "e.g. Kim, Lee, Park, Smith, Johnson",
+		"firstNamePlaceholder": "e.g. Developer, Manager, Student, John, Jane",
+		"emailHelp": "Email address for login and important notifications",
+		"nameHelp": "Only Korean or English characters allowed (1-50 characters)",
+		"languageHelp": "You can change this in settings anytime",
+		"terms1": "By creating an account, you agree to our",
+		"and": "and",
+		"terms2": "",
+		"termsOfService": "Terms of Service",
+		"privacyPolicy": "Privacy Policy",
+		"step1": {
+			"title": "Create Account",
+			"subtitle": "Create your first board in just a few minutes",
+			"securityTip": "Please set a strong password for a secure account."
+		},
+		"step2": {
+			"title": "Profile Information",
+			"subtitle": "Last step. Please enter your basic information",
+			"almostDone": "Almost there! Please enter your basic information."
+		},
+		"welcome": {
+			"title": "Welcome!",
+			"message": "Your Boardly registration is complete.\nNow start managing your projects smarter!",
+			"createBoard": "Create Your First Board",
+			"exploreDashboard": "Explore Dashboard",
+			"nextSteps": "Next Steps",
+			"step1": "Create your first board",
+			"step2": "Add lists and cards",
+			"step3": "Manage tasks with drag & drop",
+			"readyToStart": "Ready to Get Started",
+			"kanban": "Kanban Board",
+			"quickMove": "Quick Navigation",
+			"teamWork": "Team Collaboration",
+			"security": "Secure Protection",
+			"needHelp": "Need help?",
+			"helpCenter": "Help Center",
+			"checkIt": "Check out our"
+		},
+		"features": {
+			"title": "With Boardly",
+			"dragDrop": "Fast task management with drag & drop",
+			"security": "Secure data protection and backup",
+			"cloud": "Cloud-based access from anywhere"
+		},
+		"privacy": {
+			"title": "Personal Information Collection and Use Notice",
+			"items": "Collection Items: Email, Name, Language Settings",
+			"purpose": "Collection Purpose: Service provision, account management, customer support",
+			"retention": "Retention Period: Until account deletion",
+			"consent": "Completing registration is considered consent to personal information processing."
+		},
 		"success": {
 			"title": "Registration Successful!",
 			"message": "Your account has been created successfully.",
 			"homeButton": "Go to Home"
 		},
 		"validation": {
-			"email": "Please enter a valid email address.",
-			"lastName": "Please enter your last name.",
-			"firstName": "Please enter your first name.",
-			"password": "Password must be at least 8 characters.",
-			"passwordConfirm": "Passwords do not match."
+			"email": "Please enter a valid email address",
+			"lastName": "Please enter your last name",
+			"firstName": "Please enter your first name",
+			"password": "Password must be at least 8 characters",
+			"passwordConfirm": "Passwords do not match",
+			"language": "Please select a language"
 		}
 	},
 	"modal": {

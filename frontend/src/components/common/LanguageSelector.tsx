@@ -1,54 +1,39 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Globe } from 'lucide-react';
 import { 
-  SUPPORTED_LANGUAGES, 
-  setStoredLanguage,
-  getInitialLanguage 
-} from '@/utils/languageUtils';
-import type { SupportedLanguage } from '@/utils/languageUtils';
+  SUPPORTED_LANGUAGES,
+  useLanguageStore,
+  useCurrentLanguage,
+  useLanguageInitialized,
+  useLanguageLoading,
+  type SupportedLanguage
+} from '@/store/languageStore';
 
 export default function LanguageSelector() {
-  const { i18n } = useTranslation();
-  const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>('en');
+  const { initializeLanguage, changeLanguage } = useLanguageStore();
+  const currentLanguage = useCurrentLanguage();
+  const isInitialized = useLanguageInitialized();
+  const isLoading = useLanguageLoading();
   const [isOpen, setIsOpen] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // 초기 언어 설정
   useEffect(() => {
-    const initializeLanguage = async () => {
-      try {
-        const initialLanguage = getInitialLanguage();
-        setCurrentLanguage(initialLanguage);
-        console.log('initialLanguage', initialLanguage);
-        await i18n.changeLanguage(initialLanguage);
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Failed to initialize language:', error);
-        setCurrentLanguage('en');
-        await i18n.changeLanguage('en');
-        setIsInitialized(true);
-      }
-    };
-
     initializeLanguage();
-  }, [i18n]);
+  }, [initializeLanguage]);
 
   // 언어 변경 핸들러
   const handleLanguageChange = async (language: SupportedLanguage) => {
     try {
-      setCurrentLanguage(language);
-      setStoredLanguage(language);
-      await i18n.changeLanguage(language);
+      await changeLanguage(language);
       setIsOpen(false);
     } catch (error) {
       console.error('Failed to change language:', error);
     }
   };
 
-  // 초기화되지 않았으면 로딩 표시
-  if (!isInitialized) {
+  // 초기화되지 않았거나 로딩 중이면 로딩 표시
+  if (!isInitialized || isLoading) {
     return (
       <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
     );

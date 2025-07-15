@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import LoadingButton from "@/components/common/LoadingButton";
 import { useTranslation } from "react-i18next";
+import { useCurrentLanguage } from "@/store/languageStore";
 import { useNavigate } from "react-router-dom";
 import { registerUser, type FieldViolation } from "@/services/api/client";
 import { handle } from "@oazapfts/runtime";
@@ -41,7 +42,8 @@ interface Step2Data {
 }
 
 export default function Register() {
-	const { t, i18n } = useTranslation("common");
+	const { t } = useTranslation("common");
+	const currentLanguage = useCurrentLanguage();
 	const [currentStep, setCurrentStep] = useState<Step>('step1');
 	const [step1Data, setStep1Data] = useState<Step1Data | null>(null);
 	const [_step2Data, setStep2Data] = useState<Step2Data | null>(null);
@@ -82,7 +84,7 @@ export default function Register() {
 	const step2Form = useForm<Step2Data>({
 		resolver: zodResolver(step2Schema),
 		defaultValues: {
-			language: i18n.language === 'ko' ? 'ko' : 'en'
+			language: currentLanguage
 		}
 	});
 

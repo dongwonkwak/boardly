@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import LanguageSelector from "@/components/common/LanguageSelector";
@@ -10,6 +10,7 @@ interface HeaderProps {
 
 export default function Header({ onLogin, showNavigation = true }: HeaderProps) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
@@ -54,12 +55,10 @@ export default function Header({ onLogin, showNavigation = true }: HeaderProps) 
           {/* CTA Button */}
           <Button 
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-4 md:px-6"
-            onClick={onLogin}
+            onClick={() => navigate("/register")}
           >
-            <Link to="/register">
-              <span className="hidden sm:inline">{t("header.freeStart")}</span>
-              <span className="sm:hidden">{t("header.freeStartShort")}</span>
-            </Link>
+            <span className="hidden sm:inline">{t("header.freeStart")}</span>
+            <span className="sm:hidden">{t("header.freeStartShort")}</span>
           </Button>
         </div>
       </div>

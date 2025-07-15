@@ -11,10 +11,12 @@ import Dashboard from "@/pages/Dashboard";
 import Callback from "./pages/Auth/Callback";
 import { useOAuth } from "@/hooks/useAuth";
 import { useUserStore } from "@/store/userStore";
+import { useLanguageStore } from "@/store/languageStore";
 
 function App() {
 	const { events, auth } = useOAuth();
 	const { fetchUser } = useUserStore();
+	const { initializeLanguage } = useLanguageStore();
 
 	useEffect(() => {
 		// 사용자 로그인 시 자동으로 사용자 정보 가져오기
@@ -38,8 +40,9 @@ function App() {
 	}, [events, auth.user?.access_token, fetchUser]);
 
 	useEffect(() => {
-		// i18n is already initialized in the import
-	}, []);
+		// 언어 스토어 초기화
+		initializeLanguage();
+	}, [initializeLanguage]);
 
 	return (
 		<Router>

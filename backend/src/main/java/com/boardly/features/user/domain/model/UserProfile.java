@@ -10,6 +10,6 @@ public record UserProfile(String firstName, String lastName) {
     }
 
     public String getFullName() {
-        return String.format("%s %s", lastName, firstName);
+        return String.format("%s %s", firstName, lastName);
     }
 }

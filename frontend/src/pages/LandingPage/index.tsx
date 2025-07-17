@@ -30,7 +30,7 @@ export default function LandingPage() {
 			<Header onLogin={login} showNavigation={true} />
 			
 			{/* Hero Section */}
-			<HeroSection onLogin={login} onDemo={handleDemo} />
+			<HeroSection onDemo={handleDemo} />
 			
 			{/* Features Section */}
 			<FeaturesSection />

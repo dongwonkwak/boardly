@@ -135,6 +135,8 @@
 	},
 	"register": {
 		"title": "회원가입",
+		"subtitle": "몇 분 안에 첫 번째 보드를 만들어보세요",
+		"securityTip": "안전한 계정을 위해 강력한 비밀번호를 설정해주세요.",
 		"email": "이메일 주소",
 		"lastName": "성 (Last Name)",
 		"firstName": "이름 (First Name)",
@@ -161,9 +163,10 @@
 		"emailHelp": "로그인과 중요한 알림을 받을 이메일 주소입니다",
 		"nameHelp": "한글 또는 영문만 입력 가능합니다 (1-50자)",
 		"languageHelp": "언제든지 설정에서 변경할 수 있습니다",
-		"terms1": "계정을 만들면",
-		"and": "및",
-		"terms2": "에 동의하는 것으로 간주됩니다.",
+		"terms1": "회원가입을 진행하시면 Boardly의",
+		"and": "과",
+		"terms2": "에 동",
+		"terms3": "의하는 것으로 간주됩니다.",
 		"termsOfService": "이용약관",
 		"privacyPolicy": "개인정보처리방침",
 		"step1": {
@@ -185,7 +188,10 @@
 			"step1": "첫 번째 보드 생성하기",
 			"step2": "리스트와 카드 추가하기",
 			"step3": "드래그 앤 드롭으로 작업 관리하기",
-			"readyToStart": "시작할 준비가 되었습니다",
+			"readyToStart": "Boardly와 함께 시작하세요",
+			"feature1": "무제한 개인 보드 생성",
+			"feature2": "직관적인 드래그 앤 드롭",
+			"feature3": "실시간 동기화 및 자동 저장",
 			"kanban": "칸반 보드",
 			"quickMove": "빠른 이동",
 			"teamWork": "팀 협업",
@@ -195,17 +201,23 @@
 			"checkIt": "를 확인해보세요"
 		},
 		"features": {
-			"title": "Boardly와 함께하면",
-			"dragDrop": "드래그 앤 드롭으로 빠른 작업 관리",
+			"title": "Boardly와 함께 시작하세요",
+			"boards": "무제한 개인 보드 생성",
+			"dragDrop": "직관적인 드래그 앤 드롭",
+			"sync": "실시간 동기화 및 자동 저장",
 			"security": "안전한 데이터 보호와 백업",
 			"cloud": "어디서든 접속 가능한 클라우드 기반"
 		},
 		"privacy": {
-			"title": "개인정보 수집 및 이용 안내",
+			"title": "개인정보 보호 안내",
 			"items": "수집 항목: 이메일, 이름, 언어 설정",
-			"purpose": "수집 목적: 서비스 제공, 계정 관리, 고객 지원",
-			"retention": "보유 기간: 회원 탈퇴 시까지",
-			"consent": "가입을 완료하면 개인정보 처리에 동의하는 것으로 간주됩니다."
+			"purpose": "수집 목적:",
+			"purposeText": "계정 생성, 서비스 제공, 고객 지원",
+			"retention": "보관 기간:",
+			"retentionText": "계정 삭제 시까지 (법정 보관 의무 제외)",
+			"thirdParty": "제3자 제공:",
+			"thirdPartyText": "법령에 의한 경우를 제외하고 제공하지 않습니다",
+			"consent": "회원가입 시 개인정보 처리방침에 동의한 것으로 간주됩니다."
 		},
 		"success": {
 			"title": "회원가입 성공!",

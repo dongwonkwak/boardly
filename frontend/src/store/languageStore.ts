@@ -115,7 +115,7 @@ export const useLanguageStore = create<LanguageStore>()(
         
         try {
           const initialLanguage = getInitialLanguage();
-          await (i18n as any).changeLanguage(initialLanguage);
+          await i18n.changeLanguage(initialLanguage);
           set({ 
             currentLanguage: initialLanguage, 
             isInitialized: true, 
@@ -124,7 +124,7 @@ export const useLanguageStore = create<LanguageStore>()(
         } catch (error) {
           console.error('Failed to initialize language:', error);
           // 실패 시 기본값으로 설정
-          await (i18n as any).changeLanguage('en');
+          await i18n.changeLanguage('en');
           set({ 
             currentLanguage: 'en', 
             isInitialized: true, 
@@ -138,7 +138,7 @@ export const useLanguageStore = create<LanguageStore>()(
         
         try {
           setStoredLanguage(language);
-          await (i18n as any).changeLanguage(language);
+          await i18n.changeLanguage(language);
           set({ 
             currentLanguage: language, 
             isLoading: false 

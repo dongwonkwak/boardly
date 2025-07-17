@@ -135,6 +135,8 @@
 	},
 	"register": {
 		"title": "Sign Up",
+		"subtitle": "Create your first board in just a few minutes",
+		"securityTip": "Please set a strong password for a secure account.",
 		"email": "Email Address",
 		"lastName": "Last Name",
 		"firstName": "First Name",
@@ -161,9 +163,10 @@
 		"emailHelp": "Email address for login and important notifications",
 		"nameHelp": "Only Korean or English characters allowed (1-50 characters)",
 		"languageHelp": "You can change this in settings anytime",
-		"terms1": "By creating an account, you agree to our",
+		"terms1": "By proceeding with registration, you agree to Boardly's",
 		"and": "and",
-		"terms2": "",
+		"terms2": ".",
+		"terms3": "",
 		"termsOfService": "Terms of Service",
 		"privacyPolicy": "Privacy Policy",
 		"step1": {
@@ -185,7 +188,10 @@
 			"step1": "Create your first board",
 			"step2": "Add lists and cards",
 			"step3": "Manage tasks with drag & drop",
-			"readyToStart": "Ready to Get Started",
+			"readyToStart": "Get Started with Boardly",
+			"feature1": "Unlimited personal board creation",
+			"feature2": "Intuitive drag & drop",
+			"feature3": "Real-time sync and auto-save",
 			"kanban": "Kanban Board",
 			"quickMove": "Quick Navigation",
 			"teamWork": "Team Collaboration",
@@ -195,17 +201,23 @@
 			"checkIt": "Check out our"
 		},
 		"features": {
-			"title": "With Boardly",
-			"dragDrop": "Fast task management with drag & drop",
+			"title": "Get Started with Boardly",
+			"boards": "Unlimited personal board creation",
+			"dragDrop": "Intuitive drag & drop",
+			"sync": "Real-time sync and auto-save",
 			"security": "Secure data protection and backup",
 			"cloud": "Cloud-based access from anywhere"
 		},
 		"privacy": {
-			"title": "Personal Information Collection and Use Notice",
+			"title": "Privacy Information Notice",
 			"items": "Collection Items: Email, Name, Language Settings",
-			"purpose": "Collection Purpose: Service provision, account management, customer support",
-			"retention": "Retention Period: Until account deletion",
-			"consent": "Completing registration is considered consent to personal information processing."
+			"purpose": "Collection Purpose:",
+			"purposeText": "Account creation, service provision, customer support",
+			"retention": "Retention Period:",
+			"retentionText": "Until account deletion (except legal retention obligations)",
+			"thirdParty": "Third Party Sharing:",
+			"thirdPartyText": "No sharing except as required by law",
+			"consent": "Registration constitutes consent to the privacy policy."
 		},
 		"success": {
 			"title": "Registration Successful!",

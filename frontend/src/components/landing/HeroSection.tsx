@@ -4,11 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 interface HeroSectionProps {
-  onLogin?: () => void;
   onDemo?: () => void;
 }
 
-export default function HeroSection({ onLogin, onDemo }: HeroSectionProps) {
+export default function HeroSection({ onDemo }: HeroSectionProps) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
   return (

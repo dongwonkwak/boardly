@@ -2,7 +2,6 @@ package com.boardly.features.user.presentation;
 
 import com.boardly.features.user.application.port.input.RegisterUserCommand;
 import com.boardly.features.user.application.port.input.UpdateUserCommand;
-import com.boardly.features.user.application.usecase.GetUserUseCase;
 import com.boardly.features.user.application.usecase.RegisterUserUseCase;
 import com.boardly.features.user.application.usecase.UpdateUserUseCase;
 import com.boardly.features.user.domain.model.User;
@@ -30,7 +29,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -48,9 +46,6 @@ class UserControllerTest {
 
     @MockitoBean
     private UpdateUserUseCase updateUserUseCase;
-
-    @MockitoBean
-    private GetUserUseCase getUserUseCase;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -399,145 +394,7 @@ class UserControllerTest {
         }
     }
 
-    @Nested
-    @DisplayName("내 정보 조회 테스트")
-    class GetUserTests {
 
-        @Test
-        @DisplayName("내 정보 조회 성공")
-        void getUser_Success() throws Exception {
-            // Given
-            given(getUserUseCase.get(any()))
-                    .willReturn(Either.right(testUser));
-
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    .claim("scope", "read openid")))
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.userId").exists())
-                    .andExpect(jsonPath("$.email").value("test@example.com"))
-                    .andExpect(jsonPath("$.firstName").value("홍"))
-                    .andExpect(jsonPath("$.lastName").value("길동"))
-                    .andExpect(jsonPath("$.isActive").value(true));
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - 인증 없음")
-        void getUser_Unauthorized() throws Exception {
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isUnauthorized());
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - read 권한 없음")
-        void getUser_Forbidden_NoReadScope() throws Exception {
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    .claim("scope", "write openid"))) // read 권한이 없음
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - openid 권한 없음")
-        void getUser_Forbidden_NoOpenidScope() throws Exception {
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    .claim("scope", "read"))) // openid 권한이 없음
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - 사용자 찾을 수 없음")
-        void getUser_NotFound() throws Exception {
-            // Given
-            Failure notFoundFailure = Failure.ofNotFound("사용자를 찾을 수 없습니다.");
-
-            given(getUserUseCase.get(any()))
-                    .willReturn(Either.left(notFoundFailure));
-
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    .claim("scope", "read openid")))
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNotFound())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.message").value("사용자를 찾을 수 없습니다."))
-                    .andExpect(jsonPath("$.errorCode").value("NOT_FOUND"));
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - 서버 오류")
-        void getUser_InternalServerError() throws Exception {
-            // Given
-            Failure internalServerError = Failure.ofInternalServerError("서버 내부 오류가 발생했습니다.");
-
-            given(getUserUseCase.get(any()))
-                    .willReturn(Either.left(internalServerError));
-
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    .claim("scope", "read openid")))
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isInternalServerError())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.message").value("서버 내부 오류가 발생했습니다."))
-                    .andExpect(jsonPath("$.errorCode").value("INTERNAL_SERVER_ERROR"));
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - 잘못된 scope 형식")
-        void getUser_Forbidden_InvalidScope() throws Exception {
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    .claim("scope", "invalid scope"))) // 잘못된 scope
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - 빈 scope")
-        void getUser_Forbidden_EmptyScope() throws Exception {
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    .claim("scope", ""))) // 빈 scope
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
-        }
-
-        @Test
-        @DisplayName("내 정보 조회 실패 - scope claim 없음")
-        void getUser_Forbidden_NoScopeClaim() throws Exception {
-            // When & Then
-            mockMvc.perform(get(Path.USERS)
-                            .with(csrf())
-                            .with(jwt().jwt(jwt -> jwt.subject("test-user-id")
-                                    // scope claim이 아예 없음
-                                    .claim("other", "value")))
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isForbidden());
-        }
-    }
 
     @Nested
     @DisplayName("HTTP 메서드 테스트")

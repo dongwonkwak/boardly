@@ -290,36 +290,8 @@ export default function Register() {
 								</p>
 							</div>
 
-							{/* 성과 이름 (2열 레이아웃) */}
+							{/* 이름과 성 (2열 레이아웃) */}
 							<div className="grid grid-cols-2 gap-4">
-								{/* 성 */}
-								<div>
-									<label htmlFor="lastName" className="block text-sm font-medium text-slate-700 mb-2">
-										{t("register.lastName", "성 (Last Name)")} *
-									</label>
-									<div className="relative">
-										<User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-										<input
-											id="lastName"
-											type="text"
-											placeholder={t("register.lastNamePlaceholder", "예: 김, 이, Smith")}
-											{...form.register("lastName")}
-											className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-												form.formState.errors.lastName || fieldErrors.lastName ? "border-red-300" : "border-slate-300"
-											}`}
-										/>
-									</div>
-									{form.formState.errors.lastName && (
-										<p className="text-red-500 text-xs mt-1">{form.formState.errors.lastName.message}</p>
-									)}
-									{fieldErrors.lastName && (
-										<p className="text-red-500 text-xs mt-1">{fieldErrors.lastName}</p>
-									)}
-									<p className="text-slate-500 text-xs mt-1">
-										{t("register.nameHelp", "한글 또는 영문만 (1-50자)")}
-									</p>
-								</div>
-
 								{/* 이름 */}
 								<div>
 									<label htmlFor="firstName" className="block text-sm font-medium text-slate-700 mb-2">
@@ -342,6 +314,34 @@ export default function Register() {
 									)}
 									{fieldErrors.firstName && (
 										<p className="text-red-500 text-xs mt-1">{fieldErrors.firstName}</p>
+									)}
+									<p className="text-slate-500 text-xs mt-1">
+										{t("register.nameHelp", "한글 또는 영문만 (1-50자)")}
+									</p>
+								</div>
+
+								{/* 성 */}
+								<div>
+									<label htmlFor="lastName" className="block text-sm font-medium text-slate-700 mb-2">
+										{t("register.lastName", "성 (Last Name)")} *
+									</label>
+									<div className="relative">
+										<User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+										<input
+											id="lastName"
+											type="text"
+											placeholder={t("register.lastNamePlaceholder", "예: 김, 이, Smith")}
+											{...form.register("lastName")}
+											className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+												form.formState.errors.lastName || fieldErrors.lastName ? "border-red-300" : "border-slate-300"
+											}`}
+										/>
+									</div>
+									{form.formState.errors.lastName && (
+										<p className="text-red-500 text-xs mt-1">{form.formState.errors.lastName.message}</p>
+									)}
+									{fieldErrors.lastName && (
+										<p className="text-red-500 text-xs mt-1">{fieldErrors.lastName}</p>
 									)}
 									<p className="text-slate-500 text-xs mt-1">
 										{t("register.nameHelp", "한글 또는 영문만 (1-50자)")}

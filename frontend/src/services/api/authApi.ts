@@ -12,14 +12,6 @@ function createAuthenticatedOptsWithToken(accessToken: string): Oazapfts.Request
 }
 
 /**
- * 인증된 사용자 정보 조회
- */
-export async function getAuthenticatedUser(accessToken: string) {
-  const authOpts = createAuthenticatedOptsWithToken(accessToken);
-  return apiClient.getUser(authOpts);
-}
-
-/**
  * 인증된 사용자 정보 업데이트
  */
 export async function updateAuthenticatedUser(accessToken: string, updateUserRequest: UpdateUserRequest) {

@@ -13,8 +13,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
+@RequiredArgsConstructor
 public class AuthorizationConfig {
+
+    private final OidcUserInfoMapper oidcUserInfoMapper;
 
     @Bean
     @Order(1)
@@ -26,7 +31,10 @@ public class AuthorizationConfig {
             .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
             .with(authorizationServerConfigurer, authorizationServer ->
                 authorizationServer
-                        .oidc(Customizer.withDefaults())
+                        .oidc(oidc -> oidc
+                            .userInfoEndpoint(userInfo ->
+                                userInfo.userInfoMapper(oidcUserInfoMapper))
+                        )
             )
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().authenticated())

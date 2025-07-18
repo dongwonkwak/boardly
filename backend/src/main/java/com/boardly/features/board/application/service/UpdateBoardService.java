@@ -47,59 +47,113 @@ public class UpdateBoardService implements UpdateBoardUseCase {
         log.info("보드 업데이트 시작: boardId={}, title={}, description={}, requestedBy={}", 
                 command.boardId().getId(), command.title(), command.description(), command.requestedBy().getId());
 
-        // 1. 입력 검증
+        return validateInput(command)
+                .flatMap(validatedCommand -> findExistingBoard(validatedCommand))
+                .flatMap(this::verifyOwnership)
+                .flatMap(this::checkArchiveStatus)
+                .flatMap(this::checkForChanges)
+                .flatMap(this::applyChangesToBoard)
+                .flatMap(this::saveUpdatedBoard);
+    }
+
+    /**
+     * 1단계: 입력 검증
+     */
+    private Either<Failure, UpdateBoardCommand> validateInput(UpdateBoardCommand command) {
         ValidationResult<UpdateBoardCommand> validationResult = boardValidator.validate(command);
         if (validationResult.isInvalid()) {
             log.warn("보드 업데이트 검증 실패: boardId={}, violations={}", 
                     command.boardId().getId(), validationResult.getErrorsAsCollection());
             return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
         }
+        return Either.right(command);
+    }
 
-        // 2. 기존 보드 조회
+    /**
+     * 2단계: 기존 보드 조회
+     */
+    private Either<Failure, BoardUpdateContext> findExistingBoard(UpdateBoardCommand command) {
         Optional<Board> existingBoardOpt = boardRepository.findById(command.boardId());
         if (existingBoardOpt.isEmpty()) {
             log.warn("보드를 찾을 수 없음: boardId={}", command.boardId().getId());
             return Either.left(Failure.ofNotFound(messageResolver.getMessage("validation.board.not.found")));
         }
-
+        
         Board existingBoard = existingBoardOpt.get();
+        return Either.right(new BoardUpdateContext(command, existingBoard));
+    }
 
-        // 3. 권한 확인 (요청자가 보드 소유자인지 확인)
-        if (!existingBoard.getOwnerId().equals(command.requestedBy())) {
+    /**
+     * 3단계: 권한 확인 (요청자가 보드 소유자인지 확인)
+     */
+    private Either<Failure, BoardUpdateContext> verifyOwnership(BoardUpdateContext context) {
+        if (!context.board().getOwnerId().equals(context.command().requestedBy())) {
             log.warn("보드 수정 권한 없음: boardId={}, ownerId={}, requestedBy={}", 
-                    command.boardId().getId(), existingBoard.getOwnerId().getId(), command.requestedBy().getId());
+                    context.command().boardId().getId(), 
+                    context.board().getOwnerId().getId(), 
+                    context.command().requestedBy().getId());
             return Either.left(Failure.ofForbidden(messageResolver.getMessage("validation.board.modification.access.denied")));
         }
+        return Either.right(context);
+    }
 
-        // 4. 아카이브된 보드 수정 제한 확인
-        if (existingBoard.isArchived()) {
+    /**
+     * 4단계: 아카이브된 보드 수정 제한 확인
+     */
+    private Either<Failure, BoardUpdateContext> checkArchiveStatus(BoardUpdateContext context) {
+        if (context.board().isArchived()) {
             log.warn("아카이브된 보드의 수정 시도: boardId={}, requestedBy={}", 
-                    command.boardId().getId(), command.requestedBy().getId());
+                    context.command().boardId().getId(), context.command().requestedBy().getId());
             return Either.left(Failure.ofConflict(messageResolver.getMessage("validation.board.archived.modification.denied")));
         }
+        return Either.right(context);
+    }
 
-        // 5. 변경 사항이 있는지 확인
-        if (isNoChangesApplied(existingBoard, command)) {
-            log.info("보드 변경 사항 없음: boardId={}", command.boardId().getId());
-            return Either.right(existingBoard);
+    /**
+     * 5단계: 변경 사항이 있는지 확인
+     */
+    private Either<Failure, BoardUpdateContext> checkForChanges(BoardUpdateContext context) {
+        if (isNoChangesApplied(context.board(), context.command())) {
+            log.info("보드 변경 사항 없음: boardId={}", context.command().boardId().getId());
+            return Either.right(new BoardUpdateContext(context.command(), context.board(), true));
+        }
+        return Either.right(context);
+    }
+
+    /**
+     * 6단계: 변경 사항 적용
+     */
+    private Either<Failure, BoardUpdateContext> applyChangesToBoard(BoardUpdateContext context) {
+        // 변경 사항이 없으면 바로 반환
+        if (context.hasNoChanges()) {
+            return Either.right(context);
         }
 
-        // 6. 변경 사항 적용
         try {
-            applyChanges(existingBoard, command);
-            log.debug("보드 변경 사항 적용 완료: boardId={}", command.boardId().getId());
+            applyChanges(context.board(), context.command());
+            log.debug("보드 변경 사항 적용 완료: boardId={}", context.command().boardId().getId());
+            return Either.right(context);
         } catch (Exception e) {
             log.error("보드 변경 중 오류 발생: boardId={}, error={}", 
-                    command.boardId().getId(), e.getMessage(), e);
+                    context.command().boardId().getId(), e.getMessage(), e);
             return Either.left(Failure.ofInternalServerError(messageResolver.getMessage("validation.board.modification.error")));
         }
+    }
 
-        // 7. 업데이트된 보드 저장
-        return Try.of(() -> boardRepository.save(existingBoard))
+    /**
+     * 7단계: 업데이트된 보드 저장
+     */
+    private Either<Failure, Board> saveUpdatedBoard(BoardUpdateContext context) {
+        // 변경 사항이 없으면 기존 보드 반환
+        if (context.hasNoChanges()) {
+            return Either.right(context.board());
+        }
+
+        return Try.of(() -> boardRepository.save(context.board()))
             .fold(
                 throwable -> {
                     log.error("보드 업데이트 중 예외 발생: boardId={}, error={}", 
-                            command.boardId().getId(), throwable.getMessage(), throwable);
+                            context.command().boardId().getId(), throwable.getMessage(), throwable);
                     return Either.left(Failure.ofInternalServerError(messageResolver.getMessage("validation.board.update.error")));
                 },
                 saveResult -> {
@@ -108,7 +162,7 @@ public class UpdateBoardService implements UpdateBoardUseCase {
                                 saveResult.get().getBoardId().getId(), saveResult.get().getTitle());
                     } else {
                         log.error("보드 저장 실패: boardId={}, error={}", 
-                                command.boardId().getId(), saveResult.getLeft().message());
+                                context.command().boardId().getId(), saveResult.getLeft().message());
                     }
                     return saveResult;
                 }
@@ -154,7 +208,19 @@ public class UpdateBoardService implements UpdateBoardUseCase {
         if (command.description() != null && !command.description().equals(board.getDescription())) {
             return false;
         }
-
         return true;
+    }
+
+    /**
+     * 보드 업데이트 과정에서 사용되는 컨텍스트 객체
+     */
+    private record BoardUpdateContext(
+            UpdateBoardCommand command,
+            Board board,
+            boolean hasNoChanges
+    ) {
+        BoardUpdateContext(UpdateBoardCommand command, Board board) {
+            this(command, board, false);
+        }
     }
 } 

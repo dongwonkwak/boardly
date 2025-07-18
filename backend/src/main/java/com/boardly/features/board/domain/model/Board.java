@@ -20,10 +20,12 @@ public class Board extends BaseEntity {
     private String description;
     private boolean isArchived;
     private UserId ownerId;
+    private boolean isStarred;
 
     @Builder
     private Board(BoardId boardId, String title, String description, 
-                 boolean isArchived, UserId ownerId, Instant createdAt, Instant updatedAt) {
+                 boolean isArchived, UserId ownerId, boolean isStarred, 
+                 Instant createdAt, Instant updatedAt) {
 
         super(createdAt, updatedAt);
         this.boardId = boardId;
@@ -31,6 +33,7 @@ public class Board extends BaseEntity {
         this.description = description;
         this.isArchived = isArchived;
         this.ownerId = ownerId;
+        this.isStarred = isStarred;
     }
 
     /**
@@ -44,6 +47,7 @@ public class Board extends BaseEntity {
             .description(description)
             .isArchived(false)
             .ownerId(ownerId)
+            .isStarred(false)
             .createdAt(now)
             .updatedAt(now)
             .build();
@@ -62,6 +66,14 @@ public class Board extends BaseEntity {
      */
     public void updateDescription(String description) {
         this.description = description;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드 즐겨찾기 상태를 수정합니다.
+     */
+    public void updateStarred(boolean isStarred) {
+        this.isStarred = isStarred;
         markAsUpdated();
     }
 

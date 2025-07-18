@@ -34,6 +34,9 @@ public class BoardEntity extends BaseEntity {
     @Column(name = "owner_id", nullable = false)
     private String ownerId;
 
+    @Column(name = "is_starred", nullable = false)
+    private boolean isStarred;
+
     @Version
     @Column(name = "version")
     private Long version;
@@ -41,6 +44,7 @@ public class BoardEntity extends BaseEntity {
     @Builder
     private BoardEntity(String boardId, String title, String description, 
                        boolean isArchived, String ownerId,
+                       boolean isStarred,
                        Instant createdAt, Instant updatedAt) {
         super(createdAt, updatedAt);
         this.boardId = boardId;
@@ -48,6 +52,7 @@ public class BoardEntity extends BaseEntity {
         this.description = description;
         this.isArchived = isArchived;
         this.ownerId = ownerId;
+        this.isStarred = isStarred;
     }
 
     /**
@@ -60,6 +65,7 @@ public class BoardEntity extends BaseEntity {
                 .description(this.description)
                 .isArchived(this.isArchived)
                 .ownerId(new UserId(this.ownerId))
+                .isStarred(this.isStarred)
                 .createdAt(this.getCreatedAt())
                 .updatedAt(this.getUpdatedAt())
                 .build();
@@ -75,6 +81,7 @@ public class BoardEntity extends BaseEntity {
                 .description(board.getDescription())
                 .isArchived(board.isArchived())
                 .ownerId(board.getOwnerId().getId())
+                .isStarred(board.isStarred())
                 .createdAt(board.getCreatedAt())
                 .updatedAt(board.getUpdatedAt())
                 .build();

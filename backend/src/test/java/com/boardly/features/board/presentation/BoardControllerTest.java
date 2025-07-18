@@ -91,6 +91,7 @@ class BoardControllerTest {
             .title("Test Board")
             .description("Test Description")
             .isArchived(false)
+            .isStarred(false)
             .ownerId(new UserId(TEST_USER_ID))
             .createdAt(now.minus(2, ChronoUnit.HOURS))
             .updatedAt(now.minus(30, ChronoUnit.MINUTES))
@@ -101,6 +102,7 @@ class BoardControllerTest {
             .title("Test Board 2")
             .description("Test Description 2")
             .isArchived(false)
+            .isStarred(true)
             .ownerId(new UserId(TEST_USER_ID))
             .createdAt(now.minus(1, ChronoUnit.HOURS))
             .updatedAt(now) // 가장 최근 수정
@@ -111,6 +113,7 @@ class BoardControllerTest {
             .title("Archived Board")
             .description("Archived Description")
             .isArchived(true)
+            .isStarred(false)
             .ownerId(new UserId(TEST_USER_ID))
             .createdAt(now.minus(3, ChronoUnit.HOURS))
             .updatedAt(now.minus(1, ChronoUnit.HOURS))
@@ -140,6 +143,7 @@ class BoardControllerTest {
                 .andExpect(jsonPath("$.title").value("Test Board"))
                 .andExpect(jsonPath("$.description").value("Test Description"))
                 .andExpect(jsonPath("$.isArchived").value(false))
+                .andExpect(jsonPath("$.isStarred").value(false))
                 .andExpect(jsonPath("$.ownerId").value(TEST_USER_ID));
         }
 
@@ -240,6 +244,7 @@ class BoardControllerTest {
                 .title("Updated Board")
                 .description("Updated Description")
                 .isArchived(false)
+                .isStarred(true)
                 .ownerId(new UserId(TEST_USER_ID))
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -260,6 +265,7 @@ class BoardControllerTest {
                 .andExpect(jsonPath("$.title").value("Updated Board"))
                 .andExpect(jsonPath("$.description").value("Updated Description"))
                 .andExpect(jsonPath("$.isArchived").value(false))
+                .andExpect(jsonPath("$.isStarred").value(true))
                 .andExpect(jsonPath("$.ownerId").value(TEST_USER_ID));
         }
 
@@ -354,6 +360,7 @@ class BoardControllerTest {
                 .title("Test Board")
                 .description("Test Description")
                 .isArchived(true)
+                .isStarred(false)
                 .ownerId(new UserId(TEST_USER_ID))
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -370,6 +377,7 @@ class BoardControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.boardId").value(TEST_BOARD_ID))
                 .andExpect(jsonPath("$.isArchived").value(true))
+                .andExpect(jsonPath("$.isStarred").value(false))
                 .andExpect(jsonPath("$.ownerId").value(TEST_USER_ID));
         }
 
@@ -454,6 +462,7 @@ class BoardControllerTest {
                 .title("Test Board")
                 .description("Test Description")
                 .isArchived(false)
+                .isStarred(false)
                 .ownerId(new UserId(TEST_USER_ID))
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -470,6 +479,7 @@ class BoardControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.boardId").value(TEST_BOARD_ID))
                 .andExpect(jsonPath("$.isArchived").value(false))
+                .andExpect(jsonPath("$.isStarred").value(false))
                 .andExpect(jsonPath("$.ownerId").value(TEST_USER_ID));
         }
 
@@ -563,9 +573,11 @@ class BoardControllerTest {
                 .andExpect(jsonPath("$[0].boardId").value(TEST_BOARD_ID_2))
                 .andExpect(jsonPath("$[0].title").value("Test Board 2"))
                 .andExpect(jsonPath("$[0].isArchived").value(false))
+                .andExpect(jsonPath("$[0].isStarred").value(true))
                 .andExpect(jsonPath("$[1].boardId").value(TEST_BOARD_ID))
                 .andExpect(jsonPath("$[1].title").value("Test Board"))
-                .andExpect(jsonPath("$[1].isArchived").value(false));
+                .andExpect(jsonPath("$[1].isArchived").value(false))
+                .andExpect(jsonPath("$[1].isStarred").value(false));
         }
 
         @Test
@@ -586,10 +598,13 @@ class BoardControllerTest {
                 .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[0].boardId").value(TEST_BOARD_ID_2))
                 .andExpect(jsonPath("$[0].isArchived").value(false))
+                .andExpect(jsonPath("$[0].isStarred").value(true))
                 .andExpect(jsonPath("$[1].boardId").value(TEST_BOARD_ID))
                 .andExpect(jsonPath("$[1].isArchived").value(false))
+                .andExpect(jsonPath("$[1].isStarred").value(false))
                 .andExpect(jsonPath("$[2].boardId").value(ARCHIVED_BOARD_ID))
-                .andExpect(jsonPath("$[2].isArchived").value(true));
+                .andExpect(jsonPath("$[2].isArchived").value(true))
+                .andExpect(jsonPath("$[2].isStarred").value(false));
         }
 
         @Test
@@ -679,7 +694,8 @@ class BoardControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].isArchived").value(false));
+                .andExpect(jsonPath("$[0].isArchived").value(false))
+                .andExpect(jsonPath("$[0].isStarred").value(false));
         }
 
         @Test
@@ -698,7 +714,8 @@ class BoardControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].isArchived").value(false));
+                .andExpect(jsonPath("$[0].isArchived").value(false))
+                .andExpect(jsonPath("$[0].isStarred").value(false));
         }
     }
 

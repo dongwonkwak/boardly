@@ -12,6 +12,7 @@ public record BoardResponse(
         String description,
         boolean isArchived,
         String ownerId,
+        boolean isStarred,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -26,6 +27,7 @@ public record BoardResponse(
                 board.getDescription(),
                 board.isArchived(),
                 board.getOwnerId().getId(),
+                board.isStarred(),
                 board.getCreatedAt(),
                 board.getUpdatedAt()
         );

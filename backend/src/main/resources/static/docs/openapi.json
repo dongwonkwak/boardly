@@ -663,6 +663,9 @@
           "ownerId": {
             "type": "string"
           },
+          "isStarred": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"

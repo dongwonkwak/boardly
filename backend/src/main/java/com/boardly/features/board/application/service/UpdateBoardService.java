@@ -48,7 +48,7 @@ public class UpdateBoardService implements UpdateBoardUseCase {
                 command.boardId().getId(), command.title(), command.description(), command.requestedBy().getId());
 
         return validateInput(command)
-                .flatMap(validatedCommand -> findExistingBoard(validatedCommand))
+                .flatMap(this::findExistingBoard)
                 .flatMap(this::verifyOwnership)
                 .flatMap(this::checkArchiveStatus)
                 .flatMap(this::checkForChanges)

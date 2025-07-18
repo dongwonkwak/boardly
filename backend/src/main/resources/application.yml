@@ -1,3 +1,12 @@
 spring:
   profiles:
     active: dev
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC

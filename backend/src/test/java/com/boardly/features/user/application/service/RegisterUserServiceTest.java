@@ -16,9 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -49,6 +50,12 @@ class RegisterUserServiceTest {
                 passwordEncoder,
                 validationMessageResolver
         );
+        
+        // 메시지 모킹 설정 (lenient로 설정하여 사용되지 않는 스텁도 허용)
+        lenient().when(validationMessageResolver.getMessage("validation.user.email.duplicate"))
+                .thenReturn("이미 존재하는 이메일입니다.");
+        lenient().when(validationMessageResolver.getMessage("validation.user.registration.error"))
+                .thenReturn("사용자 등록 중 오류가 발생했습니다.");
     }
 
     private RegisterUserCommand createValidCommand() {
@@ -60,17 +67,9 @@ class RegisterUserServiceTest {
         );
     }
 
-    private User createValidUser(String email, String hashedPassword) {
+    private User createValidUser() {
         UserProfile userProfile = new UserProfile("길동", "홍");
-        return User.builder()
-                .userId(new UserId())
-                .email(email)
-                .hashedPassword(hashedPassword)
-                .userProfile(userProfile)
-                .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        return User.create("test@example.com", "hashedPassword", userProfile);
     }
 
     @Test
@@ -79,7 +78,7 @@ class RegisterUserServiceTest {
         // given
         RegisterUserCommand command = createValidCommand();
         String hashedPassword = "hashedPassword123!";
-        User savedUser = createValidUser(command.email(), hashedPassword);
+        User savedUser = createValidUser();
 
         when(userValidator.validateUserRegistration(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -96,9 +95,9 @@ class RegisterUserServiceTest {
         // then
         assertThat(result.isRight()).isTrue();
         assertThat(result.get().getEmail()).isEqualTo(command.email());
-        assertThat(result.get().getHashedPassword()).isEqualTo(hashedPassword);
         assertThat(result.get().getUserProfile().firstName()).isEqualTo(command.firstName());
         assertThat(result.get().getUserProfile().lastName()).isEqualTo(command.lastName());
+        assertThat(result.get().isActive()).isTrue();
 
         verify(userValidator).validateUserRegistration(command);
         verify(userRepository).existsByEmail(command.email());
@@ -147,8 +146,6 @@ class RegisterUserServiceTest {
                 .thenReturn(ValidationResult.valid(command));
         when(userRepository.existsByEmail(command.email()))
                 .thenReturn(true);
-        when(validationMessageResolver.getMessage("validation.user.email.duplicate"))
-                .thenReturn(duplicateMessage);
 
         // when
         Either<Failure, User> result = registerUserService.register(command);
@@ -197,12 +194,74 @@ class RegisterUserServiceTest {
     }
 
     @Test
+    @DisplayName("DataIntegrityViolationException 발생 시 이메일 중복 오류를 반환해야 한다")
+    void register_withDataIntegrityViolationException_shouldReturnConflictFailure() {
+        // given
+        RegisterUserCommand command = createValidCommand();
+        String hashedPassword = "hashedPassword123!";
+        String duplicateMessage = "이미 존재하는 이메일입니다.";
+
+        when(userValidator.validateUserRegistration(command))
+                .thenReturn(ValidationResult.valid(command));
+        when(userRepository.existsByEmail(command.email()))
+                .thenReturn(false);
+        when(passwordEncoder.encode(command.password()))
+                .thenReturn(hashedPassword);
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate entry"));
+
+        // when
+        Either<Failure, User> result = registerUserService.register(command);
+
+        // then
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isInstanceOf(Failure.ConflictFailure.class);
+        assertThat(result.getLeft().message()).isEqualTo(duplicateMessage);
+
+        verify(userValidator).validateUserRegistration(command);
+        verify(userRepository).existsByEmail(command.email());
+        verify(passwordEncoder).encode(command.password());
+        verify(userRepository).save(any(User.class));
+        verify(validationMessageResolver).getMessage("validation.user.email.duplicate");
+    }
+
+    @Test
+    @DisplayName("기타 런타임 예외 발생 시 내부 서버 오류를 반환해야 한다")
+    void register_withRuntimeException_shouldReturnInternalServerError() {
+        // given
+        RegisterUserCommand command = createValidCommand();
+        String hashedPassword = "hashedPassword123!";
+
+        when(userValidator.validateUserRegistration(command))
+                .thenReturn(ValidationResult.valid(command));
+        when(userRepository.existsByEmail(command.email()))
+                .thenReturn(false);
+        when(passwordEncoder.encode(command.password()))
+                .thenReturn(hashedPassword);
+        when(userRepository.save(any(User.class)))
+                .thenThrow(new RuntimeException("예상치 못한 오류"));
+
+        // when
+        Either<Failure, User> result = registerUserService.register(command);
+
+        // then
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isInstanceOf(Failure.InternalServerError.class);
+        assertThat(result.getLeft().message()).isEqualTo("사용자 등록 중 오류가 발생했습니다.");
+
+        verify(userValidator).validateUserRegistration(command);
+        verify(userRepository).existsByEmail(command.email());
+        verify(passwordEncoder).encode(command.password());
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
     @DisplayName("비밀번호가 올바르게 해싱되어야 한다")
     void register_shouldHashPassword() {
         // given
         RegisterUserCommand command = createValidCommand();
         String hashedPassword = "hashedPassword123!";
-        User savedUser = createValidUser(command.email(), hashedPassword);
+        User savedUser = createValidUser();
 
         when(userValidator.validateUserRegistration(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -232,7 +291,7 @@ class RegisterUserServiceTest {
         // given
         RegisterUserCommand command = createValidCommand();
         String hashedPassword = "hashedPassword123!";
-        User savedUser = createValidUser(command.email(), hashedPassword);
+        User savedUser = createValidUser();
 
         when(userValidator.validateUserRegistration(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -251,5 +310,75 @@ class RegisterUserServiceTest {
         
         // 저장되는 User 객체가 활성 상태인지 확인
         verify(userRepository).save(argThat(user -> user.isActive()));
+    }
+
+    @Test
+    @DisplayName("User.create() 메서드로 도메인 객체가 생성되어야 한다")
+    void register_shouldCreateUserWithCreateMethod() {
+        // given
+        RegisterUserCommand command = createValidCommand();
+        String hashedPassword = "hashedPassword123!";
+        User savedUser = createValidUser();
+
+        when(userValidator.validateUserRegistration(command))
+                .thenReturn(ValidationResult.valid(command));
+        when(userRepository.existsByEmail(command.email()))
+                .thenReturn(false);
+        when(passwordEncoder.encode(command.password()))
+                .thenReturn(hashedPassword);
+        when(userRepository.save(any(User.class)))
+                .thenReturn(Either.right(savedUser));
+
+        // when
+        Either<Failure, User> result = registerUserService.register(command);
+
+        // then
+        assertThat(result.isRight()).isTrue();
+        
+        // User.create() 메서드로 생성된 객체인지 확인 (필수 필드들이 올바르게 설정되었는지)
+        verify(userRepository).save(argThat(user -> 
+                user.getEmail().equals(command.email()) &&
+                user.getHashedPassword().equals(hashedPassword) &&
+                user.getUserProfile().firstName().equals(command.firstName()) &&
+                user.getUserProfile().lastName().equals(command.lastName()) &&
+                user.isActive() &&
+                user.getUserId() != null
+        ));
+    }
+
+    @Test
+    @DisplayName("여러 검증 오류가 있는 경우 모든 오류를 반환해야 한다")
+    void register_withMultipleValidationErrors_shouldReturnAllErrors() {
+        // given
+        RegisterUserCommand command = createValidCommand();
+        Failure.FieldViolation emailViolation = Failure.FieldViolation.builder()
+                .field("email")
+                .message("validation.user.email.invalid")
+                .rejectedValue(command.email())
+                .build();
+        Failure.FieldViolation passwordViolation = Failure.FieldViolation.builder()
+                .field("password")
+                .message("validation.user.password.weak")
+                .rejectedValue(command.password())
+                .build();
+        ValidationResult<RegisterUserCommand> invalidResult = ValidationResult.invalid(
+                io.vavr.collection.List.of(emailViolation, passwordViolation));
+
+        when(userValidator.validateUserRegistration(command))
+                .thenReturn(invalidResult);
+
+        // when
+        Either<Failure, User> result = registerUserService.register(command);
+
+        // then
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
+        Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
+        assertThat(validationFailure.violations()).hasSize(2);
+
+        verify(userValidator).validateUserRegistration(command);
+        verify(userRepository, never()).existsByEmail(anyString());
+        verify(passwordEncoder, never()).encode(anyString());
+        verify(userRepository, never()).save(any(User.class));
     }
 } 

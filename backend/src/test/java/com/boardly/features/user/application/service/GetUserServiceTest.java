@@ -14,7 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,16 +40,15 @@ class GetUserServiceTest {
         return new UserId("test-user-id");
     }
 
-    private User createValidUser(UserId userId) {
-        UserProfile userProfile = new UserProfile("길동", "홍");
+    private User createValidUser() {
         return User.builder()
-                .userId(userId)
+                .userId(createValidUserId())
                 .email("test@example.com")
-                .hashedPassword("hashedPassword123!")
-                .userProfile(userProfile)
+                .hashedPassword("hashedPassword")
+                .userProfile(new UserProfile("John", "Doe"))
                 .isActive(true)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
     }
 
@@ -58,7 +57,7 @@ class GetUserServiceTest {
     void get_withExistingUserId_shouldReturnUser() {
         // given
         UserId userId = createValidUserId();
-        User expectedUser = createValidUser(userId);
+        User expectedUser = createValidUser();
 
         when(userRepository.findById(userId))
                 .thenReturn(Optional.of(expectedUser));

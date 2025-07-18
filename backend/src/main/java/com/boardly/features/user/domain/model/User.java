@@ -1,6 +1,6 @@
 package com.boardly.features.user.domain.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Objects;
 
 import com.boardly.shared.domain.common.BaseEntity;
@@ -25,8 +25,8 @@ public class User extends BaseEntity {
     @Builder
     private User(
         UserId userId, String email, String hashedPassword, 
-        UserProfile userProfile, boolean isActive, LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        UserProfile userProfile, boolean isActive, Instant createdAt,
+        Instant updatedAt) {
 
         super(createdAt, updatedAt);
         this.userId = userId;
@@ -37,17 +37,18 @@ public class User extends BaseEntity {
     }
 
     /**
-     * 새로운 사용자를 생성합니다.
+     * 새로운 사용자를 생성합니다. (UTC 기준)
      */
     public static User create(String email, String hashedPassword, UserProfile userProfile) {
+        Instant now = Instant.now();
         return User.builder()
             .userId(new UserId())
             .email(email)
             .hashedPassword(hashedPassword)
             .userProfile(userProfile)
             .isActive(true)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
+            .createdAt(now)
+            .updatedAt(now)
             .build();
     }
 
@@ -68,11 +69,17 @@ public class User extends BaseEntity {
         markAsUpdated();
     }
 
+    /**
+     * 사용자를 비활성화합니다.
+     */
     public void deactivate() {
         this.isActive = false;
         markAsUpdated();
     }
 
+    /**
+     * 사용자를 활성화합니다.
+     */
     public void activate() {
         this.isActive = true;
         markAsUpdated();
@@ -83,10 +90,10 @@ public class User extends BaseEntity {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        User user = (User) obj;
         return Objects.equals(userId, user.userId);
     }
 
@@ -97,10 +104,7 @@ public class User extends BaseEntity {
 
     @Override
     public String toString() {
-        return "User{" +
-            "userId=" + userId +
-            ", email='" + email + '\'' +
-            ", isActive=" + isActive +
-            '}';
+        return String.format("User{userId=%s, email='%s', isActive=%s, createdAt=%s, updatedAt=%s}",
+                userId, email, isActive, getCreatedAt(), getUpdatedAt());
     }
 }

@@ -80,7 +80,7 @@ public class UserController {
         Either<Failure, User> result = registerUserUseCase.register(command);
 
         return result.fold(
-                failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+                ApiFailureHandler::handleFailure,
                 user -> {
                     log.info("사용자 등록 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
                     return ResponseEntity.status(HttpStatus.CREATED)
@@ -123,7 +123,7 @@ public class UserController {
         Either<Failure, User> result = updateUserUseCase.update(command);
 
         return result.fold(
-                failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+                ApiFailureHandler::handleFailure,
                 user -> {
                     log.info("사용자 업데이트 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
                     return ResponseEntity.ok(UserResponse.from(user));

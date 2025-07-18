@@ -28,7 +28,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -83,7 +84,7 @@ class BoardControllerTest {
             "Updated Description"
         );
         
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         
         testBoard = Board.builder()
             .boardId(new BoardId(TEST_BOARD_ID))
@@ -91,8 +92,8 @@ class BoardControllerTest {
             .description("Test Description")
             .isArchived(false)
             .ownerId(new UserId(TEST_USER_ID))
-            .createdAt(now.minusHours(2))
-            .updatedAt(now.minusMinutes(30))
+            .createdAt(now.minus(2, ChronoUnit.HOURS))
+            .updatedAt(now.minus(30, ChronoUnit.MINUTES))
             .build();
             
         testBoard2 = Board.builder()
@@ -101,7 +102,7 @@ class BoardControllerTest {
             .description("Test Description 2")
             .isArchived(false)
             .ownerId(new UserId(TEST_USER_ID))
-            .createdAt(now.minusHours(1))
+            .createdAt(now.minus(1, ChronoUnit.HOURS))
             .updatedAt(now) // 가장 최근 수정
             .build();
             
@@ -111,8 +112,8 @@ class BoardControllerTest {
             .description("Archived Description")
             .isArchived(true)
             .ownerId(new UserId(TEST_USER_ID))
-            .createdAt(now.minusHours(3))
-            .updatedAt(now.minusHours(1))
+            .createdAt(now.minus(3, ChronoUnit.HOURS))
+            .updatedAt(now.minus(1, ChronoUnit.HOURS))
             .build();
     }
 
@@ -240,8 +241,8 @@ class BoardControllerTest {
                 .description("Updated Description")
                 .isArchived(false)
                 .ownerId(new UserId(TEST_USER_ID))
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
             given(updateBoardUseCase.updateBoard(any(UpdateBoardCommand.class)))
@@ -354,8 +355,8 @@ class BoardControllerTest {
                 .description("Test Description")
                 .isArchived(true)
                 .ownerId(new UserId(TEST_USER_ID))
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
             given(archiveBoardUseCase.archiveBoard(any(ArchiveBoardCommand.class)))
@@ -454,8 +455,8 @@ class BoardControllerTest {
                 .description("Test Description")
                 .isArchived(false)
                 .ownerId(new UserId(TEST_USER_ID))
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
             given(archiveBoardUseCase.unarchiveBoard(any(ArchiveBoardCommand.class)))

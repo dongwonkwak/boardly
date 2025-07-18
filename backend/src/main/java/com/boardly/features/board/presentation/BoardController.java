@@ -98,7 +98,7 @@ public class BoardController {
     Either<Failure, List<Board>> result = getUserBoardsUseCase.getUserBoards(command);
     
     return result.fold(
-      failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+      ApiFailureHandler::handleFailure,
       boards -> {
         log.info("사용자 보드 목록 조회 성공: userId={}, boardCount={}, includeArchived={}", 
                 userId, boards.size(), includeArchived);
@@ -143,7 +143,7 @@ public class BoardController {
     Either<Failure, Board> result = createBoardUseCase.createBoard(command);
     
     return result.fold(
-      failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+      ApiFailureHandler::handleFailure,
       board -> {
         log.info("보드 생성 성공: boardId={}, title={}", board.getBoardId().getId(), board.getTitle());
         return ResponseEntity.status(HttpStatus.CREATED).body(BoardResponse.from(board));
@@ -195,7 +195,7 @@ public class BoardController {
     Either<Failure, Board> result = updateBoardUseCase.updateBoard(command);
     
     return result.fold(
-      failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+      ApiFailureHandler::handleFailure,
       board -> {
         log.info("보드 업데이트 성공: boardId={}, title={}", board.getBoardId().getId(), board.getTitle());
         return ResponseEntity.ok(BoardResponse.from(board));
@@ -239,7 +239,7 @@ public class BoardController {
     Either<Failure, Board> result = archiveBoardUseCase.archiveBoard(command);
     
     return result.fold(
-      failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+      ApiFailureHandler::handleFailure,
       board -> {
         log.info("보드 아카이브 성공: boardId={}", board.getBoardId().getId());
         return ResponseEntity.ok(BoardResponse.from(board));
@@ -283,7 +283,7 @@ public class BoardController {
     Either<Failure, Board> result = archiveBoardUseCase.unarchiveBoard(command);
     
     return result.fold(
-      failure -> ApiFailureHandler.handleFailure(failure, httpRequest.getRequestURI()),
+      ApiFailureHandler::handleFailure,
       board -> {
         log.info("보드 언아카이브 성공: boardId={}", board.getBoardId().getId());
         return ResponseEntity.ok(BoardResponse.from(board));

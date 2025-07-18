@@ -1,5 +1,8 @@
 package com.boardly.features.board.domain.model;
 
+import java.time.Instant;
+import java.util.Objects;
+
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.BaseEntity;
 
@@ -7,9 +10,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -22,10 +22,9 @@ public class Board extends BaseEntity {
     private UserId ownerId;
 
     @Builder
-    private Board(
-        BoardId boardId, String title, String description, 
-        boolean isArchived, UserId ownerId, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        
+    private Board(BoardId boardId, String title, String description, 
+                 boolean isArchived, UserId ownerId, Instant createdAt, Instant updatedAt) {
+
         super(createdAt, updatedAt);
         this.boardId = boardId;
         this.title = title;
@@ -35,18 +34,18 @@ public class Board extends BaseEntity {
     }
 
     /**
-     * 새로운 보드를 생성합니다.
+     * 새로운 보드를 생성합니다. (UTC 기준)
      */
     public static Board create(String title, String description, UserId ownerId) {
-        
+        Instant now = Instant.now();
         return Board.builder()
             .boardId(new BoardId())
             .title(title)
-            .description(description != null ? description : "")
+            .description(description)
             .isArchived(false)
             .ownerId(ownerId)
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
+            .createdAt(now)
+            .updatedAt(now)
             .build();
     }
 
@@ -62,7 +61,16 @@ public class Board extends BaseEntity {
      * 보드 설명을 수정합니다.
      */
     public void updateDescription(String description) {
-        this.description = description != null ? description : "";
+        this.description = description;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드를 수정합니다.
+     */
+    public void update(String title, String description) {
+        this.title = title;
+        this.description = description;
         markAsUpdated();
     }
 
@@ -89,12 +97,11 @@ public class Board extends BaseEntity {
         return !isArchived;
     }
 
-
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Board board = (Board) o;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Board board = (Board) obj;
         return Objects.equals(boardId, board.boardId);
     }
 
@@ -105,10 +112,7 @@ public class Board extends BaseEntity {
 
     @Override
     public String toString() {
-        return "Board{" +
-            "boardId=" + boardId +
-            ", title='" + title + '\'' +
-            ", isArchived=" + isArchived +
-            '}';
+        return String.format("Board{boardId=%s, title='%s', isArchived=%s, ownerId=%s, createdAt=%s, updatedAt=%s}",
+                boardId, title, isArchived, ownerId, getCreatedAt(), getUpdatedAt());
     }
 }

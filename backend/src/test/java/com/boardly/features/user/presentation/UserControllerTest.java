@@ -148,7 +148,7 @@ class UserControllerTest {
                     .andExpect(status().isConflict())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."))
-                    .andExpect(jsonPath("$.errorCode").value("CONFLICT"));
+                    .andExpect(jsonPath("$.errorCode").value("CONFLICT_ERROR"));
         }
 
         @Test
@@ -322,7 +322,7 @@ class UserControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.message").value("사용자를 찾을 수 없습니다."))
-                    .andExpect(jsonPath("$.errorCode").value("NOT_FOUND"));
+                    .andExpect(jsonPath("$.errorCode").value("NOT_FOUND_ERROR"));
         }
 
         @Test

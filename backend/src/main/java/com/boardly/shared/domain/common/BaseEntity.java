@@ -1,24 +1,26 @@
 package com.boardly.shared.domain.common;
 
 import lombok.Getter;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 /**
  * 모든 도메인 엔티티의 기본 클래스
  * 공통 속성과 기능을 제공
+ * 모든 시간은 UTC 기준으로 저장됩니다.
  */
 @Getter
 public abstract class BaseEntity {
 
     /**
-     * 엔티티 생성 일시
+     * 엔티티 생성 일시 (UTC)
      */
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     /**
-     * 엔티티 최종 수정 일시
+     * 엔티티 최종 수정 일시 (UTC)
      */
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     /**
      * 엔티티 버전 (낙관적 락킹용)
@@ -28,37 +30,37 @@ public abstract class BaseEntity {
     /**
      * BaseEntity 생성자
      *
-     * @param createdAt 생성 일시
-     * @param updatedAt 수정 일시
+     * @param createdAt 생성 일시 (UTC)
+     * @param updatedAt 수정 일시 (UTC)
      */
-    protected BaseEntity(LocalDateTime createdAt, LocalDateTime updatedAt) {
+    protected BaseEntity(Instant createdAt, Instant updatedAt) {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.version = 0L;
     }
 
     /**
-     * 현재 시간으로 생성되는 BaseEntity 생성자
+     * 현재 시간으로 생성되는 BaseEntity 생성자 (UTC 기준)
      */
     protected BaseEntity() {
-        var now =  LocalDateTime.now();
+        var now = Instant.now();
         this.createdAt = now;
         this.updatedAt = now;
         this.version = 0L;
     }
 
     /**
-     * 엔티티가 수정되었음을 표시
+     * 엔티티가 수정되었음을 표시 (UTC 기준)
      * 자식 클래스에서 상태 변경 시 호출해야 함
      */
     protected void markAsUpdated() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = Instant.now();
     }
 
     /**
      * 엔티티 생성 시점 설정 (테스트 또는 데이터 마이그레이션용)
      */
-    protected void setCreatedAt(LocalDateTime createdAt) {
+    protected void setCreatedAt(Instant createdAt) {
         if (createdAt != null) {
             this.createdAt = createdAt;
         }
@@ -67,7 +69,7 @@ public abstract class BaseEntity {
     /**
      * 엔티티 수정 시점 설정 (테스트 또는 데이터 마이그레이션용)
      */
-    protected void setUpdatedAt(LocalDateTime updatedAt) {
+    protected void setUpdatedAt(Instant updatedAt) {
         if (updatedAt != null) {
             this.updatedAt = updatedAt;
         }
@@ -95,7 +97,7 @@ public abstract class BaseEntity {
      * @return 최근 생성 여부
      */
     public boolean isCreatedWithin(long minutes) {
-        return createdAt.isAfter(LocalDateTime.now().minusMinutes(minutes));
+        return createdAt.isAfter(Instant.now().minus(minutes, ChronoUnit.MINUTES));
     }
 
     /**
@@ -105,7 +107,7 @@ public abstract class BaseEntity {
      * @return 최근 수정 여부
      */
     public boolean isUpdatedWithin(long minutes) {
-        return updatedAt.isAfter(LocalDateTime.now().minusMinutes(minutes));
+        return updatedAt.isAfter(Instant.now().minus(minutes, ChronoUnit.MINUTES));
     }
 
     /**
@@ -122,7 +124,7 @@ public abstract class BaseEntity {
      * @return 생성 후 경과 시간 (분 단위)
      */
     public long getAgeInMinutes() {
-        return java.time.Duration.between(createdAt, LocalDateTime.now()).toMinutes();
+        return ChronoUnit.MINUTES.between(createdAt, Instant.now());
     }
 
     /**
@@ -131,7 +133,7 @@ public abstract class BaseEntity {
      * @return 마지막 수정 후 경과 시간 (분 단위)
      */
     public long getMinutesSinceLastUpdate() {
-        return java.time.Duration.between(updatedAt, LocalDateTime.now()).toMinutes();
+        return ChronoUnit.MINUTES.between(updatedAt, Instant.now());
     }
 
     /**

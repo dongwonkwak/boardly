@@ -16,7 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,7 +46,7 @@ class GetUserBoardsServiceTest {
     void setUp() {
         testUserId = new UserId("test-user-123");
         
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         
         activeBoard1 = Board.builder()
                 .boardId(new BoardId())
@@ -53,8 +54,8 @@ class GetUserBoardsServiceTest {
                 .description("첫 번째 활성 보드")
                 .isArchived(false)
                 .ownerId(testUserId)
-                .createdAt(now.minusHours(2))
-                .updatedAt(now.minusMinutes(30))
+                .createdAt(now.minus(2, ChronoUnit.HOURS))
+                .updatedAt(now.minus(30, ChronoUnit.MINUTES))
                 .build();
 
         activeBoard2 = Board.builder()
@@ -63,7 +64,7 @@ class GetUserBoardsServiceTest {
                 .description("두 번째 활성 보드")
                 .isArchived(false)
                 .ownerId(testUserId)
-                .createdAt(now.minusHours(1))
+                .createdAt(now.minus(1, ChronoUnit.HOURS))
                 .updatedAt(now) // 가장 최근 수정
                 .build();
 
@@ -73,8 +74,8 @@ class GetUserBoardsServiceTest {
                 .description("아카이브된 보드")
                 .isArchived(true)
                 .ownerId(testUserId)
-                .createdAt(now.minusHours(3))
-                .updatedAt(now.minusHours(1))
+                .createdAt(now.minus(3, ChronoUnit.HOURS))
+                .updatedAt(now.minus(1, ChronoUnit.HOURS))
                 .build();
     }
 

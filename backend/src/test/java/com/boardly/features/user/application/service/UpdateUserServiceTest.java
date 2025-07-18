@@ -17,7 +17,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,8 +65,8 @@ class UpdateUserServiceTest {
                 .hashedPassword("hashedPassword123!")
                 .userProfile(userProfile)
                 .isActive(true)
-                .createdAt(LocalDateTime.now().minusDays(1))
-                .updatedAt(LocalDateTime.now().minusDays(1))
+                .createdAt(Instant.now().minus(1, ChronoUnit.DAYS))
+                .updatedAt(Instant.now().minus(1, ChronoUnit.DAYS))
                 .build();
     }
 
@@ -76,8 +77,8 @@ class UpdateUserServiceTest {
                 .hashedPassword("hashedPassword123!")
                 .userProfile(newProfile)
                 .isActive(true)
-                .createdAt(LocalDateTime.now().minusDays(1))
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now().minus(1, ChronoUnit.DAYS))
+                .updatedAt(Instant.now())
                 .build();
     }
 

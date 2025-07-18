@@ -17,7 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,27 +68,39 @@ class UpdateBoardServiceTest {
         );
     }
 
-    private Board createValidBoard(String title, String description, UserId ownerId) {
+    private Board createValidBoard() {
         return Board.builder()
                 .boardId(boardId)
-                .title(title)
-                .description(description)
+                .title("Original Title")
+                .description("Original Description")
                 .isArchived(false)
                 .ownerId(ownerId)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
     }
 
-    private Board createArchivedBoard(String title, String description, UserId ownerId) {
+    private Board createArchivedBoard() {
         return Board.builder()
                 .boardId(boardId)
-                .title(title)
-                .description(description)
+                .title("Archived Board")
+                .description("Archived Description")
                 .isArchived(true)
                 .ownerId(ownerId)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    private Board createBoardWithOtherOwner() {
+        return Board.builder()
+                .boardId(boardId)
+                .title("Other User's Board")
+                .description("Other User's Description")
+                .isArchived(false)
+                .ownerId(otherUserId)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
     }
 
@@ -97,8 +109,10 @@ class UpdateBoardServiceTest {
     void updateBoard_withValidData_shouldReturnUpdatedBoard() {
         // given
         UpdateBoardCommand command = createValidCommand();
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
-        Board updatedBoard = createValidBoard(command.title(), command.description(), ownerId);
+        Board existingBoard = createValidBoard();
+        Board updatedBoard = createValidBoard();
+        updatedBoard.updateTitle(command.title());
+        updatedBoard.updateDescription(command.description());
         
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -132,8 +146,9 @@ class UpdateBoardServiceTest {
                 null,
                 ownerId
         );
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
-        Board updatedBoard = createValidBoard(command.title(), "기존 설명", ownerId);
+        Board existingBoard = createValidBoard();
+        Board updatedBoard = createValidBoard();
+        updatedBoard.updateTitle(command.title());
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -148,7 +163,7 @@ class UpdateBoardServiceTest {
         // then
         assertThat(result.isRight()).isTrue();
         assertThat(result.get().getTitle()).isEqualTo(command.title());
-        assertThat(result.get().getDescription()).isEqualTo("기존 설명");
+        assertThat(result.get().getDescription()).isEqualTo("Original Description");
 
         verify(boardValidator).validate(command);
         verify(boardRepository).findById(boardId);
@@ -165,8 +180,9 @@ class UpdateBoardServiceTest {
                 "업데이트된 설명",
                 ownerId
         );
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
-        Board updatedBoard = createValidBoard("기존 제목", command.description(), ownerId);
+        Board existingBoard = createValidBoard();
+        Board updatedBoard = createValidBoard();
+        updatedBoard.updateDescription(command.description());
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -180,7 +196,7 @@ class UpdateBoardServiceTest {
 
         // then
         assertThat(result.isRight()).isTrue();
-        assertThat(result.get().getTitle()).isEqualTo("기존 제목");
+        assertThat(result.get().getTitle()).isEqualTo("Original Title");
         assertThat(result.get().getDescription()).isEqualTo(command.description());
 
         verify(boardValidator).validate(command);
@@ -250,9 +266,9 @@ class UpdateBoardServiceTest {
                 boardId,
                 "업데이트된 제목",
                 "업데이트된 설명",
-                otherUserId
+                otherUserId  // 다른 사용자가 요청
         );
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
+        Board existingBoard = createValidBoard();  // ownerId가 소유한 보드
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -278,7 +294,7 @@ class UpdateBoardServiceTest {
     void updateBoard_withArchivedBoard_shouldReturnConflictFailure() {
         // given
         UpdateBoardCommand command = createValidCommand();
-        Board archivedBoard = createArchivedBoard("기존 제목", "기존 설명", ownerId);
+        Board archivedBoard = createArchivedBoard();
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -305,11 +321,11 @@ class UpdateBoardServiceTest {
         // given
         UpdateBoardCommand command = new UpdateBoardCommand(
                 boardId,
-                "기존 제목",
-                "기존 설명",
+                "Original Title",  // 기존 보드와 같은 제목
+                "Original Description",  // 기존 보드와 같은 설명
                 ownerId
         );
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
+        Board existingBoard = createValidBoard();
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -338,7 +354,7 @@ class UpdateBoardServiceTest {
                 null,
                 ownerId
         );
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
+        Board existingBoard = createValidBoard();
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -362,7 +378,7 @@ class UpdateBoardServiceTest {
     void updateBoard_withSaveFailure_shouldReturnRepositoryFailure() {
         // given
         UpdateBoardCommand command = createValidCommand();
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
+        Board existingBoard = createValidBoard();
         Failure saveFailure = Failure.ofInternalServerError("데이터베이스 연결 오류");
 
         when(boardValidator.validate(command))
@@ -425,7 +441,7 @@ class UpdateBoardServiceTest {
     void updateBoard_withRuntimeException_shouldReturnInternalServerError() {
         // given
         UpdateBoardCommand command = createValidCommand();
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
+        Board existingBoard = createValidBoard();
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -453,7 +469,7 @@ class UpdateBoardServiceTest {
     void updateBoard_withApplyChangesException_shouldReturnInternalServerError() {
         // given
         UpdateBoardCommand command = createValidCommand();
-        Board existingBoard = spy(createValidBoard("기존 제목", "기존 설명", ownerId));
+        Board existingBoard = spy(createValidBoard());
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -483,8 +499,10 @@ class UpdateBoardServiceTest {
     void updateBoard_withBothTitleAndDescription_shouldUpdateBothFields() {
         // given
         UpdateBoardCommand command = createValidCommand();
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
-        Board updatedBoard = createValidBoard(command.title(), command.description(), ownerId);
+        Board existingBoard = createValidBoard();
+        Board updatedBoard = createValidBoard();
+        updatedBoard.updateTitle(command.title());
+        updatedBoard.updateDescription(command.description());
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -516,8 +534,10 @@ class UpdateBoardServiceTest {
                 "",
                 ownerId
         );
-        Board existingBoard = createValidBoard("기존 제목", "기존 설명", ownerId);
-        Board updatedBoard = createValidBoard("", "", ownerId);
+        Board existingBoard = createValidBoard();
+        Board updatedBoard = createValidBoard();
+        updatedBoard.updateTitle("");
+        updatedBoard.updateDescription("");
 
         when(boardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));

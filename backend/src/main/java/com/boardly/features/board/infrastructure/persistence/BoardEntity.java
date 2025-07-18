@@ -10,7 +10,7 @@ import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.BaseEntity;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "boards")
@@ -41,7 +41,7 @@ public class BoardEntity extends BaseEntity {
     @Builder
     private BoardEntity(String boardId, String title, String description, 
                        boolean isArchived, String ownerId,
-                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+                       Instant createdAt, Instant updatedAt) {
         super(createdAt, updatedAt);
         this.boardId = boardId;
         this.title = title;
@@ -66,7 +66,7 @@ public class BoardEntity extends BaseEntity {
     }
 
     /**
-     * Domain Board 객체에서 생성
+     * Domain Board 객체로부터 Entity 생성
      */
     public static BoardEntity fromDomainEntity(Board board) {
         return BoardEntity.builder()

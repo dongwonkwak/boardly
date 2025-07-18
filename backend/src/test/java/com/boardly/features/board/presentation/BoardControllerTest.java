@@ -4,10 +4,12 @@ import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
 import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
+import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
 import com.boardly.features.board.application.usecase.CreateBoardUseCase;
 import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
 import com.boardly.features.board.application.usecase.ArchiveBoardUseCase;
 import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
+import com.boardly.features.board.application.usecase.ToggleStarBoardUseCase;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
@@ -58,6 +60,9 @@ class BoardControllerTest {
 
     @MockitoBean
     private GetUserBoardsUseCase getUserBoardsUseCase;
+
+    @MockitoBean
+    private ToggleStarBoardUseCase toggleStarBoardUseCase;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -762,6 +767,260 @@ class BoardControllerTest {
                     .contentType(MediaType.TEXT_PLAIN)
                     .content("invalid content type"))
                 .andExpect(status().isUnsupportedMediaType());
+        }
+    }
+
+    @Nested
+    @DisplayName("보드 즐겨찾기 추가 테스트")
+    class StarBoardTests {
+
+        @Test
+        @DisplayName("보드 즐겨찾기 추가 성공")
+        void starBoard_Success() throws Exception {
+            // given
+            Board starredBoard = Board.builder()
+                .boardId(new BoardId(TEST_BOARD_ID))
+                .title("Test Board")
+                .description("Test Description")
+                .isArchived(false)
+                .isStarred(true)
+                .ownerId(new UserId(TEST_USER_ID))
+                .createdAt(Instant.now().minus(2, ChronoUnit.HOURS))
+                .updatedAt(Instant.now())
+                .build();
+
+            given(toggleStarBoardUseCase.starringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.right(starredBoard));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/star")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.boardId").value(TEST_BOARD_ID))
+                .andExpect(jsonPath("$.title").value("Test Board"))
+                .andExpect(jsonPath("$.description").value("Test Description"))
+                .andExpect(jsonPath("$.isArchived").value(false))
+                .andExpect(jsonPath("$.isStarred").value(true))
+                .andExpect(jsonPath("$.ownerId").value(TEST_USER_ID));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 추가 실패 - 인증 없음")
+        void starBoard_Unauthorized() throws Exception {
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/star")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 추가 실패 - 권한 없음")
+        void starBoard_Forbidden() throws Exception {
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/star")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 추가 실패 - 보드 찾을 수 없음")
+        void starBoard_NotFound() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.starringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.NotFoundFailure("보드를 찾을 수 없습니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/star")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("보드를 찾을 수 없습니다"));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 추가 실패 - 즐겨찾기 권한 없음")
+        void starBoard_Forbidden_NotOwner() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.starringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.ForbiddenFailure("보드 즐겨찾기 권한이 없습니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/star")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("보드 즐겨찾기 권한이 없습니다"));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 추가 실패 - 이미 즐겨찾기에 추가된 보드")
+        void starBoard_Conflict_AlreadyStarred() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.starringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.ConflictFailure("이미 즐겨찾기에 추가된 보드입니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/star")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("이미 즐겨찾기에 추가된 보드입니다"));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 추가 실패 - 서버 오류")
+        void starBoard_InternalServerError() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.starringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.InternalServerError("서버 오류가 발생했습니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/star")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("서버 오류가 발생했습니다"));
+        }
+    }
+
+    @Nested
+    @DisplayName("보드 즐겨찾기 제거 테스트")
+    class UnstarBoardTests {
+
+        @Test
+        @DisplayName("보드 즐겨찾기 제거 성공")
+        void unstarBoard_Success() throws Exception {
+            // given
+            Board unstarredBoard = Board.builder()
+                .boardId(new BoardId(TEST_BOARD_ID))
+                .title("Test Board")
+                .description("Test Description")
+                .isArchived(false)
+                .isStarred(false)
+                .ownerId(new UserId(TEST_USER_ID))
+                .createdAt(Instant.now().minus(2, ChronoUnit.HOURS))
+                .updatedAt(Instant.now())
+                .build();
+
+            given(toggleStarBoardUseCase.unstarringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.right(unstarredBoard));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/unstar")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.boardId").value(TEST_BOARD_ID))
+                .andExpect(jsonPath("$.title").value("Test Board"))
+                .andExpect(jsonPath("$.description").value("Test Description"))
+                .andExpect(jsonPath("$.isArchived").value(false))
+                .andExpect(jsonPath("$.isStarred").value(false))
+                .andExpect(jsonPath("$.ownerId").value(TEST_USER_ID));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 제거 실패 - 인증 없음")
+        void unstarBoard_Unauthorized() throws Exception {
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/unstar")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 제거 실패 - 권한 없음")
+        void unstarBoard_Forbidden() throws Exception {
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/unstar")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "read openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 제거 실패 - 보드 찾을 수 없음")
+        void unstarBoard_NotFound() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.unstarringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.NotFoundFailure("보드를 찾을 수 없습니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/unstar")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("보드를 찾을 수 없습니다"));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 제거 실패 - 즐겨찾기 권한 없음")
+        void unstarBoard_Forbidden_NotOwner() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.unstarringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.ForbiddenFailure("보드 즐겨찾기 권한이 없습니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/unstar")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("보드 즐겨찾기 권한이 없습니다"));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 제거 실패 - 즐겨찾기에 없는 보드")
+        void unstarBoard_Conflict_NotStarred() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.unstarringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.ConflictFailure("즐겨찾기에 없는 보드입니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/unstar")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("즐겨찾기에 없는 보드입니다"));
+        }
+
+        @Test
+        @DisplayName("보드 즐겨찾기 제거 실패 - 서버 오류")
+        void unstarBoard_InternalServerError() throws Exception {
+            // given
+            given(toggleStarBoardUseCase.unstarringBoard(any(ToggleStarBoardCommand.class)))
+                .willReturn(Either.left(new Failure.InternalServerError("서버 오류가 발생했습니다")));
+
+            // when & then
+            mockMvc.perform(post(Path.BOARDS + "/" + TEST_BOARD_ID + "/unstar")
+                    .with(csrf())
+                    .with(jwt().jwt(jwt -> jwt.subject(TEST_USER_ID).claim("scope", "write openid")))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.message").value("서버 오류가 발생했습니다"));
         }
     }
 } 

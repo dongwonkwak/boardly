@@ -18,10 +18,12 @@ import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
 import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
+import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
 import com.boardly.features.board.application.usecase.CreateBoardUseCase;
 import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
 import com.boardly.features.board.application.usecase.ArchiveBoardUseCase;
 import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
+import com.boardly.features.board.application.usecase.ToggleStarBoardUseCase;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
@@ -64,6 +66,7 @@ public class BoardController {
   private final UpdateBoardUseCase updateBoardUseCase;
   private final ArchiveBoardUseCase archiveBoardUseCase;
   private final GetUserBoardsUseCase getUserBoardsUseCase;
+  private final ToggleStarBoardUseCase toggleStarBoardUseCase;
 
   @Operation(
     summary = "내 보드 목록 조회",
@@ -286,6 +289,94 @@ public class BoardController {
       ApiFailureHandler::handleFailure,
       board -> {
         log.info("보드 언아카이브 성공: boardId={}", board.getBoardId().getId());
+        return ResponseEntity.ok(BoardResponse.from(board));
+      }
+    );
+  }
+
+  @Operation(
+    summary = "보드 즐겨찾기 추가",
+    description = "보드를 즐겨찾기에 추가합니다.",
+    tags = {TAGS},
+    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "보드 즐겨찾기 추가 성공",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+    @ApiResponse(responseCode = "403", description = "보드 즐겨찾기 권한 없음",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "409", description = "이미 즐겨찾기에 추가된 보드",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "500", description = "서버 오류",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
+  @PostMapping("/{boardId}/star")
+  public ResponseEntity<?> starBoard(
+    @Parameter(description = "즐겨찾기에 추가할 보드 ID", required = true)
+    @PathVariable String boardId,
+    HttpServletRequest httpRequest,
+    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+    
+    String userId = jwt.getSubject();
+    log.info("보드 즐겨찾기 추가 요청: userId={}, boardId={}", userId, boardId);
+    
+    ToggleStarBoardCommand command = ToggleStarBoardCommand.of(
+      new BoardId(boardId),
+      new UserId(userId)
+    );
+    
+    Either<Failure, Board> result = toggleStarBoardUseCase.starringBoard(command);
+    
+    return result.fold(
+      ApiFailureHandler::handleFailure,
+      board -> {
+        log.info("보드 즐겨찾기 추가 성공: boardId={}", board.getBoardId().getId());
+        return ResponseEntity.ok(BoardResponse.from(board));
+      }
+    );
+  }
+
+  @Operation(
+    summary = "보드 즐겨찾기 제거",
+    description = "보드를 즐겨찾기에서 제거합니다.",
+    tags = {TAGS},
+    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "보드 즐겨찾기 제거 성공",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+    @ApiResponse(responseCode = "403", description = "보드 즐겨찾기 권한 없음",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "409", description = "즐겨찾기에 없는 보드",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "500", description = "서버 오류",
+      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
+  @PostMapping("/{boardId}/unstar")
+  public ResponseEntity<?> unstarBoard(
+    @Parameter(description = "즐겨찾기에서 제거할 보드 ID", required = true)
+    @PathVariable String boardId,
+    HttpServletRequest httpRequest,
+    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+    
+    String userId = jwt.getSubject();
+    log.info("보드 즐겨찾기 제거 요청: userId={}, boardId={}", userId, boardId);
+    
+    ToggleStarBoardCommand command = ToggleStarBoardCommand.of(
+      new BoardId(boardId),
+      new UserId(userId)
+    );
+    
+    Either<Failure, Board> result = toggleStarBoardUseCase.unstarringBoard(command);
+    
+    return result.fold(
+      ApiFailureHandler::handleFailure,
+      board -> {
+        log.info("보드 즐겨찾기 제거 성공: boardId={}", board.getBoardId().getId());
         return ResponseEntity.ok(BoardResponse.from(board));
       }
     );

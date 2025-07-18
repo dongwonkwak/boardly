@@ -400,6 +400,87 @@
         ]
       }
     },
+    "/api/boards/{boardId}/unstar": {
+      "post": {
+        "tags": [
+          "Board"
+        ],
+        "summary": "보드 즐겨찾기 제거",
+        "description": "보드를 즐겨찾기에서 제거합니다.",
+        "operationId": "unstarBoard",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "즐겨찾기에서 제거할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "보드 즐겨찾기 제거 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "보드 즐겨찾기 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "즐겨찾기에 없는 보드",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
     "/api/boards/{boardId}/unarchive": {
       "post": {
         "tags": [
@@ -452,6 +533,87 @@
           },
           "409": {
             "description": "이미 활성화된 보드",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/boards/{boardId}/star": {
+      "post": {
+        "tags": [
+          "Board"
+        ],
+        "summary": "보드 즐겨찾기 추가",
+        "description": "보드를 즐겨찾기에 추가합니다.",
+        "operationId": "starBoard",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "즐겨찾기에 추가할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "보드 즐겨찾기 추가 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "보드 즐겨찾기 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "이미 즐겨찾기에 추가된 보드",
             "content": {
               "application/json": {
                 "schema": {

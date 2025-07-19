@@ -1,7 +1,7 @@
 package com.boardly.features.boardlist.application.validation;
 
 import com.boardly.features.boardlist.application.port.input.GetBoardListsCommand;
-import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
@@ -39,7 +39,7 @@ class GetBoardListsValidatorTest {
             .thenAnswer(invocation -> {
                 String key = invocation.getArgument(0);
                 return switch (key) {
-                    case "validation.boardlist.listId.required" -> "List ID is required";
+                    case "validation.boardlist.boardId.required" -> "Board ID is required";
                     case "validation.boardlist.userId.required" -> "User ID is required";
                     default -> key;
                 };
@@ -54,7 +54,7 @@ class GetBoardListsValidatorTest {
     void validate_ValidCommand_ShouldPass() {
         // given
         GetBoardListsCommand command = new GetBoardListsCommand(
-                new ListId("list-123"),
+                new BoardId("board-123"),
                 new UserId("user-123")
         );
 
@@ -66,8 +66,8 @@ class GetBoardListsValidatorTest {
     }
 
     @Test
-    @DisplayName("listId가 null인 경우 검증에 실패해야 한다")
-    void validate_NullListId_ShouldFail() {
+    @DisplayName("boardId가 null인 경우 검증에 실패해야 한다")
+    void validate_NullBoardId_ShouldFail() {
         // given
         GetBoardListsCommand command = new GetBoardListsCommand(
                 null,
@@ -80,7 +80,7 @@ class GetBoardListsValidatorTest {
         // then
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
-        assertThat(result.getErrors().get(0).field()).isEqualTo("listId");
+        assertThat(result.getErrors().get(0).field()).isEqualTo("boardId");
     }
 
     @Test
@@ -88,7 +88,7 @@ class GetBoardListsValidatorTest {
     void validate_NullUserId_ShouldFail() {
         // given
         GetBoardListsCommand command = new GetBoardListsCommand(
-                new ListId("list-123"),
+                new BoardId("board-123"),
                 null
         );
 
@@ -102,7 +102,7 @@ class GetBoardListsValidatorTest {
     }
 
     @Test
-    @DisplayName("listId와 userId가 모두 null인 경우 모든 오류가 반환되어야 한다")
+    @DisplayName("boardId와 userId가 모두 null인 경우 모든 오류가 반환되어야 한다")
     void validate_BothNullFields_ShouldReturnAllErrors() {
         // given
         GetBoardListsCommand command = new GetBoardListsCommand(
@@ -118,17 +118,17 @@ class GetBoardListsValidatorTest {
         assertThat(result.getErrors()).hasSize(2);
         
         var errors = result.getErrors();
-        assertThat(errors).anyMatch(error -> error.field().equals("listId"));
+        assertThat(errors).anyMatch(error -> error.field().equals("boardId"));
         assertThat(errors).anyMatch(error -> error.field().equals("userId"));
     }
 
     @Test
-    @DisplayName("유효한 ListId와 UserId 객체로 검증이 성공해야 한다")
+    @DisplayName("유효한 BoardId와 UserId 객체로 검증이 성공해야 한다")
     void validate_ValidObjects_ShouldPass() {
         // given
-        ListId listId = new ListId("valid-list-id");
+        BoardId boardId = new BoardId("valid-board-id");
         UserId userId = new UserId("valid-user-id");
-        GetBoardListsCommand command = new GetBoardListsCommand(listId, userId);
+        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
 
         // when
         ValidationResult<GetBoardListsCommand> result = validator.validate(command);
@@ -141,9 +141,9 @@ class GetBoardListsValidatorTest {
     @DisplayName("빈 문자열 ID로 생성된 객체들도 유효해야 한다")
     void validate_EmptyStringIds_ShouldPass() {
         // given
-        ListId listId = new ListId("");
+        BoardId boardId = new BoardId("");
         UserId userId = new UserId("");
-        GetBoardListsCommand command = new GetBoardListsCommand(listId, userId);
+        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
 
         // when
         ValidationResult<GetBoardListsCommand> result = validator.validate(command);
@@ -156,9 +156,9 @@ class GetBoardListsValidatorTest {
     @DisplayName("특수문자가 포함된 ID로 생성된 객체들도 유효해야 한다")
     void validate_SpecialCharacterIds_ShouldPass() {
         // given
-        ListId listId = new ListId("list-123_456@test");
+        BoardId boardId = new BoardId("board-123_456@test");
         UserId userId = new UserId("user-123_456@test");
-        GetBoardListsCommand command = new GetBoardListsCommand(listId, userId);
+        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
 
         // when
         ValidationResult<GetBoardListsCommand> result = validator.validate(command);
@@ -172,9 +172,9 @@ class GetBoardListsValidatorTest {
     void validate_LongIds_ShouldPass() {
         // given
         String longId = "a".repeat(1000);
-        ListId listId = new ListId(longId);
+        BoardId boardId = new BoardId(longId);
         UserId userId = new UserId(longId);
-        GetBoardListsCommand command = new GetBoardListsCommand(listId, userId);
+        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
 
         // when
         ValidationResult<GetBoardListsCommand> result = validator.validate(command);
@@ -187,9 +187,9 @@ class GetBoardListsValidatorTest {
     @DisplayName("한글이 포함된 ID로 생성된 객체들도 유효해야 한다")
     void validate_KoreanIds_ShouldPass() {
         // given
-        ListId listId = new ListId("리스트-123");
+        BoardId boardId = new BoardId("보드-123");
         UserId userId = new UserId("사용자-123");
-        GetBoardListsCommand command = new GetBoardListsCommand(listId, userId);
+        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
 
         // when
         ValidationResult<GetBoardListsCommand> result = validator.validate(command);
@@ -202,9 +202,9 @@ class GetBoardListsValidatorTest {
     @DisplayName("UUID 형태의 ID로 생성된 객체들도 유효해야 한다")
     void validate_UuidIds_ShouldPass() {
         // given
-        ListId listId = new ListId("550e8400-e29b-41d4-a716-446655440000");
+        BoardId boardId = new BoardId("550e8400-e29b-41d4-a716-446655440000");
         UserId userId = new UserId("550e8400-e29b-41d4-a716-446655440001");
-        GetBoardListsCommand command = new GetBoardListsCommand(listId, userId);
+        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
 
         // when
         ValidationResult<GetBoardListsCommand> result = validator.validate(command);

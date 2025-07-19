@@ -19,17 +19,17 @@ public class GetBoardListsValidator {
     
     private Validator<GetBoardListsCommand> getValidator() {
         return Validator.combine(
-            listIdValidator(),
+            boardIdValidator(),
             userIdValidator()
         );
     }
     
-    private Validator<GetBoardListsCommand> listIdValidator() {
+    private Validator<GetBoardListsCommand> boardIdValidator() {
         return Validator.fieldWithMessage(
-            GetBoardListsCommand::listId,
-            listId -> listId != null,
-            "listId",
-            "validation.boardlist.listId.required",
+            GetBoardListsCommand::boardId,
+            boardId -> boardId != null,
+            "boardId",
+            "validation.boardlist.boardId.required",
             messageResolver
         );
     }

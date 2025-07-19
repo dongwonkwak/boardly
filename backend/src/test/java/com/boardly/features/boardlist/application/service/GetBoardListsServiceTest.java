@@ -7,7 +7,6 @@ import com.boardly.features.boardlist.application.port.input.GetBoardListsComman
 import com.boardly.features.boardlist.application.validation.GetBoardListsValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
-import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationResult;
@@ -53,7 +52,7 @@ class GetBoardListsServiceTest {
 
     private GetBoardListsCommand createValidCommand() {
         return new GetBoardListsCommand(
-                new ListId("list-123"),
+                new BoardId("board-123"),
                 new UserId("user-123")
         );
     }
@@ -70,9 +69,9 @@ class GetBoardListsServiceTest {
                 .build();
     }
 
-    private BoardList createValidBoardList(ListId listId, BoardId boardId, int position) {
+    private BoardList createValidBoardList(BoardId boardId, int position) {
         return BoardList.builder()
-                .listId(listId)
+                .listId(new com.boardly.features.boardlist.domain.model.ListId("list-" + position))
                 .title("테스트 리스트 " + position)
                 .description("테스트 리스트 설명 " + position)
                 .position(position)
@@ -88,20 +87,17 @@ class GetBoardListsServiceTest {
     void getBoardLists_withValidData_shouldReturnBoardLists() {
         // given
         GetBoardListsCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
+        BoardId boardId = command.boardId();
         Board board = createValidBoard(boardId, command.userId());
-        BoardList list = createValidBoardList(command.listId(), boardId, 1);
         
         List<BoardList> expectedLists = List.of(
-                createValidBoardList(new ListId("list-1"), boardId, 0),
-                createValidBoardList(new ListId("list-2"), boardId, 1),
-                createValidBoardList(new ListId("list-3"), boardId, 2)
+                createValidBoardList(boardId, 0),
+                createValidBoardList(boardId, 1),
+                createValidBoardList(boardId, 2)
         );
 
         when(getBoardListsValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(list));
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
         when(boardListRepository.findByBoardIdOrderByPosition(boardId))
@@ -116,7 +112,6 @@ class GetBoardListsServiceTest {
         assertThat(result.get()).isEqualTo(expectedLists);
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
         verify(boardRepository).findById(boardId);
         verify(boardListRepository).findByBoardIdOrderByPosition(boardId);
     }
@@ -126,14 +121,11 @@ class GetBoardListsServiceTest {
     void getBoardLists_withEmptyList_shouldReturnEmptyList() {
         // given
         GetBoardListsCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
+        BoardId boardId = command.boardId();
         Board board = createValidBoard(boardId, command.userId());
-        BoardList list = createValidBoardList(command.listId(), boardId, 1);
 
         when(getBoardListsValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(list));
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
         when(boardListRepository.findByBoardIdOrderByPosition(boardId))
@@ -147,7 +139,6 @@ class GetBoardListsServiceTest {
         assertThat(result.get()).isEmpty();
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
         verify(boardRepository).findById(boardId);
         verify(boardListRepository).findByBoardIdOrderByPosition(boardId);
     }
@@ -158,9 +149,9 @@ class GetBoardListsServiceTest {
         // given
         GetBoardListsCommand command = createValidCommand();
         Failure.FieldViolation violation = Failure.FieldViolation.builder()
-                .field("listId")
-                .message("validation.boardlist.listId.required")
-                .rejectedValue(command.listId())
+                .field("boardId")
+                .message("validation.boardlist.boardId.required")
+                .rejectedValue(command.boardId())
                 .build();
         ValidationResult<GetBoardListsCommand> invalidResult = ValidationResult.invalid(violation);
 
@@ -177,31 +168,6 @@ class GetBoardListsServiceTest {
         assertThat(validationFailure.message()).contains("INVALID_INPUT");
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository, never()).findById(any(ListId.class));
-        verify(boardListRepository, never()).findByBoardIdOrderByPosition(any(BoardId.class));
-    }
-
-    @Test
-    @DisplayName("리스트를 찾을 수 없는 경우 NOT_FOUND 오류를 반환해야 한다")
-    void getBoardLists_withNonExistentList_shouldReturnNotFoundFailure() {
-        // given
-        GetBoardListsCommand command = createValidCommand();
-
-        when(getBoardListsValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.empty());
-
-        // when
-        Either<Failure, List<BoardList>> result = getBoardListsService.getBoardLists(command);
-
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.NotFoundFailure.class);
-        assertThat(result.getLeft().message()).isEqualTo("LIST_NOT_FOUND");
-
-        verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
         verify(boardRepository, never()).findById(any(BoardId.class));
         verify(boardListRepository, never()).findByBoardIdOrderByPosition(any(BoardId.class));
     }
@@ -211,13 +177,10 @@ class GetBoardListsServiceTest {
     void getBoardLists_withNonExistentBoard_shouldReturnNotFoundFailure() {
         // given
         GetBoardListsCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        BoardList list = createValidBoardList(command.listId(), boardId, 1);
+        BoardId boardId = command.boardId();
 
         when(getBoardListsValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(list));
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.empty());
 
@@ -230,7 +193,6 @@ class GetBoardListsServiceTest {
         assertThat(result.getLeft().message()).isEqualTo("BOARD_NOT_FOUND");
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
         verify(boardRepository).findById(boardId);
         verify(boardListRepository, never()).findByBoardIdOrderByPosition(any(BoardId.class));
     }
@@ -240,15 +202,12 @@ class GetBoardListsServiceTest {
     void getBoardLists_withUnauthorizedUser_shouldReturnForbiddenFailure() {
         // given
         GetBoardListsCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
+        BoardId boardId = command.boardId();
         UserId differentUserId = new UserId("different-user");
         Board board = createValidBoard(boardId, differentUserId);
-        BoardList list = createValidBoardList(command.listId(), boardId, 1);
 
         when(getBoardListsValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(list));
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
 
@@ -261,7 +220,6 @@ class GetBoardListsServiceTest {
         assertThat(result.getLeft().message()).isEqualTo("UNAUTHORIZED_ACCESS");
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
         verify(boardRepository).findById(boardId);
         verify(boardListRepository, never()).findByBoardIdOrderByPosition(any(BoardId.class));
     }
@@ -271,14 +229,11 @@ class GetBoardListsServiceTest {
     void getBoardLists_withRepositoryException_shouldReturnInternalServerError() {
         // given
         GetBoardListsCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
+        BoardId boardId = command.boardId();
         Board board = createValidBoard(boardId, command.userId());
-        BoardList list = createValidBoardList(command.listId(), boardId, 1);
 
         when(getBoardListsValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(list));
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
         when(boardListRepository.findByBoardIdOrderByPosition(boardId))
@@ -293,7 +248,6 @@ class GetBoardListsServiceTest {
         assertThat(result.getLeft().message()).isEqualTo("데이터베이스 오류");
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
         verify(boardRepository).findById(boardId);
         verify(boardListRepository).findByBoardIdOrderByPosition(boardId);
     }
@@ -303,10 +257,10 @@ class GetBoardListsServiceTest {
     void getBoardLists_withMultipleValidationErrors_shouldReturnAllErrors() {
         // given
         GetBoardListsCommand command = createValidCommand();
-        Failure.FieldViolation listIdViolation = Failure.FieldViolation.builder()
-                .field("listId")
-                .message("validation.boardlist.listId.required")
-                .rejectedValue(command.listId())
+        Failure.FieldViolation boardIdViolation = Failure.FieldViolation.builder()
+                .field("boardId")
+                .message("validation.boardlist.boardId.required")
+                .rejectedValue(command.boardId())
                 .build();
         Failure.FieldViolation userIdViolation = Failure.FieldViolation.builder()
                 .field("userId")
@@ -314,7 +268,7 @@ class GetBoardListsServiceTest {
                 .rejectedValue(command.userId())
                 .build();
         ValidationResult<GetBoardListsCommand> invalidResult = ValidationResult.invalid(
-                io.vavr.collection.List.of(listIdViolation, userIdViolation));
+                io.vavr.collection.List.of(boardIdViolation, userIdViolation));
 
         when(getBoardListsValidator.validate(command))
                 .thenReturn(invalidResult);
@@ -329,7 +283,7 @@ class GetBoardListsServiceTest {
         assertThat(validationFailure.violations()).hasSize(2);
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository, never()).findById(any(ListId.class));
+        verify(boardRepository, never()).findById(any(BoardId.class));
         verify(boardListRepository, never()).findByBoardIdOrderByPosition(any(BoardId.class));
     }
 
@@ -338,21 +292,18 @@ class GetBoardListsServiceTest {
     void getBoardLists_shouldReturnSortedLists() {
         // given
         GetBoardListsCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
+        BoardId boardId = command.boardId();
         Board board = createValidBoard(boardId, command.userId());
-        BoardList list = createValidBoardList(command.listId(), boardId, 1);
         
         // position 순서대로 정렬된 리스트들
         List<BoardList> expectedLists = List.of(
-                createValidBoardList(new ListId("list-1"), boardId, 0),
-                createValidBoardList(new ListId("list-2"), boardId, 1),
-                createValidBoardList(new ListId("list-3"), boardId, 2)
+                createValidBoardList(boardId, 0),
+                createValidBoardList(boardId, 1),
+                createValidBoardList(boardId, 2)
         );
 
         when(getBoardListsValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(list));
         when(boardRepository.findById(boardId))
                 .thenReturn(Optional.of(board));
         when(boardListRepository.findByBoardIdOrderByPosition(boardId))
@@ -371,7 +322,6 @@ class GetBoardListsServiceTest {
         }
 
         verify(getBoardListsValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
         verify(boardRepository).findById(boardId);
         verify(boardListRepository).findByBoardIdOrderByPosition(boardId);
     }

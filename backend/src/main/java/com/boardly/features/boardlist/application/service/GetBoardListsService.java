@@ -41,48 +41,39 @@ public class GetBoardListsService implements GetBoardListsUseCase {
     // 1. 입력 데이터 검증
     ValidationResult<GetBoardListsCommand> validationResult = getBoardListsValidator.validate(command);
     if (validationResult.isInvalid()) {
-      log.warn("보드 리스트 조회 검증 실패: listId={}, violations={}", 
-                    command.listId(), validationResult.getErrorsAsCollection());
+      log.warn("보드 리스트 조회 검증 실패: boardId={}, violations={}", 
+                    command.boardId(), validationResult.getErrorsAsCollection());
       return Either.left(Failure.ofValidation(
         "INVALID_INPUT", validationResult.getErrorsAsCollection()));
     }
 
-    // 2. 리스트 존재 확인
-    var listResult = boardListRepository.findById(command.listId());
-    if (listResult.isEmpty()) {
-      log.warn("리스트를 찾을 수 없음: listId={}", command.listId().getId());
-      return Either.left(Failure.ofNotFound("LIST_NOT_FOUND"));
-    }
-
-    var list = listResult.get();
-
-    // 3. 보드 존재 확인
-    var boardResult = boardRepository.findById(list.getBoardId());
+    // 2. 보드 존재 확인
+    var boardResult = boardRepository.findById(command.boardId());
     if (boardResult.isEmpty()) {
-      log.warn("보드를 찾을 수 없음: boardId={}", list.getBoardId().getId());
+      log.warn("보드를 찾을 수 없음: boardId={}", command.boardId().getId());
       return Either.left(Failure.ofNotFound("BOARD_NOT_FOUND"));
     }
 
     var board = boardResult.get();
 
-    // 4. 권한 확인 (보드 소유자만 조회 가능)
+    // 3. 권한 확인 (보드 소유자만 조회 가능)
     if (!board.getOwnerId().equals(command.userId())) {
-      log.warn("리스트 조회 권한 없음: listId={}, userId={}, boardOwnerId={}", 
-               command.listId().getId(), command.userId().getId(), board.getOwnerId().getId());
+      log.warn("보드 리스트 조회 권한 없음: boardId={}, userId={}, boardOwnerId={}", 
+               command.boardId().getId(), command.userId().getId(), board.getOwnerId().getId());
       return Either.left(Failure.ofForbidden("UNAUTHORIZED_ACCESS"));
     }
 
-    // 5. 보드의 모든 리스트 조회
+    // 4. 보드의 모든 리스트 조회
     try {
-      List<BoardList> boardLists = boardListRepository.findByBoardIdOrderByPosition(list.getBoardId());
+      List<BoardList> boardLists = boardListRepository.findByBoardIdOrderByPosition(command.boardId());
       
       log.info("보드 리스트 조회 완료: boardId={}, 리스트 개수={}", 
-               list.getBoardId().getId(), boardLists.size());
+               command.boardId().getId(), boardLists.size());
       return Either.right(boardLists);
 
     } catch (Exception e) {
-      log.error("보드 리스트 조회 중 예외 발생: listId={}, error={}", 
-                command.listId().getId(), e.getMessage(), e);
+      log.error("보드 리스트 조회 중 예외 발생: boardId={}, error={}", 
+                command.boardId().getId(), e.getMessage(), e);
       return Either.left(Failure.ofInternalServerError(e.getMessage()));
     }
   }

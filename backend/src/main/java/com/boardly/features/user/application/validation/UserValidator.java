@@ -1,13 +1,13 @@
 package com.boardly.features.user.application.validation;
 
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import com.boardly.shared.application.validation.ValidationResult;
 import org.springframework.stereotype.Component;
 
 import com.boardly.features.user.application.port.input.RegisterUserCommand;
 import com.boardly.features.user.application.port.input.UpdateUserCommand;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.Validator;
 
@@ -17,22 +17,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserValidator {
   private final ValidationMessageResolver messageResolver;
-
-  // === 패턴 정의 ===
-    
-  private static final Pattern EMAIL_PATTERN = Pattern.compile(
-    "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-  );
-
-  // 영문 대소문자, 숫자, 특수문자 조합 8자 이상 20자 이하
-  private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-    "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$"
-  );
-
-  // 한글 영문만 허용
-  private static final Pattern NAME_PATTERN = Pattern.compile(
-    "^[a-zA-Z가-힣]+$"
-  );
 
   /**
    * 사용자 등록 검증
@@ -83,7 +67,7 @@ public class UserValidator {
             // 이메일 형식 검증
             Validator.fieldWithMessage(
                     RegisterUserCommand::email,
-                    email -> EMAIL_PATTERN.matcher(email).matches(),
+                    email -> CommonValidationRules.EMAIL_PATTERN.matcher(email).matches(),
                     "email",
                     "validation.user.email.invalid",
                     messageResolver
@@ -91,7 +75,7 @@ public class UserValidator {
             // 길이 검증
             Validator.fieldWithMessage(
                     RegisterUserCommand::email,
-                    email -> email.length() <= 100,
+                    email -> email.length() <= CommonValidationRules.EMAIL_MAX_LENGTH,
                     "email",
                     "validation.user.email.length",
                     messageResolver
@@ -115,7 +99,7 @@ public class UserValidator {
             // 최소 길이 검증
             Validator.fieldWithMessage(
                     RegisterUserCommand::password,
-                    password -> password == null || password.length() >= 8,
+                    password -> password == null || password.length() >= CommonValidationRules.PASSWORD_MIN_LENGTH,
                     "password",
                     "validation.user.password.min.length",
                     messageResolver
@@ -124,7 +108,7 @@ public class UserValidator {
             // 최대 길이 검증
             Validator.fieldWithMessage(
                     RegisterUserCommand::password,
-                    password -> password == null || password.length() <= 20,
+                    password -> password == null || password.length() <= CommonValidationRules.PASSWORD_MAX_LENGTH,
                     "password",
                     "validation.user.password.max.length",
                     messageResolver
@@ -133,7 +117,7 @@ public class UserValidator {
             // 패턴 검증
             Validator.fieldWithMessage(
                     RegisterUserCommand::password,
-                    password -> password == null || PASSWORD_PATTERN.matcher(password).matches(),
+                    password -> password == null || CommonValidationRules.PASSWORD_PATTERN.matcher(password).matches(),
                     "password",
                     "validation.user.password.pattern",
                     messageResolver
@@ -157,7 +141,7 @@ public class UserValidator {
             // 길이 검증
             Validator.fieldWithMessage(
                     getter,
-                    firstName -> firstName == null || (!firstName.isEmpty() && firstName.length() <= 50),
+                    firstName -> firstName == null || (!firstName.isEmpty() && firstName.length() <= CommonValidationRules.NAME_MAX_LENGTH),
                     "firstName",
                     "validation.common.length.range",
                     messageResolver,
@@ -167,7 +151,7 @@ public class UserValidator {
             // 패턴 검증 (한글/영문만)
             Validator.fieldWithMessage(
                     getter,
-                    firstName -> firstName == null || NAME_PATTERN.matcher(firstName).matches(),
+                    firstName -> firstName == null || CommonValidationRules.NAME_PATTERN.matcher(firstName).matches(),
                     "firstName",
                     "validation.user.firstName.pattern",
                     messageResolver
@@ -191,7 +175,7 @@ public class UserValidator {
             // 길이 검증
             Validator.fieldWithMessage(
                     getter,
-                    lastName -> lastName == null || (!lastName.isEmpty() && lastName.length() <= 50),
+                    lastName -> lastName == null || (!lastName.isEmpty() && lastName.length() <= CommonValidationRules.NAME_MAX_LENGTH),
                     "lastName",
                     "validation.common.length.range",
                     messageResolver,
@@ -201,7 +185,7 @@ public class UserValidator {
             // 패턴 검증 (한글/영문만)
             Validator.fieldWithMessage(
                     getter,
-                    lastName -> lastName == null || NAME_PATTERN.matcher(lastName).matches(),
+                    lastName -> lastName == null || CommonValidationRules.NAME_PATTERN.matcher(lastName).matches(),
                     "lastName",
                     "validation.user.lastName.pattern",
                     messageResolver

@@ -1,10 +1,10 @@
 package com.boardly.features.board.application.validation;
 
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.Validator;
 
@@ -12,7 +12,6 @@ import com.boardly.shared.application.validation.Validator;
 public final class BoardValidationRules {
   public static final int TITLE_MAX_LENGTH = 50;
   public static final int DESCRIPTION_MAX_LENGTH = 500;
-  public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
 
   private BoardValidationRules() {
   }
@@ -37,7 +36,7 @@ public final class BoardValidationRules {
       ),
       Validator.fieldWithMessage(
         titleExtractor,
-        title -> title == null || isTitleValid(title),
+        title -> title == null || !CommonValidationRules.HTML_TAG_PATTERN.matcher(title).find(),
         "title",
         "validation.board.title.invalid",
         messageResolver
@@ -56,7 +55,7 @@ public final class BoardValidationRules {
       ),
       Validator.fieldWithMessage(
         descriptionExtractor,
-        description -> description == null || !isHtmlTag(description),
+        description -> description == null || !CommonValidationRules.HTML_TAG_PATTERN.matcher(description).find(),
         "description",
         "validation.board.description.invalid",
         messageResolver
@@ -82,21 +81,5 @@ public final class BoardValidationRules {
       "validation.user.id.required",
       messageResolver
     );
-  }
-
-  private static boolean isHtmlTag(String text) {
-    if (text == null || text.trim().isEmpty()) {
-      return false;
-    }
-
-    return HTML_TAG_PATTERN.matcher(text).find();
-  }
-
-  private static boolean isTitleValid(String title) {
-    if (isHtmlTag(title)) {
-      return false;
-    }
-
-    return title.matches("^[a-zA-Z0-9가-힣\\s\\-_.,!?()]*$");
   }
 }

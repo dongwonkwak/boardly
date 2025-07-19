@@ -28,16 +28,16 @@ public record CreateBoardListCommand(
   ListColor color
 ) {
   /**
-     * 색상이 지정되지 않은 경우 기본 색상을 사용하는 생성자
-     */
-    public CreateBoardListCommand(BoardId boardId, UserId userId, String title, String description) {
-      this(boardId, userId, trim(title), description, ListColor.defaultColor());
+   * 색상이 지정되지 않은 경우 기본 색상을 사용하는 생성자
+   */
+  public CreateBoardListCommand(BoardId boardId, UserId userId, String title, String description) {
+    this(boardId, userId, trim(title), description, ListColor.defaultColor());
   }
   
   /**
    * 설명과 색상이 지정되지 않은 경우 기본값을 사용하는 생성자
    */
   public CreateBoardListCommand(BoardId boardId, UserId userId, String title) {
-      this(boardId, userId, trim(title), null, ListColor.defaultColor());
+    this(boardId, userId, trim(title), null, ListColor.defaultColor());
   }
 } 

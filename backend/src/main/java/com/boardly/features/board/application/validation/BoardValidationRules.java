@@ -12,7 +12,7 @@ import com.boardly.shared.application.validation.Validator;
 public final class BoardValidationRules {
   public static final int TITLE_MAX_LENGTH = 50;
   public static final int DESCRIPTION_MAX_LENGTH = 500;
-  public static final Pattern HTML_TAG_PATTERN = Pattern.compile("^<[^>]*>$");
+  public static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
 
   private BoardValidationRules() {
   }
@@ -89,7 +89,7 @@ public final class BoardValidationRules {
       return false;
     }
 
-    return HTML_TAG_PATTERN.matcher(text).matches();
+    return HTML_TAG_PATTERN.matcher(text).find();
   }
 
   private static boolean isTitleValid(String title) {

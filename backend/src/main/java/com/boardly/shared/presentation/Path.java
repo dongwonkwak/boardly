@@ -8,4 +8,14 @@ public final class Path {
   public static final String PREFIX = "/api";
   public static final String USERS = PREFIX + "/users";
   public static final String BOARDS = PREFIX + "/boards";
+
+  /*
+   * Board List
+   */
+  public static final String BOARD_LISTS = PREFIX + "/board-lists";
+
+  /**
+   * 특정 보드의 리스트 목록 조회 경로
+   */
+  public static final String BOARD_LISTS_BY_BOARD = BOARD_LISTS + "/board/{boardId}";
 }

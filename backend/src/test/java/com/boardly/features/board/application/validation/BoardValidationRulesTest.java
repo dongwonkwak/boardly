@@ -2,6 +2,7 @@ package com.boardly.features.board.application.validation;
 
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.application.validation.Validator;
@@ -32,6 +33,7 @@ class BoardValidationRulesTest {
     private MessageSource messageSource;
 
     private ValidationMessageResolver messageResolver;
+    private CommonValidationRules commonValidationRules;
 
     @BeforeEach
     void setUp() {
@@ -42,18 +44,20 @@ class BoardValidationRulesTest {
             .thenAnswer(invocation -> {
                 String key = invocation.getArgument(0);
                 return switch (key) {
-                    case "validation.board.title.min.length" -> "Board title must be at least 1 character long";
-                    case "validation.board.title.max.length" -> "Board title must be no more than 50 characters long";
-                    case "validation.board.title.invalid" -> "Board title cannot contain HTML tags";
-                    case "validation.board.description.max.length" -> "Board description must be no more than 500 characters long";
-                    case "validation.board.description.invalid" -> "Board description cannot contain HTML tags";
-                    case "validation.board.id.required" -> "Board ID is required";
-                    case "validation.user.id.required" -> "User ID is required";
+                    case "validation.title.required" -> "제목은 필수 입력 항목입니다";
+                    case "validation.title.min.length" -> "제목은 최소 1자 이상 입력해야 합니다";
+                    case "validation.title.max.length" -> "제목은 50자 이하로 입력해야 합니다";
+                    case "validation.title.invalid" -> "제목에 HTML 태그는 허용되지 않습니다";
+                    case "validation.description.max.length" -> "설명은 500자 이하로 입력해야 합니다";
+                    case "validation.description.invalid" -> "설명에 HTML 태그는 허용되지 않습니다";
+                    case "validation.boardId.required" -> "보드 ID는 필수 입력 항목입니다";
+                    case "validation.userId.required" -> "사용자 ID는 필수 입력 항목입니다";
                     default -> key;
                 };
             });
 
         messageResolver = new ValidationMessageResolver(messageSource);
+        commonValidationRules = new CommonValidationRules(messageResolver);
     }
 
     // ==================== 테스트 데이터 제공 메서드들 ====================
@@ -71,17 +75,17 @@ class BoardValidationRulesTest {
 
     private static Stream<Arguments> invalidTitleTestData() {
         return Stream.of(
-            Arguments.of("", "Board title must be at least 1 character long"),
-            Arguments.of("   ", "Board title must be at least 1 character long"),
-            Arguments.of("a".repeat(51), "Board title must be no more than 50 characters long")
+            Arguments.of("", "제목은 필수 입력 항목입니다"),
+            Arguments.of("   ", "제목은 필수 입력 항목입니다"),
+            Arguments.of("a".repeat(51), "제목은 50자 이하로 입력해야 합니다")
         );
     }
 
     private static Stream<Arguments> htmlTagTitleTestData() {
         return Stream.of(
-            Arguments.of("<script>alert('test')</script>", "Board title cannot contain HTML tags"),
-            Arguments.of("<div>제목</div>", "Board title cannot contain HTML tags"),
-            Arguments.of("<p>테스트</p>", "Board title cannot contain HTML tags")
+            Arguments.of("<script>alert('test')</script>", "제목에 HTML 태그는 허용되지 않습니다"),
+            Arguments.of("<div>제목</div>", "제목에 HTML 태그는 허용되지 않습니다"),
+            Arguments.of("<p>테스트</p>", "제목에 HTML 태그는 허용되지 않습니다")
         );
     }
 
@@ -96,15 +100,15 @@ class BoardValidationRulesTest {
 
     private static Stream<Arguments> invalidDescriptionTestData() {
         return Stream.of(
-            Arguments.of("a".repeat(501), "Board description must be no more than 500 characters long")
+            Arguments.of("a".repeat(501), "설명은 500자 이하로 입력해야 합니다")
         );
     }
 
     private static Stream<Arguments> htmlTagDescriptionTestData() {
         return Stream.of(
-            Arguments.of("<script>alert('test')</script>", "Board description cannot contain HTML tags"),
-            Arguments.of("<div>설명</div>", "Board description cannot contain HTML tags"),
-            Arguments.of("<p>테스트</p>", "Board description cannot contain HTML tags")
+            Arguments.of("<script>alert('test')</script>", "설명에 HTML 태그는 허용되지 않습니다"),
+            Arguments.of("<div>설명</div>", "설명에 HTML 태그는 허용되지 않습니다"),
+            Arguments.of("<p>테스트</p>", "설명에 HTML 태그는 허용되지 않습니다")
         );
     }
 
@@ -113,10 +117,10 @@ class BoardValidationRulesTest {
     @ParameterizedTest
     @DisplayName("유효한 제목으로 검증을 통과해야 한다")
     @MethodSource("validTitleTestData")
-    void titleValidator_ValidTitle_ShouldPass(String title) {
+    void titleComplete_ValidTitle_ShouldPass(String title) {
         // given
         TestCommand command = new TestCommand(title, "설명", new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.titleValidator(TestCommand::title, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.titleComplete(TestCommand::title);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -128,10 +132,10 @@ class BoardValidationRulesTest {
     @ParameterizedTest
     @DisplayName("유효하지 않은 제목으로 검증에 실패해야 한다")
     @MethodSource("invalidTitleTestData")
-    void titleValidator_InvalidTitle_ShouldFail(String title, String expectedMessage) {
+    void titleComplete_InvalidTitle_ShouldFail(String title, String expectedMessage) {
         // given
         TestCommand command = new TestCommand(title, "설명", new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.titleValidator(TestCommand::title, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.titleComplete(TestCommand::title);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -146,10 +150,10 @@ class BoardValidationRulesTest {
     @ParameterizedTest
     @DisplayName("HTML 태그가 포함된 제목으로 검증에 실패해야 한다")
     @MethodSource("htmlTagTitleTestData")
-    void titleValidator_HtmlTagTitle_ShouldFail(String title, String expectedMessage) {
+    void titleComplete_HtmlTagTitle_ShouldFail(String title, String expectedMessage) {
         // given
         TestCommand command = new TestCommand(title, "설명", new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.titleValidator(TestCommand::title, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.titleComplete(TestCommand::title);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -166,10 +170,10 @@ class BoardValidationRulesTest {
     @ParameterizedTest
     @DisplayName("유효한 설명으로 검증을 통과해야 한다")
     @MethodSource("validDescriptionTestData")
-    void descriptionValidator_ValidDescription_ShouldPass(String description) {
+    void descriptionComplete_ValidDescription_ShouldPass(String description) {
         // given
         TestCommand command = new TestCommand("제목", description, new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.descriptionValidator(TestCommand::description, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.descriptionComplete(TestCommand::description);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -181,10 +185,10 @@ class BoardValidationRulesTest {
     @ParameterizedTest
     @DisplayName("유효하지 않은 설명으로 검증에 실패해야 한다")
     @MethodSource("invalidDescriptionTestData")
-    void descriptionValidator_InvalidDescription_ShouldFail(String description, String expectedMessage) {
+    void descriptionComplete_InvalidDescription_ShouldFail(String description, String expectedMessage) {
         // given
         TestCommand command = new TestCommand("제목", description, new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.descriptionValidator(TestCommand::description, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.descriptionComplete(TestCommand::description);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -199,10 +203,10 @@ class BoardValidationRulesTest {
     @ParameterizedTest
     @DisplayName("HTML 태그가 포함된 설명으로 검증에 실패해야 한다")
     @MethodSource("htmlTagDescriptionTestData")
-    void descriptionValidator_HtmlTagDescription_ShouldFail(String description, String expectedMessage) {
+    void descriptionComplete_HtmlTagDescription_ShouldFail(String description, String expectedMessage) {
         // given
         TestCommand command = new TestCommand("제목", description, new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.descriptionValidator(TestCommand::description, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.descriptionComplete(TestCommand::description);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -218,10 +222,10 @@ class BoardValidationRulesTest {
 
     @Test
     @DisplayName("유효한 BoardId로 검증을 통과해야 한다")
-    void boardIdValidator_ValidBoardId_ShouldPass() {
+    void boardIdRequired_ValidBoardId_ShouldPass() {
         // given
         TestCommand command = new TestCommand("제목", "설명", new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.boardIdValidator(TestCommand::boardId, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.boardIdRequired(TestCommand::boardId);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -232,10 +236,10 @@ class BoardValidationRulesTest {
 
     @Test
     @DisplayName("null BoardId로 검증에 실패해야 한다")
-    void boardIdValidator_NullBoardId_ShouldFail() {
+    void boardIdRequired_NullBoardId_ShouldFail() {
         // given
         TestCommand command = new TestCommand("제목", "설명", null, new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.boardIdValidator(TestCommand::boardId, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.boardIdRequired(TestCommand::boardId);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -244,17 +248,17 @@ class BoardValidationRulesTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("boardId");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("Board ID is required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("보드 ID는 필수 입력 항목입니다");
     }
 
     // ==================== UserId 검증 테스트 ====================
 
     @Test
     @DisplayName("유효한 UserId로 검증을 통과해야 한다")
-    void userIdValidator_ValidUserId_ShouldPass() {
+    void userIdRequired_ValidUserId_ShouldPass() {
         // given
         TestCommand command = new TestCommand("제목", "설명", new BoardId("board-123"), new UserId("user-123"));
-        Validator<TestCommand> validator = BoardValidationRules.userIdValidator(TestCommand::userId, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.userIdRequired(TestCommand::userId);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -265,10 +269,10 @@ class BoardValidationRulesTest {
 
     @Test
     @DisplayName("null UserId로 검증에 실패해야 한다")
-    void userIdValidator_NullUserId_ShouldFail() {
+    void userIdRequired_NullUserId_ShouldFail() {
         // given
         TestCommand command = new TestCommand("제목", "설명", new BoardId("board-123"), null);
-        Validator<TestCommand> validator = BoardValidationRules.userIdValidator(TestCommand::userId, messageResolver);
+        Validator<TestCommand> validator = commonValidationRules.userIdRequired(TestCommand::userId);
 
         // when
         ValidationResult<TestCommand> result = validator.validate(command);
@@ -277,7 +281,7 @@ class BoardValidationRulesTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("userId");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("User ID is required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("사용자 ID는 필수 입력 항목입니다");
     }
 
     // ==================== 상수 테스트 ====================
@@ -285,13 +289,13 @@ class BoardValidationRulesTest {
     @Test
     @DisplayName("TITLE_MAX_LENGTH 상수가 올바른 값을 가져야 한다")
     void titleMaxLength_ShouldBeCorrect() {
-        assertThat(BoardValidationRules.TITLE_MAX_LENGTH).isEqualTo(50);
+        assertThat(CommonValidationRules.TITLE_MAX_LENGTH).isEqualTo(50);
     }
 
     @Test
     @DisplayName("DESCRIPTION_MAX_LENGTH 상수가 올바른 값을 가져야 한다")
     void descriptionMaxLength_ShouldBeCorrect() {
-        assertThat(BoardValidationRules.DESCRIPTION_MAX_LENGTH).isEqualTo(500);
+        assertThat(CommonValidationRules.DESCRIPTION_MAX_LENGTH).isEqualTo(500);
     }
 
     // ==================== 테스트용 내부 클래스 ====================

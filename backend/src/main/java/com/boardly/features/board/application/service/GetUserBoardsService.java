@@ -2,10 +2,8 @@ package com.boardly.features.board.application.service;
 
 import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
 import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
-import com.boardly.features.board.application.validation.BoardValidationRules;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
@@ -24,7 +22,6 @@ import java.util.List;
 public class GetUserBoardsService implements GetUserBoardsUseCase {
 
     private final BoardRepository boardRepository;
-    private final ValidationMessageResolver messageResolver;
 
     @Override
     public Either<Failure, List<Board>> getUserBoards(GetUserBoardsCommand command) {
@@ -41,11 +38,14 @@ public class GetUserBoardsService implements GetUserBoardsUseCase {
                 command.ownerId(), command.includeArchived());
 
         // 1. 입력 검증
-        var validationResult = BoardValidationRules.userIdValidator(GetUserBoardsCommand::ownerId, messageResolver).validate(command);
-        if (validationResult.isInvalid()) {
-            log.warn("사용자 보드 목록 조회 검증 실패: ownerId={}, violations={}", 
-                    command.ownerId(), validationResult.getErrorsAsCollection());
-            return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+        if (command.ownerId() == null) {
+            var violation = Failure.FieldViolation.builder()
+                    .field("userId")
+                    .message("사용자 ID는 필수 입력 항목입니다")
+                    .rejectedValue(null)
+                    .build();
+            log.warn("사용자 보드 목록 조회 검증 실패: ownerId=null");
+            return Either.left(Failure.ofValidation("INVALID_INPUT", java.util.List.of(violation)));
         }
 
         // 2. 보드 목록 조회

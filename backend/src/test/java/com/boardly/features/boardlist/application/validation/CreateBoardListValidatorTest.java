@@ -4,6 +4,7 @@ import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.application.port.input.CreateBoardListCommand;
 import com.boardly.features.boardlist.domain.model.ListColor;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +54,8 @@ class CreateBoardListValidatorTest {
             });
 
         ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-        validator = new CreateBoardListValidator(messageResolver);
+        CommonValidationRules commonValidationRules = new CommonValidationRules(messageResolver);
+        validator = new CreateBoardListValidator( commonValidationRules);
     }
 
     @Test

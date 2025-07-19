@@ -2,6 +2,7 @@ package com.boardly.features.user.application.validation;
 
 import com.boardly.features.user.application.port.input.RegisterUserCommand;
 import com.boardly.features.user.application.port.input.UpdateUserCommand;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,8 @@ class UserValidatorTest {
         });
 
         ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-        userValidator = new UserValidator(messageResolver);
+        CommonValidationRules commonValidationRules = new CommonValidationRules(messageResolver);
+        userValidator = new UserValidator(commonValidationRules);
     }
 
     private RegisterUserCommand createValidCommand() {
@@ -83,7 +85,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("email");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.email.required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.email.required");
     }
 
     @Test
@@ -99,7 +101,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("email");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.email.invalid");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.email.pattern");
     }
 
     @Test
@@ -116,7 +118,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("email");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.email.length");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.email.max.length 100");
     }
 
     @Test
@@ -132,7 +134,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("password");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.password.required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.password.required");
     }
 
     @Test
@@ -148,7 +150,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("password");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.password.min.length");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.password.min.length 8");
     }
 
     @Test
@@ -164,14 +166,14 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("password");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.password.max.length");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.password.max.length 20");
     }
 
     @Test
     @DisplayName("비밀번호 패턴이 맞지 않으면 검증에 실패해야 한다")
     void validateUserRegistration_withInvalidPasswordPattern_shouldBeInvalid() {
         // given
-        RegisterUserCommand command = new RegisterUserCommand("test@example.com", "password123!", "Gildong", "Hong"); // No uppercase
+        RegisterUserCommand command = new RegisterUserCommand("test@example.com", "password", "Gildong", "Hong"); // No numbers or special chars
         
         // when
         ValidationResult<RegisterUserCommand> result = userValidator.validateUserRegistration(command);
@@ -180,7 +182,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("password");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.password.pattern");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.password.pattern");
     }
     
     @Test
@@ -196,7 +198,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.firstName.required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.firstName.required");
     }
 
     @Test
@@ -212,7 +214,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.firstName.pattern");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.firstName.pattern");
     }
 
     @Test
@@ -229,7 +231,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.common.length.range 1 50");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.firstName.max.length 50");
     }
     
     @Test
@@ -245,7 +247,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("lastName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.lastName.required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.lastName.required");
     }
 
     @Test
@@ -261,7 +263,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("lastName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.lastName.pattern");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.lastName.pattern");
     }
 
     @Test
@@ -278,7 +280,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("lastName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.common.length.range 1 50");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.lastName.max.length 50");
     }
 
     @Test
@@ -330,7 +332,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.firstName.required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.firstName.required");
     }
 
     @Test
@@ -346,7 +348,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.firstName.pattern");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.firstName.pattern");
     }
 
     @Test
@@ -363,7 +365,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("firstName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.common.length.range 1 50");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.firstName.max.length 50");
     }
 
     @Test
@@ -379,7 +381,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("lastName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.lastName.required");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.lastName.required");
     }
 
     @Test
@@ -395,7 +397,7 @@ class UserValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("lastName");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.user.lastName.pattern");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.lastName.pattern");
     }
 
     @Test

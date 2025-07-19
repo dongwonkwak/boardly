@@ -92,18 +92,6 @@ class UpdateBoardServiceTest {
                 .build();
     }
 
-    private Board createBoardWithOtherOwner() {
-        return Board.builder()
-                .boardId(boardId)
-                .title("Other User's Board")
-                .description("Other User's Description")
-                .isArchived(false)
-                .ownerId(otherUserId)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
-    }
-
     @Test
     @DisplayName("유효한 정보로 보드 업데이트가 성공해야 한다")
     void updateBoard_withValidData_shouldReturnUpdatedBoard() {

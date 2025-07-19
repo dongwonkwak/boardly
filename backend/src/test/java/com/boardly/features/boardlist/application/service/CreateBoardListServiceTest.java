@@ -7,7 +7,6 @@ import com.boardly.features.boardlist.application.port.input.CreateBoardListComm
 import com.boardly.features.boardlist.application.validation.CreateBoardListValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
-import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.policy.ListLimitPolicy;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.user.domain.model.UserId;
@@ -95,7 +94,7 @@ class CreateBoardListServiceTest {
         Board board = createValidBoard(command.boardId(), command.userId());
         BoardList savedList = createValidBoardList(command, 0);
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.of(board));
@@ -119,7 +118,7 @@ class CreateBoardListServiceTest {
         assertThat(result.get().getBoardId()).isEqualTo(command.boardId());
         assertThat(result.get().getPosition()).isEqualTo(0);
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(listLimitPolicy).canCreateList(0);
         verify(boardListRepository).countByBoardId(command.boardId());
@@ -141,7 +140,7 @@ class CreateBoardListServiceTest {
         Board board = createValidBoard(command.boardId(), command.userId());
         BoardList savedList = createValidBoardList(command, 0);
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.of(board));
@@ -163,7 +162,7 @@ class CreateBoardListServiceTest {
         assertThat(result.get().getDescription()).isEqualTo(null);
         assertThat(result.get().getColor()).isEqualTo(command.color());
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(listLimitPolicy).canCreateList(0);
         verify(boardListRepository).countByBoardId(command.boardId());
@@ -183,7 +182,7 @@ class CreateBoardListServiceTest {
                 .build();
         ValidationResult<CreateBoardListCommand> invalidResult = ValidationResult.invalid(violation);
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(invalidResult);
 
         // when
@@ -195,7 +194,7 @@ class CreateBoardListServiceTest {
         Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
         assertThat(validationFailure.message()).contains("INVALID_INPUT");
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository, never()).findById(any(BoardId.class));
         verify(boardListRepository, never()).save(any(BoardList.class));
     }
@@ -206,7 +205,7 @@ class CreateBoardListServiceTest {
         // given
         CreateBoardListCommand command = createValidCommand();
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.empty());
@@ -219,7 +218,7 @@ class CreateBoardListServiceTest {
         assertThat(result.getLeft()).isInstanceOf(Failure.NotFoundFailure.class);
         assertThat(result.getLeft().message()).isEqualTo("BOARD_NOT_FOUND");
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(boardListRepository, never()).save(any(BoardList.class));
     }
@@ -232,7 +231,7 @@ class CreateBoardListServiceTest {
         UserId differentUserId = new UserId();
         Board board = createValidBoard(command.boardId(), differentUserId);
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.of(board));
@@ -245,7 +244,7 @@ class CreateBoardListServiceTest {
         assertThat(result.getLeft()).isInstanceOf(Failure.ForbiddenFailure.class);
         assertThat(result.getLeft().message()).isEqualTo("UNAUTHORIZED_ACCESS");
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(boardListRepository, never()).save(any(BoardList.class));
     }
@@ -257,7 +256,7 @@ class CreateBoardListServiceTest {
         CreateBoardListCommand command = createValidCommand();
         Board board = createValidBoard(command.boardId(), command.userId());
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.of(board));
@@ -274,7 +273,7 @@ class CreateBoardListServiceTest {
         assertThat(result.getLeft()).isInstanceOf(Failure.ForbiddenFailure.class);
         assertThat(result.getLeft().message()).isEqualTo("LIST_LIMIT_EXCEEDED");
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(boardListRepository).countByBoardId(command.boardId());
         verify(listLimitPolicy).canCreateList(10);
@@ -289,7 +288,7 @@ class CreateBoardListServiceTest {
         Board board = createValidBoard(command.boardId(), command.userId());
         BoardList savedList = createValidBoardList(command, 3);
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.of(board));
@@ -309,7 +308,7 @@ class CreateBoardListServiceTest {
         assertThat(result.isRight()).isTrue();
         assertThat(result.get().getPosition()).isEqualTo(3);
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(listLimitPolicy).canCreateList(3);
         verify(boardListRepository).countByBoardId(command.boardId());
@@ -324,7 +323,7 @@ class CreateBoardListServiceTest {
         CreateBoardListCommand command = createValidCommand();
         Board board = createValidBoard(command.boardId(), command.userId());
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.of(board));
@@ -345,7 +344,7 @@ class CreateBoardListServiceTest {
         assertThat(result.getLeft()).isInstanceOf(Failure.InternalServerError.class);
         assertThat(result.getLeft().message()).isEqualTo("데이터베이스 오류");
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(listLimitPolicy).canCreateList(0);
         verify(boardListRepository).countByBoardId(command.boardId());
@@ -371,7 +370,7 @@ class CreateBoardListServiceTest {
         ValidationResult<CreateBoardListCommand> invalidResult = ValidationResult.invalid(
                 io.vavr.collection.List.of(titleViolation, colorViolation));
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(invalidResult);
 
         // when
@@ -383,7 +382,7 @@ class CreateBoardListServiceTest {
         Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
         assertThat(validationFailure.violations()).hasSize(2);
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository, never()).findById(any(BoardId.class));
         verify(boardListRepository, never()).save(any(BoardList.class));
     }
@@ -396,7 +395,7 @@ class CreateBoardListServiceTest {
         Board board = createValidBoard(command.boardId(), command.userId());
         BoardList savedList = createValidBoardList(command, 0);
 
-        when(createBoardListValidator.validate(command))
+        when(createBoardListValidator.validateCreateBoardList(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.findById(command.boardId()))
                 .thenReturn(Optional.of(board));
@@ -422,7 +421,7 @@ class CreateBoardListServiceTest {
         assertThat(createdList.getBoardId()).isEqualTo(command.boardId());
         assertThat(createdList.getPosition()).isEqualTo(0);
 
-        verify(createBoardListValidator).validate(command);
+        verify(createBoardListValidator).validateCreateBoardList(command);
         verify(boardRepository).findById(command.boardId());
         verify(listLimitPolicy).canCreateList(0);
         verify(boardListRepository).countByBoardId(command.boardId());

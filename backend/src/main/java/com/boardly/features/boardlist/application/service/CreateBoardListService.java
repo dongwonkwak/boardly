@@ -35,7 +35,7 @@ public class CreateBoardListService implements CreateBoardListUseCase {
     log.info("CreateBoardListService.createBoardList() called with command: {}", command);
 
     // 1. 입력 데이터 검증
-    ValidationResult<CreateBoardListCommand> validationResult = createBoardListValidator.validate(command);
+    ValidationResult<CreateBoardListCommand> validationResult = createBoardListValidator.validateCreateBoardList(command);
     if (validationResult.isInvalid()) {
       log.warn("보드 리스트 생성 검증 실패: boardId={}, violations={}", 
                     command.boardId(), validationResult.getErrorsAsCollection());

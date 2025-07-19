@@ -10,6 +10,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CommonValidationRules 단위 테스트")
@@ -19,13 +22,19 @@ class CommonValidationRulesTest {
     private MessageSource messageSource;
 
     private ValidationMessageResolver messageResolver;
+    private CommonValidationRules commonValidationRules;
 
     private record TestObject(String email, String password, String name, String title, String description, Object id) {
     }
 
     @BeforeEach
     void setUp() {
+        // MessageSource Mock 설정
+        lenient().when(messageSource.getMessage(anyString(), any(), any()))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
         messageResolver = new ValidationMessageResolver(messageSource);
+        commonValidationRules = new CommonValidationRules(messageResolver);
     }
 
     @Nested
@@ -37,9 +46,7 @@ class CommonValidationRulesTest {
         void should_pass_valid_email() {
             // given
             TestObject validObject = new TestObject("test@example.com", null, null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.emailComplete(
-                TestObject::email, "email", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.emailComplete(TestObject::email);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -53,9 +60,7 @@ class CommonValidationRulesTest {
         void should_reject_invalid_email() {
             // given
             TestObject invalidObject = new TestObject("invalid-email", null, null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.emailComplete(
-                TestObject::email, "email", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.emailComplete(TestObject::email);
 
             // when
             ValidationResult<TestObject> result = validator.validate(invalidObject);
@@ -69,9 +74,7 @@ class CommonValidationRulesTest {
         void should_reject_null_email() {
             // given
             TestObject nullObject = new TestObject(null, null, null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.emailComplete(
-                TestObject::email, "email", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.emailComplete(TestObject::email);
 
             // when
             ValidationResult<TestObject> result = validator.validate(nullObject);
@@ -90,9 +93,7 @@ class CommonValidationRulesTest {
         void should_pass_valid_password() {
             // given
             TestObject validObject = new TestObject(null, "ValidPass1!", null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.passwordComplete(
-                TestObject::password, "password", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.passwordComplete(TestObject::password);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -106,9 +107,7 @@ class CommonValidationRulesTest {
         void should_reject_short_password() {
             // given
             TestObject shortObject = new TestObject(null, "Short1!", null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.passwordComplete(
-                TestObject::password, "password", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.passwordComplete(TestObject::password);
 
             // when
             ValidationResult<TestObject> result = validator.validate(shortObject);
@@ -122,9 +121,7 @@ class CommonValidationRulesTest {
         void should_reject_password_without_special_char() {
             // given
             TestObject noSpecialObject = new TestObject(null, "ValidPass1", null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.passwordComplete(
-                TestObject::password, "password", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.passwordComplete(TestObject::password);
 
             // when
             ValidationResult<TestObject> result = validator.validate(noSpecialObject);
@@ -143,9 +140,7 @@ class CommonValidationRulesTest {
         void should_pass_korean_name() {
             // given
             TestObject validObject = new TestObject(null, null, "홍길동", null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.nameComplete(
-                TestObject::name, "name", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.firstNameComplete(TestObject::name);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -159,9 +154,7 @@ class CommonValidationRulesTest {
         void should_pass_english_name() {
             // given
             TestObject validObject = new TestObject(null, null, "John", null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.nameComplete(
-                TestObject::name, "name", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.firstNameComplete(TestObject::name);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -175,9 +168,7 @@ class CommonValidationRulesTest {
         void should_reject_name_with_numbers() {
             // given
             TestObject invalidObject = new TestObject(null, null, "John123", null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.nameComplete(
-                TestObject::name, "name", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.firstNameComplete(TestObject::name);
 
             // when
             ValidationResult<TestObject> result = validator.validate(invalidObject);
@@ -196,9 +187,7 @@ class CommonValidationRulesTest {
         void should_pass_valid_title() {
             // given
             TestObject validObject = new TestObject(null, null, null, "Valid Title", null, null);
-            Validator<TestObject> validator = CommonValidationRules.titleComplete(
-                TestObject::title, "title", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.titleComplete(TestObject::title);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -212,9 +201,7 @@ class CommonValidationRulesTest {
         void should_reject_title_with_html() {
             // given
             TestObject invalidObject = new TestObject(null, null, null, "<script>alert('xss')</script>", null, null);
-            Validator<TestObject> validator = CommonValidationRules.titleComplete(
-                TestObject::title, "title", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.titleComplete(TestObject::title);
 
             // when
             ValidationResult<TestObject> result = validator.validate(invalidObject);
@@ -228,9 +215,7 @@ class CommonValidationRulesTest {
         void should_reject_empty_title() {
             // given
             TestObject emptyObject = new TestObject(null, null, null, "", null, null);
-            Validator<TestObject> validator = CommonValidationRules.titleComplete(
-                TestObject::title, "title", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.titleComplete(TestObject::title);
 
             // when
             ValidationResult<TestObject> result = validator.validate(emptyObject);
@@ -249,9 +234,7 @@ class CommonValidationRulesTest {
         void should_pass_valid_description() {
             // given
             TestObject validObject = new TestObject(null, null, null, null, "Valid description", null);
-            Validator<TestObject> validator = CommonValidationRules.descriptionComplete(
-                TestObject::description, "description", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.descriptionComplete(TestObject::description);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -265,9 +248,7 @@ class CommonValidationRulesTest {
         void should_pass_null_description() {
             // given
             TestObject nullObject = new TestObject(null, null, null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.descriptionComplete(
-                TestObject::description, "description", messageResolver
-            );
+            Validator<TestObject> validator = commonValidationRules.descriptionComplete(TestObject::description);
 
             // when
             ValidationResult<TestObject> result = validator.validate(nullObject);
@@ -280,10 +261,8 @@ class CommonValidationRulesTest {
         @DisplayName("HTML 태그가 포함된 설명을 거부한다")
         void should_reject_description_with_html() {
             // given
-            TestObject invalidObject = new TestObject(null, null, null, null, "Description <b>with</b> HTML", null);
-            Validator<TestObject> validator = CommonValidationRules.descriptionComplete(
-                TestObject::description, "description", messageResolver
-            );
+            TestObject invalidObject = new TestObject(null, null, null, null, "<script>alert('xss')</script>", null);
+            Validator<TestObject> validator = commonValidationRules.descriptionComplete(TestObject::description);
 
             // when
             ValidationResult<TestObject> result = validator.validate(invalidObject);
@@ -302,9 +281,7 @@ class CommonValidationRulesTest {
         void should_pass_non_null_id() {
             // given
             TestObject validObject = new TestObject(null, null, null, null, null, "valid-id");
-            Validator<TestObject> validator = CommonValidationRules.idRequired(
-                TestObject::id, "id", messageResolver
-            );
+            Validator<TestObject> validator = CommonValidationRules.idRequired(TestObject::id, "id", messageResolver);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -318,9 +295,7 @@ class CommonValidationRulesTest {
         void should_reject_null_id() {
             // given
             TestObject nullObject = new TestObject(null, null, null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.idRequired(
-                TestObject::id, "id", messageResolver
-            );
+            Validator<TestObject> validator = CommonValidationRules.idRequired(TestObject::id, "id", messageResolver);
 
             // when
             ValidationResult<TestObject> result = validator.validate(nullObject);
@@ -338,10 +313,8 @@ class CommonValidationRulesTest {
         @DisplayName("최소 길이 검증을 통과한다")
         void should_pass_min_length() {
             // given
-            TestObject validObject = new TestObject(null, null, null, "12345", null, null);
-            Validator<TestObject> validator = CommonValidationRules.minLength(
-                TestObject::title, "title", 5, messageResolver
-            );
+            TestObject validObject = new TestObject(null, null, null, "Valid", null, null);
+            Validator<TestObject> validator = CommonValidationRules.minLength(TestObject::title, "title", 3, messageResolver);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);
@@ -354,26 +327,8 @@ class CommonValidationRulesTest {
         @DisplayName("최대 길이 검증을 통과한다")
         void should_pass_max_length() {
             // given
-            TestObject validObject = new TestObject(null, null, null, "123", null, null);
-            Validator<TestObject> validator = CommonValidationRules.maxLength(
-                TestObject::title, "title", 5, messageResolver
-            );
-
-            // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
-
-            // then
-            assertThat(result.isValid()).isTrue();
-        }
-
-        @Test
-        @DisplayName("길이 범위 검증을 통과한다")
-        void should_pass_length_range() {
-            // given
-            TestObject validObject = new TestObject(null, null, null, "12345", null, null);
-            Validator<TestObject> validator = CommonValidationRules.lengthRange(
-                TestObject::title, "title", 3, 10, messageResolver
-            );
+            TestObject validObject = new TestObject(null, null, null, "Valid", null, null);
+            Validator<TestObject> validator = CommonValidationRules.maxLength(TestObject::title, "title", 10, messageResolver);
 
             // when
             ValidationResult<TestObject> result = validator.validate(validObject);

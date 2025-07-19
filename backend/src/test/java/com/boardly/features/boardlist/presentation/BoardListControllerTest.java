@@ -11,7 +11,6 @@ import com.boardly.features.boardlist.presentation.request.UpdateBoardListReques
 import com.boardly.features.boardlist.presentation.request.UpdateBoardListPositionRequest;
 import com.boardly.features.boardlist.presentation.response.BoardListResponse;
 import com.boardly.shared.domain.common.Failure;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,11 +51,9 @@ class BoardListControllerTest {
     private Jwt jwt;
 
     private BoardListController controller;
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
         controller = new BoardListController(
                 getBoardListsUseCase,
                 createBoardListUseCase,

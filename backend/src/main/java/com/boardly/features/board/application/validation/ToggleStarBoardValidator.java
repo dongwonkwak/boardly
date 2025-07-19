@@ -1,7 +1,7 @@
 package com.boardly.features.board.application.validation;
 
 import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.application.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ToggleStarBoardValidator {
 
-    private final ValidationMessageResolver messageResolver;
+    private final CommonValidationRules commonValidationRules;
 
     public ValidationResult<ToggleStarBoardCommand> validate(ToggleStarBoardCommand command) {
         return getValidator().validate(command);
@@ -26,8 +26,8 @@ public class ToggleStarBoardValidator {
 
     private Validator<ToggleStarBoardCommand> getValidator() {
         return Validator.combine(
-            BoardValidationRules.boardIdValidator(ToggleStarBoardCommand::boardId, messageResolver),
-            BoardValidationRules.userIdValidator(ToggleStarBoardCommand::requestedBy, messageResolver)
+            commonValidationRules.boardIdRequired(ToggleStarBoardCommand::boardId),
+            commonValidationRules.userIdRequired(ToggleStarBoardCommand::requestedBy)
         );
     }
 }

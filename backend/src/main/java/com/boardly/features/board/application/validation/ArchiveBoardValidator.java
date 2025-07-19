@@ -3,7 +3,7 @@ package com.boardly.features.board.application.validation;
 import org.springframework.stereotype.Component;
 
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.application.validation.Validator;
 
@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ArchiveBoardValidator {
   
-  private final ValidationMessageResolver messageResolver;
+  private final CommonValidationRules commonValidationRules;
 
   public ValidationResult<ArchiveBoardCommand> validate(ArchiveBoardCommand command) {
     return getValidator().validate(command);
@@ -21,8 +21,8 @@ public class ArchiveBoardValidator {
 
   private Validator<ArchiveBoardCommand> getValidator() {
     return Validator.combine(
-      BoardValidationRules.boardIdValidator(ArchiveBoardCommand::boardId, messageResolver),
-      BoardValidationRules.userIdValidator(ArchiveBoardCommand::requestedBy, messageResolver)
+      commonValidationRules.boardIdRequired(ArchiveBoardCommand::boardId),
+      commonValidationRules.userIdRequired(ArchiveBoardCommand::requestedBy)
     );
   }
 }

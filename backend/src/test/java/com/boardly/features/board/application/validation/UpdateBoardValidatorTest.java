@@ -3,6 +3,7 @@ package com.boardly.features.board.application.validation;
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,21 +39,24 @@ class UpdateBoardValidatorTest {
         LocaleContextHolder.setLocale(Locale.KOREAN);
         
         // MessageSource Mock 설정
-        lenient().when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
+        lenient().when(messageSource.getMessage(anyString(), any(), any()))
             .thenAnswer(invocation -> {
                 String key = invocation.getArgument(0);
                 return switch (key) {
-                    case "validation.board.id.required" -> "Board ID is required";
-                    case "validation.user.id.required" -> "User ID is required";
-                    case "validation.board.title.max.length" -> "Board title must be no more than 50 characters long";
-                    case "validation.board.title.invalid" -> "Board title can only contain letters, numbers, and special characters";
-                    case "validation.board.description.invalid" -> "Board description cannot contain HTML tags";
+                    case "validation.title.required" -> "Board title is required";
+                    case "validation.title.max.length" -> "Board title must be no more than 50 characters long";
+                    case "validation.title.invalid" -> "Board title cannot contain HTML tags";
+                    case "validation.description.max.length" -> "Board description must be no more than 500 characters long";
+                    case "validation.description.invalid" -> "Board description cannot contain HTML tags";
+                    case "validation.boardId.required" -> "Board ID is required";
+                    case "validation.userId.required" -> "User ID is required";
                     default -> key;
                 };
             });
 
         ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-        updateBoardValidator = new UpdateBoardValidator(messageResolver);
+        CommonValidationRules commonValidationRules = new CommonValidationRules(messageResolver);
+        updateBoardValidator = new UpdateBoardValidator(commonValidationRules);
     }
 
     private UpdateBoardCommand createValidCommand() {
@@ -74,9 +78,9 @@ class UpdateBoardValidatorTest {
 
     private static Stream<Arguments> htmlTagTitleTestData() {
         return Stream.of(
-            Arguments.of("<script>", "Board title can only contain letters, numbers, and special characters"),
-            Arguments.of("<div>", "Board title can only contain letters, numbers, and special characters"),
-            Arguments.of("<p>", "Board title can only contain letters, numbers, and special characters")
+            Arguments.of("<script>", "Board title cannot contain HTML tags"),
+            Arguments.of("<div>", "Board title cannot contain HTML tags"),
+            Arguments.of("<p>", "Board title cannot contain HTML tags")
         );
     }
 

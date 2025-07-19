@@ -77,6 +77,8 @@ class GetUserBoardsServiceTest {
                 .createdAt(now.minus(3, ChronoUnit.HOURS))
                 .updatedAt(now.minus(1, ChronoUnit.HOURS))
                 .build();
+
+
     }
 
     @Test
@@ -157,7 +159,7 @@ class GetUserBoardsServiceTest {
         
         Failure.FieldViolation violation = validationFailure.violations().iterator().next();
         assertThat(violation.field()).isEqualTo("userId");
-        assertThat(violation.message()).isNull();
+        assertThat(violation.message()).isEqualTo("사용자 ID는 필수 입력 항목입니다");
     }
 
     @Test

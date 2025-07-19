@@ -2,6 +2,7 @@ package com.boardly.features.board.application.validation;
 
 import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,18 +42,18 @@ class CreateBoardValidatorTest {
             .thenAnswer(invocation -> {
                 String key = invocation.getArgument(0);
                 return switch (key) {
-                    case "validation.board.title.required" -> "Board title is required";
-                    case "validation.board.title.max.length" -> "Board title must be no more than 50 characters long";
-                    case "validation.board.title.invalid" -> "Board title cannot contain HTML tags";
-                    case "validation.board.description.required" -> "Board description is required";
-                    case "validation.board.description.invalid" -> "Board description cannot contain HTML tags";
-                    case "validation.board.owner.required" -> "Board owner is required";
+                    case "validation.title.required" -> "Board title is required";
+                    case "validation.title.max.length" -> "Board title must be no more than 50 characters long";
+                    case "validation.title.invalid" -> "Board title cannot contain HTML tags";
+                    case "validation.description.invalid" -> "Board description cannot contain HTML tags";
+                    case "validation.userId.required" -> "Board owner is required";
                     default -> key;
                 };
             });
 
         ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-        createBoardValidator = new CreateBoardValidator(messageResolver);
+        CommonValidationRules commonValidationRules = new CommonValidationRules(messageResolver);
+        createBoardValidator = new CreateBoardValidator(commonValidationRules);
     }
 
     private CreateBoardCommand createValidCommand() {
@@ -278,7 +279,7 @@ class CreateBoardValidatorTest {
         // then
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
-        assertThat(result.getErrors().get(0).field()).isEqualTo("ownerId");
+        assertThat(result.getErrors().get(0).field()).isEqualTo("userId");
         assertThat(result.getErrors().get(0).message()).isEqualTo("Board owner is required");
     }
 
@@ -297,8 +298,8 @@ class CreateBoardValidatorTest {
 
         // then
         assertThat(result.isValid()).isFalse();
-        assertThat(result.getErrors()).hasSize(3);
-        assertThat(result.getErrors()).extracting("field").containsExactlyInAnyOrder("title", "description", "ownerId");
+        assertThat(result.getErrors()).hasSize(3); // title, description, userId 모두 실패
+        assertThat(result.getErrors()).extracting("field").containsExactlyInAnyOrder("title", "description", "userId");
     }
 
     @Test

@@ -3,7 +3,6 @@ package com.boardly.features.user.application.service;
 import com.boardly.features.user.application.port.input.RegisterUserCommand;
 import com.boardly.features.user.application.validation.UserValidator;
 import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
 import com.boardly.features.user.domain.model.UserProfile;
 import com.boardly.features.user.domain.repository.UserRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -18,8 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

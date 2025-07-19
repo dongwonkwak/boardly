@@ -3,7 +3,7 @@ package com.boardly.features.board.application.validation;
 import org.springframework.stereotype.Component;
 
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.application.validation.Validator;
 
@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UpdateBoardValidator {
   
-  private final ValidationMessageResolver messageResolver;
+  private final CommonValidationRules commonValidationRules;
 
   public ValidationResult<UpdateBoardCommand> validate(UpdateBoardCommand command) {
     return getValidator().validate(command);
@@ -21,10 +21,10 @@ public class UpdateBoardValidator {
 
   private Validator<UpdateBoardCommand> getValidator() {
     return Validator.combine(
-      BoardValidationRules.boardIdValidator(UpdateBoardCommand::boardId, messageResolver),
-      BoardValidationRules.userIdValidator(UpdateBoardCommand::requestedBy, messageResolver),
-      BoardValidationRules.titleValidator(UpdateBoardCommand::title, messageResolver),
-      BoardValidationRules.descriptionValidator(UpdateBoardCommand::description, messageResolver)
+      commonValidationRules.boardIdRequired(UpdateBoardCommand::boardId),
+      commonValidationRules.userIdRequired(UpdateBoardCommand::requestedBy),
+      commonValidationRules.titleOptional(UpdateBoardCommand::title),
+      commonValidationRules.descriptionComplete(UpdateBoardCommand::description)
     );
   }
 }

@@ -1,7 +1,6 @@
 package com.boardly.features.boardlist.presentation.response;
 
 import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.model.ListColor;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.Instant;

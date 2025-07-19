@@ -10,7 +10,6 @@ import com.boardly.features.boardlist.presentation.request.CreateBoardListReques
 import com.boardly.features.boardlist.presentation.request.UpdateBoardListRequest;
 import com.boardly.features.boardlist.presentation.request.UpdateBoardListPositionRequest;
 import com.boardly.features.boardlist.presentation.response.BoardListResponse;
-import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vavr.control.Either;

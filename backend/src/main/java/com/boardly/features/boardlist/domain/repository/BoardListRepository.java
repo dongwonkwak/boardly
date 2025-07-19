@@ -1,14 +1,11 @@
 package com.boardly.features.boardlist.domain.repository;
 
-import com.boardly.shared.domain.common.Failure;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 
 import java.util.List;
 import java.util.Optional;
-
-import io.vavr.control.Either;
 
 public interface BoardListRepository {
   

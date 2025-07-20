@@ -16,25 +16,25 @@ import java.util.List;
 public record ErrorResponse(
         String message,
         String errorCode,
-        @JsonFormat(shape = JsonFormat.Shape.STRING)
-        Instant timestamp,
+        @JsonFormat(shape = JsonFormat.Shape.STRING) Instant timestamp,
         String path,
-        List<Failure.FieldViolation> details
-) {
-    
+        List<Failure.FieldViolation> details) {
+
     public static ErrorResponse of(Failure failure) {
         return switch (failure) {
-            case Failure.ValidationFailure validationFailure -> 
+            case Failure.ValidationFailure validationFailure ->
                 validation(validationFailure);
-            case Failure.ConflictFailure conflictFailure -> 
+            case Failure.ConflictFailure conflictFailure ->
                 conflict(conflictFailure);
-            case Failure.NotFoundFailure notFoundFailure -> 
+            case Failure.NotFoundFailure notFoundFailure ->
                 notFound(notFoundFailure);
-            case Failure.InternalServerError internalServerError -> 
+            case Failure.InternalServerError internalServerError ->
                 internal(internalServerError);
-            case Failure.ForbiddenFailure forbiddenFailure -> 
+            case Failure.ForbiddenFailure forbiddenFailure ->
                 forbidden(forbiddenFailure);
-            default -> 
+            case Failure.BadRequestFailure badRequestFailure ->
+                badRequest(badRequestFailure);
+            default ->
                 internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다."));
         };
     }
@@ -80,9 +80,9 @@ public record ErrorResponse(
                 .build();
     }
 
-    public static ErrorResponse badRequest(String message) {
+    public static ErrorResponse badRequest(Failure.BadRequestFailure failure) {
         return ErrorResponse.builder()
-                .message(message)
+                .message(failure.message())
                 .errorCode("BAD_REQUEST")
                 .timestamp(Instant.now())
                 .build();
@@ -103,4 +103,4 @@ public record ErrorResponse(
                 .timestamp(Instant.now())
                 .build();
     }
-} 
+}

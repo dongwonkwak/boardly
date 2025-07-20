@@ -18,18 +18,22 @@ public class ApiFailureHandler {
      */
     public static ResponseEntity<?> handleFailure(Failure failure) {
         return switch (failure) {
-            case Failure.ValidationFailure validationFailure -> 
+            case Failure.ValidationFailure validationFailure ->
                 ResponseEntity.unprocessableEntity().body(ErrorResponse.validation(validationFailure));
-            case Failure.ConflictFailure conflictFailure -> 
+            case Failure.ConflictFailure conflictFailure ->
                 ResponseEntity.status(HttpStatus.CONFLICT).body(ErrorResponse.conflict(conflictFailure));
-            case Failure.NotFoundFailure notFoundFailure -> 
+            case Failure.NotFoundFailure notFoundFailure ->
                 ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.notFound(notFoundFailure));
-            case Failure.InternalServerError internalServerError -> 
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.internal(internalServerError));
-            case Failure.ForbiddenFailure forbiddenFailure -> 
+            case Failure.InternalServerError internalServerError ->
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ErrorResponse.internal(internalServerError));
+            case Failure.ForbiddenFailure forbiddenFailure ->
                 ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.forbidden(forbiddenFailure));
-            default -> 
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ErrorResponse.internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다.")));
+            case Failure.BadRequestFailure badRequestFailure ->
+                ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.badRequest(badRequestFailure));
+            default ->
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(ErrorResponse.internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다.")));
         };
     }
-} 
+}

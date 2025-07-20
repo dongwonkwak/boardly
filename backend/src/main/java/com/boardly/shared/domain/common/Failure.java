@@ -6,7 +6,7 @@ import lombok.Builder;
 
 public interface Failure {
   String message();
-  
+
   static Failure ofValidation(String message, Collection<FieldViolation> violations) {
     return new ValidationFailure(message, violations);
   }
@@ -27,6 +27,10 @@ public interface Failure {
     return new ForbiddenFailure(message);
   }
 
+  static Failure ofBadRequest(String message) {
+    return new BadRequestFailure(message);
+  }
+
   record ValidationFailure(String message, Collection<FieldViolation> violations) implements Failure {
   }
 
@@ -42,10 +46,13 @@ public interface Failure {
   public record ForbiddenFailure(String message) implements Failure {
   }
 
+  public record BadRequestFailure(String message) implements Failure {
+  }
+
   @Builder
   record FieldViolation(
-    String field, 
-    String message,
-    Object rejectedValue) {
+      String field,
+      String message,
+      Object rejectedValue) {
   }
 }

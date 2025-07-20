@@ -1,8 +1,6 @@
 package com.boardly.features.card.application.service;
 
-import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.card.application.port.input.CreateCardCommand;
 import com.boardly.features.card.application.usecase.CreateCardUseCase;
@@ -10,8 +8,6 @@ import com.boardly.features.card.application.validation.CreateCardValidator;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.policy.CardCreationPolicy;
 import com.boardly.features.card.domain.repository.CardRepository;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;

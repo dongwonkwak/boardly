@@ -29,7 +29,7 @@ public class CommonValidationRules {
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int PASSWORD_MAX_LENGTH = 20;
     public static final int NAME_MAX_LENGTH = 50;
-    public static final int TITLE_MAX_LENGTH = 50;
+    public static final int TITLE_MAX_LENGTH = 100;
     public static final int DESCRIPTION_MAX_LENGTH = 500;
 
     // 기본 검증 메서드들

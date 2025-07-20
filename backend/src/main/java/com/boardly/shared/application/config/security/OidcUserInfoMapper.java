@@ -24,39 +24,37 @@ public class OidcUserInfoMapper implements Function<OidcUserInfoAuthenticationCo
     @Override
     public OidcUserInfo apply(OidcUserInfoAuthenticationContext context) {
         return Try.of(() -> extractUserIdFromContext(context))
-            .flatMap(userId -> Try.of(() -> getUserUseCase.get(new UserId(userId))))
-            .fold(
-                throwable -> {
-                    log.error("OIDC UserInfo 조회 중 오류 발생: {}", throwable.getMessage(), throwable);
-                    return createMinimalUserInfo("unknown");
-                },
-                userResult -> userResult.fold(
-                    failure -> {
-                        log.warn("사용자 정보 조회 실패: {}", failure.message());
-                        return createMinimalUserInfo("unknown");
-                    },
-                    user -> OidcUserInfo.builder()
-                        .subject(user.getUserId().getId())
-                        .email(user.getEmail())
-                        .name(user.getFullName())
-                        .emailVerified(true)
-                        .build()
-                )
-            );
+                .flatMap(userId -> Try.of(() -> getUserUseCase.get(new UserId(userId))))
+                .fold(
+                        throwable -> {
+                            log.warn("사용자 정보 조회 실패: {}", throwable.getMessage());
+                            return createMinimalUserInfo("unknown");
+                        },
+                        userResult -> userResult.fold(
+                                failure -> {
+                                    log.warn("사용자 정보 조회 실패: {}", failure.getMessage());
+                                    return createMinimalUserInfo("unknown");
+                                },
+                                user -> OidcUserInfo.builder()
+                                        .subject(user.getUserId().getId())
+                                        .email(user.getEmail())
+                                        .name(user.getFullName())
+                                        .emailVerified(true)
+                                        .build()));
     }
 
     private String extractUserIdFromContext(OidcUserInfoAuthenticationContext context) {
         var authentication = context.getAuthentication();
         if (!(authentication.getPrincipal() instanceof JwtAuthenticationToken jwtToken)) {
-            throw new IllegalStateException("Expected JwtAuthenticationToken but got: " + 
-                authentication.getPrincipal().getClass().getSimpleName());
+            throw new IllegalStateException("Expected JwtAuthenticationToken but got: " +
+                    authentication.getPrincipal().getClass().getSimpleName());
         }
         return jwtToken.getToken().getSubject();
     }
 
     private OidcUserInfo createMinimalUserInfo(String subject) {
         return OidcUserInfo.builder()
-            .subject(subject)
-            .build();
+                .subject(subject)
+                .build();
     }
 }

@@ -1,236 +1,716 @@
 package com.boardly.shared.application.validation;
 
-import com.boardly.shared.domain.common.Failure.FieldViolation;
-import io.vavr.collection.List;
-import io.vavr.control.Validation;
-import org.junit.jupiter.api.BeforeEach;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+import java.util.function.Function;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
 
-import java.util.Locale;
-import java.util.function.Predicate;
+import com.boardly.shared.domain.common.Failure.FieldViolation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import io.vavr.collection.Seq;
+import io.vavr.control.Validation;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Validator 단위 테스트")
+@DisplayName("Validator 테스트")
 class ValidatorTest {
 
-    private record TestObject(String name, int age) {
+  @Mock
+  private ValidationMessageResolver messageResolver;
+
+  // 테스트용 데이터 클래스
+  private static class TestData {
+    private final String name;
+    private final int age;
+    private final String email;
+
+    public TestData(String name, int age, String email) {
+      this.name = name;
+      this.age = age;
+      this.email = email;
     }
 
-    private Validator<TestObject> nameIsNotEmpty;
-    private Validator<TestObject> ageIsPositive;
-
-    @BeforeEach
-    void setUp() {
-        nameIsNotEmpty = Validator.field(
-            TestObject::name,
-            name -> name != null && !name.trim().isEmpty(),
-            "name",
-            "Name is required"
-        );
-
-        ageIsPositive = Validator.of(
-            (TestObject obj) -> obj.age() > 0,
-            "age",
-            "Age must be positive"
-        );
+    public String getName() {
+      return name;
     }
 
-    @Nested
-    @DisplayName("and 메서드는")
-    class Describe_and {
-
-        @Test
-        @DisplayName("두 검증이 모두 성공하면 성공 결과를 반환한다")
-        void whenBothValid_shouldReturnValid() {
-            Validator<TestObject> validator = nameIsNotEmpty.and(ageIsPositive);
-            TestObject validObject = new TestObject("John", 30);
-            ValidationResult<TestObject> result = validator.validate(validObject);
-            assertThat(result.isValid()).isTrue();
-        }
-
-        @Test
-        @DisplayName("하나의 검증만 실패하면 모든 에러를 포함한 실패 결과를 반환한다")
-        void whenOneInvalid_shouldReturnInvalidWithAllErrors() {
-            Validator<TestObject> validator = nameIsNotEmpty.and(ageIsPositive);
-            TestObject invalidObject = new TestObject("", -5);
-            ValidationResult<TestObject> result = validator.validate(invalidObject);
-            assertThat(result.isInvalid()).isTrue();
-            assertThat(result.getErrors()).hasSize(2);
-            assertThat(result.getErrors().map(FieldViolation::field)).containsExactlyInAnyOrder("name", "age");
-        }
+    public int getAge() {
+      return age;
     }
 
-    @Nested
-    @DisplayName("then 메서드는")
-    class Describe_then {
+    public String getEmail() {
+      return email;
+    }
+  }
 
-        @Test
-        @DisplayName("두 검증이 모두 성공하면 성공 결과를 반환한다")
-        void whenBothValid_shouldReturnValid() {
-            Validator<TestObject> validator = nameIsNotEmpty.then(ageIsPositive);
-            TestObject validObject = new TestObject("John", 30);
-            ValidationResult<TestObject> result = validator.validate(validObject);
-            assertThat(result.isValid()).isTrue();
-        }
+  @Nested
+  @DisplayName("기본 검증 메서드 테스트")
+  class BasicValidationTests {
 
-        @Test
-        @DisplayName("첫 검증이 실패하면 즉시 실패 결과를 반환한다")
-        void whenFirstInvalid_shouldReturnImmediately() {
-            Validator<TestObject> validator = nameIsNotEmpty.then(ageIsPositive);
-            TestObject invalidObject = new TestObject("", -5);
-            ValidationResult<TestObject> result = validator.validate(invalidObject);
-            assertThat(result.isInvalid()).isTrue();
-            assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("name");
-        }
+    @Test
+    @DisplayName("valid() - 항상 성공하는 검증기")
+    void valid_ShouldAlwaysReturnSuccess() {
+      // given
+      Validator<String> validator = Validator.valid();
+
+      // when
+      ValidationResult<String> result = validator.validate("test");
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get()).isEqualTo("test");
     }
 
-    @Nested
-    @DisplayName("when 메서드는")
-    class Describe_when {
+    @Test
+    @DisplayName("invalid() - 항상 실패하는 검증기")
+    void invalid_ShouldAlwaysReturnFailure() {
+      // given
+      Validator<String> validator = Validator.invalid("field", "error message");
 
-        @Test
-        @DisplayName("조건이 참일 때만 검증을 수행한다")
-        void whenConditionIsTrue_shouldValidate() {
-            Validator<TestObject> validator = nameIsNotEmpty.when(obj -> obj.age > 18);
+      // when
+      ValidationResult<String> result = validator.validate("test");
 
-            ValidationResult<TestObject> resultForAdultWithNoName = validator.validate(new TestObject("", 20));
-            assertThat(resultForAdultWithNoName.isInvalid()).isTrue();
-
-            ValidationResult<TestObject> resultForChildWithNoName = validator.validate(new TestObject("", 15));
-            assertThat(resultForChildWithNoName.isValid()).isTrue();
-        }
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("field");
+      assertThat(violation.message()).isEqualTo("error message");
+      assertThat(violation.rejectedValue()).isEqualTo("test");
     }
 
-    @Nested
-    @DisplayName("contramap 메서드는")
-    class Describe_contramap {
+    @Test
+    @DisplayName("of() - 조건부 검증기 (성공 케이스)")
+    void of_ShouldReturnSuccess_WhenConditionIsTrue() {
+      // given
+      Validator<String> validator = Validator.of(
+          str -> str.length() > 0,
+          "name",
+          "이름은 필수입니다");
 
-        private record Wrapper(TestObject testObject) {
-        }
+      // when
+      ValidationResult<String> result = validator.validate("test");
 
-        @Test
-        @DisplayName("검증 대상을 변환하여 검증을 수행한다")
-        void shouldContramapValidator() {
-            Validator<TestObject> ageValidator = Validator.field(TestObject::age, age -> age > 18, "age", "Must be adult");
-            Validator<Wrapper> wrapperValidator = ageValidator.contramap(Wrapper::testObject);
-
-            ValidationResult<Wrapper> invalidResult = wrapperValidator.validate(new Wrapper(new TestObject("kid", 10)));
-            assertThat(invalidResult.isInvalid()).isTrue();
-
-            ValidationResult<Wrapper> validResult = wrapperValidator.validate(new Wrapper(new TestObject("adult", 20)));
-            assertThat(validResult.isValid()).isTrue();
-        }
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get()).isEqualTo("test");
     }
 
-    @Nested
-    @DisplayName("정적 팩토리 메서드는")
-    class Describe_static_factories {
+    @Test
+    @DisplayName("of() - 조건부 검증기 (실패 케이스)")
+    void of_ShouldReturnFailure_WhenConditionIsFalse() {
+      // given
+      Validator<String> validator = Validator.of(
+          str -> str.length() > 0,
+          "name",
+          "이름은 필수입니다");
 
-        @Mock
-        private MessageSource messageSource;
+      // when
+      ValidationResult<String> result = validator.validate("");
 
-        @Test
-        @DisplayName("valid는 항상 성공 결과를 반환한다")
-        void valid_shouldAlwaysReturnValid() {
-            Validator<TestObject> validator = Validator.valid();
-            assertThat(validator.validate(new TestObject("any", 1)).isValid()).isTrue();
-        }
-
-        @Test
-        @DisplayName("invalid는 항상 실패 결과를 반환한다")
-        void invalid_shouldAlwaysReturnInvalid() {
-            Validator<TestObject> validator = Validator.invalid("field", "message");
-            ValidationResult<TestObject> result = validator.validate(new TestObject("any", 1));
-            assertThat(result.isInvalid()).isTrue();
-            assertThat(result.getErrors().get(0).field()).isEqualTo("field");
-        }
-
-        @Test
-        @DisplayName("of는 PREDICATE에 따라 결과를 반환한다")
-        void of_shouldValidateBasedOnPredicate() {
-            Predicate<TestObject> predicate = obj -> obj.age() > 18;
-            Validator<TestObject> validator = Validator.of(predicate, "age", "Too young");
-
-            assertThat(validator.validate(new TestObject("John", 20)).isValid()).isTrue();
-            assertThat(validator.validate(new TestObject("Jane", 15)).isInvalid()).isTrue();
-        }
-
-        @Test
-        @DisplayName("field는 특정 필드를 검증한다")
-        void field_shouldValidateField() {
-            Validator<TestObject> validator = Validator.field(TestObject::name, n -> n.length() > 3, "name", "Too short");
-
-            assertThat(validator.validate(new TestObject("John", 20)).isValid()).isTrue();
-            assertThat(validator.validate(new TestObject("Jo", 20)).isInvalid()).isTrue();
-        }
-
-        @Test
-        @DisplayName("fieldWithMessage는 국제화 메시지를 사용하여 필드를 검증한다")
-        void fieldWithMessage_shouldUseMessageResolver() {
-            ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-            when(messageSource.getMessage(eq("length.min"), any(), any(Locale.class)))
-                .thenReturn("Error with code length.min");
-
-            Validator<TestObject> validator = Validator.fieldWithMessage(
-                TestObject::name,
-                n -> n.length() > 3,
-                "name",
-                "length.min",
-                messageResolver
-            );
-
-            ValidationResult<TestObject> result = validator.validate(new TestObject("Jo", 20));
-            assertThat(result.isInvalid()).isTrue();
-            assertThat(result.getErrors().get(0).message()).isEqualTo("Error with code length.min");
-        }
-
-        @Test
-        @DisplayName("combine은 여러 검증을 결합하여 모든 에러를 반환한다")
-        void combine_shouldCombineValidators() {
-            Validator<TestObject> validator = Validator.combine(nameIsNotEmpty, ageIsPositive);
-            ValidationResult<TestObject> result = validator.validate(new TestObject("", -1));
-
-            assertThat(result.isInvalid()).isTrue();
-            assertThat(result.getErrors()).hasSize(2);
-        }
-
-        @Test
-        @DisplayName("chain은 여러 검증을 순차 실행하여 첫 에러만 반환한다")
-        void chain_shouldChainValidators() {
-            Validator<TestObject> validator = Validator.chain(nameIsNotEmpty, ageIsPositive);
-            ValidationResult<TestObject> result = validator.validate(new TestObject("", -1));
-
-            assertThat(result.isInvalid()).isTrue();
-            assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("name");
-        }
-
-        @Test
-        @DisplayName("fromValidation은 Vavr Validation으로부터 Validator를 생성한다")
-        void fromValidation_shouldCreateFromVavrValidation() {
-            Validator<TestObject> validator = Validator.fromValidation(obj -> {
-                if (obj.name().isEmpty()) {
-                    return Validation.invalid(List.of(
-                        FieldViolation.builder().field("name").message("empty").rejectedValue("").build()
-                    ));
-                }
-                return Validation.valid(obj);
-            });
-
-            assertThat(validator.validate(new TestObject("", 1)).isInvalid()).isTrue();
-            assertThat(validator.validate(new TestObject("John", 1)).isValid()).isTrue();
-        }
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.rejectedValue()).isEqualTo("");
     }
-} 
+  }
+
+  @Nested
+  @DisplayName("필드 검증 메서드 테스트")
+  class FieldValidationTests {
+
+    @Test
+    @DisplayName("field() - 필드 검증기 (성공 케이스)")
+    void field_ShouldReturnSuccess_WhenFieldValidationPasses() {
+      // given
+      Validator<TestData> validator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      // when
+      ValidationResult<TestData> result = validator.validate(new TestData("John", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("John");
+    }
+
+    @Test
+    @DisplayName("field() - 필드 검증기 (실패 케이스)")
+    void field_ShouldReturnFailure_WhenFieldValidationFails() {
+      // given
+      Validator<TestData> validator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      // when
+      ValidationResult<TestData> result = validator.validate(new TestData("", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.rejectedValue()).isEqualTo("");
+    }
+
+    @Test
+    @DisplayName("fieldWithMessage() - 국제화 메시지 필드 검증기")
+    void fieldWithMessage_ShouldUseMessageResolver() {
+      // given
+      when(messageResolver.getMessage("validation.name.required")).thenReturn("이름은 필수입니다");
+
+      Validator<TestData> validator = Validator.fieldWithMessage(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "validation.name.required",
+          messageResolver);
+
+      // when
+      ValidationResult<TestData> result = validator.validate(new TestData("", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.rejectedValue()).isEqualTo("");
+    }
+  }
+
+  @Nested
+  @DisplayName("조합 메서드 테스트")
+  class CombinationTests {
+
+    @Test
+    @DisplayName("and() - 두 검증기 결합 (모두 성공)")
+    void and_ShouldReturnSuccess_WhenBothValidatorsPass() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> combinedValidator = nameValidator.and(ageValidator);
+
+      // when
+      ValidationResult<TestData> result = combinedValidator.validate(new TestData("John", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("John");
+    }
+
+    @Test
+    @DisplayName("and() - 두 검증기 결합 (하나 실패)")
+    void and_ShouldReturnFailure_WhenOneValidatorFails() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> combinedValidator = nameValidator.and(ageValidator);
+
+      // when
+      ValidationResult<TestData> result = combinedValidator.validate(new TestData("", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+    }
+
+    @Test
+    @DisplayName("and() - 두 검증기 결합 (모두 실패)")
+    void and_ShouldReturnAllFailures_WhenBothValidatorsFail() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> combinedValidator = nameValidator.and(ageValidator);
+
+      // when
+      ValidationResult<TestData> result = combinedValidator.validate(new TestData("", -5, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(2);
+
+      Seq<FieldViolation> violations = result.getErrors();
+      assertThat(violations.map(FieldViolation::field)).contains("name", "age");
+      assertThat(violations.map(FieldViolation::message)).contains("이름은 필수입니다", "나이는 0 이상이어야 합니다");
+    }
+
+    @Test
+    @DisplayName("then() - 순차 검증기 (첫 번째 성공, 두 번째 성공)")
+    void then_ShouldReturnSuccess_WhenBothValidatorsPass() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> chainedValidator = nameValidator.then(ageValidator);
+
+      // when
+      ValidationResult<TestData> result = chainedValidator.validate(new TestData("John", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("John");
+    }
+
+    @Test
+    @DisplayName("then() - 순차 검증기 (첫 번째 실패)")
+    void then_ShouldReturnFirstFailure_WhenFirstValidatorFails() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> chainedValidator = nameValidator.then(ageValidator);
+
+      // when
+      ValidationResult<TestData> result = chainedValidator.validate(new TestData("", -5, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+    }
+
+    @Test
+    @DisplayName("then() - 순차 검증기 (첫 번째 성공, 두 번째 실패)")
+    void then_ShouldReturnSecondFailure_WhenFirstPassesAndSecondFails() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> chainedValidator = nameValidator.then(ageValidator);
+
+      // when
+      ValidationResult<TestData> result = chainedValidator.validate(new TestData("John", -5, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("age");
+      assertThat(violation.message()).isEqualTo("나이는 0 이상이어야 합니다");
+    }
+  }
+
+  @Nested
+  @DisplayName("조건부 검증 테스트")
+  class ConditionalValidationTests {
+
+    @Test
+    @DisplayName("when() - 조건부 검증 (조건 참)")
+    void when_ShouldValidate_WhenConditionIsTrue() {
+      // given
+      Validator<TestData> validator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다").when(data -> data.getAge() >= 18);
+
+      // when
+      ValidationResult<TestData> result = validator.validate(new TestData("", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+    }
+
+    @Test
+    @DisplayName("when() - 조건부 검증 (조건 거짓)")
+    void when_ShouldSkipValidation_WhenConditionIsFalse() {
+      // given
+      Validator<TestData> validator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다").when(data -> data.getAge() >= 18);
+
+      // when
+      ValidationResult<TestData> result = validator.validate(new TestData("", 15, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("");
+    }
+  }
+
+  @Nested
+  @DisplayName("변환 메서드 테스트")
+  class TransformationTests {
+
+    @Test
+    @DisplayName("contramap() - 검증 대상 변환")
+    void contramap_ShouldTransformTarget() {
+      // given
+      Validator<String> stringValidator = Validator.field(
+          Function.identity(),
+          str -> str != null && !str.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> dataValidator = stringValidator.contramap(TestData::getName);
+
+      // when
+      ValidationResult<TestData> result = dataValidator.validate(new TestData("", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.rejectedValue()).isEqualTo("");
+    }
+  }
+
+  @Nested
+  @DisplayName("정적 조합 메서드 테스트")
+  class StaticCombinationTests {
+
+    @Test
+    @DisplayName("combine() - 여러 검증기 결합 (모두 성공)")
+    void combine_ShouldReturnSuccess_WhenAllValidatorsPass() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> emailValidator = Validator.field(
+          TestData::getEmail,
+          email -> email != null && email.contains("@"),
+          "email",
+          "이메일 형식이 올바르지 않습니다");
+
+      Validator<TestData> combinedValidator = Validator.combine(nameValidator, ageValidator, emailValidator);
+
+      // when
+      ValidationResult<TestData> result = combinedValidator.validate(new TestData("John", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("John");
+    }
+
+    @Test
+    @DisplayName("combine() - 여러 검증기 결합 (일부 실패)")
+    void combine_ShouldReturnAllFailures_WhenSomeValidatorsFail() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> emailValidator = Validator.field(
+          TestData::getEmail,
+          email -> email != null && email.contains("@"),
+          "email",
+          "이메일 형식이 올바르지 않습니다");
+
+      Validator<TestData> combinedValidator = Validator.combine(nameValidator, ageValidator, emailValidator);
+
+      // when
+      ValidationResult<TestData> result = combinedValidator.validate(new TestData("", -5, "invalid-email"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(3);
+
+      Seq<FieldViolation> violations = result.getErrors();
+      assertThat(violations.map(FieldViolation::field)).contains("name", "age", "email");
+    }
+
+    @Test
+    @DisplayName("chain() - 순차 검증기 (첫 번째 실패에서 중단)")
+    void chain_ShouldStopAtFirstFailure() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> emailValidator = Validator.field(
+          TestData::getEmail,
+          email -> email != null && email.contains("@"),
+          "email",
+          "이메일 형식이 올바르지 않습니다");
+
+      Validator<TestData> chainedValidator = Validator.chain(nameValidator, ageValidator, emailValidator);
+
+      // when
+      ValidationResult<TestData> result = chainedValidator.validate(new TestData("", -5, "invalid-email"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+    }
+
+    @Test
+    @DisplayName("chain() - 순차 검증기 (모두 성공)")
+    void chain_ShouldReturnSuccess_WhenAllValidatorsPass() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 0,
+          "age",
+          "나이는 0 이상이어야 합니다");
+
+      Validator<TestData> emailValidator = Validator.field(
+          TestData::getEmail,
+          email -> email != null && email.contains("@"),
+          "email",
+          "이메일 형식이 올바르지 않습니다");
+
+      Validator<TestData> chainedValidator = Validator.chain(nameValidator, ageValidator, emailValidator);
+
+      // when
+      ValidationResult<TestData> result = chainedValidator.validate(new TestData("John", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("John");
+    }
+  }
+
+  @Nested
+  @DisplayName("Vavr Validation 변환 테스트")
+  class VavrValidationTests {
+
+    @Test
+    @DisplayName("fromValidation() - Vavr Validation에서 Validator 생성 (성공)")
+    void fromValidation_ShouldReturnSuccess_WhenValidationSucceeds() {
+      // given
+      Function<TestData, Validation<Seq<FieldViolation>, TestData>> validationFunc = data -> {
+        if (data.getName() != null && !data.getName().trim().isEmpty()) {
+          return Validation.valid(data);
+        } else {
+          FieldViolation violation = FieldViolation.builder()
+              .field("name")
+              .message("이름은 필수입니다")
+              .rejectedValue(data.getName())
+              .build();
+          return Validation.invalid(io.vavr.collection.List.of(violation));
+        }
+      };
+
+      Validator<TestData> validator = Validator.fromValidation(validationFunc);
+
+      // when
+      ValidationResult<TestData> result = validator.validate(new TestData("John", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("John");
+    }
+
+    @Test
+    @DisplayName("fromValidation() - Vavr Validation에서 Validator 생성 (실패)")
+    void fromValidation_ShouldReturnFailure_WhenValidationFails() {
+      // given
+      Function<TestData, Validation<Seq<FieldViolation>, TestData>> validationFunc = data -> {
+        if (data.getName() != null && !data.getName().trim().isEmpty()) {
+          return Validation.valid(data);
+        } else {
+          FieldViolation violation = FieldViolation.builder()
+              .field("name")
+              .message("이름은 필수입니다")
+              .rejectedValue(data.getName())
+              .build();
+          return Validation.invalid(io.vavr.collection.List.of(violation));
+        }
+      };
+
+      Validator<TestData> validator = Validator.fromValidation(validationFunc);
+
+      // when
+      ValidationResult<TestData> result = validator.validate(new TestData("", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.rejectedValue()).isEqualTo("");
+    }
+  }
+
+  @Nested
+  @DisplayName("복합 시나리오 테스트")
+  class ComplexScenarioTests {
+
+    @Test
+    @DisplayName("복합 검증 시나리오 - 성인 사용자 검증")
+    void complexScenario_AdultUserValidation() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 18,
+          "age",
+          "성인만 가입할 수 있습니다").when(data -> data.getName() != null && !data.getName().trim().isEmpty());
+
+      Validator<TestData> emailValidator = Validator.field(
+          TestData::getEmail,
+          email -> email != null && email.contains("@"),
+          "email",
+          "이메일 형식이 올바르지 않습니다").when(data -> data.getAge() >= 18);
+
+      Validator<TestData> combinedValidator = nameValidator.and(ageValidator).and(emailValidator);
+
+      // when
+      ValidationResult<TestData> result = combinedValidator.validate(new TestData("John", 25, "john@test.com"));
+
+      // then
+      assertThat(result.isValid()).isTrue();
+      assertThat(result.get().getName()).isEqualTo("John");
+    }
+
+    @Test
+    @DisplayName("복합 검증 시나리오 - 미성년자 검증")
+    void complexScenario_MinorUserValidation() {
+      // given
+      Validator<TestData> nameValidator = Validator.field(
+          TestData::getName,
+          name -> name != null && !name.trim().isEmpty(),
+          "name",
+          "이름은 필수입니다");
+
+      Validator<TestData> ageValidator = Validator.field(
+          TestData::getAge,
+          age -> age >= 18,
+          "age",
+          "성인만 가입할 수 있습니다").when(data -> data.getName() != null && !data.getName().trim().isEmpty());
+
+      Validator<TestData> emailValidator = Validator.field(
+          TestData::getEmail,
+          email -> email != null && email.contains("@"),
+          "email",
+          "이메일 형식이 올바르지 않습니다").when(data -> data.getAge() >= 18);
+
+      Validator<TestData> combinedValidator = nameValidator.and(ageValidator).and(emailValidator);
+
+      // when
+      ValidationResult<TestData> result = combinedValidator.validate(new TestData("John", 15, "john@test.com"));
+
+      // then
+      assertThat(result.isInvalid()).isTrue();
+      assertThat(result.getErrors()).hasSize(1);
+      FieldViolation violation = result.getErrors().get(0);
+      assertThat(violation.field()).isEqualTo("age");
+      assertThat(violation.message()).isEqualTo("성인만 가입할 수 있습니다");
+    }
+  }
+}

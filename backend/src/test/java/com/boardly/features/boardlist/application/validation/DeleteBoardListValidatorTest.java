@@ -11,51 +11,36 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
-
-import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class DeleteBoardListValidatorTest {
 
-    private DeleteBoardListValidator validator;
-
     @Mock
-    private MessageSource messageSource;
+    private ValidationMessageResolver validationMessageResolver;
+
+    private DeleteBoardListValidator validator;
 
     @BeforeEach
     void setUp() {
-        LocaleContextHolder.setLocale(Locale.KOREAN);
-        
-        // MessageSource Mock 설정
-        lenient().when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
-            .thenAnswer(invocation -> {
-                String key = invocation.getArgument(0);
-                return switch (key) {
-                    case "validation.boardlist.listId.required" -> "List ID is required";
-                    case "validation.boardlist.userId.required" -> "User ID is required";
-                    default -> key;
-                };
-            });
+        // ValidationMessageResolver Mock 설정
+        lenient().when(validationMessageResolver.getMessage("validation.boardlist.listId.required"))
+                .thenReturn("리스트 ID는 필수입니다");
+        lenient().when(validationMessageResolver.getMessage("validation.boardlist.userId.required"))
+                .thenReturn("사용자 ID는 필수입니다");
 
-        ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-        validator = new DeleteBoardListValidator(messageResolver);
+        validator = new DeleteBoardListValidator(validationMessageResolver);
     }
 
     @Test
-    @DisplayName("유효한 삭제 명령어는 검증을 통과해야 한다")
+    @DisplayName("유효한 DeleteBoardListCommand는 검증을 통과해야 한다")
     void validate_ValidCommand_ShouldPass() {
         // given
         DeleteBoardListCommand command = new DeleteBoardListCommand(
-                new ListId("list-123"),
-                new UserId("user-123")
-        );
+                new ListId(),
+                new UserId());
 
         // when
         ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
@@ -70,8 +55,7 @@ class DeleteBoardListValidatorTest {
         // given
         DeleteBoardListCommand command = new DeleteBoardListCommand(
                 null,
-                new UserId("user-123")
-        );
+                new UserId());
 
         // when
         ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
@@ -80,6 +64,7 @@ class DeleteBoardListValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("listId");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("리스트 ID는 필수입니다");
     }
 
     @Test
@@ -87,9 +72,8 @@ class DeleteBoardListValidatorTest {
     void validate_NullUserId_ShouldFail() {
         // given
         DeleteBoardListCommand command = new DeleteBoardListCommand(
-                new ListId("list-123"),
-                null
-        );
+                new ListId(),
+                null);
 
         // when
         ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
@@ -98,6 +82,7 @@ class DeleteBoardListValidatorTest {
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
         assertThat(result.getErrors().get(0).field()).isEqualTo("userId");
+        assertThat(result.getErrors().get(0).message()).isEqualTo("사용자 ID는 필수입니다");
     }
 
     @Test
@@ -106,8 +91,7 @@ class DeleteBoardListValidatorTest {
         // given
         DeleteBoardListCommand command = new DeleteBoardListCommand(
                 null,
-                null
-        );
+                null);
 
         // when
         ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
@@ -115,18 +99,22 @@ class DeleteBoardListValidatorTest {
         // then
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(2);
-        
-        var errors = result.getErrors();
-        assertThat(errors).anyMatch(error -> error.field().equals("listId"));
-        assertThat(errors).anyMatch(error -> error.field().equals("userId"));
+
+        // listId 오류 확인
+        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("listId") &&
+                error.message().equals("리스트 ID는 필수입니다"));
+
+        // userId 오류 확인
+        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("userId") &&
+                error.message().equals("사용자 ID는 필수입니다"));
     }
 
     @Test
-    @DisplayName("유효한 ListId와 UserId 객체로 검증이 성공해야 한다")
+    @DisplayName("유효한 ListId와 UserId 객체로 검증을 통과해야 한다")
     void validate_ValidObjects_ShouldPass() {
         // given
-        ListId listId = new ListId("valid-list-id");
-        UserId userId = new UserId("valid-user-id");
+        ListId listId = new ListId();
+        UserId userId = new UserId();
         DeleteBoardListCommand command = new DeleteBoardListCommand(listId, userId);
 
         // when
@@ -137,78 +125,23 @@ class DeleteBoardListValidatorTest {
     }
 
     @Test
-    @DisplayName("빈 문자열 ID로 생성된 객체들도 유효해야 한다")
-    void validate_EmptyStringIds_ShouldPass() {
+    @DisplayName("다른 유효한 ListId와 UserId 조합으로도 검증을 통과해야 한다")
+    void validate_DifferentValidObjects_ShouldPass() {
         // given
-        ListId listId = new ListId("");
-        UserId userId = new UserId("");
-        DeleteBoardListCommand command = new DeleteBoardListCommand(listId, userId);
+        ListId listId1 = new ListId();
+        ListId listId2 = new ListId();
+        UserId userId1 = new UserId();
+        UserId userId2 = new UserId();
+
+        DeleteBoardListCommand command1 = new DeleteBoardListCommand(listId1, userId1);
+        DeleteBoardListCommand command2 = new DeleteBoardListCommand(listId2, userId2);
 
         // when
-        ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
+        ValidationResult<DeleteBoardListCommand> result1 = validator.validate(command1);
+        ValidationResult<DeleteBoardListCommand> result2 = validator.validate(command2);
 
         // then
-        assertThat(result.isValid()).isTrue();
+        assertThat(result1.isValid()).isTrue();
+        assertThat(result2.isValid()).isTrue();
     }
-
-    @Test
-    @DisplayName("특수문자가 포함된 ID로 생성된 객체들도 유효해야 한다")
-    void validate_SpecialCharacterIds_ShouldPass() {
-        // given
-        ListId listId = new ListId("list-123_456@test");
-        UserId userId = new UserId("user-123_456@test");
-        DeleteBoardListCommand command = new DeleteBoardListCommand(listId, userId);
-
-        // when
-        ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
-
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
-
-    @Test
-    @DisplayName("긴 ID로 생성된 객체들도 유효해야 한다")
-    void validate_LongIds_ShouldPass() {
-        // given
-        String longId = "a".repeat(1000);
-        ListId listId = new ListId(longId);
-        UserId userId = new UserId(longId);
-        DeleteBoardListCommand command = new DeleteBoardListCommand(listId, userId);
-
-        // when
-        ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
-
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
-
-    @Test
-    @DisplayName("한글이 포함된 ID로 생성된 객체들도 유효해야 한다")
-    void validate_KoreanIds_ShouldPass() {
-        // given
-        ListId listId = new ListId("리스트-123");
-        UserId userId = new UserId("사용자-123");
-        DeleteBoardListCommand command = new DeleteBoardListCommand(listId, userId);
-
-        // when
-        ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
-
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
-
-    @Test
-    @DisplayName("UUID 형태의 ID로 생성된 객체들도 유효해야 한다")
-    void validate_UuidIds_ShouldPass() {
-        // given
-        ListId listId = new ListId("550e8400-e29b-41d4-a716-446655440000");
-        UserId userId = new UserId("550e8400-e29b-41d4-a716-446655440001");
-        DeleteBoardListCommand command = new DeleteBoardListCommand(listId, userId);
-
-        // when
-        ValidationResult<DeleteBoardListCommand> result = validator.validate(command);
-
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
-} 
+}

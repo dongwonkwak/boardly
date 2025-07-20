@@ -10,6 +10,7 @@ import com.boardly.features.boardlist.domain.model.ListColor;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
@@ -31,380 +32,345 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DeleteBoardListServiceTest {
 
-    private DeleteBoardListService deleteBoardListService;
+        private DeleteBoardListService deleteBoardListService;
 
-    @Mock
-    private DeleteBoardListValidator deleteBoardListValidator;
+        @Mock
+        private DeleteBoardListValidator deleteBoardListValidator;
 
-    @Mock
-    private BoardRepository boardRepository;
+        @Mock
+        private BoardRepository boardRepository;
 
-    @Mock
-    private BoardListRepository boardListRepository;
+        @Mock
+        private BoardListRepository boardListRepository;
 
-    @BeforeEach
-    void setUp() {
-        deleteBoardListService = new DeleteBoardListService(
-                deleteBoardListValidator,
-                boardRepository,
-                boardListRepository
-        );
-    }
+        @Mock
+        private ValidationMessageResolver validationMessageResolver;
 
-    private DeleteBoardListCommand createValidCommand() {
-        return new DeleteBoardListCommand(
-                new ListId("list-123"),
-                new UserId("user-123")
-        );
-    }
+        @BeforeEach
+        void setUp() {
+                deleteBoardListService = new DeleteBoardListService(
+                                deleteBoardListValidator,
+                                boardRepository,
+                                boardListRepository,
+                                validationMessageResolver);
+        }
 
-    private Board createValidBoard(BoardId boardId, UserId ownerId) {
-        return Board.builder()
-                .boardId(boardId)
-                .title("테스트 보드")
-                .description("테스트 보드 설명")
-                .isArchived(false)
-                .ownerId(ownerId)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
-    }
+        private DeleteBoardListCommand createValidCommand() {
+                return new DeleteBoardListCommand(
+                                new ListId(),
+                                new UserId());
+        }
 
-    private BoardList createValidBoardList(ListId listId, BoardId boardId, int position) {
-        return BoardList.builder()
-                .listId(listId)
-                .title("삭제할 리스트")
-                .description("삭제할 리스트 설명")
-                .position(position)
-                .color(ListColor.of("#0079BF"))
-                .boardId(boardId)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
-    }
+        private Board createValidBoard(BoardId boardId, UserId ownerId) {
+                return Board.builder()
+                                .boardId(boardId)
+                                .title("테스트 보드")
+                                .description("테스트 보드 설명")
+                                .isArchived(false)
+                                .ownerId(ownerId)
+                                .createdAt(Instant.now())
+                                .updatedAt(Instant.now())
+                                .build();
+        }
 
-    @Test
-    @DisplayName("유효한 정보로 리스트 삭제가 성공해야 한다")
-    void deleteBoardList_withValidData_shouldReturnSuccess() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        Board board = createValidBoard(boardId, command.userId());
-        BoardList listToDelete = createValidBoardList(command.listId(), boardId, 1);
+        private BoardList createValidBoardList(ListId listId, BoardId boardId, int position) {
+                return BoardList.create(
+                                "테스트 리스트",
+                                "테스트 리스트 설명",
+                                position,
+                                ListColor.of("#0079BF"),
+                                boardId);
+        }
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(listToDelete));
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.of(board));
-        when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 1))
-                .thenReturn(List.of());
+        @Test
+        @DisplayName("유효한 정보로 리스트 삭제가 성공해야 한다")
+        void deleteBoardList_withValidData_shouldReturnSuccess() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                BoardId boardId = new BoardId();
+                Board board = createValidBoard(boardId, command.userId());
+                BoardList listToDelete = createValidBoardList(command.listId(), boardId, 2);
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(boardListRepository.findById(command.listId()))
+                                .thenReturn(Optional.of(listToDelete));
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.of(board));
+                when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 2))
+                                .thenReturn(List.of());
 
-        // then
-        assertThat(result.isRight()).isTrue();
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository).findById(boardId);
-        verify(boardListRepository).deleteById(command.listId());
-        verify(boardListRepository).findByBoardIdAndPositionGreaterThan(boardId, 1);
-    }
+                // then
+                assertThat(result.isRight()).isTrue();
 
-    @Test
-    @DisplayName("삭제 후 position 재정렬이 올바르게 동작해야 한다")
-    void deleteBoardList_withRemainingLists_shouldReorderPositions() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        Board board = createValidBoard(boardId, command.userId());
-        BoardList listToDelete = createValidBoardList(command.listId(), boardId, 1);
-        
-        // 삭제 후 남은 리스트들
-        BoardList remainingList1 = createValidBoardList(new ListId("list-456"), boardId, 2);
-        BoardList remainingList2 = createValidBoardList(new ListId("list-789"), boardId, 3);
-        List<BoardList> remainingLists = List.of(remainingList1, remainingList2);
+                verify(deleteBoardListValidator).validate(command);
+                verify(boardListRepository).findById(command.listId());
+                verify(boardRepository).findById(boardId);
+                verify(boardListRepository).deleteById(command.listId());
+                verify(boardListRepository).findByBoardIdAndPositionGreaterThan(boardId, 2);
+        }
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(listToDelete));
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.of(board));
-        when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 1))
-                .thenReturn(remainingLists);
-        when(boardListRepository.saveAll(any()))
-                .thenReturn(remainingLists);
+        @Test
+        @DisplayName("입력 검증 실패 시 InputError를 반환해야 한다")
+        void deleteBoardList_withInvalidData_shouldReturnInputError() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                Failure.FieldViolation violation = Failure.FieldViolation.builder()
+                                .field("listId")
+                                .message("리스트 ID는 필수입니다")
+                                .rejectedValue(command.listId())
+                                .build();
+                ValidationResult<DeleteBoardListCommand> invalidResult = ValidationResult.invalid(violation);
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(invalidResult);
+                when(validationMessageResolver.getMessage("validation.input.invalid"))
+                                .thenReturn("입력 데이터가 유효하지 않습니다");
 
-        // then
-        assertThat(result.isRight()).isTrue();
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository).findById(boardId);
-        verify(boardListRepository).deleteById(command.listId());
-        verify(boardListRepository).findByBoardIdAndPositionGreaterThan(boardId, 1);
-        verify(boardListRepository).saveAll(remainingLists);
+                // then
+                assertThat(result.isLeft()).isTrue();
+                assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
+                Failure.InputError inputError = (Failure.InputError) result.getLeft();
+                assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
+                assertThat(inputError.getViolations()).hasSize(1);
+                assertThat(inputError.getViolations().get(0).field()).isEqualTo("listId");
+                assertThat(inputError.getViolations().get(0).message()).isEqualTo("리스트 ID는 필수입니다");
 
-        // position이 올바르게 업데이트되었는지 확인
-        assertThat(remainingList1.getPosition()).isEqualTo(1);
-        assertThat(remainingList2.getPosition()).isEqualTo(2);
-    }
+                verify(deleteBoardListValidator).validate(command);
+                verify(validationMessageResolver).getMessage("validation.input.invalid");
+        }
 
-    @Test
-    @DisplayName("입력 검증 실패 시 검증 오류를 반환해야 한다")
-    void deleteBoardList_withInvalidData_shouldReturnValidationFailure() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        Failure.FieldViolation violation = Failure.FieldViolation.builder()
-                .field("listId")
-                .message("validation.boardlist.listId.required")
-                .rejectedValue(command.listId())
-                .build();
-        ValidationResult<DeleteBoardListCommand> invalidResult = ValidationResult.invalid(violation);
+        @Test
+        @DisplayName("리스트를 찾을 수 없는 경우 NotFound 오류를 반환해야 한다")
+        void deleteBoardList_withNonExistentList_shouldReturnNotFoundFailure() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(invalidResult);
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(boardListRepository.findById(command.listId()))
+                                .thenReturn(Optional.empty());
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-        Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
-        assertThat(validationFailure.message()).contains("INVALID_INPUT");
+                // then
+                assertThat(result.isLeft()).isTrue();
+                assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
+                Failure.NotFound notFound = (Failure.NotFound) result.getLeft();
+                assertThat(notFound.getErrorCode()).isEqualTo("NOT_FOUND");
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository, never()).findById(any(ListId.class));
-        verify(boardListRepository, never()).deleteById(any(ListId.class));
-    }
+                verify(deleteBoardListValidator).validate(command);
+                verify(boardListRepository).findById(command.listId());
+        }
 
-    @Test
-    @DisplayName("리스트를 찾을 수 없는 경우 NOT_FOUND 오류를 반환해야 한다")
-    void deleteBoardList_withNonExistentList_shouldReturnNotFoundFailure() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
+        @Test
+        @DisplayName("보드를 찾을 수 없는 경우 NotFound 오류를 반환해야 한다")
+        void deleteBoardList_withNonExistentBoard_shouldReturnNotFoundFailure() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                BoardId boardId = new BoardId();
+                BoardList listToDelete = createValidBoardList(command.listId(), boardId, 2);
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.empty());
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(boardListRepository.findById(command.listId()))
+                                .thenReturn(Optional.of(listToDelete));
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.empty());
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.NotFoundFailure.class);
-        assertThat(result.getLeft().message()).isEqualTo("LIST_NOT_FOUND");
+                // then
+                assertThat(result.isLeft()).isTrue();
+                assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
+                Failure.NotFound notFound = (Failure.NotFound) result.getLeft();
+                assertThat(notFound.getErrorCode()).isEqualTo("NOT_FOUND");
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository, never()).findById(any(BoardId.class));
-        verify(boardListRepository, never()).deleteById(any(ListId.class));
-    }
+                verify(deleteBoardListValidator).validate(command);
+                verify(boardListRepository).findById(command.listId());
+                verify(boardRepository).findById(boardId);
+        }
 
-    @Test
-    @DisplayName("보드를 찾을 수 없는 경우 NOT_FOUND 오류를 반환해야 한다")
-    void deleteBoardList_withNonExistentBoard_shouldReturnNotFoundFailure() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        BoardList listToDelete = createValidBoardList(command.listId(), boardId, 1);
+        @Test
+        @DisplayName("보드 소유자가 아닌 경우 PermissionDenied 오류를 반환해야 한다")
+        void deleteBoardList_withUnauthorizedUser_shouldReturnPermissionDeniedFailure() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                BoardId boardId = new BoardId();
+                UserId differentUserId = new UserId();
+                Board board = createValidBoard(boardId, differentUserId);
+                BoardList listToDelete = createValidBoardList(command.listId(), boardId, 2);
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(listToDelete));
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.empty());
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(boardListRepository.findById(command.listId()))
+                                .thenReturn(Optional.of(listToDelete));
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.of(board));
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.NotFoundFailure.class);
-        assertThat(result.getLeft().message()).isEqualTo("BOARD_NOT_FOUND");
+                // then
+                assertThat(result.isLeft()).isTrue();
+                assertThat(result.getLeft()).isInstanceOf(Failure.PermissionDenied.class);
+                Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) result.getLeft();
+                assertThat(permissionDenied.getErrorCode()).isEqualTo("UNAUTHORIZED_ACCESS");
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository).findById(boardId);
-        verify(boardListRepository, never()).deleteById(any(ListId.class));
-    }
+                verify(deleteBoardListValidator).validate(command);
+                verify(boardListRepository).findById(command.listId());
+                verify(boardRepository).findById(boardId);
+        }
 
-    @Test
-    @DisplayName("보드 소유자가 아닌 경우 권한 오류를 반환해야 한다")
-    void deleteBoardList_withUnauthorizedUser_shouldReturnForbiddenFailure() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        UserId differentUserId = new UserId("different-user");
-        Board board = createValidBoard(boardId, differentUserId);
-        BoardList listToDelete = createValidBoardList(command.listId(), boardId, 1);
+        @Test
+        @DisplayName("리스트 삭제 후 position 재정렬이 성공해야 한다")
+        void deleteBoardList_withRemainingLists_shouldReorderPositions() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                BoardId boardId = new BoardId();
+                Board board = createValidBoard(boardId, command.userId());
+                BoardList listToDelete = createValidBoardList(command.listId(), boardId, 2);
+                BoardList remainingList1 = createValidBoardList(new ListId(), boardId, 3);
+                BoardList remainingList2 = createValidBoardList(new ListId(), boardId, 4);
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(listToDelete));
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.of(board));
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(boardListRepository.findById(command.listId()))
+                                .thenReturn(Optional.of(listToDelete));
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.of(board));
+                when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 2))
+                                .thenReturn(List.of(remainingList1, remainingList2));
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.ForbiddenFailure.class);
-        assertThat(result.getLeft().message()).isEqualTo("UNAUTHORIZED_ACCESS");
+                // then
+                assertThat(result.isRight()).isTrue();
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository).findById(boardId);
-        verify(boardListRepository, never()).deleteById(any(ListId.class));
-    }
+                verify(deleteBoardListValidator).validate(command);
+                verify(boardListRepository).findById(command.listId());
+                verify(boardRepository).findById(boardId);
+                verify(boardListRepository).deleteById(command.listId());
+                verify(boardListRepository).findByBoardIdAndPositionGreaterThan(boardId, 2);
+                verify(boardListRepository).saveAll(any());
+        }
 
-    @Test
-    @DisplayName("리스트 삭제 중 예외 발생 시 내부 서버 오류를 반환해야 한다")
-    void deleteBoardList_withDeleteException_shouldReturnInternalServerError() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        Board board = createValidBoard(boardId, command.userId());
-        BoardList listToDelete = createValidBoardList(command.listId(), boardId, 1);
+        @Test
+        @DisplayName("리스트 삭제 중 예외 발생 시 InternalError를 반환해야 한다")
+        void deleteBoardList_withDeleteException_shouldReturnInternalError() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                BoardId boardId = new BoardId();
+                Board board = createValidBoard(boardId, command.userId());
+                BoardList listToDelete = createValidBoardList(command.listId(), boardId, 2);
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(listToDelete));
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.of(board));
-        doThrow(new RuntimeException("데이터베이스 오류"))
-                .when(boardListRepository).deleteById(command.listId());
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(boardListRepository.findById(command.listId()))
+                                .thenReturn(Optional.of(listToDelete));
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.of(board));
+                doThrow(new RuntimeException("데이터베이스 오류"))
+                                .when(boardListRepository).deleteById(command.listId());
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.InternalServerError.class);
-        assertThat(result.getLeft().message()).isEqualTo("데이터베이스 오류");
+                // then
+                assertThat(result.isLeft()).isTrue();
+                assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
+                Failure.InternalError internalError = (Failure.InternalError) result.getLeft();
+                assertThat(internalError.getErrorCode()).isEqualTo("INTERNAL_ERROR");
+                assertThat(internalError.getMessage()).isEqualTo("데이터베이스 오류");
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository).findById(boardId);
-        verify(boardListRepository).deleteById(command.listId());
-    }
+                verify(deleteBoardListValidator).validate(command);
+                verify(boardListRepository).findById(command.listId());
+                verify(boardRepository).findById(boardId);
+                verify(boardListRepository).deleteById(command.listId());
+        }
 
-    @Test
-    @DisplayName("position 재정렬 중 예외가 발생해도 삭제는 성공해야 한다")
-    void deleteBoardList_withReorderException_shouldStillSucceed() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        Board board = createValidBoard(boardId, command.userId());
-        BoardList listToDelete = createValidBoardList(command.listId(), boardId, 1);
-        
-        // 삭제 후 남은 리스트들
-        BoardList remainingList = createValidBoardList(new ListId("list-456"), boardId, 2);
-        List<BoardList> remainingLists = List.of(remainingList);
+        @Test
+        @DisplayName("여러 검증 오류가 있는 경우 모든 오류를 반환해야 한다")
+        void deleteBoardList_withMultipleValidationErrors_shouldReturnAllErrors() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                Failure.FieldViolation violation1 = Failure.FieldViolation.builder()
+                                .field("listId")
+                                .message("리스트 ID는 필수입니다")
+                                .rejectedValue(command.listId())
+                                .build();
+                Failure.FieldViolation violation2 = Failure.FieldViolation.builder()
+                                .field("userId")
+                                .message("사용자 ID는 필수입니다")
+                                .rejectedValue(command.userId())
+                                .build();
+                ValidationResult<DeleteBoardListCommand> invalidResult = ValidationResult
+                                .invalid(io.vavr.collection.List.of(violation1, violation2));
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(listToDelete));
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.of(board));
-        when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 1))
-                .thenReturn(remainingLists);
-        doThrow(new RuntimeException("재정렬 오류"))
-                .when(boardListRepository).saveAll(remainingLists);
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(invalidResult);
+                when(validationMessageResolver.getMessage("validation.input.invalid"))
+                                .thenReturn("입력 데이터가 유효하지 않습니다");
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        // then
-        assertThat(result.isRight()).isTrue(); // 삭제는 성공해야 함
+                // then
+                assertThat(result.isLeft()).isTrue();
+                assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
+                Failure.InputError inputError = (Failure.InputError) result.getLeft();
+                assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
+                assertThat(inputError.getViolations()).hasSize(2);
+                assertThat(inputError.getViolations().get(0).field()).isEqualTo("listId");
+                assertThat(inputError.getViolations().get(0).message()).isEqualTo("리스트 ID는 필수입니다");
+                assertThat(inputError.getViolations().get(1).field()).isEqualTo("userId");
+                assertThat(inputError.getViolations().get(1).message()).isEqualTo("사용자 ID는 필수입니다");
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository).findById(boardId);
-        verify(boardListRepository).deleteById(command.listId());
-        verify(boardListRepository).findByBoardIdAndPositionGreaterThan(boardId, 1);
-        verify(boardListRepository).saveAll(remainingLists);
-    }
+                verify(deleteBoardListValidator).validate(command);
+                verify(validationMessageResolver).getMessage("validation.input.invalid");
+        }
 
-    @Test
-    @DisplayName("여러 검증 오류가 있는 경우 모든 오류를 반환해야 한다")
-    void deleteBoardList_withMultipleValidationErrors_shouldReturnAllErrors() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        Failure.FieldViolation listIdViolation = Failure.FieldViolation.builder()
-                .field("listId")
-                .message("validation.boardlist.listId.required")
-                .rejectedValue(command.listId())
-                .build();
-        Failure.FieldViolation userIdViolation = Failure.FieldViolation.builder()
-                .field("userId")
-                .message("validation.boardlist.userId.required")
-                .rejectedValue(command.userId())
-                .build();
-        ValidationResult<DeleteBoardListCommand> invalidResult = ValidationResult.invalid(
-                io.vavr.collection.List.of(listIdViolation, userIdViolation));
+        @Test
+        @DisplayName("position 재정렬 중 예외가 발생해도 삭제는 성공해야 한다")
+        void deleteBoardList_withReorderException_shouldStillSucceed() {
+                // given
+                DeleteBoardListCommand command = createValidCommand();
+                BoardId boardId = new BoardId();
+                Board board = createValidBoard(boardId, command.userId());
+                BoardList listToDelete = createValidBoardList(command.listId(), boardId, 2);
+                BoardList remainingList = createValidBoardList(new ListId(), boardId, 3);
 
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(invalidResult);
+                when(deleteBoardListValidator.validate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(boardListRepository.findById(command.listId()))
+                                .thenReturn(Optional.of(listToDelete));
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.of(board));
+                when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 2))
+                                .thenReturn(List.of(remainingList));
+                doThrow(new RuntimeException("재정렬 오류"))
+                                .when(boardListRepository).saveAll(any());
 
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
+                // when
+                Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
 
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-        Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
-        assertThat(validationFailure.violations()).hasSize(2);
+                // then
+                assertThat(result.isRight()).isTrue();
 
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository, never()).findById(any(ListId.class));
-        verify(boardListRepository, never()).deleteById(any(ListId.class));
-    }
-
-    @Test
-    @DisplayName("마지막 리스트를 삭제할 때 position 재정렬이 필요하지 않아야 한다")
-    void deleteBoardList_withLastList_shouldNotReorderPositions() {
-        // given
-        DeleteBoardListCommand command = createValidCommand();
-        BoardId boardId = new BoardId("board-123");
-        Board board = createValidBoard(boardId, command.userId());
-        BoardList listToDelete = createValidBoardList(command.listId(), boardId, 0); // 첫 번째 리스트
-
-        when(deleteBoardListValidator.validate(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(boardListRepository.findById(command.listId()))
-                .thenReturn(Optional.of(listToDelete));
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.of(board));
-        when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 0))
-                .thenReturn(List.of()); // 남은 리스트 없음
-
-        // when
-        Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
-
-        // then
-        assertThat(result.isRight()).isTrue();
-
-        verify(deleteBoardListValidator).validate(command);
-        verify(boardListRepository).findById(command.listId());
-        verify(boardRepository).findById(boardId);
-        verify(boardListRepository).deleteById(command.listId());
-        verify(boardListRepository).findByBoardIdAndPositionGreaterThan(boardId, 0);
-        verify(boardListRepository, never()).saveAll(any()); // saveAll 호출되지 않음
-    }
-} 
+                verify(deleteBoardListValidator).validate(command);
+                verify(boardListRepository).findById(command.listId());
+                verify(boardRepository).findById(boardId);
+                verify(boardListRepository).deleteById(command.listId());
+                verify(boardListRepository).findByBoardIdAndPositionGreaterThan(boardId, 2);
+                verify(boardListRepository).saveAll(any());
+        }
+}

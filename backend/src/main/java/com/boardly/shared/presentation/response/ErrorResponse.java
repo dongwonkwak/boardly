@@ -1,3 +1,4 @@
+// ErrorResponse.java - 개선된 API 오류 응답
 package com.boardly.shared.presentation.response;
 
 import com.boardly.shared.domain.common.Failure;
@@ -14,93 +15,134 @@ import java.util.List;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorResponse(
-        String message,
-        String errorCode,
-        @JsonFormat(shape = JsonFormat.Shape.STRING) Instant timestamp,
-        String path,
-        List<Failure.FieldViolation> details) {
+        String code, // 에러 코드
+        String message, // 사용자 친화적 메시지
+        @JsonFormat(shape = JsonFormat.Shape.STRING) Instant timestamp, // 오류 발생 시간
+        String path, // 요청 경로 (컨트롤러에서 설정)
+        List<Failure.FieldViolation> details, // 상세 검증 오류 (400일 때만)
+        Object context // 추가 컨텍스트 정보
+) {
 
+    public ErrorResponse {
+        if (timestamp == null) {
+            timestamp = Instant.now();
+        }
+    }
+
+    /**
+     * 기본 에러 응답 생성
+     */
+    public static ErrorResponse of(String code, String message) {
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * 컨텍스트 정보가 있는 에러 응답 생성
+     */
+    public static ErrorResponse of(String code, String message, Object context) {
+        return ErrorResponse.builder()
+                .code(code)
+                .message(message)
+                .context(context)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * 입력 검증 오류 응답 생성 (400 Bad Request)
+     */
+    public static ErrorResponse validation(String message, List<Failure.FieldViolation> details) {
+        return ErrorResponse.builder()
+                .code("VALIDATION_ERROR")
+                .message(message)
+                .details(details)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * 기존 호환성을 위한 메서드들
+     */
+    public static ErrorResponse validation(Failure.InputError inputError) {
+        return ErrorResponse.builder()
+                .code(inputError.getErrorCode())
+                .message(inputError.getMessage())
+                .details(inputError.getViolations())
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    public static ErrorResponse forbidden(Failure.PermissionDenied permissionDenied) {
+        return ErrorResponse.builder()
+                .code(permissionDenied.getErrorCode())
+                .message(permissionDenied.getMessage())
+                .context(permissionDenied.getContext())
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    public static ErrorResponse notFound(Failure.NotFound notFound) {
+        return ErrorResponse.builder()
+                .code(notFound.getErrorCode())
+                .message(notFound.getMessage())
+                .context(notFound.getContext())
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    public static ErrorResponse conflict(Failure.ResourceConflict resourceConflict) {
+        return ErrorResponse.builder()
+                .code(resourceConflict.getErrorCode())
+                .message(resourceConflict.getMessage())
+                .context(resourceConflict.getContext())
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    public static ErrorResponse preconditionFailed(Failure.PreconditionFailed preconditionFailed) {
+        return ErrorResponse.builder()
+                .code(preconditionFailed.getErrorCode())
+                .message(preconditionFailed.getMessage())
+                .context(preconditionFailed.getContext())
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    public static ErrorResponse businessRuleViolation(Failure.BusinessRuleViolation businessRuleViolation) {
+        return ErrorResponse.builder()
+                .code(businessRuleViolation.getErrorCode())
+                .message(businessRuleViolation.getMessage())
+                .context(businessRuleViolation.getContext())
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    public static ErrorResponse internal(Failure.InternalError internalError) {
+        return ErrorResponse.builder()
+                .code("INTERNAL_ERROR")
+                .message(internalError.getMessage())
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * @deprecated 대신 새로운 타입별 메서드 사용
+     */
+    @Deprecated
     public static ErrorResponse of(Failure failure) {
         return switch (failure) {
-            case Failure.ValidationFailure validationFailure ->
-                validation(validationFailure);
-            case Failure.ConflictFailure conflictFailure ->
-                conflict(conflictFailure);
-            case Failure.NotFoundFailure notFoundFailure ->
-                notFound(notFoundFailure);
-            case Failure.InternalServerError internalServerError ->
-                internal(internalServerError);
-            case Failure.ForbiddenFailure forbiddenFailure ->
-                forbidden(forbiddenFailure);
-            case Failure.BadRequestFailure badRequestFailure ->
-                badRequest(badRequestFailure);
-            default ->
-                internal(new Failure.InternalServerError("알 수 없는 오류가 발생했습니다."));
+            case Failure.InputError inputError -> validation(inputError);
+            case Failure.PermissionDenied permissionDenied -> forbidden(permissionDenied);
+            case Failure.NotFound notFound -> notFound(notFound);
+            case Failure.ResourceConflict resourceConflict -> conflict(resourceConflict);
+            case Failure.PreconditionFailed preconditionFailed -> preconditionFailed(preconditionFailed);
+            case Failure.BusinessRuleViolation businessRuleViolation -> businessRuleViolation(businessRuleViolation);
+            case Failure.InternalError internalError -> internal(internalError);
+            default -> ErrorResponse.of("UNKNOWN_ERROR", "알 수 없는 오류가 발생했습니다.");
         };
-    }
-
-    public static ErrorResponse validation(Failure.ValidationFailure failure) {
-        return ErrorResponse.builder()
-                .message(failure.message())
-                .errorCode("VALIDATION_ERROR")
-                .timestamp(Instant.now())
-                .details(failure.violations().stream().toList())
-                .build();
-    }
-
-    public static ErrorResponse conflict(Failure.ConflictFailure failure) {
-        return ErrorResponse.builder()
-                .message(failure.message())
-                .errorCode("CONFLICT_ERROR")
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    public static ErrorResponse notFound(Failure.NotFoundFailure failure) {
-        return ErrorResponse.builder()
-                .message(failure.message())
-                .errorCode("NOT_FOUND_ERROR")
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    public static ErrorResponse internal(Failure.InternalServerError failure) {
-        return ErrorResponse.builder()
-                .message(failure.message())
-                .errorCode("INTERNAL_SERVER_ERROR")
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    public static ErrorResponse forbidden(Failure.ForbiddenFailure failure) {
-        return ErrorResponse.builder()
-                .message(failure.message())
-                .errorCode("FORBIDDEN_ERROR")
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    public static ErrorResponse badRequest(Failure.BadRequestFailure failure) {
-        return ErrorResponse.builder()
-                .message(failure.message())
-                .errorCode("BAD_REQUEST")
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    public static ErrorResponse unauthorized(String message) {
-        return ErrorResponse.builder()
-                .message(message)
-                .errorCode("UNAUTHORIZED")
-                .timestamp(Instant.now())
-                .build();
-    }
-
-    public static ErrorResponse methodNotAllowed(String message) {
-        return ErrorResponse.builder()
-                .message(message)
-                .errorCode("METHOD_NOT_ALLOWED")
-                .timestamp(Instant.now())
-                .build();
     }
 }

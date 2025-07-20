@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
@@ -34,17 +36,23 @@ public class UpdateUserService implements UpdateUserUseCase {
         // 1. 입력 검증
         ValidationResult<UpdateUserCommand> validationResult = userValidator.validateUserUpdate(command);
         if (validationResult.isInvalid()) {
-            log.warn("사용자 업데이트 검증 실패: userId={}, violations={}", 
-                command.userId().getId(), validationResult.getErrorsAsCollection());
-            return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+            log.warn("사용자 업데이트 검증 실패: userId={}, violations={}",
+                    command.userId().getId(), validationResult.getErrorsAsCollection());
+            return Either.left(Failure.ofInputError(
+                    validationMessageResolver.getMessage("validation.input.invalid"),
+                    "INVALID_INPUT",
+                    List.copyOf(validationResult.getErrorsAsCollection())));
         }
 
         // 2. 기존 사용자 조회
         Optional<User> existingUserOpt = userRepository.findById(command.userId());
         if (existingUserOpt.isEmpty()) {
             log.warn("업데이트할 사용자를 찾을 수 없음: userId={}", command.userId().getId());
+            Map<String, Object> context = Map.of("userId", command.userId().getId());
             return Either.left(Failure.ofNotFound(
-                validationMessageResolver.getMessage("validation.user.email.not.found")));
+                    validationMessageResolver.getMessage("validation.user.email.not.found"),
+                    "USER_NOT_FOUND",
+                    context));
         }
 
         // 3. 사용자 정보 업데이트
@@ -53,15 +61,16 @@ public class UpdateUserService implements UpdateUserUseCase {
         existingUser.updateProfile(newUserProfile);
 
         // 4. 사용자 저장
-        Either<Failure, User> saveResult = userRepository.save(existingUser);
-        
-        if (saveResult.isRight()) {
-            log.info("사용자 업데이트 완료: userId={}", command.userId().getId());
-        } else {
-            log.error("사용자 업데이트 실패: userId={}, error={}", 
-                command.userId().getId(), saveResult.getLeft().message());
-        }
-
-        return saveResult;
+        return userRepository.save(existingUser)
+                .fold(
+                        failure -> {
+                            log.error("사용자 업데이트 실패: userId={}, error={}", command.userId().getId(),
+                                    failure.getMessage());
+                            return Either.left(failure);
+                        },
+                        user -> {
+                            log.info("사용자 업데이트 완료: userId={}", command.userId().getId());
+                            return Either.right(user);
+                        });
     }
-} 
+}

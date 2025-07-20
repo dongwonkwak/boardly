@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,11 +29,20 @@ public class GetUserService implements GetUserUseCase {
   public Either<Failure, User> get(UserId userId) {
     try {
       return userRepository.findById(userId)
-        .map(Either::<Failure, User>right)
-        .orElseGet(() -> Either.left(Failure.ofNotFound(validationMessageResolver.getMessage("validation.user.email.not.found"))));
+          .map(Either::<Failure, User>right)
+          .orElseGet(() -> {
+            Map<String, Object> context = Map.of("userId", userId.getId());
+            return Either.left(Failure.ofNotFound(
+                validationMessageResolver.getMessage("validation.user.email.not.found"),
+                "USER_NOT_FOUND",
+                context));
+          });
     } catch (Exception e) {
       log.error("사용자 조회 실패: userId={}, error={}", userId, e.getMessage());
-      return Either.left(Failure.ofInternalServerError(e.getMessage()));
+      return Either.left(Failure.ofInternalError(
+          e.getMessage(),
+          "USER_QUERY_ERROR",
+          null));
     }
   }
 }

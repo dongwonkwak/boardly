@@ -47,26 +47,18 @@ public class UserController {
 
     private final RegisterUserUseCase registerUserUseCase;
     private final UpdateUserUseCase updateUserUseCase;
+    private final ApiFailureHandler failureHandler;
 
-    @Operation(
-        summary = "사용자 등록",
-        description = "사용자를 등록합니다.",
-        security = {},
-        tags = {TAGS})
+    @Operation(summary = "사용자 등록", description = "사용자를 등록합니다.", security = {}, tags = { TAGS })
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "사용자 등록 성공",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponse.class))),
-        @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "409", description = "이미 사용 중인 이메일",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "서버 오류",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "201", description = "사용자 등록 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "이미 사용 중인 이메일", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(
-            @Parameter(description = "회원가입 요청 정보", required = true)
-            @RequestBody RegisterUserRequest request,
+            @Parameter(description = "회원가입 요청 정보", required = true) @RequestBody RegisterUserRequest request,
             HttpServletRequest httpRequest) {
         log.info("사용자 등록 요청: email={}", request.email());
 
@@ -74,41 +66,31 @@ public class UserController {
                 request.email(),
                 request.password(),
                 request.firstName(),
-                request.lastName()
-        );
+                request.lastName());
 
         Either<Failure, User> result = registerUserUseCase.register(command);
 
         return result.fold(
-                ApiFailureHandler::handleFailure,
+                failure -> failureHandler.handleFailure(failure),
                 user -> {
                     log.info("사용자 등록 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
                     return ResponseEntity.status(HttpStatus.CREATED)
                             .body(UserResponse.from(user));
-                }
-        );
+                });
     }
 
-    @Operation(
-        summary = "사용자 업데이트",
-        description = "사용자를 업데이트합니다.",
-        tags = {TAGS},
-        security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+    @Operation(summary = "사용자 업데이트", description = "사용자를 업데이트합니다.", tags = {
+            TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "사용자 업데이트 성공",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponse.class))),
-        @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "서버 오류",
-            content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "200", description = "사용자 업데이트 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
     @PutMapping
     public ResponseEntity<?> updateUser(
-            @Parameter(description = "사용자 업데이트 요청 정보", required = true)
-            @RequestBody UpdateUserRequest request,
+            @Parameter(description = "사용자 업데이트 요청 정보", required = true) @RequestBody UpdateUserRequest request,
             HttpServletRequest httpRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
@@ -117,17 +99,15 @@ public class UserController {
         UpdateUserCommand command = new UpdateUserCommand(
                 new UserId(userId),
                 request.firstName(),
-                request.lastName()
-        );
+                request.lastName());
 
         Either<Failure, User> result = updateUserUseCase.update(command);
 
         return result.fold(
-                ApiFailureHandler::handleFailure,
+                failure -> failureHandler.handleFailure(failure),
                 user -> {
                     log.info("사용자 업데이트 성공: userId={}, email={}", user.getUserId().getId(), user.getEmail());
                     return ResponseEntity.ok(UserResponse.from(user));
-                }
-        );
+                });
     }
-} 
+}

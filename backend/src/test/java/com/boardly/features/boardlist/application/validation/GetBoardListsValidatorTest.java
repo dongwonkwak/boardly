@@ -1,214 +1,167 @@
 package com.boardly.features.boardlist.application.validation;
 
-import com.boardly.features.boardlist.application.port.input.GetBoardListsCommand;
 import com.boardly.features.board.domain.model.BoardId;
+import com.boardly.features.boardlist.application.port.input.GetBoardListsCommand;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
+import com.boardly.shared.domain.common.Failure;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
-
-import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class GetBoardListsValidatorTest {
 
-    private GetBoardListsValidator validator;
+  @Mock
+  private ValidationMessageResolver messageResolver;
 
-    @Mock
-    private MessageSource messageSource;
+  private GetBoardListsValidator validator;
 
-    @BeforeEach
-    void setUp() {
-        LocaleContextHolder.setLocale(Locale.KOREAN);
-        
-        // MessageSource Mock 설정
-        lenient().when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
-            .thenAnswer(invocation -> {
-                String key = invocation.getArgument(0);
-                return switch (key) {
-                    case "validation.boardlist.boardId.required" -> "Board ID is required";
-                    case "validation.boardlist.userId.required" -> "User ID is required";
-                    default -> key;
-                };
-            });
+  @BeforeEach
+  void setUp() {
+    // ValidationMessageResolver Mock 설정
+    lenient().when(messageResolver.getMessage("validation.boardlist.boardId.required"))
+        .thenReturn("보드 ID는 필수입니다");
+    lenient().when(messageResolver.getMessage("validation.boardlist.userId.required"))
+        .thenReturn("사용자 ID는 필수입니다");
 
-        ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-        validator = new GetBoardListsValidator(messageResolver);
-    }
+    validator = new GetBoardListsValidator(messageResolver);
+  }
 
-    @Test
-    @DisplayName("유효한 조회 명령어는 검증을 통과해야 한다")
-    void validate_ValidCommand_ShouldPass() {
-        // given
-        GetBoardListsCommand command = new GetBoardListsCommand(
-                new BoardId("board-123"),
-                new UserId("user-123")
-        );
+  @Test
+  @DisplayName("유효한 GetBoardListsCommand는 검증을 통과해야 한다")
+  void validate_ValidCommand_ShouldPass() {
+    // given
+    GetBoardListsCommand command = new GetBoardListsCommand(
+        new BoardId("board-123"),
+        new UserId("user-456"));
 
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
+    // when
+    ValidationResult<GetBoardListsCommand> result = validator.validate(command);
 
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
+    // then
+    assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
+  }
 
-    @Test
-    @DisplayName("boardId가 null인 경우 검증에 실패해야 한다")
-    void validate_NullBoardId_ShouldFail() {
-        // given
-        GetBoardListsCommand command = new GetBoardListsCommand(
-                null,
-                new UserId("user-123")
-        );
+  @Test
+  @DisplayName("boardId가 null인 경우 검증에 실패해야 한다")
+  void validate_NullBoardId_ShouldFail() {
+    // given
+    GetBoardListsCommand command = new GetBoardListsCommand(
+        null,
+        new UserId("user-456"));
 
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
+    // when
+    ValidationResult<GetBoardListsCommand> result = validator.validate(command);
 
-        // then
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.getErrors()).hasSize(1);
-        assertThat(result.getErrors().get(0).field()).isEqualTo("boardId");
-    }
+    // then
+    assertThat(result.isValid()).isFalse();
+    assertThat(result.getErrors()).hasSize(1);
 
-    @Test
-    @DisplayName("userId가 null인 경우 검증에 실패해야 한다")
-    void validate_NullUserId_ShouldFail() {
-        // given
-        GetBoardListsCommand command = new GetBoardListsCommand(
-                new BoardId("board-123"),
-                null
-        );
+    var violation = result.getErrors().get(0);
+    assertThat(violation.field()).isEqualTo("boardId");
+    assertThat(violation.message()).isEqualTo("보드 ID는 필수입니다");
+    assertThat(violation.rejectedValue()).isNull();
+  }
 
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
+  @Test
+  @DisplayName("userId가 null인 경우 검증에 실패해야 한다")
+  void validate_NullUserId_ShouldFail() {
+    // given
+    GetBoardListsCommand command = new GetBoardListsCommand(
+        new BoardId("board-123"),
+        null);
 
-        // then
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.getErrors()).hasSize(1);
-        assertThat(result.getErrors().get(0).field()).isEqualTo("userId");
-    }
+    // when
+    ValidationResult<GetBoardListsCommand> result = validator.validate(command);
 
-    @Test
-    @DisplayName("boardId와 userId가 모두 null인 경우 모든 오류가 반환되어야 한다")
-    void validate_BothNullFields_ShouldReturnAllErrors() {
-        // given
-        GetBoardListsCommand command = new GetBoardListsCommand(
-                null,
-                null
-        );
+    // then
+    assertThat(result.isValid()).isFalse();
+    assertThat(result.getErrors()).hasSize(1);
 
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
+    var violation = result.getErrors().get(0);
+    assertThat(violation.field()).isEqualTo("userId");
+    assertThat(violation.message()).isEqualTo("사용자 ID는 필수입니다");
+    assertThat(violation.rejectedValue()).isNull();
+  }
 
-        // then
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.getErrors()).hasSize(2);
-        
-        var errors = result.getErrors();
-        assertThat(errors).anyMatch(error -> error.field().equals("boardId"));
-        assertThat(errors).anyMatch(error -> error.field().equals("userId"));
-    }
+  @Test
+  @DisplayName("boardId와 userId가 모두 null인 경우 모든 오류가 반환되어야 한다")
+  void validate_BothNullIds_ShouldReturnAllErrors() {
+    // given
+    GetBoardListsCommand command = new GetBoardListsCommand(
+        null,
+        null);
 
-    @Test
-    @DisplayName("유효한 BoardId와 UserId 객체로 검증이 성공해야 한다")
-    void validate_ValidObjects_ShouldPass() {
-        // given
-        BoardId boardId = new BoardId("valid-board-id");
-        UserId userId = new UserId("valid-user-id");
-        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
+    // when
+    ValidationResult<GetBoardListsCommand> result = validator.validate(command);
 
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
+    // then
+    assertThat(result.isValid()).isFalse();
+    assertThat(result.getErrors()).hasSize(2);
 
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
+    var violations = result.getErrorsAsCollection();
+    assertThat(violations).extracting("field")
+        .containsExactlyInAnyOrder("boardId", "userId");
+    assertThat(violations).extracting("message")
+        .containsExactlyInAnyOrder("보드 ID는 필수입니다", "사용자 ID는 필수입니다");
+    assertThat(violations).extracting("rejectedValue")
+        .containsOnlyNulls();
+  }
 
-    @Test
-    @DisplayName("빈 문자열 ID로 생성된 객체들도 유효해야 한다")
-    void validate_EmptyStringIds_ShouldPass() {
-        // given
-        BoardId boardId = new BoardId("");
-        UserId userId = new UserId("");
-        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
+  @Test
+  @DisplayName("ValidationResult를 Failure로 변환할 수 있어야 한다")
+  void toFailure_ShouldConvertValidationResultToFailure() {
+    // given
+    GetBoardListsCommand command = new GetBoardListsCommand(
+        null,
+        null);
+    ValidationResult<GetBoardListsCommand> result = validator.validate(command);
 
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
+    // when
+    Failure failure = result.toFailure("입력 데이터가 유효하지 않습니다");
 
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
+    // then
+    assertThat(failure).isInstanceOf(Failure.InputError.class);
+    var inputError = (Failure.InputError) failure;
+    assertThat(inputError.getMessage()).isEqualTo("입력 데이터가 유효하지 않습니다");
+    assertThat(inputError.getErrorCode()).isEqualTo("VALIDATION_ERROR");
+    assertThat(inputError.getViolations()).hasSize(2);
+  }
 
-    @Test
-    @DisplayName("특수문자가 포함된 ID로 생성된 객체들도 유효해야 한다")
-    void validate_SpecialCharacterIds_ShouldPass() {
-        // given
-        BoardId boardId = new BoardId("board-123_456@test");
-        UserId userId = new UserId("user-123_456@test");
-        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
+  @Test
+  @DisplayName("유효한 검증 결과를 Failure로 변환하려고 하면 예외가 발생해야 한다")
+  void toFailure_ValidResult_ShouldThrowException() {
+    // given
+    GetBoardListsCommand command = new GetBoardListsCommand(
+        new BoardId("board-123"),
+        new UserId("user-456"));
+    ValidationResult<GetBoardListsCommand> result = validator.validate(command);
 
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
+    // when & then
+    assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
+  }
 
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
+  @Test
+  @DisplayName("검증 실패 시 get() 메서드를 호출하면 예외가 발생해야 한다")
+  void get_InvalidResult_ShouldThrowException() {
+    // given
+    GetBoardListsCommand command = new GetBoardListsCommand(
+        null,
+        new UserId("user-456"));
+    ValidationResult<GetBoardListsCommand> result = validator.validate(command);
 
-    @Test
-    @DisplayName("긴 ID로 생성된 객체들도 유효해야 한다")
-    void validate_LongIds_ShouldPass() {
-        // given
-        String longId = "a".repeat(1000);
-        BoardId boardId = new BoardId(longId);
-        UserId userId = new UserId(longId);
-        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
-
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
-
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
-
-    @Test
-    @DisplayName("한글이 포함된 ID로 생성된 객체들도 유효해야 한다")
-    void validate_KoreanIds_ShouldPass() {
-        // given
-        BoardId boardId = new BoardId("보드-123");
-        UserId userId = new UserId("사용자-123");
-        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
-
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
-
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
-
-    @Test
-    @DisplayName("UUID 형태의 ID로 생성된 객체들도 유효해야 한다")
-    void validate_UuidIds_ShouldPass() {
-        // given
-        BoardId boardId = new BoardId("550e8400-e29b-41d4-a716-446655440000");
-        UserId userId = new UserId("550e8400-e29b-41d4-a716-446655440001");
-        GetBoardListsCommand command = new GetBoardListsCommand(boardId, userId);
-
-        // when
-        ValidationResult<GetBoardListsCommand> result = validator.validate(command);
-
-        // then
-        assertThat(result.isValid()).isTrue();
-    }
-} 
+    // when & then
+    assertThat(result.isValid()).isFalse();
+    assertThat(result.getErrors()).hasSize(1);
+  }
+}

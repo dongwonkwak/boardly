@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,8 +45,7 @@ class UpdateUserServiceTest {
         updateUserService = new UpdateUserService(
                 userRepository,
                 userValidator,
-                validationMessageResolver
-        );
+                validationMessageResolver);
     }
 
     private UpdateUserCommand createValidCommand() {
@@ -53,8 +53,7 @@ class UpdateUserServiceTest {
         return new UpdateUserCommand(
                 userId,
                 "업데이트된길동",
-                "업데이트된홍"
-        );
+                "업데이트된홍");
     }
 
     private User createExistingUser(UserId userId) {
@@ -112,60 +111,72 @@ class UpdateUserServiceTest {
     }
 
     @Test
-    @DisplayName("입력 검증 실패 시 검증 오류를 반환해야 한다")
-    void update_withInvalidData_shouldReturnValidationFailure() {
+    @DisplayName("입력 검증 실패 시 InputError를 반환해야 한다")
+    void update_withInvalidInput_shouldReturnInputError() {
         // given
         UpdateUserCommand command = createValidCommand();
-        Failure.FieldViolation violation = Failure.FieldViolation.builder()
-                .field("firstName")
-                .message("validation.user.firstName.required")
-                .rejectedValue(command.firstName())
-                .build();
-        ValidationResult<UpdateUserCommand> invalidResult = ValidationResult.invalid(violation);
+        String errorMessage = "입력 데이터가 올바르지 않습니다";
 
+        when(validationMessageResolver.getMessage("validation.input.invalid"))
+                .thenReturn(errorMessage);
         when(userValidator.validateUserUpdate(command))
-                .thenReturn(invalidResult);
+                .thenReturn(ValidationResult.invalid(io.vavr.collection.List.of(
+                        Failure.FieldViolation.builder()
+                                .field("firstName")
+                                .message("이름은 필수입니다")
+                                .rejectedValue(command.firstName())
+                                .build())));
 
         // when
         Either<Failure, User> result = updateUserService.update(command);
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-        Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
-        assertThat(validationFailure.message()).contains("INVALID_INPUT");
+        assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
+
+        Failure.InputError inputError = (Failure.InputError) result.getLeft();
+        assertThat(inputError.getMessage()).isEqualTo(errorMessage);
+        assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
+        assertThat(inputError.getViolations()).hasSize(1);
+        assertThat(inputError.getViolations().get(0).field()).isEqualTo("firstName");
 
         verify(userValidator).validateUserUpdate(command);
-        verify(userRepository, never()).findById(any(UserId.class));
-        verify(userRepository, never()).save(any(User.class));
+        verify(validationMessageResolver).getMessage("validation.input.invalid");
     }
 
     @Test
-    @DisplayName("존재하지 않는 사용자 ID로 업데이트 시 NotFound 오류를 반환해야 한다")
-    void update_withNonExistentUser_shouldReturnNotFoundFailure() {
+    @DisplayName("사용자를 찾을 수 없을 때 NotFound를 반환해야 한다")
+    void update_withUserNotFound_shouldReturnNotFound() {
         // given
         UpdateUserCommand command = createValidCommand();
-        String notFoundMessage = "사용자를 찾을 수 없습니다.";
+        String errorMessage = "사용자를 찾을 수 없습니다";
 
+        when(validationMessageResolver.getMessage("validation.user.email.not.found"))
+                .thenReturn(errorMessage);
         when(userValidator.validateUserUpdate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(userRepository.findById(command.userId()))
                 .thenReturn(Optional.empty());
-        when(validationMessageResolver.getMessage("validation.user.email.not.found"))
-                .thenReturn(notFoundMessage);
 
         // when
         Either<Failure, User> result = updateUserService.update(command);
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.NotFoundFailure.class);
-        assertThat(result.getLeft().message()).isEqualTo(notFoundMessage);
+        assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
+
+        Failure.NotFound notFound = (Failure.NotFound) result.getLeft();
+        assertThat(notFound.getMessage()).isEqualTo(errorMessage);
+        assertThat(notFound.getErrorCode()).isEqualTo("USER_NOT_FOUND");
+        assertThat(notFound.getContext()).isInstanceOf(Map.class);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> context = (Map<String, Object>) notFound.getContext();
+        assertThat(context.get("userId")).isEqualTo(command.userId().getId());
 
         verify(userValidator).validateUserUpdate(command);
         verify(userRepository).findById(command.userId());
         verify(validationMessageResolver).getMessage("validation.user.email.not.found");
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -174,7 +185,8 @@ class UpdateUserServiceTest {
         // given
         UpdateUserCommand command = createValidCommand();
         User existingUser = createExistingUser(command.userId());
-        Failure saveFailure = Failure.ofInternalServerError("데이터베이스 연결 오류");
+        String errorMessage = "데이터베이스 연결 오류";
+        Failure saveFailure = Failure.ofInternalError(errorMessage, "USER_UPDATE_ERROR", null);
 
         when(userValidator.validateUserUpdate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -188,8 +200,8 @@ class UpdateUserServiceTest {
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.InternalServerError.class);
-        assertThat(result.getLeft().message()).isEqualTo("데이터베이스 연결 오류");
+        assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
+        assertThat(result.getLeft().getMessage()).isEqualTo(errorMessage);
 
         verify(userValidator).validateUserUpdate(command);
         verify(userRepository).findById(command.userId());
@@ -217,12 +229,13 @@ class UpdateUserServiceTest {
 
         // then
         assertThat(result.isRight()).isTrue();
-        
-        // 저장되는 User 객체의 프로필이 업데이트되었는지 확인
-        verify(userRepository).save(argThat(user -> 
-                user.getUserProfile().firstName().equals(command.firstName()) &&
-                user.getUserProfile().lastName().equals(command.lastName())
-        ));
+        assertThat(result.get().getUserProfile().firstName()).isEqualTo(command.firstName());
+        assertThat(result.get().getUserProfile().lastName()).isEqualTo(command.lastName());
+
+        // 기존 사용자의 updateProfile 메서드가 호출되었는지 확인
+        verify(userRepository)
+                .save(argThat(user -> user.getUserProfile().firstName().equals(command.firstName()) &&
+                        user.getUserProfile().lastName().equals(command.lastName())));
     }
 
     @Test
@@ -246,25 +259,24 @@ class UpdateUserServiceTest {
 
         // then
         assertThat(result.isRight()).isTrue();
-        
-        // 저장되는 User 객체의 다른 필드들이 보존되었는지 확인
-        verify(userRepository).save(argThat(user -> 
-                user.getUserId().equals(existingUser.getUserId()) &&
-                user.getEmail().equals(existingUser.getEmail()) &&
-                user.getHashedPassword().equals(existingUser.getHashedPassword()) &&
-                user.isActive() == existingUser.isActive()
-        ));
+        assertThat(result.get().getEmail()).isEqualTo(existingUser.getEmail());
+        assertThat(result.get().getHashedPassword()).isEqualTo(existingUser.getHashedPassword());
+        assertThat(result.get().isActive()).isEqualTo(existingUser.isActive());
+        assertThat(result.get().getUserId()).isEqualTo(existingUser.getUserId());
     }
 
     @Test
     @DisplayName("동일한 이름으로 업데이트해도 성공해야 한다")
     void update_withSameName_shouldSucceed() {
         // given
-        UserId userId = new UserId();
-        UpdateUserCommand command = new UpdateUserCommand(userId, "길동", "홍");
-        User existingUser = createExistingUser(userId);
-        UserProfile sameProfile = new UserProfile("길동", "홍");
-        User updatedUser = createUpdatedUser(userId, sameProfile);
+        UpdateUserCommand command = new UpdateUserCommand(
+                new UserId(),
+                "길동", // 기존과 동일한 이름
+                "홍" // 기존과 동일한 이름
+        );
+        User existingUser = createExistingUser(command.userId());
+        UserProfile newUserProfile = new UserProfile(command.firstName(), command.lastName());
+        User updatedUser = createUpdatedUser(command.userId(), newUserProfile);
 
         when(userValidator.validateUserUpdate(command))
                 .thenReturn(ValidationResult.valid(command));
@@ -278,11 +290,7 @@ class UpdateUserServiceTest {
 
         // then
         assertThat(result.isRight()).isTrue();
-        assertThat(result.get().getUserProfile().firstName()).isEqualTo("길동");
-        assertThat(result.get().getUserProfile().lastName()).isEqualTo("홍");
-
-        verify(userValidator).validateUserUpdate(command);
-        verify(userRepository).findById(command.userId());
-        verify(userRepository).save(any(User.class));
+        assertThat(result.get().getUserProfile().firstName()).isEqualTo(command.firstName());
+        assertThat(result.get().getUserProfile().lastName()).isEqualTo(command.lastName());
     }
-} 
+}

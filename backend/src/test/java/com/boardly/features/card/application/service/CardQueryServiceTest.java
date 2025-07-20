@@ -1,26 +1,5 @@
 package com.boardly.features.card.application.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
-
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
-
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
@@ -33,356 +12,691 @@ import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.application.validation.ValidationResult;
+import com.boardly.shared.application.validation.Validator;
 import com.boardly.shared.domain.common.Failure;
-
 import io.vavr.control.Either;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CardQueryService 테스트")
 class CardQueryServiceTest {
 
-  @Mock
-  private CardRepository cardRepository;
-
-  @Mock
-  private BoardListRepository boardListRepository;
-
-  @Mock
-  private BoardRepository boardRepository;
-
-  @Mock
-  private MessageSource messageSource;
-
-  private CardQueryService cardQueryService;
-
-  private CardId cardId;
-  private ListId listId;
-  private UserId userId;
-  private BoardId boardId;
-
-  @BeforeEach
-  void setUp() {
-    LocaleContextHolder.setLocale(Locale.KOREAN);
-
-    // MessageSource Mock 설정
-    lenient().when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
-        .thenAnswer(invocation -> {
-          String key = invocation.getArgument(0);
-          return switch (key) {
-            case "validation.cardId.required" -> "카드 ID는 필수 항목입니다";
-            case "validation.userId.required" -> "사용자 ID는 필수 항목입니다";
-            case "validation.listId.required" -> "리스트 ID는 필수 항목입니다";
-            default -> key;
-          };
-        });
-
-    ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
-    CommonValidationRules commonValidationRules = new CommonValidationRules(messageResolver);
-    cardQueryService = new CardQueryService(cardRepository, boardListRepository, boardRepository,
-        commonValidationRules);
-
-    // 테스트 데이터 초기화
-    cardId = new CardId("card-123");
-    listId = new ListId("list-123");
-    userId = new UserId("user-123");
-    boardId = new BoardId("board-123");
-  }
-
-  // ==================== getCard 테스트 ====================
-
-  @Test
-  @DisplayName("유효한 카드 조회 요청은 성공해야 한다")
-  void getCard_ValidRequest_ShouldSucceed() {
-    // given
-    Card card = createTestCard();
-    BoardList boardList = createTestBoardList();
-    Board board = createTestBoard();
-
-    when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
-    when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
-    when(boardRepository.findByIdAndOwnerId(boardId, userId)).thenReturn(Optional.of(board));
-
-    // when
-    Either<Failure, Card> result = cardQueryService.getCard(cardId, userId);
-
-    // then
-    assertThat(result.isRight()).isTrue();
-    assertThat(result.get()).isEqualTo(card);
-  }
-
-  @Test
-  @DisplayName("null cardId로 카드 조회 시 실패해야 한다")
-  void getCard_NullCardId_ShouldFail() {
-    // when
-    Either<Failure, Card> result = cardQueryService.getCard(null, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-  }
-
-  @Test
-  @DisplayName("null userId로 카드 조회 시 실패해야 한다")
-  void getCard_NullUserId_ShouldFail() {
-    // when
-    Either<Failure, Card> result = cardQueryService.getCard(cardId, null);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 카드 조회 시 실패해야 한다")
-  void getCard_NonExistentCard_ShouldFail() {
-    // given
-    when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
-
-    // when
-    Either<Failure, Card> result = cardQueryService.getCard(cardId, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("NOT_FOUND_CARD");
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 리스트의 카드 조회 시 실패해야 한다")
-  void getCard_NonExistentList_ShouldFail() {
-    // given
-    Card card = createTestCard();
-    when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
-    when(boardListRepository.findById(listId)).thenReturn(Optional.empty());
-
-    // when
-    Either<Failure, Card> result = cardQueryService.getCard(cardId, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("NOT_FOUND_LIST");
-  }
-
-  @Test
-  @DisplayName("보드 접근 권한이 없는 경우 실패해야 한다")
-  void getCard_NoBoardAccess_ShouldFail() {
-    // given
-    Card card = createTestCard();
-    BoardList boardList = createTestBoardList();
-
-    when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
-    when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
-    when(boardRepository.findByIdAndOwnerId(boardId, userId)).thenReturn(Optional.empty());
-
-    // when
-    Either<Failure, Card> result = cardQueryService.getCard(cardId, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("FORBIDDEN_BOARD");
-  }
-
-  // ==================== getCardsByListId 테스트 ====================
-
-  @Test
-  @DisplayName("유효한 리스트별 카드 조회 요청은 성공해야 한다")
-  void getCardsByListId_ValidRequest_ShouldSucceed() {
-    // given
-    List<Card> cards = Arrays.asList(createTestCard(), createTestCard2());
-    BoardList boardList = createTestBoardList();
-    Board board = createTestBoard();
-
-    when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
-    when(boardRepository.findByIdAndOwnerId(boardId, userId)).thenReturn(Optional.of(board));
-    when(cardRepository.findByListIdOrderByPosition(listId)).thenReturn(cards);
-
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(listId, userId);
-
-    // then
-    assertThat(result.isRight()).isTrue();
-    assertThat(result.get()).hasSize(2);
-    assertThat(result.get()).isEqualTo(cards);
-  }
-
-  @Test
-  @DisplayName("null listId로 리스트별 카드 조회 시 실패해야 한다")
-  void getCardsByListId_NullListId_ShouldFail() {
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(null, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 리스트 조회 시 실패해야 한다")
-  void getCardsByListId_NonExistentList_ShouldFail() {
-    // given
-    when(boardListRepository.findById(listId)).thenReturn(Optional.empty());
-
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(listId, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("NOT_FOUND_LIST");
-  }
-
-  @Test
-  @DisplayName("보드 접근 권한이 없는 경우 리스트별 카드 조회 시 실패해야 한다")
-  void getCardsByListId_NoBoardAccess_ShouldFail() {
-    // given
-    BoardList boardList = createTestBoardList();
-
-    when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
-    when(boardRepository.findByIdAndOwnerId(boardId, userId)).thenReturn(Optional.empty());
-
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(listId, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("FORBIDDEN_BOARD");
-  }
-
-  // ==================== searchCards 테스트 ====================
-
-  @Test
-  @DisplayName("유효한 카드 검색 요청은 성공해야 한다")
-  void searchCards_ValidRequest_ShouldSucceed() {
-    // given
-    String searchTerm = "테스트";
-    List<Card> cards = Arrays.asList(createTestCard());
-    BoardList boardList = createTestBoardList();
-    Board board = createTestBoard();
-
-    when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
-    when(boardRepository.findByIdAndOwnerId(boardId, userId)).thenReturn(Optional.of(board));
-    when(cardRepository.findByListIdAndTitleContaining(listId, searchTerm)).thenReturn(cards);
-
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.searchCards(listId, searchTerm, userId);
-
-    // then
-    assertThat(result.isRight()).isTrue();
-    assertThat(result.get()).hasSize(1);
-    assertThat(result.get()).isEqualTo(cards);
-  }
-
-  @Test
-  @DisplayName("null 검색어로 검색 시 실패해야 한다")
-  void searchCards_NullSearchTerm_ShouldFail() {
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.searchCards(listId, null, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("SEARCH_TERM_EMPTY");
-  }
-
-  @Test
-  @DisplayName("빈 검색어로 검색 시 실패해야 한다")
-  void searchCards_EmptySearchTerm_ShouldFail() {
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.searchCards(listId, "", userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("SEARCH_TERM_EMPTY");
-  }
-
-  @Test
-  @DisplayName("공백만 있는 검색어로 검색 시 실패해야 한다")
-  void searchCards_BlankSearchTerm_ShouldFail() {
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.searchCards(listId, "   ", userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("SEARCH_TERM_EMPTY");
-  }
-
-  @Test
-  @DisplayName("존재하지 않는 리스트에서 검색 시 실패해야 한다")
-  void searchCards_NonExistentList_ShouldFail() {
-    // given
-    String searchTerm = "테스트";
-    when(boardListRepository.findById(listId)).thenReturn(Optional.empty());
-
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.searchCards(listId, searchTerm, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("NOT_FOUND_LIST");
-  }
-
-  @Test
-  @DisplayName("보드 접근 권한이 없는 경우 검색 시 실패해야 한다")
-  void searchCards_NoBoardAccess_ShouldFail() {
-    // given
-    String searchTerm = "테스트";
-    BoardList boardList = createTestBoardList();
-
-    when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
-    when(boardRepository.findByIdAndOwnerId(boardId, userId)).thenReturn(Optional.empty());
-
-    // when
-    Either<Failure, List<Card>> result = cardQueryService.searchCards(listId, searchTerm, userId);
-
-    // then
-    assertThat(result.isLeft()).isTrue();
-    assertThat(result.getLeft().message()).isEqualTo("FORBIDDEN_BOARD");
-  }
-
-  // ==================== 헬퍼 메서드 ====================
-
-  private Card createTestCard() {
-    return Card.builder()
-        .cardId(cardId)
-        .title("테스트 카드")
-        .description("테스트 설명")
-        .position(1)
-        .listId(listId)
-        .createdAt(Instant.now())
-        .updatedAt(Instant.now())
-        .build();
-  }
-
-  private Card createTestCard2() {
-    return Card.builder()
-        .cardId(new CardId("card-456"))
-        .title("테스트 카드 2")
-        .description("테스트 설명 2")
-        .position(2)
-        .listId(listId)
-        .createdAt(Instant.now())
-        .updatedAt(Instant.now())
-        .build();
-  }
-
-  private BoardList createTestBoardList() {
-    return BoardList.builder()
-        .listId(listId)
-        .title("테스트 리스트")
-        .position(1)
-        .boardId(boardId)
-        .createdAt(Instant.now())
-        .updatedAt(Instant.now())
-        .build();
-  }
-
-  private Board createTestBoard() {
-    return Board.builder()
-        .boardId(boardId)
-        .title("테스트 보드")
-        .description("테스트 보드 설명")
-        .ownerId(userId)
-        .isArchived(false)
-        .isStarred(false)
-        .createdAt(Instant.now())
-        .updatedAt(Instant.now())
-        .build();
-  }
+    @Mock
+    private CardRepository cardRepository;
+
+    @Mock
+    private BoardListRepository boardListRepository;
+
+    @Mock
+    private BoardRepository boardRepository;
+
+    @Mock
+    private CommonValidationRules commonValidationRules;
+
+    @Mock
+    private ValidationMessageResolver validationMessageResolver;
+
+    @InjectMocks
+    private CardQueryService cardQueryService;
+
+    private UserId testUserId;
+    private CardId testCardId;
+    private ListId testListId;
+    private BoardId testBoardId;
+    private Card testCard;
+    private BoardList testBoardList;
+    private Board testBoard;
+
+    @BeforeEach
+    void setUp() {
+        testUserId = new UserId("test-user-123");
+        testCardId = new CardId("test-card-123");
+        testListId = new ListId("test-list-123");
+        testBoardId = new BoardId("test-board-123");
+
+        Instant now = Instant.now();
+
+        testCard = Card.builder()
+                .cardId(testCardId)
+                .title("테스트 카드")
+                .description("테스트 카드 설명")
+                .position(1)
+                .listId(testListId)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        testBoardList = BoardList.builder()
+                .listId(testListId)
+                .title("테스트 리스트")
+                .position(1)
+                .boardId(testBoardId)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        testBoard = Board.builder()
+                .boardId(testBoardId)
+                .title("테스트 보드")
+                .description("테스트 보드 설명")
+                .isArchived(false)
+                .ownerId(testUserId)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    @Nested
+    @DisplayName("getCard 메서드 테스트")
+    class GetCardTest {
+
+        @Test
+        @DisplayName("카드 조회 성공")
+        void getCard_Success() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> cardIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(cardIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(cardRepository.findById(testCardId)).thenReturn(Optional.of(testCard));
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.of(testBoard));
+
+            // when
+            Either<Failure, Card> result = cardQueryService.getCard(testCardId, testUserId);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            Card card = result.get();
+            assertThat(card).isEqualTo(testCard);
+            assertThat(card.getCardId()).isEqualTo(testCardId);
+            assertThat(card.getTitle()).isEqualTo("테스트 카드");
+
+            verify(cardRepository).findById(testCardId);
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+        }
+
+        @Test
+        @DisplayName("카드 ID가 null인 경우 - 검증 실패")
+        void getCard_NullCardId_ValidationFailure() {
+            // given
+            ValidationResult<Object> invalidResult = ValidationResult.invalid("cardId", "카드 ID는 필수입니다", null);
+            Validator<Object> cardIdValidator = cmd -> invalidResult;
+            Validator<Object> userIdValidator = cmd -> ValidationResult.valid(new Object());
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(cardIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(validationMessageResolver.getMessage("validation.input.invalid"))
+                    .thenReturn("입력 데이터가 올바르지 않습니다");
+
+            // when
+            Either<Failure, Card> result = cardQueryService.getCard(null, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.InputError.class);
+
+            Failure.InputError inputError = (Failure.InputError) failure;
+            assertThat(inputError.getMessage()).isEqualTo("입력 데이터가 올바르지 않습니다");
+            assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
+
+            verify(cardRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("사용자 ID가 null인 경우 - 검증 실패")
+        void getCard_NullUserId_ValidationFailure() {
+            // given
+            ValidationResult<Object> invalidResult = ValidationResult.invalid("userId", "사용자 ID는 필수입니다", null);
+            Validator<Object> cardIdValidator = cmd -> ValidationResult.valid(new Object());
+            Validator<Object> userIdValidator = cmd -> invalidResult;
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(cardIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(validationMessageResolver.getMessage("validation.input.invalid"))
+                    .thenReturn("입력 데이터가 올바르지 않습니다");
+
+            // when
+            Either<Failure, Card> result = cardQueryService.getCard(testCardId, null);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.InputError.class);
+
+            verify(cardRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("카드를 찾을 수 없는 경우 - NotFound 실패")
+        void getCard_CardNotFound_NotFoundFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> cardIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(cardIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(cardRepository.findById(testCardId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("error.service.card.move.not_found"))
+                    .thenReturn("이동할 카드를 찾을 수 없습니다");
+
+            // when
+            Either<Failure, Card> result = cardQueryService.getCard(testCardId, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.NotFound.class);
+
+            Failure.NotFound notFound = (Failure.NotFound) failure;
+            assertThat(notFound.getMessage()).isEqualTo("이동할 카드를 찾을 수 없습니다");
+
+            verify(cardRepository).findById(testCardId);
+            verify(boardListRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("리스트를 찾을 수 없는 경우 - NotFound 실패")
+        void getCard_ListNotFound_NotFoundFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> cardIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(cardIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(cardRepository.findById(testCardId)).thenReturn(Optional.of(testCard));
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("error.service.card.move.list_not_found"))
+                    .thenReturn("리스트를 찾을 수 없습니다");
+
+            // when
+            Either<Failure, Card> result = cardQueryService.getCard(testCardId, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.NotFound.class);
+
+            Failure.NotFound notFound = (Failure.NotFound) failure;
+            assertThat(notFound.getMessage()).isEqualTo("리스트를 찾을 수 없습니다");
+
+            verify(cardRepository).findById(testCardId);
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository, never()).findByIdAndOwnerId(any(), any());
+        }
+
+        @Test
+        @DisplayName("보드 접근 권한이 없는 경우 - PermissionDenied 실패")
+        void getCard_AccessDenied_PermissionDeniedFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> cardIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(cardIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(cardRepository.findById(testCardId)).thenReturn(Optional.of(testCard));
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("error.service.card.move.access_denied"))
+                    .thenReturn("보드에 접근할 권한이 없습니다");
+
+            // when
+            Either<Failure, Card> result = cardQueryService.getCard(testCardId, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.PermissionDenied.class);
+
+            Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) failure;
+            assertThat(permissionDenied.getMessage()).isEqualTo("보드에 접근할 권한이 없습니다");
+
+            verify(cardRepository).findById(testCardId);
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+        }
+    }
+
+    @Nested
+    @DisplayName("getCardsByListId 메서드 테스트")
+    class GetCardsByListIdTest {
+
+        @Test
+        @DisplayName("리스트별 카드 조회 성공")
+        void getCardsByListId_Success() {
+            // given
+            List<Card> cards = List.of(testCard);
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.of(testBoard));
+            when(cardRepository.findByListIdOrderByPosition(testListId)).thenReturn(cards);
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            List<Card> resultCards = result.get();
+            assertThat(resultCards).hasSize(1);
+            assertThat(resultCards.get(0)).isEqualTo(testCard);
+
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+            verify(cardRepository).findByListIdOrderByPosition(testListId);
+        }
+
+        @Test
+        @DisplayName("빈 카드 목록 조회 성공")
+        void getCardsByListId_EmptyList_Success() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.of(testBoard));
+            when(cardRepository.findByListIdOrderByPosition(testListId)).thenReturn(List.of());
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            List<Card> resultCards = result.get();
+            assertThat(resultCards).isEmpty();
+
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+            verify(cardRepository).findByListIdOrderByPosition(testListId);
+        }
+
+        @Test
+        @DisplayName("리스트 ID가 null인 경우 - 검증 실패")
+        void getCardsByListId_NullListId_ValidationFailure() {
+            // given
+            ValidationResult<Object> invalidResult = ValidationResult.invalid("listId", "리스트 ID는 필수입니다", null);
+            Validator<Object> listIdValidator = cmd -> invalidResult;
+            Validator<Object> userIdValidator = cmd -> ValidationResult.valid(new Object());
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(validationMessageResolver.getMessage("validation.input.invalid"))
+                    .thenReturn("입력 데이터가 올바르지 않습니다");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(null, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.InputError.class);
+
+            verify(boardListRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("리스트를 찾을 수 없는 경우 - NotFound 실패")
+        void getCardsByListId_ListNotFound_NotFoundFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("error.service.card.move.list_not_found"))
+                    .thenReturn("리스트를 찾을 수 없습니다");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.NotFound.class);
+
+            Failure.NotFound notFound = (Failure.NotFound) failure;
+            assertThat(notFound.getMessage()).isEqualTo("리스트를 찾을 수 없습니다");
+
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository, never()).findByIdAndOwnerId(any(), any());
+        }
+
+        @Test
+        @DisplayName("보드 접근 권한이 없는 경우 - PermissionDenied 실패")
+        void getCardsByListId_AccessDenied_PermissionDeniedFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("error.service.card.move.access_denied"))
+                    .thenReturn("보드에 접근할 권한이 없습니다");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.PermissionDenied.class);
+
+            Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) failure;
+            assertThat(permissionDenied.getMessage()).isEqualTo("보드에 접근할 권한이 없습니다");
+
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+            verify(cardRepository, never()).findByListIdOrderByPosition(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("searchCards 메서드 테스트")
+    class SearchCardsTest {
+
+        @Test
+        @DisplayName("카드 검색 성공")
+        void searchCards_Success() {
+            // given
+            String searchTerm = "테스트";
+            List<Card> cards = List.of(testCard);
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.of(testBoard));
+            when(cardRepository.findByListIdAndTitleContaining(testListId, searchTerm)).thenReturn(cards);
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.searchCards(testListId, searchTerm, testUserId);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            List<Card> resultCards = result.get();
+            assertThat(resultCards).hasSize(1);
+            assertThat(resultCards.get(0)).isEqualTo(testCard);
+
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+            verify(cardRepository).findByListIdAndTitleContaining(testListId, searchTerm);
+        }
+
+        @Test
+        @DisplayName("검색어가 null인 경우 - 검증 실패")
+        void searchCards_NullSearchTerm_ValidationFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(validationMessageResolver.getMessage("validation.search.term.required"))
+                    .thenReturn("검색어를 입력해주세요");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.searchCards(testListId, null, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.InputError.class);
+
+            Failure.InputError inputError = (Failure.InputError) failure;
+            assertThat(inputError.getMessage()).isEqualTo("검색어를 입력해주세요");
+            assertThat(inputError.getErrorCode()).isEqualTo("SEARCH_TERM_EMPTY");
+
+            verify(boardListRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("검색어가 빈 문자열인 경우 - 검증 실패")
+        void searchCards_EmptySearchTerm_ValidationFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(validationMessageResolver.getMessage("validation.search.term.required"))
+                    .thenReturn("검색어를 입력해주세요");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.searchCards(testListId, "", testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.InputError.class);
+
+            Failure.InputError inputError = (Failure.InputError) failure;
+            assertThat(inputError.getMessage()).isEqualTo("검색어를 입력해주세요");
+            assertThat(inputError.getErrorCode()).isEqualTo("SEARCH_TERM_EMPTY");
+
+            verify(boardListRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("검색어가 공백만 있는 경우 - 검증 실패")
+        void searchCards_WhitespaceSearchTerm_ValidationFailure() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(validationMessageResolver.getMessage("validation.search.term.required"))
+                    .thenReturn("검색어를 입력해주세요");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.searchCards(testListId, "   ", testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.InputError.class);
+
+            Failure.InputError inputError = (Failure.InputError) failure;
+            assertThat(inputError.getMessage()).isEqualTo("검색어를 입력해주세요");
+            assertThat(inputError.getErrorCode()).isEqualTo("SEARCH_TERM_EMPTY");
+
+            verify(boardListRepository, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("검색 결과가 없는 경우 - 빈 목록 반환")
+        void searchCards_NoResults_EmptyList() {
+            // given
+            String searchTerm = "존재하지않는카드";
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.of(testBoard));
+            when(cardRepository.findByListIdAndTitleContaining(testListId, searchTerm)).thenReturn(List.of());
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.searchCards(testListId, searchTerm, testUserId);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            List<Card> resultCards = result.get();
+            assertThat(resultCards).isEmpty();
+
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+            verify(cardRepository).findByListIdAndTitleContaining(testListId, searchTerm);
+        }
+
+        @Test
+        @DisplayName("검색어 앞뒤 공백 제거 확인")
+        void searchCards_SearchTermTrimmed() {
+            // given
+            String searchTerm = "  테스트  ";
+            String trimmedSearchTerm = "테스트";
+            List<Card> cards = List.of(testCard);
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.of(testBoard));
+            when(cardRepository.findByListIdAndTitleContaining(testListId, trimmedSearchTerm)).thenReturn(cards);
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.searchCards(testListId, searchTerm, testUserId);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            List<Card> resultCards = result.get();
+            assertThat(resultCards).hasSize(1);
+
+            verify(cardRepository).findByListIdAndTitleContaining(testListId, trimmedSearchTerm);
+        }
+    }
+
+    @Nested
+    @DisplayName("공통 검증 메서드 테스트")
+    class CommonValidationTest {
+
+        @Test
+        @DisplayName("validateCardQuery - 성공")
+        void validateCardQuery_Success() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> cardIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(cardIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+
+            // when
+            Either<Failure, Card> result = cardQueryService.getCard(testCardId, testUserId);
+
+            // then
+            // 검증이 성공하면 다음 단계로 진행되므로, 실제 검증은 위의 성공 테스트에서 확인
+            verify(commonValidationRules).cardIdRequired(any());
+            verify(commonValidationRules).userIdRequired(any());
+        }
+
+        @Test
+        @DisplayName("validateListQuery - 성공")
+        void validateListQuery_Success() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            // 검증이 성공하면 다음 단계로 진행되므로, 실제 검증은 위의 성공 테스트에서 확인
+            verify(commonValidationRules).listIdRequired(any());
+            verify(commonValidationRules).userIdRequired(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("보드 접근 권한 검증 테스트")
+    class BoardAccessValidationTest {
+
+        @Test
+        @DisplayName("validateBoardAccess - 성공")
+        void validateBoardAccess_Success() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.of(testBoard));
+            when(cardRepository.findByListIdOrderByPosition(testListId)).thenReturn(List.of());
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            verify(boardListRepository).findById(testListId);
+            verify(boardRepository).findByIdAndOwnerId(testBoardId, testUserId);
+        }
+
+        @Test
+        @DisplayName("validateBoardAccess - 리스트 없음")
+        void validateBoardAccess_ListNotFound() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("error.service.card.move.list_not_found"))
+                    .thenReturn("리스트를 찾을 수 없습니다");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.NotFound.class);
+            assertThat(failure.getMessage()).isEqualTo("리스트를 찾을 수 없습니다");
+        }
+
+        @Test
+        @DisplayName("validateBoardAccess - 보드 접근 권한 없음")
+        void validateBoardAccess_AccessDenied() {
+            // given
+            ValidationResult<Object> validResult = ValidationResult.valid(new Object());
+            Validator<Object> listIdValidator = cmd -> validResult;
+            Validator<Object> userIdValidator = cmd -> validResult;
+            when(commonValidationRules.listIdRequired(any())).thenReturn(listIdValidator);
+            when(commonValidationRules.userIdRequired(any())).thenReturn(userIdValidator);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findByIdAndOwnerId(testBoardId, testUserId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("error.service.card.move.access_denied"))
+                    .thenReturn("보드에 접근할 권한이 없습니다");
+
+            // when
+            Either<Failure, List<Card>> result = cardQueryService.getCardsByListId(testListId, testUserId);
+
+            // then
+            assertThat(result.isLeft()).isTrue();
+            Failure failure = result.getLeft();
+            assertThat(failure).isInstanceOf(Failure.PermissionDenied.class);
+            assertThat(failure.getMessage()).isEqualTo("보드에 접근할 권한이 없습니다");
+        }
+    }
 }

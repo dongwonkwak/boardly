@@ -57,7 +57,10 @@ public class MoveCardService implements MoveCardUseCase {
     var validationResult = moveCardValidator.validate(command);
     if (validationResult.isInvalid()) {
       log.warn("카드 이동 입력 검증 실패: {}", validationResult.getErrorsAsCollection());
-      return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+      return Either.left(Failure.ofInputError(
+          messageResolver.getMessage("validation.input.invalid"),
+          "INVALID_INPUT",
+          List.copyOf(validationResult.getErrorsAsCollection())));
     }
 
     // 2. 카드 존재 확인

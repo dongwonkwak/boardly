@@ -3,7 +3,6 @@ package com.boardly.features.boardlist.domain.repository;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.user.domain.model.UserId;
 
 import java.util.List;
 import java.util.Optional;

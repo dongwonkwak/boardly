@@ -12,168 +12,192 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
-
-import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DeleteCardValidatorTest {
 
-  private DeleteCardValidator deleteCardValidator;
-
   @Mock
-  private MessageSource messageSource;
+  private ValidationMessageResolver messageResolver;
+
+  private DeleteCardValidator validator;
 
   @BeforeEach
   void setUp() {
-    LocaleContextHolder.setLocale(Locale.KOREAN);
-
-    // MessageSource Mock 설정
-    lenient().when(messageSource.getMessage(anyString(), any(), any(Locale.class)))
-        .thenAnswer(invocation -> {
-          String key = invocation.getArgument(0);
-          return switch (key) {
-            case "validation.cardId.required" -> "Card ID is required";
-            case "validation.userId.required" -> "User ID is required";
-            default -> key;
-          };
-        });
-
-    ValidationMessageResolver messageResolver = new ValidationMessageResolver(messageSource);
     CommonValidationRules commonValidationRules = new CommonValidationRules(messageResolver);
-    deleteCardValidator = new DeleteCardValidator(commonValidationRules);
+    validator = new DeleteCardValidator(commonValidationRules);
   }
-
-  private DeleteCardCommand createValidCommand() {
-    return new DeleteCardCommand(
-        new CardId(),
-        new UserId());
-  }
-
-  // ==================== 기본 테스트 ====================
 
   @Test
-  @DisplayName("유효한 카드 삭제 정보는 검증을 통과해야 한다")
-  void validate_withValidData_shouldBeValid() {
+  @DisplayName("유효한 DeleteCardCommand는 검증을 통과해야 한다")
+  void validate_ValidCommand_ShouldPass() {
     // given
-    DeleteCardCommand command = createValidCommand();
+    DeleteCardCommand command = DeleteCardCommand.of(
+        new CardId("card-123"),
+        new UserId("user-789"));
 
     // when
-    ValidationResult<DeleteCardCommand> result = deleteCardValidator.validate(command);
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
 
     // then
     assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
   }
 
-  // ==================== 필수 필드 검증 ====================
-
   @Test
-  @DisplayName("cardId가 null이면 검증에 실패해야 한다")
-  void validate_withNullCardId_shouldBeInvalid() {
+  @DisplayName("cardId가 null인 경우 검증에 실패해야 한다")
+  void validate_NullCardId_ShouldFail() {
     // given
-    DeleteCardCommand command = new DeleteCardCommand(
+    when(messageResolver.getMessage("validation.cardId.required"))
+        .thenReturn("카드 ID는 필수입니다");
+
+    DeleteCardCommand command = DeleteCardCommand.of(
         null,
-        new UserId());
+        new UserId("user-789"));
 
     // when
-    ValidationResult<DeleteCardCommand> result = deleteCardValidator.validate(command);
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
 
     // then
     assertThat(result.isValid()).isFalse();
     assertThat(result.getErrors()).hasSize(1);
-    assertThat(result.getErrors().get(0).field()).isEqualTo("cardId");
-    assertThat(result.getErrors().get(0).message()).isEqualTo("Card ID is required");
+
+    var violation = result.getErrors().get(0);
+    assertThat(violation.field()).isEqualTo("cardId");
+    assertThat(violation.message()).isEqualTo("카드 ID는 필수입니다");
+    assertThat(violation.rejectedValue()).isNull();
   }
 
   @Test
-  @DisplayName("userId가 null이면 검증에 실패해야 한다")
-  void validate_withNullUserId_shouldBeInvalid() {
+  @DisplayName("userId가 null인 경우 검증에 실패해야 한다")
+  void validate_NullUserId_ShouldFail() {
     // given
-    DeleteCardCommand command = new DeleteCardCommand(
-        new CardId(),
+    when(messageResolver.getMessage("validation.userId.required"))
+        .thenReturn("사용자 ID는 필수입니다");
+
+    DeleteCardCommand command = DeleteCardCommand.of(
+        new CardId("card-123"),
         null);
 
     // when
-    ValidationResult<DeleteCardCommand> result = deleteCardValidator.validate(command);
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
 
     // then
     assertThat(result.isValid()).isFalse();
     assertThat(result.getErrors()).hasSize(1);
-    assertThat(result.getErrors().get(0).field()).isEqualTo("userId");
-    assertThat(result.getErrors().get(0).message()).isEqualTo("User ID is required");
+
+    var violation = result.getErrors().get(0);
+    assertThat(violation.field()).isEqualTo("userId");
+    assertThat(violation.message()).isEqualTo("사용자 ID는 필수입니다");
+    assertThat(violation.rejectedValue()).isNull();
   }
 
-  // ==================== 복합 검증 ====================
-
   @Test
-  @DisplayName("cardId와 userId가 모두 null이면 모든 오류를 반환해야 한다")
-  void validate_withBothFieldsNull_shouldReturnAllErrors() {
+  @DisplayName("cardId와 userId가 모두 null인 경우 모든 오류가 반환되어야 한다")
+  void validate_BothNullFields_ShouldReturnAllErrors() {
     // given
-    DeleteCardCommand command = new DeleteCardCommand(
-        null, // 카드 ID 없음
-        null // 사용자 ID 없음
-    );
+    when(messageResolver.getMessage("validation.cardId.required"))
+        .thenReturn("카드 ID는 필수입니다");
+    when(messageResolver.getMessage("validation.userId.required"))
+        .thenReturn("사용자 ID는 필수입니다");
+
+    DeleteCardCommand command = DeleteCardCommand.of(
+        null,
+        null);
 
     // when
-    ValidationResult<DeleteCardCommand> result = deleteCardValidator.validate(command);
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
 
     // then
     assertThat(result.isValid()).isFalse();
     assertThat(result.getErrors()).hasSize(2);
-    assertThat(result.getErrors()).extracting("field")
-        .containsExactlyInAnyOrder("cardId", "userId");
-  }
 
-  // ==================== 특수 케이스 테스트 ====================
+    var errors = result.getErrors();
+    assertThat(errors).anyMatch(error -> error.field().equals("cardId") &&
+        error.message().equals("카드 ID는 필수입니다"));
+    assertThat(errors).anyMatch(error -> error.field().equals("userId") &&
+        error.message().equals("사용자 ID는 필수입니다"));
+  }
 
   @Test
   @DisplayName("유효한 CardId와 UserId로 검증을 통과해야 한다")
-  void validate_withValidIds_shouldBeValid() {
-    // given
-    CardId cardId = new CardId();
-    UserId userId = new UserId();
-    DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
-
-    // when
-    ValidationResult<DeleteCardCommand> result = deleteCardValidator.validate(command);
-
-    // then
-    assertThat(result.isValid()).isTrue();
-  }
-
-  @Test
-  @DisplayName("다른 CardId와 UserId 조합으로도 검증을 통과해야 한다")
-  void validate_withDifferentValidIds_shouldBeValid() {
-    // given
-    CardId cardId = new CardId();
-    UserId userId = new UserId();
-    DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
-
-    // when
-    ValidationResult<DeleteCardCommand> result = deleteCardValidator.validate(command);
-
-    // then
-    assertThat(result.isValid()).isTrue();
-  }
-
-  @Test
-  @DisplayName("정상적인 삭제 요청은 검증을 통과해야 한다")
-  void validate_normalDeleteRequest_shouldBeValid() {
+  void validate_ValidIds_ShouldPass() {
     // given
     DeleteCardCommand command = DeleteCardCommand.of(
-        new CardId(),
-        new UserId());
+        new CardId("valid-card-id"),
+        new UserId("valid-user-id"));
 
     // when
-    ValidationResult<DeleteCardCommand> result = deleteCardValidator.validate(command);
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
 
     // then
     assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
+  }
+
+  @Test
+  @DisplayName("빈 문자열 ID로도 검증을 통과해야 한다 (ID 객체 생성 시점에서 검증)")
+  void validate_EmptyStringIds_ShouldPass() {
+    // given
+    DeleteCardCommand command = DeleteCardCommand.of(
+        new CardId(""),
+        new UserId(""));
+
+    // when
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
+
+    // then
+    assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
+  }
+
+  @Test
+  @DisplayName("특수문자가 포함된 ID로도 검증을 통과해야 한다")
+  void validate_SpecialCharacterIds_ShouldPass() {
+    // given
+    DeleteCardCommand command = DeleteCardCommand.of(
+        new CardId("card-123!@#$%"),
+        new UserId("user-789!@#$%"));
+
+    // when
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
+
+    // then
+    assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
+  }
+
+  @Test
+  @DisplayName("한글이 포함된 ID로도 검증을 통과해야 한다")
+  void validate_KoreanIds_ShouldPass() {
+    // given
+    DeleteCardCommand command = DeleteCardCommand.of(
+        new CardId("카드-123"),
+        new UserId("사용자-789"));
+
+    // when
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
+
+    // then
+    assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
+  }
+
+  @Test
+  @DisplayName("이모지가 포함된 ID로도 검증을 통과해야 한다")
+  void validate_EmojiIds_ShouldPass() {
+    // given
+    DeleteCardCommand command = DeleteCardCommand.of(
+        new CardId("card-123🎉"),
+        new UserId("user-789🎉"));
+
+    // when
+    ValidationResult<DeleteCardCommand> result = validator.validate(command);
+
+    // then
+    assertThat(result.isValid()).isTrue();
+    assertThat(result.get()).isEqualTo(command);
   }
 }

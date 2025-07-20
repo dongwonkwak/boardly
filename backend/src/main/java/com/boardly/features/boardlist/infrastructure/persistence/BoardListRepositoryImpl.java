@@ -4,7 +4,6 @@ import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.user.domain.model.UserId;
 import org.springframework.stereotype.Repository;
 
 import lombok.RequiredArgsConstructor;

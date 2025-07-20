@@ -57,328 +57,252 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(Path.BOARDS)
 @RequiredArgsConstructor
-@Tag(name = "Board", description = "Board API")
+@Tag(name = "Board", description = "보드 관리 API")
 public class BoardController {
-  
+
   private static final String TAGS = "Board";
 
   private final CreateBoardUseCase createBoardUseCase;
+  private final GetUserBoardsUseCase getUserBoardsUseCase;
   private final UpdateBoardUseCase updateBoardUseCase;
   private final ArchiveBoardUseCase archiveBoardUseCase;
-  private final GetUserBoardsUseCase getUserBoardsUseCase;
   private final ToggleStarBoardUseCase toggleStarBoardUseCase;
+  private final ApiFailureHandler failureHandler;
 
-  @Operation(
-    summary = "내 보드 목록 조회",
-    description = "현재 사용자가 소유한 보드 목록을 조회합니다. 쿼리 파라미터로 아카이브된 보드 포함 여부를 설정할 수 있습니다.",
-    tags = {TAGS},
-    security = @SecurityRequirement(name = "oauth2", scopes = {"read", "openid"}))
+  @Operation(summary = "내 보드 목록 조회", description = "현재 사용자가 소유한 보드 목록을 조회합니다. 쿼리 파라미터로 아카이브된 보드 포함 여부를 설정할 수 있습니다.", tags = {
+      TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "read", "openid" }))
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "보드 목록 조회 성공",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, 
-        array = @ArraySchema(schema = @Schema(implementation = BoardResponse.class)))),
-    @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "500", description = "서버 오류",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200", description = "보드 목록 조회 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = BoardResponse.class)))),
+      @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
   })
   @PreAuthorize("hasAuthority('SCOPE_read') and hasAuthority('SCOPE_openid')")
   @GetMapping
   public ResponseEntity<?> getMyBoards(
-    @Parameter(description = "아카이브된 보드 포함 여부 (기본값: false)", required = false)
-    @RequestParam(defaultValue = "false") boolean includeArchived,
-    HttpServletRequest httpRequest,
-    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-    
+      @Parameter(description = "아카이브된 보드 포함 여부 (기본값: false)", required = false) @RequestParam(defaultValue = "false") boolean includeArchived,
+      HttpServletRequest httpRequest,
+      @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
     String userId = jwt.getSubject();
     log.info("사용자 보드 목록 조회 요청: userId={}, includeArchived={}", userId, includeArchived);
-    
+
     GetUserBoardsCommand command = new GetUserBoardsCommand(
-      new UserId(userId),
-      includeArchived
-    );
-    
+        new UserId(userId),
+        includeArchived);
+
     Either<Failure, List<Board>> result = getUserBoardsUseCase.getUserBoards(command);
-    
+
     return result.fold(
-      ApiFailureHandler::handleFailure,
-      boards -> {
-        log.info("사용자 보드 목록 조회 성공: userId={}, boardCount={}, includeArchived={}", 
-                userId, boards.size(), includeArchived);
-        List<BoardResponse> responses = boards.stream()
-                .map(BoardResponse::from)
-                .toList();
-        return ResponseEntity.ok(responses);
-      }
-    );
+        failureHandler::handleFailure,
+        boards -> {
+          log.info("사용자 보드 목록 조회 성공: userId={}, boardCount={}, includeArchived={}",
+              userId, boards.size(), includeArchived);
+          List<BoardResponse> responses = boards.stream()
+              .map(BoardResponse::from)
+              .toList();
+          return ResponseEntity.ok(responses);
+        });
   }
 
-  @Operation(
-    summary = "보드 생성",
-    description = "새로운 보드를 생성합니다.",
-    tags = {TAGS},
-    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @Operation(summary = "보드 생성", description = "새로운 보드를 생성합니다.", tags = {
+      TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "201", description = "보드 생성 성공",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
-    @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "500", description = "서버 오류",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "201", description = "보드 생성 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+      @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
   })
   @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
   @PostMapping
   public ResponseEntity<?> createBoard(
-    @Parameter(description = "보드 생성 요청 정보", required = true)
-    @RequestBody CreateBoardRequest request,
-    HttpServletRequest httpRequest,
-    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-    
+      @Parameter(description = "보드 생성 요청 정보", required = true) @RequestBody CreateBoardRequest request,
+      HttpServletRequest httpRequest,
+      @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
     String userId = jwt.getSubject();
     log.info("보드 생성 요청: userId={}, title={}", userId, request.title());
-    
+
     CreateBoardCommand command = CreateBoardCommand.of(
-      request.title(),
-      request.description(),
-      new UserId(userId)
-    );
-    
+        request.title(),
+        request.description(),
+        new UserId(userId));
+
     Either<Failure, Board> result = createBoardUseCase.createBoard(command);
-    
+
     return result.fold(
-      ApiFailureHandler::handleFailure,
-      board -> {
-        log.info("보드 생성 성공: boardId={}, title={}", board.getBoardId().getId(), board.getTitle());
-        return ResponseEntity.status(HttpStatus.CREATED).body(BoardResponse.from(board));
-      }
-    );
+        failureHandler::handleFailure,
+        board -> {
+          log.info("보드 생성 성공: boardId={}, title={}", board.getBoardId().getId(), board.getTitle());
+          return ResponseEntity.status(HttpStatus.CREATED).body(BoardResponse.from(board));
+        });
   }
 
-  @Operation(
-    summary = "보드 업데이트",
-    description = "기존 보드의 제목과 설명을 업데이트합니다.",
-    tags = {TAGS},
-    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @Operation(summary = "보드 업데이트", description = "기존 보드의 제목과 설명을 업데이트합니다.", tags = {
+      TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "보드 업데이트 성공",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
-    @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "403", description = "보드 수정 권한 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "409", description = "아카이브된 보드는 수정 불가",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "500", description = "서버 오류",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200", description = "보드 업데이트 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+      @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "403", description = "보드 수정 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "409", description = "아카이브된 보드는 수정 불가", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
   })
   @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
   @PutMapping("/{boardId}")
   public ResponseEntity<?> updateBoard(
-    @Parameter(description = "업데이트할 보드 ID", required = true)
-    @PathVariable String boardId,
-    @Parameter(description = "보드 업데이트 요청 정보", required = true)
-    @RequestBody UpdateBoardRequest request,
-    HttpServletRequest httpRequest,
-    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-    
+      @Parameter(description = "업데이트할 보드 ID", required = true) @PathVariable String boardId,
+      @Parameter(description = "보드 업데이트 요청 정보", required = true) @RequestBody UpdateBoardRequest request,
+      HttpServletRequest httpRequest,
+      @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
     String userId = jwt.getSubject();
     log.info("보드 업데이트 요청: userId={}, boardId={}, title={}", userId, boardId, request.title());
-    
+
     UpdateBoardCommand command = UpdateBoardCommand.of(
-      new BoardId(boardId),
-      request.title(),
-      request.description(),
-      new UserId(userId)
-    );
-    
+        new BoardId(boardId),
+        request.title(),
+        request.description(),
+        new UserId(userId));
+
     Either<Failure, Board> result = updateBoardUseCase.updateBoard(command);
-    
+
     return result.fold(
-      ApiFailureHandler::handleFailure,
-      board -> {
-        log.info("보드 업데이트 성공: boardId={}, title={}", board.getBoardId().getId(), board.getTitle());
-        return ResponseEntity.ok(BoardResponse.from(board));
-      }
-    );
+        failureHandler::handleFailure,
+        board -> {
+          log.info("보드 업데이트 성공: boardId={}, title={}", board.getBoardId().getId(), board.getTitle());
+          return ResponseEntity.ok(BoardResponse.from(board));
+        });
   }
 
-  @Operation(
-    summary = "보드 아카이브",
-    description = "보드를 아카이브합니다. 아카이브된 보드는 읽기 전용이 되며, 내용 수정이 불가능합니다.",
-    tags = {TAGS},
-    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @Operation(summary = "보드 아카이브", description = "보드를 아카이브합니다. 아카이브된 보드는 읽기 전용이 되며, 내용 수정이 불가능합니다.", tags = {
+      TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "보드 아카이브 성공",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
-    @ApiResponse(responseCode = "403", description = "보드 아카이브 권한 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "409", description = "이미 아카이브된 보드",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "500", description = "서버 오류",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200", description = "보드 아카이브 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+      @ApiResponse(responseCode = "403", description = "보드 아카이브 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "409", description = "이미 아카이브된 보드", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
   })
   @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
   @PostMapping("/{boardId}/archive")
   public ResponseEntity<?> archiveBoard(
-    @Parameter(description = "아카이브할 보드 ID", required = true)
-    @PathVariable String boardId,
-    HttpServletRequest httpRequest,
-    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-    
+      @Parameter(description = "아카이브할 보드 ID", required = true) @PathVariable String boardId,
+      HttpServletRequest httpRequest,
+      @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
     String userId = jwt.getSubject();
     log.info("보드 아카이브 요청: userId={}, boardId={}", userId, boardId);
-    
+
     ArchiveBoardCommand command = ArchiveBoardCommand.of(
-      new BoardId(boardId),
-      new UserId(userId)
-    );
-    
+        new BoardId(boardId),
+        new UserId(userId));
+
     Either<Failure, Board> result = archiveBoardUseCase.archiveBoard(command);
-    
+
     return result.fold(
-      ApiFailureHandler::handleFailure,
-      board -> {
-        log.info("보드 아카이브 성공: boardId={}", board.getBoardId().getId());
-        return ResponseEntity.ok(BoardResponse.from(board));
-      }
-    );
+        failureHandler::handleFailure,
+        board -> {
+          log.info("보드 아카이브 성공: boardId={}", board.getBoardId().getId());
+          return ResponseEntity.ok(BoardResponse.from(board));
+        });
   }
 
-  @Operation(
-    summary = "보드 언아카이브",
-    description = "보드를 언아카이브합니다. 언아카이브된 보드는 다시 활성 상태가 되며, 내용 수정이 가능합니다.",
-    tags = {TAGS},
-    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @Operation(summary = "보드 언아카이브", description = "보드를 언아카이브합니다. 언아카이브된 보드는 다시 활성 상태가 되며, 내용 수정이 가능합니다.", tags = {
+      TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "보드 언아카이브 성공",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
-    @ApiResponse(responseCode = "403", description = "보드 언아카이브 권한 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "409", description = "이미 활성화된 보드",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "500", description = "서버 오류",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200", description = "보드 언아카이브 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+      @ApiResponse(responseCode = "403", description = "보드 언아카이브 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "409", description = "이미 활성화된 보드", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
   })
   @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
   @PostMapping("/{boardId}/unarchive")
   public ResponseEntity<?> unarchiveBoard(
-    @Parameter(description = "언아카이브할 보드 ID", required = true)
-    @PathVariable String boardId,
-    HttpServletRequest httpRequest,
-    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-    
+      @Parameter(description = "언아카이브할 보드 ID", required = true) @PathVariable String boardId,
+      HttpServletRequest httpRequest,
+      @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
     String userId = jwt.getSubject();
     log.info("보드 언아카이브 요청: userId={}, boardId={}", userId, boardId);
-    
+
     ArchiveBoardCommand command = ArchiveBoardCommand.of(
-      new BoardId(boardId),
-      new UserId(userId)
-    );
-    
+        new BoardId(boardId),
+        new UserId(userId));
+
     Either<Failure, Board> result = archiveBoardUseCase.unarchiveBoard(command);
-    
+
     return result.fold(
-      ApiFailureHandler::handleFailure,
-      board -> {
-        log.info("보드 언아카이브 성공: boardId={}", board.getBoardId().getId());
-        return ResponseEntity.ok(BoardResponse.from(board));
-      }
-    );
+        failureHandler::handleFailure,
+        board -> {
+          log.info("보드 언아카이브 성공: boardId={}", board.getBoardId().getId());
+          return ResponseEntity.ok(BoardResponse.from(board));
+        });
   }
 
-  @Operation(
-    summary = "보드 즐겨찾기 추가",
-    description = "보드를 즐겨찾기에 추가합니다.",
-    tags = {TAGS},
-    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @Operation(summary = "보드 즐겨찾기 추가", description = "보드를 즐겨찾기에 추가합니다.", tags = {
+      TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "보드 즐겨찾기 추가 성공",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
-    @ApiResponse(responseCode = "403", description = "보드 즐겨찾기 권한 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "409", description = "이미 즐겨찾기에 추가된 보드",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "500", description = "서버 오류",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200", description = "보드 즐겨찾기 추가 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+      @ApiResponse(responseCode = "403", description = "보드 즐겨찾기 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "409", description = "이미 즐겨찾기에 추가된 보드", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
   })
   @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
   @PostMapping("/{boardId}/star")
   public ResponseEntity<?> starBoard(
-    @Parameter(description = "즐겨찾기에 추가할 보드 ID", required = true)
-    @PathVariable String boardId,
-    HttpServletRequest httpRequest,
-    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-    
+      @Parameter(description = "즐겨찾기에 추가할 보드 ID", required = true) @PathVariable String boardId,
+      HttpServletRequest httpRequest,
+      @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
     String userId = jwt.getSubject();
     log.info("보드 즐겨찾기 추가 요청: userId={}, boardId={}", userId, boardId);
-    
+
     ToggleStarBoardCommand command = ToggleStarBoardCommand.of(
-      new BoardId(boardId),
-      new UserId(userId)
-    );
-    
+        new BoardId(boardId),
+        new UserId(userId));
+
     Either<Failure, Board> result = toggleStarBoardUseCase.starringBoard(command);
-    
+
     return result.fold(
-      ApiFailureHandler::handleFailure,
-      board -> {
-        log.info("보드 즐겨찾기 추가 성공: boardId={}", board.getBoardId().getId());
-        return ResponseEntity.ok(BoardResponse.from(board));
-      }
-    );
+        failureHandler::handleFailure,
+        board -> {
+          log.info("보드 즐겨찾기 추가 성공: boardId={}", board.getBoardId().getId());
+          return ResponseEntity.ok(BoardResponse.from(board));
+        });
   }
 
-  @Operation(
-    summary = "보드 즐겨찾기 제거",
-    description = "보드를 즐겨찾기에서 제거합니다.",
-    tags = {TAGS},
-    security = @SecurityRequirement(name = "oauth2", scopes = {"write", "openid"}))
+  @Operation(summary = "보드 즐겨찾기 제거", description = "보드를 즐겨찾기에서 제거합니다.", tags = {
+      TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
   @ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "보드 즐겨찾기 제거 성공",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
-    @ApiResponse(responseCode = "403", description = "보드 즐겨찾기 권한 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "409", description = "즐겨찾기에 없는 보드",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "500", description = "서버 오류",
-      content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+      @ApiResponse(responseCode = "200", description = "보드 즐겨찾기 제거 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = BoardResponse.class))),
+      @ApiResponse(responseCode = "403", description = "보드 즐겨찾기 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "409", description = "즐겨찾기에 없는 보드", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+      @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
   })
   @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
   @PostMapping("/{boardId}/unstar")
   public ResponseEntity<?> unstarBoard(
-    @Parameter(description = "즐겨찾기에서 제거할 보드 ID", required = true)
-    @PathVariable String boardId,
-    HttpServletRequest httpRequest,
-    @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
-    
+      @Parameter(description = "즐겨찾기에서 제거할 보드 ID", required = true) @PathVariable String boardId,
+      HttpServletRequest httpRequest,
+      @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
     String userId = jwt.getSubject();
     log.info("보드 즐겨찾기 제거 요청: userId={}, boardId={}", userId, boardId);
-    
+
     ToggleStarBoardCommand command = ToggleStarBoardCommand.of(
-      new BoardId(boardId),
-      new UserId(userId)
-    );
-    
+        new BoardId(boardId),
+        new UserId(userId));
+
     Either<Failure, Board> result = toggleStarBoardUseCase.unstarringBoard(command);
-    
+
     return result.fold(
-      ApiFailureHandler::handleFailure,
-      board -> {
-        log.info("보드 즐겨찾기 제거 성공: boardId={}", board.getBoardId().getId());
-        return ResponseEntity.ok(BoardResponse.from(board));
-      }
-    );
+        failureHandler::handleFailure,
+        board -> {
+          log.info("보드 즐겨찾기 제거 성공: boardId={}", board.getBoardId().getId());
+          return ResponseEntity.ok(BoardResponse.from(board));
+        });
   }
 }

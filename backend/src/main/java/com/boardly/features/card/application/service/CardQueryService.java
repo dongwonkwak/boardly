@@ -15,6 +15,7 @@ import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.shared.application.validation.CommonValidationRules;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.application.validation.Validator;
 import com.boardly.shared.domain.common.Failure;
@@ -33,6 +34,7 @@ public class CardQueryService implements CardQueryUseCase {
   private final BoardListRepository boardListRepository;
   private final BoardRepository boardRepository;
   private final CommonValidationRules commonValidationRules;
+  private final ValidationMessageResolver validationMessageResolver;
 
   @Override
   public Either<Failure, Card> getCard(CardId cardId, UserId userId) {
@@ -45,7 +47,10 @@ public class CardQueryService implements CardQueryUseCase {
     var validationResult = validateCardQuery(cardId, userId);
     if (validationResult.isInvalid()) {
       log.warn("카드 조회 입력 검증 실패: {}", validationResult.getErrorsAsCollection());
-      return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+      return Either.left(Failure.ofInputError(
+          validationMessageResolver.getMessage("validation.input.invalid"),
+          "INVALID_INPUT",
+          List.copyOf(validationResult.getErrorsAsCollection())));
     }
 
     return findCard(cardId, userId);
@@ -61,7 +66,10 @@ public class CardQueryService implements CardQueryUseCase {
     var validationResult = validateListQuery(listId, userId);
     if (validationResult.isInvalid()) {
       log.warn("리스트별 카드 조회 입력 검증 실패: {}", validationResult.getErrorsAsCollection());
-      return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+      return Either.left(Failure.ofInputError(
+          validationMessageResolver.getMessage("validation.input.invalid"),
+          "INVALID_INPUT",
+          List.copyOf(validationResult.getErrorsAsCollection())));
     }
 
     return findCardsByListId(listId, userId);
@@ -78,13 +86,19 @@ public class CardQueryService implements CardQueryUseCase {
     var validationResult = validateListQuery(listId, userId);
     if (validationResult.isInvalid()) {
       log.warn("카드 검색 입력 검증 실패: {}", validationResult.getErrorsAsCollection());
-      return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+      return Either.left(Failure.ofInputError(
+          validationMessageResolver.getMessage("validation.input.invalid"),
+          "INVALID_INPUT",
+          List.copyOf(validationResult.getErrorsAsCollection())));
     }
 
     // 2. 검색어 검증
     if (searchTerm == null || searchTerm.trim().isEmpty()) {
-      log.warn("검색어가 null이거나 비어있음: searchTerm={}", searchTerm);
-      return Either.left(Failure.ofBadRequest("SEARCH_TERM_EMPTY"));
+      log.warn("검색어가 비어있음: userId={}", userId != null ? userId.getId() : "null");
+      return Either.left(Failure.ofInputError(
+          validationMessageResolver.getMessage("validation.search.term.required"),
+          "SEARCH_TERM_EMPTY",
+          null));
     }
 
     return findCardsBySearch(listId, searchTerm, userId);
@@ -116,7 +130,8 @@ public class CardQueryService implements CardQueryUseCase {
     Optional<Card> cardOpt = cardRepository.findById(cardId);
     if (cardOpt.isEmpty()) {
       log.warn("카드를 찾을 수 없음: cardId={}", cardId.getId());
-      return Either.left(Failure.ofNotFound("NOT_FOUND_CARD"));
+      return Either.left(Failure.ofNotFound(
+          validationMessageResolver.getMessage("error.service.card.move.not_found")));
     }
 
     Card card = cardOpt.get();
@@ -160,7 +175,8 @@ public class CardQueryService implements CardQueryUseCase {
     var boardListOpt = boardListRepository.findById(listId);
     if (boardListOpt.isEmpty()) {
       log.warn("리스트를 찾을 수 없음: listId={}", listId.getId());
-      return Either.left(Failure.ofNotFound("NOT_FOUND_LIST"));
+      return Either.left(Failure.ofNotFound(
+          validationMessageResolver.getMessage("error.service.card.move.list_not_found")));
     }
 
     // 보드 접근 권한 확인
@@ -170,7 +186,8 @@ public class CardQueryService implements CardQueryUseCase {
     if (boardOpt.isEmpty()) {
       log.warn("보드 접근 권한 없음: boardId={}, userId={}",
           boardList.getBoardId().getId(), userId.getId());
-      return Either.left(Failure.ofForbidden("FORBIDDEN_BOARD"));
+      return Either.left(Failure.ofPermissionDenied(
+          validationMessageResolver.getMessage("error.service.card.move.access_denied")));
     }
 
     return Either.right(new Object());

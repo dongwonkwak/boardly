@@ -4,6 +4,7 @@ import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
 import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
@@ -22,6 +23,7 @@ import java.util.List;
 public class GetUserBoardsService implements GetUserBoardsUseCase {
 
     private final BoardRepository boardRepository;
+    private final ValidationMessageResolver validationMessageResolver;
 
     @Override
     public Either<Failure, List<Board>> getUserBoards(GetUserBoardsCommand command) {
@@ -31,27 +33,33 @@ public class GetUserBoardsService implements GetUserBoardsUseCase {
                     .message("GetUserBoardsCommand is null")
                     .rejectedValue(null)
                     .build();
-            return Either.left(Failure.ofValidation("INVALID_COMMAND", java.util.List.of(violation)));
+            return Either.left(Failure.ofInputError(
+                    validationMessageResolver.getMessage("validation.input.invalid"),
+                    "INVALID_COMMAND",
+                    List.of(violation)));
         }
 
-        log.info("사용자 보드 목록 조회 시작: ownerId={}, includeArchived={}", 
+        log.info("사용자 보드 목록 조회 시작: ownerId={}, includeArchived={}",
                 command.ownerId(), command.includeArchived());
 
         // 1. 입력 검증
         if (command.ownerId() == null) {
             var violation = Failure.FieldViolation.builder()
                     .field("userId")
-                    .message("사용자 ID는 필수 입력 항목입니다")
+                    .message(validationMessageResolver.getMessage("validation.user.id.required"))
                     .rejectedValue(null)
                     .build();
             log.warn("사용자 보드 목록 조회 검증 실패: ownerId=null");
-            return Either.left(Failure.ofValidation("INVALID_INPUT", java.util.List.of(violation)));
+            return Either.left(Failure.ofInputError(
+                    validationMessageResolver.getMessage("validation.input.invalid"),
+                    "INVALID_INPUT",
+                    List.of(violation)));
         }
 
         // 2. 보드 목록 조회
         return Try.of(() -> {
             List<Board> boards;
-            
+
             if (command.includeArchived()) {
                 // 모든 보드 조회 (활성 + 아카이브)
                 boards = boardRepository.findByOwnerId(command.ownerId());
@@ -67,18 +75,18 @@ public class GetUserBoardsService implements GetUserBoardsUseCase {
                     .sorted(Comparator.comparing(Board::getUpdatedAt).reversed())
                     .toList();
 
-            log.info("사용자 보드 목록 조회 완료: ownerId={}, totalCount={}, includeArchived={}", 
+            log.info("사용자 보드 목록 조회 완료: ownerId={}, totalCount={}, includeArchived={}",
                     command.ownerId(), sortedBoards.size(), command.includeArchived());
 
             return sortedBoards;
         })
-        .fold(
-            throwable -> {
-                log.error("사용자 보드 목록 조회 중 예외 발생: ownerId={}, error={}", 
-                         command.ownerId(), throwable.getMessage(), throwable);
-                return Either.left(Failure.ofInternalServerError(throwable.getMessage()));
-            },
-            Either::right
-        );
+                .fold(
+                        throwable -> {
+                            log.error("사용자 보드 목록 조회 중 예외 발생: ownerId={}, error={}",
+                                    command.ownerId(), throwable.getMessage(), throwable);
+                            return Either
+                                    .left(Failure.ofInternalError(throwable.getMessage(), "BOARD_QUERY_ERROR", null));
+                        },
+                        Either::right);
     }
-} 
+}

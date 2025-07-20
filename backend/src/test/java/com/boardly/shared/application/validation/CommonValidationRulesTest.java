@@ -1,5 +1,15 @@
 package com.boardly.shared.application.validation;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
+
+import java.util.function.Function;
+import java.util.regex.Pattern;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -7,334 +17,887 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
+import com.boardly.features.boardlist.domain.model.ListColor;
+import com.boardly.shared.domain.common.Failure.FieldViolation;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("CommonValidationRules 단위 테스트")
+@DisplayName("CommonValidationRules 테스트")
 class CommonValidationRulesTest {
 
     @Mock
-    private MessageSource messageSource;
-
     private ValidationMessageResolver messageResolver;
-    private CommonValidationRules commonValidationRules;
 
-    private record TestObject(String email, String password, String name, String title, String description, Object id) {
+    private CommonValidationRules validationRules;
+
+    // 테스트용 데이터 클래스들
+    private static class TestData {
+        private final String email;
+        private final String password;
+        private final String firstName;
+        private final String lastName;
+        private final String title;
+        private final String description;
+        private final Object userId;
+        private final Object boardId;
+        private final Object listId;
+        private final Object cardId;
+        private final Object position;
+        private final String color;
+        private final ListColor listColor;
+
+        public TestData(String email, String password, String firstName, String lastName,
+                String title, String description, Object userId, Object boardId,
+                Object listId, Object cardId, Object position, String color, ListColor listColor) {
+            this.email = email;
+            this.password = password;
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.title = title;
+            this.description = description;
+            this.userId = userId;
+            this.boardId = boardId;
+            this.listId = listId;
+            this.cardId = cardId;
+            this.position = position;
+            this.color = color;
+            this.listColor = listColor;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public String getFirstName() {
+            return firstName;
+        }
+
+        public String getLastName() {
+            return lastName;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public Object getUserId() {
+            return userId;
+        }
+
+        public Object getBoardId() {
+            return boardId;
+        }
+
+        public Object getListId() {
+            return listId;
+        }
+
+        public Object getCardId() {
+            return cardId;
+        }
+
+        public Object getPosition() {
+            return position;
+        }
+
+        public String getColor() {
+            return color;
+        }
+
+        public ListColor getListColor() {
+            return listColor;
+        }
     }
 
     @BeforeEach
     void setUp() {
-        // MessageSource Mock 설정
-        lenient().when(messageSource.getMessage(anyString(), any(), any()))
-            .thenAnswer(invocation -> invocation.getArgument(0));
+        validationRules = new CommonValidationRules(messageResolver);
 
-        messageResolver = new ValidationMessageResolver(messageSource);
-        commonValidationRules = new CommonValidationRules(messageResolver);
+        // 기본 메시지 설정 - lenient로 설정하여 불필요한 stubbing 허용
+        lenient().when(messageResolver.getMessage(anyString(), any())).thenAnswer(invocation -> {
+            String messageKey = invocation.getArgument(0);
+            return messageKey.replace("validation.", "").replace(".", " ");
+        });
     }
 
     @Nested
-    @DisplayName("이메일 검증은")
-    class Describe_email_validation {
+    @DisplayName("정적 검증 메서드 테스트")
+    class StaticValidationMethodTests {
 
         @Test
-        @DisplayName("올바른 이메일 형식을 통과한다")
-        void should_pass_valid_email() {
+        @DisplayName("required() - 필수 필드 검증 (성공)")
+        void required_ShouldReturnSuccess_WhenFieldIsNotNullAndNotEmpty() {
             // given
-            TestObject validObject = new TestObject("test@example.com", null, null, null, null, null);
-            Validator<TestObject> validator = commonValidationRules.emailComplete(TestObject::email);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.required(
+                    fieldExtractor, "title", messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "Valid Title", null, null, null, null, null, null, null,
+                            null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("잘못된 이메일 형식을 거부한다")
-        void should_reject_invalid_email() {
+        @DisplayName("required() - 필수 필드 검증 (실패 - null)")
+        void required_ShouldReturnFailure_WhenFieldIsNull() {
             // given
-            TestObject invalidObject = new TestObject("invalid-email", null, null, null, null, null);
-            Validator<TestObject> validator = commonValidationRules.emailComplete(TestObject::email);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.required(
+                    fieldExtractor, "title", messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(invalidObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+            FieldViolation violation = result.getErrors().get(0);
+            assertThat(violation.field()).isEqualTo("title");
         }
 
         @Test
-        @DisplayName("null 이메일을 거부한다")
-        void should_reject_null_email() {
+        @DisplayName("required() - 필수 필드 검증 (실패 - 빈 문자열)")
+        void required_ShouldReturnFailure_WhenFieldIsEmpty() {
             // given
-            TestObject nullObject = new TestObject(null, null, null, null, null, null);
-            Validator<TestObject> validator = commonValidationRules.emailComplete(TestObject::email);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.required(
+                    fieldExtractor, "title", messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(nullObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "", null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+            FieldViolation violation = result.getErrors().get(0);
+            assertThat(violation.field()).isEqualTo("title");
         }
-    }
-
-    @Nested
-    @DisplayName("비밀번호 검증은")
-    class Describe_password_validation {
 
         @Test
-        @DisplayName("올바른 비밀번호 형식을 통과한다")
-        void should_pass_valid_password() {
+        @DisplayName("maxLength() - 최대 길이 검증 (성공)")
+        void maxLength_ShouldReturnSuccess_WhenFieldIsWithinLimit() {
             // given
-            TestObject validObject = new TestObject(null, "ValidPass1!", null, null, null, null);
-            Validator<TestObject> validator = commonValidationRules.passwordComplete(TestObject::password);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.maxLength(
+                    fieldExtractor, "title", 10, messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "Short", null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("너무 짧은 비밀번호를 거부한다")
-        void should_reject_short_password() {
+        @DisplayName("maxLength() - 최대 길이 검증 (성공 - null)")
+        void maxLength_ShouldReturnSuccess_WhenFieldIsNull() {
             // given
-            TestObject shortObject = new TestObject(null, "Short1!", null, null, null, null);
-            Validator<TestObject> validator = commonValidationRules.passwordComplete(TestObject::password);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.maxLength(
+                    fieldExtractor, "title", 10, messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(shortObject);
-
-            // then
-            assertThat(result.isInvalid()).isTrue();
-        }
-
-        @Test
-        @DisplayName("특수문자가 없는 비밀번호를 거부한다")
-        void should_reject_password_without_special_char() {
-            // given
-            TestObject noSpecialObject = new TestObject(null, "ValidPass1", null, null, null, null);
-            Validator<TestObject> validator = commonValidationRules.passwordComplete(TestObject::password);
-
-            // when
-            ValidationResult<TestObject> result = validator.validate(noSpecialObject);
-
-            // then
-            assertThat(result.isInvalid()).isTrue();
-        }
-    }
-
-    @Nested
-    @DisplayName("이름 검증은")
-    class Describe_name_validation {
-
-        @Test
-        @DisplayName("한글 이름을 통과한다")
-        void should_pass_korean_name() {
-            // given
-            TestObject validObject = new TestObject(null, null, "홍길동", null, null, null);
-            Validator<TestObject> validator = commonValidationRules.firstNameComplete(TestObject::name);
-
-            // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("영문 이름을 통과한다")
-        void should_pass_english_name() {
+        @DisplayName("maxLength() - 최대 길이 검증 (실패)")
+        void maxLength_ShouldReturnFailure_WhenFieldExceedsLimit() {
             // given
-            TestObject validObject = new TestObject(null, null, "John", null, null, null);
-            Validator<TestObject> validator = commonValidationRules.firstNameComplete(TestObject::name);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.maxLength(
+                    fieldExtractor, "title", 5, messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "Too Long Title", null, null, null, null, null, null, null,
+                            null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+            FieldViolation violation = result.getErrors().get(0);
+            assertThat(violation.field()).isEqualTo("title");
+        }
+
+        @Test
+        @DisplayName("minLength() - 최소 길이 검증 (성공)")
+        void minLength_ShouldReturnSuccess_WhenFieldMeetsMinimum() {
+            // given
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.minLength(
+                    fieldExtractor, "title", 3, messageResolver);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "ABC", null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("숫자가 포함된 이름을 거부한다")
-        void should_reject_name_with_numbers() {
+        @DisplayName("minLength() - 최소 길이 검증 (실패)")
+        void minLength_ShouldReturnFailure_WhenFieldIsTooShort() {
             // given
-            TestObject invalidObject = new TestObject(null, null, "John123", null, null, null);
-            Validator<TestObject> validator = commonValidationRules.firstNameComplete(TestObject::name);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.minLength(
+                    fieldExtractor, "title", 5, messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(invalidObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "ABC", null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+            FieldViolation violation = result.getErrors().get(0);
+            assertThat(violation.field()).isEqualTo("title");
         }
-    }
-
-    @Nested
-    @DisplayName("제목 검증은")
-    class Describe_title_validation {
 
         @Test
-        @DisplayName("올바른 제목을 통과한다")
-        void should_pass_valid_title() {
+        @DisplayName("pattern() - 패턴 검증 (성공)")
+        void pattern_ShouldReturnSuccess_WhenFieldMatchesPattern() {
             // given
-            TestObject validObject = new TestObject(null, null, null, "Valid Title", null, null);
-            Validator<TestObject> validator = commonValidationRules.titleComplete(TestObject::title);
+            Function<TestData, String> fieldExtractor = TestData::getEmail;
+            Pattern emailPattern = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+            Validator<TestData> validator = CommonValidationRules.pattern(
+                    fieldExtractor, "email", emailPattern, messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData("test@example.com", null, null, null, null, null, null, null, null, null, null, null,
+                            null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("HTML 태그가 포함된 제목을 거부한다")
-        void should_reject_title_with_html() {
+        @DisplayName("pattern() - 패턴 검증 (실패)")
+        void pattern_ShouldReturnFailure_WhenFieldDoesNotMatchPattern() {
             // given
-            TestObject invalidObject = new TestObject(null, null, null, "<script>alert('xss')</script>", null, null);
-            Validator<TestObject> validator = commonValidationRules.titleComplete(TestObject::title);
+            Function<TestData, String> fieldExtractor = TestData::getEmail;
+            Pattern emailPattern = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+            Validator<TestData> validator = CommonValidationRules.pattern(
+                    fieldExtractor, "email", emailPattern, messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(invalidObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData("invalid-email", null, null, null, null, null, null, null, null, null, null, null,
+                            null));
 
             // then
             assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+            FieldViolation violation = result.getErrors().get(0);
+            assertThat(violation.field()).isEqualTo("email");
         }
 
         @Test
-        @DisplayName("빈 제목을 거부한다")
-        void should_reject_empty_title() {
+        @DisplayName("noHtmlTags() - HTML 태그 검증 (성공)")
+        void noHtmlTags_ShouldReturnSuccess_WhenFieldHasNoHtmlTags() {
             // given
-            TestObject emptyObject = new TestObject(null, null, null, "", null, null);
-            Validator<TestObject> validator = commonValidationRules.titleComplete(TestObject::title);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.noHtmlTags(
+                    fieldExtractor, "title", messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(emptyObject);
-
-            // then
-            assertThat(result.isInvalid()).isTrue();
-        }
-    }
-
-    @Nested
-    @DisplayName("설명 검증은")
-    class Describe_description_validation {
-
-        @Test
-        @DisplayName("올바른 설명을 통과한다")
-        void should_pass_valid_description() {
-            // given
-            TestObject validObject = new TestObject(null, null, null, null, "Valid description", null);
-            Validator<TestObject> validator = commonValidationRules.descriptionComplete(TestObject::description);
-
-            // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "Clean Title", null, null, null, null, null, null, null,
+                            null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("null 설명을 통과한다")
-        void should_pass_null_description() {
+        @DisplayName("noHtmlTags() - HTML 태그 검증 (실패)")
+        void noHtmlTags_ShouldReturnFailure_WhenFieldContainsHtmlTags() {
             // given
-            TestObject nullObject = new TestObject(null, null, null, null, null, null);
-            Validator<TestObject> validator = commonValidationRules.descriptionComplete(TestObject::description);
+            Function<TestData, String> fieldExtractor = TestData::getTitle;
+            Validator<TestData> validator = CommonValidationRules.noHtmlTags(
+                    fieldExtractor, "title", messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(nullObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "<script>alert('xss')</script>", null, null, null, null, null,
+                            null, null, null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+            FieldViolation violation = result.getErrors().get(0);
+            assertThat(violation.field()).isEqualTo("title");
+        }
+
+        @Test
+        @DisplayName("idRequired() - ID 필수 검증 (성공)")
+        void idRequired_ShouldReturnSuccess_WhenIdIsNotNull() {
+            // given
+            Function<TestData, Object> fieldExtractor = TestData::getUserId;
+            Validator<TestData> validator = CommonValidationRules.idRequired(
+                    fieldExtractor, "userId", messageResolver);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, "user123", null, null, null, null, null, null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("HTML 태그가 포함된 설명을 거부한다")
-        void should_reject_description_with_html() {
+        @DisplayName("idRequired() - ID 필수 검증 (실패)")
+        void idRequired_ShouldReturnFailure_WhenIdIsNull() {
             // given
-            TestObject invalidObject = new TestObject(null, null, null, null, "<script>alert('xss')</script>", null);
-            Validator<TestObject> validator = commonValidationRules.descriptionComplete(TestObject::description);
+            Function<TestData, Object> fieldExtractor = TestData::getUserId;
+            Validator<TestData> validator = CommonValidationRules.idRequired(
+                    fieldExtractor, "userId", messageResolver);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(invalidObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isInvalid()).isTrue();
-        }
-    }
-
-    @Nested
-    @DisplayName("ID 검증은")
-    class Describe_id_validation {
-
-        @Test
-        @DisplayName("null이 아닌 ID를 통과한다")
-        void should_pass_non_null_id() {
-            // given
-            TestObject validObject = new TestObject(null, null, null, null, null, "valid-id");
-            Validator<TestObject> validator = CommonValidationRules.idRequired(TestObject::id, "id", messageResolver);
-
-            // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
-
-            // then
-            assertThat(result.isValid()).isTrue();
-        }
-
-        @Test
-        @DisplayName("null ID를 거부한다")
-        void should_reject_null_id() {
-            // given
-            TestObject nullObject = new TestObject(null, null, null, null, null, null);
-            Validator<TestObject> validator = CommonValidationRules.idRequired(TestObject::id, "id", messageResolver);
-
-            // when
-            ValidationResult<TestObject> result = validator.validate(nullObject);
-
-            // then
-            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+            FieldViolation violation = result.getErrors().get(0);
+            assertThat(violation.field()).isEqualTo("userId");
         }
     }
 
     @Nested
-    @DisplayName("길이 검증은")
-    class Describe_length_validation {
+    @DisplayName("완성된 검증 메서드 테스트")
+    class CompleteValidationMethodTests {
 
         @Test
-        @DisplayName("최소 길이 검증을 통과한다")
-        void should_pass_min_length() {
+        @DisplayName("emailComplete() - 이메일 완전 검증 (성공)")
+        void emailComplete_ShouldReturnSuccess_WhenEmailIsValid() {
             // given
-            TestObject validObject = new TestObject(null, null, null, "Valid", null, null);
-            Validator<TestObject> validator = CommonValidationRules.minLength(TestObject::title, "title", 3, messageResolver);
+            Function<TestData, String> emailExtractor = TestData::getEmail;
+            Validator<TestData> validator = validationRules.emailComplete(emailExtractor);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData("test@example.com", null, null, null, null, null, null, null, null, null, null, null,
+                            null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("최대 길이 검증을 통과한다")
-        void should_pass_max_length() {
+        @DisplayName("emailComplete() - 이메일 완전 검증 (실패 - 빈 값)")
+        void emailComplete_ShouldReturnFailure_WhenEmailIsEmpty() {
             // given
-            TestObject validObject = new TestObject(null, null, null, "Valid", null, null);
-            Validator<TestObject> validator = CommonValidationRules.maxLength(TestObject::title, "title", 10, messageResolver);
+            Function<TestData, String> emailExtractor = TestData::getEmail;
+            Validator<TestData> validator = validationRules.emailComplete(emailExtractor);
 
             // when
-            ValidationResult<TestObject> result = validator.validate(validObject);
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData("", null, null, null, null, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("emailComplete() - 이메일 완전 검증 (실패 - 잘못된 형식)")
+        void emailComplete_ShouldReturnFailure_WhenEmailFormatIsInvalid() {
+            // given
+            Function<TestData, String> emailExtractor = TestData::getEmail;
+            Validator<TestData> validator = validationRules.emailComplete(emailExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData("invalid-email", null, null, null, null, null, null, null, null, null, null, null,
+                            null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("passwordComplete() - 비밀번호 완전 검증 (성공)")
+        void passwordComplete_ShouldReturnSuccess_WhenPasswordIsValid() {
+            // given
+            Function<TestData, String> passwordExtractor = TestData::getPassword;
+            Validator<TestData> validator = validationRules.passwordComplete(passwordExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, "ValidPass1!", null, null, null, null, null, null, null, null, null, null,
+                            null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("passwordComplete() - 비밀번호 완전 검증 (실패 - 너무 짧음)")
+        void passwordComplete_ShouldReturnFailure_WhenPasswordIsTooShort() {
+            // given
+            Function<TestData, String> passwordExtractor = TestData::getPassword;
+            Validator<TestData> validator = validationRules.passwordComplete(passwordExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, "Short1!", null, null, null, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("firstNameComplete() - 이름 완전 검증 (성공)")
+        void firstNameComplete_ShouldReturnSuccess_WhenFirstNameIsValid() {
+            // given
+            Function<TestData, String> firstNameExtractor = TestData::getFirstName;
+            Validator<TestData> validator = validationRules.firstNameComplete(firstNameExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, "홍길동", null, null, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("firstNameComplete() - 이름 완전 검증 (실패 - 특수문자 포함)")
+        void firstNameComplete_ShouldReturnFailure_WhenFirstNameContainsSpecialChars() {
+            // given
+            Function<TestData, String> firstNameExtractor = TestData::getFirstName;
+            Validator<TestData> validator = validationRules.firstNameComplete(firstNameExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, "홍길동123", null, null, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("titleComplete() - 제목 완전 검증 (성공)")
+        void titleComplete_ShouldReturnSuccess_WhenTitleIsValid() {
+            // given
+            Function<TestData, String> titleExtractor = TestData::getTitle;
+            Validator<TestData> validator = validationRules.titleComplete(titleExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "Valid Title", null, null, null, null, null, null, null,
+                            null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("titleComplete() - 제목 완전 검증 (실패 - HTML 태그 포함)")
+        void titleComplete_ShouldReturnFailure_WhenTitleContainsHtmlTags() {
+            // given
+            Function<TestData, String> titleExtractor = TestData::getTitle;
+            Validator<TestData> validator = validationRules.titleComplete(titleExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "<script>alert('xss')</script>", null, null, null, null, null,
+                            null, null, null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("titleOptional() - 제목 선택 검증 (성공 - null)")
+        void titleOptional_ShouldReturnSuccess_WhenTitleIsNull() {
+            // given
+            Function<TestData, String> titleExtractor = TestData::getTitle;
+            Validator<TestData> validator = validationRules.titleOptional(titleExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("descriptionComplete() - 설명 완전 검증 (성공)")
+        void descriptionComplete_ShouldReturnSuccess_WhenDescriptionIsValid() {
+            // given
+            Function<TestData, String> descriptionExtractor = TestData::getDescription;
+            Validator<TestData> validator = validationRules.descriptionComplete(descriptionExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, "Valid description", null, null, null, null, null, null,
+                            null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("descriptionComplete() - 설명 완전 검증 (성공 - null)")
+        void descriptionComplete_ShouldReturnSuccess_WhenDescriptionIsNull() {
+            // given
+            Function<TestData, String> descriptionExtractor = TestData::getDescription;
+            Validator<TestData> validator = validationRules.descriptionComplete(descriptionExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
 
             // then
             assertThat(result.isValid()).isTrue();
         }
     }
-} 
+
+    @Nested
+    @DisplayName("ID 검증 메서드 테스트")
+    class IdValidationMethodTests {
+
+        @Test
+        @DisplayName("userIdRequired() - 사용자 ID 검증 (성공)")
+        void userIdRequired_ShouldReturnSuccess_WhenUserIdIsNotNull() {
+            // given
+            Function<TestData, Object> userIdExtractor = TestData::getUserId;
+            Validator<TestData> validator = validationRules.userIdRequired(userIdExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, "user123", null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("boardIdRequired() - 보드 ID 검증 (성공)")
+        void boardIdRequired_ShouldReturnSuccess_WhenBoardIdIsNotNull() {
+            // given
+            Function<TestData, Object> boardIdExtractor = TestData::getBoardId;
+            Validator<TestData> validator = validationRules.boardIdRequired(boardIdExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, "board123", null, null, null, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("listIdRequired() - 리스트 ID 검증 (성공)")
+        void listIdRequired_ShouldReturnSuccess_WhenListIdIsNotNull() {
+            // given
+            Function<TestData, Object> listIdExtractor = TestData::getListId;
+            Validator<TestData> validator = validationRules.listIdRequired(listIdExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, "list123", null, null, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("cardIdRequired() - 카드 ID 검증 (성공)")
+        void cardIdRequired_ShouldReturnSuccess_WhenCardIdIsNotNull() {
+            // given
+            Function<TestData, Object> cardIdExtractor = TestData::getCardId;
+            Validator<TestData> validator = validationRules.cardIdRequired(cardIdExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, "card123", null, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("positionRequired() - 위치 검증 (성공)")
+        void positionRequired_ShouldReturnSuccess_WhenPositionIsNotNull() {
+            // given
+            Function<TestData, Object> positionExtractor = TestData::getPosition;
+            Validator<TestData> validator = validationRules.positionRequired(positionExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, 1, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("색상 검증 메서드 테스트")
+    class ColorValidationMethodTests {
+
+        @Test
+        @DisplayName("colorRequired() - 색상 검증 (성공)")
+        void colorRequired_ShouldReturnSuccess_WhenColorIsValid() {
+            // given
+            Function<TestData, String> colorExtractor = TestData::getColor;
+            Validator<TestData> validator = validationRules.colorRequired(colorExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, "#FF0000", null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("colorRequired() - 색상 검증 (실패 - 빈 값)")
+        void colorRequired_ShouldReturnFailure_WhenColorIsEmpty() {
+            // given
+            Function<TestData, String> colorExtractor = TestData::getColor;
+            Validator<TestData> validator = validationRules.colorRequired(colorExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, "", null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("listColorRequired() - 리스트 색상 검증 (성공)")
+        void listColorRequired_ShouldReturnSuccess_WhenListColorIsValid() {
+            // given
+            Function<TestData, Object> colorExtractor = TestData::getListColor;
+            Validator<TestData> validator = validationRules.listColorRequired(colorExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null,
+                            new ListColor("#0079BF")));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("listColorRequired() - 리스트 색상 검증 (실패 - null)")
+        void listColorRequired_ShouldReturnFailure_WhenListColorIsNull() {
+            // given
+            Function<TestData, Object> colorExtractor = TestData::getListColor;
+            Validator<TestData> validator = validationRules.listColorRequired(colorExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("카드 검증 메서드 테스트")
+    class CardValidationMethodTests {
+
+        @Test
+        @DisplayName("cardTitleComplete() - 카드 제목 완전 검증 (성공)")
+        void cardTitleComplete_ShouldReturnSuccess_WhenCardTitleIsValid() {
+            // given
+            Function<TestData, String> titleExtractor = TestData::getTitle;
+            Validator<TestData> validator = validationRules.cardTitleComplete(titleExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, "Valid Card Title", null, null, null, null, null, null, null,
+                            null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("cardTitleComplete() - 카드 제목 완전 검증 (실패 - 너무 김)")
+        void cardTitleComplete_ShouldReturnFailure_WhenCardTitleIsTooLong() {
+            // given
+            Function<TestData, String> titleExtractor = TestData::getTitle;
+            Validator<TestData> validator = validationRules.cardTitleComplete(titleExtractor);
+
+            // when
+            String longTitle = "A".repeat(201); // 201자
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, longTitle, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("cardDescriptionComplete() - 카드 설명 완전 검증 (성공)")
+        void cardDescriptionComplete_ShouldReturnSuccess_WhenCardDescriptionIsValid() {
+            // given
+            Function<TestData, String> descriptionExtractor = TestData::getDescription;
+            Validator<TestData> validator = validationRules.cardDescriptionComplete(descriptionExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, "Valid card description", null, null, null, null, null,
+                            null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("cardDescriptionComplete() - 카드 설명 완전 검증 (성공 - null)")
+        void cardDescriptionComplete_ShouldReturnSuccess_WhenCardDescriptionIsNull() {
+            // given
+            Function<TestData, String> descriptionExtractor = TestData::getDescription;
+            Validator<TestData> validator = validationRules.cardDescriptionComplete(descriptionExtractor);
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("cardDescriptionComplete() - 카드 설명 완전 검증 (실패 - 너무 김)")
+        void cardDescriptionComplete_ShouldReturnFailure_WhenCardDescriptionIsTooLong() {
+            // given
+            Function<TestData, String> descriptionExtractor = TestData::getDescription;
+            Validator<TestData> validator = validationRules.cardDescriptionComplete(descriptionExtractor);
+
+            // when
+            String longDescription = "A".repeat(2001); // 2001자
+            ValidationResult<TestData> result = validator.validate(
+                    new TestData(null, null, null, null, null, longDescription, null, null, null, null, null, null,
+                            null));
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("상수 테스트")
+    class ConstantTests {
+
+        @Test
+        @DisplayName("패턴 상수들이 올바르게 정의되어 있는지 확인")
+        void patterns_ShouldBeCorrectlyDefined() {
+            // then
+            assertThat(CommonValidationRules.EMAIL_PATTERN).isNotNull();
+            assertThat(CommonValidationRules.PASSWORD_PATTERN).isNotNull();
+            assertThat(CommonValidationRules.NAME_PATTERN).isNotNull();
+            assertThat(CommonValidationRules.HTML_TAG_PATTERN).isNotNull();
+        }
+
+        @Test
+        @DisplayName("길이 상수들이 올바르게 정의되어 있는지 확인")
+        void lengthConstants_ShouldBeCorrectlyDefined() {
+            // then
+            assertThat(CommonValidationRules.EMAIL_MAX_LENGTH).isEqualTo(100);
+            assertThat(CommonValidationRules.PASSWORD_MIN_LENGTH).isEqualTo(8);
+            assertThat(CommonValidationRules.PASSWORD_MAX_LENGTH).isEqualTo(20);
+            assertThat(CommonValidationRules.NAME_MAX_LENGTH).isEqualTo(50);
+            assertThat(CommonValidationRules.TITLE_MAX_LENGTH).isEqualTo(100);
+            assertThat(CommonValidationRules.DESCRIPTION_MAX_LENGTH).isEqualTo(500);
+        }
+
+        @Test
+        @DisplayName("이메일 패턴이 올바른 이메일을 검증하는지 확인")
+        void emailPattern_ShouldValidateCorrectEmails() {
+            // given
+            Pattern emailPattern = CommonValidationRules.EMAIL_PATTERN;
+
+            // then
+            assertThat(emailPattern.matcher("test@example.com").matches()).isTrue();
+            assertThat(emailPattern.matcher("user.name@domain.co.uk").matches()).isTrue();
+            assertThat(emailPattern.matcher("invalid-email").matches()).isFalse();
+            assertThat(emailPattern.matcher("@domain.com").matches()).isFalse();
+        }
+
+        @Test
+        @DisplayName("비밀번호 패턴이 올바른 비밀번호를 검증하는지 확인")
+        void passwordPattern_ShouldValidateCorrectPasswords() {
+            // given
+            Pattern passwordPattern = CommonValidationRules.PASSWORD_PATTERN;
+
+            // then
+            assertThat(passwordPattern.matcher("ValidPass1!").matches()).isTrue();
+            assertThat(passwordPattern.matcher("Password123@").matches()).isTrue();
+            assertThat(passwordPattern.matcher("nouppercase123!").matches()).isTrue(); // 유효한 비밀번호 (알파벳+숫자+특수문자)
+            assertThat(passwordPattern.matcher("short1!").matches()).isFalse(); // 너무 짧음 (7자)
+            assertThat(passwordPattern.matcher("NOSPECIAL123").matches()).isFalse(); // 특수문자 없음
+            assertThat(passwordPattern.matcher("nouppercase123").matches()).isFalse(); // 특수문자 없음
+            assertThat(passwordPattern.matcher("nouppercase!@#").matches()).isFalse(); // 숫자 없음
+        }
+
+        @Test
+        @DisplayName("이름 패턴이 올바른 이름을 검증하는지 확인")
+        void namePattern_ShouldValidateCorrectNames() {
+            // given
+            Pattern namePattern = CommonValidationRules.NAME_PATTERN;
+
+            // then
+            assertThat(namePattern.matcher("홍길동").matches()).isTrue();
+            assertThat(namePattern.matcher("John Doe").matches()).isTrue();
+            assertThat(namePattern.matcher("김철수").matches()).isTrue();
+            assertThat(namePattern.matcher("John123").matches()).isFalse(); // 숫자 포함
+            assertThat(namePattern.matcher("홍길동!").matches()).isFalse(); // 특수문자 포함
+        }
+
+        @Test
+        @DisplayName("HTML 태그 패턴이 HTML 태그를 감지하는지 확인")
+        void htmlTagPattern_ShouldDetectHtmlTags() {
+            // given
+            Pattern htmlTagPattern = CommonValidationRules.HTML_TAG_PATTERN;
+
+            // then
+            assertThat(htmlTagPattern.matcher("<script>alert('xss')</script>").find()).isTrue();
+            assertThat(htmlTagPattern.matcher("<div>content</div>").find()).isTrue();
+            assertThat(htmlTagPattern.matcher("<p>text</p>").find()).isTrue();
+            assertThat(htmlTagPattern.matcher("Clean text without tags").find()).isFalse();
+            assertThat(htmlTagPattern.matcher("Text with > symbol").find()).isFalse();
+        }
+    }
+}

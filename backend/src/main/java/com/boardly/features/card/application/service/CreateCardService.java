@@ -8,12 +8,15 @@ import com.boardly.features.card.application.validation.CreateCardValidator;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.policy.CardCreationPolicy;
 import com.boardly.features.card.domain.repository.CardRepository;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -26,6 +29,7 @@ public class CreateCardService implements CreateCardUseCase {
   private final CardRepository cardRepository;
   private final BoardListRepository boardListRepository;
   private final BoardRepository boardRepository;
+  private final ValidationMessageResolver validationMessageResolver;
 
   @Override
   public Either<Failure, Card> createCard(CreateCardCommand command) {
@@ -36,14 +40,18 @@ public class CreateCardService implements CreateCardUseCase {
     var validationResult = cardValidator.validate(command);
     if (validationResult.isInvalid()) {
       log.warn("카드 생성 입력 검증 실패: {}", validationResult.getErrorsAsCollection());
-      return Either.left(Failure.ofValidation("INVALID_INPUT", validationResult.getErrorsAsCollection()));
+      return Either.left(Failure.ofInputError(
+          validationMessageResolver.getMessage("validation.input.invalid"),
+          "INVALID_INPUT",
+          List.copyOf(validationResult.getErrorsAsCollection())));
     }
 
     // 2. 리스트 존재 확인
     var boardList = boardListRepository.findById(command.listId());
     if (boardList.isEmpty()) {
       log.warn("리스트를 찾을 수 없음: listId={}", command.listId().getId());
-      return Either.left(Failure.ofNotFound("리스트를 찾을 수 없습니다."));
+      return Either.left(Failure.ofNotFound(
+          validationMessageResolver.getMessage("error.service.card.move.list_not_found")));
     }
 
     // 3. 보드 존재 및 권한 확인
@@ -51,14 +59,16 @@ public class CreateCardService implements CreateCardUseCase {
     if (board.isEmpty()) {
       log.warn("보드 접근 권한 없음: boardId={}, userId={}",
           boardList.get().getBoardId().getId(), command.userId().getId());
-      return Either.left(Failure.ofForbidden("보드에 접근할 권한이 없습니다."));
+      return Either.left(Failure.ofPermissionDenied(
+          validationMessageResolver.getMessage("error.service.card.move.access_denied")));
     }
 
     // 4. 활성 보드인지 확인
     if (board.get().isArchived()) {
       log.warn("아카이브된 보드에 카드 생성 시도: boardId={}, userId={}",
           board.get().getBoardId().getId(), command.userId().getId());
-      return Either.left(Failure.ofConflict("아카이브된 보드에는 카드를 생성할 수 없습니다."));
+      return Either.left(Failure.ofBusinessRuleViolation(
+          validationMessageResolver.getMessage("error.service.card.move.archived_board")));
     }
 
     // 5. 비즈니스 정책 검증

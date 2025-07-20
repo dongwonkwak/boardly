@@ -1,6 +1,5 @@
 package com.boardly.shared.application.validation;
 
-
 import java.util.Collection;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -13,6 +12,7 @@ import io.vavr.control.Validation;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ValidationResult<T> {
@@ -20,7 +20,8 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 성공 결과를 생성합니다.
-   * @param <T> 검증 결과 타입
+   * 
+   * @param <T>   검증 결과 타입
    * @param value 성공한 검증 결과 값
    * @return 성공한 결과
    */
@@ -30,7 +31,8 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 실패 결과를 생성합니다. (단일)
-   * @param <T> 검증 결과 타입
+   * 
+   * @param <T>       검증 결과 타입
    * @param violation 검증 실패 결과
    * @return 검증 실패 결과
    */
@@ -40,7 +42,8 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 실패 결과를 생성합니다. (다중)
-   * @param <T> 검증 결과 타입
+   * 
+   * @param <T>        검증 결과 타입
    * @param violations 검증 실패 결과
    * @return 검증 실패 결과
    */
@@ -50,18 +53,19 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 실패 결과를 생성합니다. (단일)
-   * @param <T> 검증 결과 타입
-   * @param field 검증 실패 필드
-   * @param message 검증 실패 메시지
+   * 
+   * @param <T>           검증 결과 타입
+   * @param field         검증 실패 필드
+   * @param message       검증 실패 메시지
    * @param rejectedValue 거절된 값
    * @return 검증 실패 결과
    */
   public static <T> ValidationResult<T> invalid(String field, String message, Object rejectedValue) {
     var violation = FieldViolation.builder()
-      .field(field)
-      .message(message)
-      .rejectedValue(rejectedValue)
-      .build();
+        .field(field)
+        .message(message)
+        .rejectedValue(rejectedValue)
+        .build();
     return invalid(violation);
   }
 
@@ -79,6 +83,7 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 성공 결과를 반환합니다.
+   * 
    * @return 검증 성공 결과
    * @throws IllegalStateException 검증 실패 시 예외 발생
    */
@@ -91,6 +96,7 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 실패 결과를 반환합니다.
+   * 
    * @return 검증 실패 결과
    */
   public Seq<FieldViolation> getErrors() {
@@ -99,6 +105,7 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 실패 결과를 컬렉션으로 반환합니다.
+   * 
    * @return 검증 실패 결과
    */
   public Collection<FieldViolation> getErrorsAsCollection() {
@@ -107,7 +114,8 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 결과를 변환합니다.
-   * @param <U> 변환된 결과 타입
+   * 
+   * @param <U>    변환된 결과 타입
    * @param mapper 변환 함수
    * @return 변환된 결과
    */
@@ -117,8 +125,9 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 결과를 다른 ValidationResult로 변환합니다.
-   * @param <U> 변환된 결과 타입
-   * @param <R> 변환된 결과 타입
+   * 
+   * @param <U>    변환된 결과 타입
+   * @param <R>    변환된 결과 타입
    * @param mapper 변환 함수
    * @return 변환된 결과
    */
@@ -132,24 +141,25 @@ public final class ValidationResult<T> {
 
   /**
    * 두 검증 결과를 결합합니다.
-   * @param <U> 결합할 결과 타입
-   * @param <R> 결합된 결과 타입
-   * @param other 결합할 결과
+   * 
+   * @param <U>      결합할 결과 타입
+   * @param <R>      결합된 결과 타입
+   * @param other    결합할 결과
    * @param combiner 결합 함수
    * @return 결합된 결과
    */
   public <U, R> ValidationResult<R> combine(
-    ValidationResult<U> other,
-    Function<T, Function<U, R>> combiner) {
-      return ValidationResult.of(
+      ValidationResult<U> other,
+      Function<T, Function<U, R>> combiner) {
+    return ValidationResult.of(
         validation.combine(other.validation)
-          .ap((t, u) -> combiner.apply(t).apply(u))
-          .mapError(errors -> errors.flatMap(e -> e))
-      );
+            .ap((t, u) -> combiner.apply(t).apply(u))
+            .mapError(errors -> errors.flatMap(e -> e)));
   }
 
   /**
    * 검증 실패 결과를 Failure로 변환합니다.
+   * 
    * @param defaultMessage 기본 메시지
    * @return 실패 결과
    */
@@ -158,11 +168,12 @@ public final class ValidationResult<T> {
       throw new IllegalStateException("ValidationResult is valid");
     }
 
-    return Failure.ofValidation(defaultMessage, getErrorsAsCollection());
+    return Failure.ofInputError(defaultMessage, "VALIDATION_ERROR", List.copyOf(getErrorsAsCollection()));
   }
 
   /**
    * 검증 성공시 결과를 소비합니다.
+   * 
    * @param consumer 소비 함수
    * @return 검증 결과
    */
@@ -173,6 +184,7 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 실패시 결과를 소비합니다.
+   * 
    * @param consumer 소비 함수
    * @return 검증 결과
    */
@@ -185,9 +197,10 @@ public final class ValidationResult<T> {
 
   /**
    * 검증 결과에 따라 다른 값 반환
-   * @param <U> 분기 결과 타입
+   * 
+   * @param <U>       분기 결과 타입
    * @param onInvalid 검증 실패 시 함수
-   * @param onValid 검증 성공 시 함수
+   * @param onValid   검증 성공 시 함수
    * @return 분기 결과
    */
   public <U> U fold(Function<Seq<FieldViolation>, U> onInvalid, Function<T, U> onValid) {

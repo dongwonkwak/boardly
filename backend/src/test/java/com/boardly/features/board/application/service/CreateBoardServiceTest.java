@@ -6,6 +6,7 @@ import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
@@ -28,22 +29,27 @@ class CreateBoardServiceTest {
     private CreateBoardService createBoardService;
 
     @Mock
-    private CreateBoardValidator boardValidator;
+    private CreateBoardValidator createBoardValidator;
 
     @Mock
     private BoardRepository boardRepository;
 
+    @Mock
+    private ValidationMessageResolver validationMessageResolver;
+
+    private final UserId ownerId = new UserId();
+
     @BeforeEach
     void setUp() {
-        createBoardService = new CreateBoardService(boardValidator, boardRepository);
+        createBoardService = new CreateBoardService(createBoardValidator, boardRepository, validationMessageResolver);
     }
 
     private CreateBoardCommand createValidCommand() {
-        return new CreateBoardCommand(
-                "테스트 보드",
-                "테스트 보드 설명",
-                new UserId()
-        );
+        return new CreateBoardCommand("테스트 보드", "테스트 보드 설명", ownerId);
+    }
+
+    private CreateBoardCommand createValidCommandWithNullDescription() {
+        return new CreateBoardCommand("테스트 보드", null, ownerId);
     }
 
     private Board createValidBoard(String title, String description, UserId ownerId) {
@@ -53,6 +59,7 @@ class CreateBoardServiceTest {
                 .description(description)
                 .isArchived(false)
                 .ownerId(ownerId)
+                .isStarred(false)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -65,7 +72,7 @@ class CreateBoardServiceTest {
         CreateBoardCommand command = createValidCommand();
         Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(Either.right(savedBoard));
@@ -79,8 +86,9 @@ class CreateBoardServiceTest {
         assertThat(result.get().getDescription()).isEqualTo(command.description());
         assertThat(result.get().getOwnerId()).isEqualTo(command.ownerId());
         assertThat(result.get().isArchived()).isFalse();
+        assertThat(result.get().isStarred()).isFalse();
 
-        verify(boardValidator).validate(command);
+        verify(createBoardValidator).validate(command);
         verify(boardRepository).save(any(Board.class));
     }
 
@@ -88,14 +96,10 @@ class CreateBoardServiceTest {
     @DisplayName("설명이 null인 경우에도 보드 생성이 성공해야 한다")
     void createBoard_withNullDescription_shouldReturnBoard() {
         // given
-        CreateBoardCommand command = new CreateBoardCommand(
-                "테스트 보드",
-                null,
-                new UserId()
-        );
+        CreateBoardCommand command = createValidCommandWithNullDescription();
         Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(Either.right(savedBoard));
@@ -106,10 +110,10 @@ class CreateBoardServiceTest {
         // then
         assertThat(result.isRight()).isTrue();
         assertThat(result.get().getTitle()).isEqualTo(command.title());
-        assertThat(result.get().getDescription()).isEqualTo(null);
+        assertThat(result.get().getDescription()).isEqualTo(command.description());
         assertThat(result.get().getOwnerId()).isEqualTo(command.ownerId());
 
-        verify(boardValidator).validate(command);
+        verify(createBoardValidator).validate(command);
         verify(boardRepository).save(any(Board.class));
     }
 
@@ -125,7 +129,9 @@ class CreateBoardServiceTest {
                 .build();
         ValidationResult<CreateBoardCommand> invalidResult = ValidationResult.invalid(violation);
 
-        when(boardValidator.validate(command))
+        when(validationMessageResolver.getMessage("validation.input.invalid"))
+                .thenReturn("입력 데이터가 올바르지 않습니다");
+        when(createBoardValidator.validate(command))
                 .thenReturn(invalidResult);
 
         // when
@@ -133,12 +139,14 @@ class CreateBoardServiceTest {
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-        Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
-        assertThat(validationFailure.message()).contains("INVALID_INPUT");
+        assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
+        Failure.InputError inputError = (Failure.InputError) result.getLeft();
+        assertThat(inputError.getMessage()).isEqualTo("입력 데이터가 올바르지 않습니다");
+        assertThat(inputError.getViolations()).hasSize(1);
 
-        verify(boardValidator).validate(command);
-        verify(boardRepository, never()).save(any(Board.class));
+        verify(createBoardValidator).validate(command);
+        verify(validationMessageResolver).getMessage("validation.input.invalid");
+        verify(boardRepository, never()).save(any());
     }
 
     @Test
@@ -159,7 +167,9 @@ class CreateBoardServiceTest {
         ValidationResult<CreateBoardCommand> invalidResult = ValidationResult.invalid(
                 io.vavr.collection.List.of(titleViolation, ownerViolation));
 
-        when(boardValidator.validate(command))
+        when(validationMessageResolver.getMessage("validation.input.invalid"))
+                .thenReturn("입력 데이터가 올바르지 않습니다");
+        when(createBoardValidator.validate(command))
                 .thenReturn(invalidResult);
 
         // when
@@ -167,12 +177,14 @@ class CreateBoardServiceTest {
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.ValidationFailure.class);
-        Failure.ValidationFailure validationFailure = (Failure.ValidationFailure) result.getLeft();
-        assertThat(validationFailure.violations()).hasSize(2);
+        assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
+        Failure.InputError inputError = (Failure.InputError) result.getLeft();
+        assertThat(inputError.getMessage()).isEqualTo("입력 데이터가 올바르지 않습니다");
+        assertThat(inputError.getViolations()).hasSize(2);
 
-        verify(boardValidator).validate(command);
-        verify(boardRepository, never()).save(any(Board.class));
+        verify(createBoardValidator).validate(command);
+        verify(validationMessageResolver).getMessage("validation.input.invalid");
+        verify(boardRepository, never()).save(any());
     }
 
     @Test
@@ -180,9 +192,9 @@ class CreateBoardServiceTest {
     void createBoard_withSaveFailure_shouldReturnRepositoryFailure() {
         // given
         CreateBoardCommand command = createValidCommand();
-        Failure saveFailure = Failure.ofInternalServerError("데이터베이스 연결 오류");
+        Failure saveFailure = Failure.ofInternalError("데이터베이스 연결 오류", "DB_CONNECTION_ERROR", null);
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(Either.left(saveFailure));
@@ -192,10 +204,10 @@ class CreateBoardServiceTest {
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.InternalServerError.class);
-        assertThat(result.getLeft().message()).isEqualTo("데이터베이스 연결 오류");
+        assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
+        assertThat(result.getLeft().getMessage()).isEqualTo("데이터베이스 연결 오류");
 
-        verify(boardValidator).validate(command);
+        verify(createBoardValidator).validate(command);
         verify(boardRepository).save(any(Board.class));
     }
 
@@ -204,9 +216,10 @@ class CreateBoardServiceTest {
     void createBoard_withConstraintViolation_shouldReturnConflictFailure() {
         // given
         CreateBoardCommand command = createValidCommand();
-        Failure constraintFailure = Failure.ofConflict("BOARD_CONSTRAINT_VIOLATION");
+        Failure constraintFailure = Failure.ofResourceConflict("BOARD_CONSTRAINT_VIOLATION", "CONSTRAINT_VIOLATION",
+                null);
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(Either.left(constraintFailure));
@@ -216,10 +229,10 @@ class CreateBoardServiceTest {
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.ConflictFailure.class);
-        assertThat(result.getLeft().message()).isEqualTo("BOARD_CONSTRAINT_VIOLATION");
+        assertThat(result.getLeft()).isInstanceOf(Failure.ResourceConflict.class);
+        assertThat(result.getLeft().getMessage()).isEqualTo("BOARD_CONSTRAINT_VIOLATION");
 
-        verify(boardValidator).validate(command);
+        verify(createBoardValidator).validate(command);
         verify(boardRepository).save(any(Board.class));
     }
 
@@ -229,7 +242,7 @@ class CreateBoardServiceTest {
         // given
         CreateBoardCommand command = createValidCommand();
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenThrow(new RuntimeException("예상치 못한 오류"));
@@ -239,10 +252,10 @@ class CreateBoardServiceTest {
 
         // then
         assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.InternalServerError.class);
-        assertThat(result.getLeft().message()).isEqualTo("보드 생성 중 오류가 발생했습니다.");
+        assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
+        assertThat(result.getLeft().getMessage()).isEqualTo("예상치 못한 오류");
 
-        verify(boardValidator).validate(command);
+        verify(createBoardValidator).validate(command);
         verify(boardRepository).save(any(Board.class));
     }
 
@@ -253,7 +266,7 @@ class CreateBoardServiceTest {
         CreateBoardCommand command = createValidCommand();
         Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(Either.right(savedBoard));
@@ -263,15 +276,16 @@ class CreateBoardServiceTest {
 
         // then
         assertThat(result.isRight()).isTrue();
-        
+
         // 저장되는 Board 객체의 초기 상태가 올바른지 확인
-        verify(boardRepository).save(argThat(board -> 
-                board.getTitle().equals(command.title()) &&
-                board.getDescription().equals(command.description() != null ? command.description() : "") &&
+        verify(boardRepository).save(argThat(board -> board.getTitle().equals(command.title()) &&
+                board.getDescription().equals(command.description()) &&
                 board.getOwnerId().equals(command.ownerId()) &&
                 !board.isArchived() &&
-                board.getBoardId() != null
-        ));
+                !board.isStarred() &&
+                board.getBoardId() != null &&
+                board.getCreatedAt() != null &&
+                board.getUpdatedAt() != null));
     }
 
     @Test
@@ -281,7 +295,7 @@ class CreateBoardServiceTest {
         CreateBoardCommand command = createValidCommand();
         Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(Either.right(savedBoard));
@@ -292,13 +306,11 @@ class CreateBoardServiceTest {
         // then
         assertThat(result.isRight()).isTrue();
         assertThat(result.get().getBoardId()).isNotNull();
-        
+
         // 저장되는 Board 객체에 BoardId가 설정되어 있는지 확인
-        verify(boardRepository).save(argThat(board -> 
-                board.getBoardId() != null &&
+        verify(boardRepository).save(argThat(board -> board.getBoardId() != null &&
                 board.getBoardId().getId() != null &&
-                !board.getBoardId().getId().isEmpty()
-        ));
+                !board.getBoardId().getId().isEmpty()));
     }
 
     @Test
@@ -308,7 +320,7 @@ class CreateBoardServiceTest {
         CreateBoardCommand command = createValidCommand();
         Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
 
-        when(boardValidator.validate(command))
+        when(createBoardValidator.validate(command))
                 .thenReturn(ValidationResult.valid(command));
         when(boardRepository.save(any(Board.class)))
                 .thenReturn(Either.right(savedBoard));
@@ -320,11 +332,104 @@ class CreateBoardServiceTest {
         assertThat(result.isRight()).isTrue();
         assertThat(result.get().getCreatedAt()).isNotNull();
         assertThat(result.get().getUpdatedAt()).isNotNull();
-        
+
         // 저장되는 Board 객체에 생성 시간이 설정되어 있는지 확인
-        verify(boardRepository).save(argThat(board -> 
-                board.getCreatedAt() != null &&
-                board.getUpdatedAt() != null
-        ));
+        verify(boardRepository).save(argThat(board -> board.getCreatedAt() != null &&
+                board.getUpdatedAt() != null));
     }
-} 
+
+    @Test
+    @DisplayName("보드 생성 시 즐겨찾기 상태는 false로 초기화되어야 한다")
+    void createBoard_shouldInitializeStarredAsFalse() {
+        // given
+        CreateBoardCommand command = createValidCommand();
+        Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
+
+        when(createBoardValidator.validate(command))
+                .thenReturn(ValidationResult.valid(command));
+        when(boardRepository.save(any(Board.class)))
+                .thenReturn(Either.right(savedBoard));
+
+        // when
+        Either<Failure, Board> result = createBoardService.createBoard(command);
+
+        // then
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.get().isStarred()).isFalse();
+
+        // 저장되는 Board 객체에 즐겨찾기 상태가 false로 설정되어 있는지 확인
+        verify(boardRepository).save(argThat(board -> !board.isStarred()));
+    }
+
+    @Test
+    @DisplayName("보드 생성 시 아카이브 상태는 false로 초기화되어야 한다")
+    void createBoard_shouldInitializeArchivedAsFalse() {
+        // given
+        CreateBoardCommand command = createValidCommand();
+        Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
+
+        when(createBoardValidator.validate(command))
+                .thenReturn(ValidationResult.valid(command));
+        when(boardRepository.save(any(Board.class)))
+                .thenReturn(Either.right(savedBoard));
+
+        // when
+        Either<Failure, Board> result = createBoardService.createBoard(command);
+
+        // then
+        assertThat(result.isRight()).isTrue();
+        assertThat(result.get().isArchived()).isFalse();
+
+        // 저장되는 Board 객체에 아카이브 상태가 false로 설정되어 있는지 확인
+        verify(boardRepository).save(argThat(board -> !board.isArchived()));
+    }
+
+    @Test
+    @DisplayName("Board.create 메서드가 올바른 파라미터로 호출되어야 한다")
+    void createBoard_shouldCallBoardCreateWithCorrectParameters() {
+        // given
+        CreateBoardCommand command = createValidCommand();
+        Board savedBoard = createValidBoard(command.title(), command.description(), command.ownerId());
+
+        when(createBoardValidator.validate(command))
+                .thenReturn(ValidationResult.valid(command));
+        when(boardRepository.save(any(Board.class)))
+                .thenReturn(Either.right(savedBoard));
+
+        // when
+        Either<Failure, Board> result = createBoardService.createBoard(command);
+
+        // then
+        assertThat(result.isRight()).isTrue();
+
+        // Board.create 메서드가 올바른 파라미터로 호출되었는지 확인
+        verify(boardRepository).save(argThat(board -> board.getTitle().equals(command.title()) &&
+                board.getDescription().equals(command.description()) &&
+                board.getOwnerId().equals(command.ownerId())));
+    }
+
+    @Test
+    @DisplayName("Try.of를 사용한 예외 처리가 올바르게 동작해야 한다")
+    void createBoard_shouldHandleExceptionsWithTry() {
+        // given
+        CreateBoardCommand command = createValidCommand();
+        String errorMessage = "데이터베이스 연결 실패";
+
+        when(createBoardValidator.validate(command))
+                .thenReturn(ValidationResult.valid(command));
+        when(boardRepository.save(any(Board.class)))
+                .thenThrow(new RuntimeException(errorMessage));
+
+        // when
+        Either<Failure, Board> result = createBoardService.createBoard(command);
+
+        // then
+        assertThat(result.isLeft()).isTrue();
+        assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
+        assertThat(result.getLeft().getMessage()).isEqualTo(errorMessage);
+        assertThat(((Failure.InternalError) result.getLeft()).getErrorCode()).isEqualTo("BOARD_CREATION_ERROR");
+
+        verify(createBoardValidator).validate(command);
+        verify(boardRepository).save(any(Board.class));
+    }
+}

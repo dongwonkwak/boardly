@@ -1,26 +1,23 @@
 package com.boardly.features.boardlist.infrastructure.persistence;
 
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface BoardListJpaRepository extends JpaRepository<BoardListEntity, String> {
 
   /**
-   * 보드 ID로 해당 보드의 모든 리스트를 position 순서대로 조회합니다.
-   * 
-   * @param boardId 보드 ID
-   * @return 보드 리스트 목록 (위치 순으로 정렬)
+   * 보드 ID로 리스트를 조회합니다 (위치 순서대로).
    */
   List<BoardListEntity> findByBoardIdOrderByPosition(String boardId);
 
   /**
-   * 보드 ID로 해당 보드의 모든 리스트를 조회합니다.
+   * 보드 ID로 리스트를 조회합니다.
    */
   List<BoardListEntity> findByBoardId(String boardId);
 
@@ -35,9 +32,9 @@ public interface BoardListJpaRepository extends JpaRepository<BoardListEntity, S
   List<BoardListEntity> findByBoardIdAndPositionBetween(String boardId, int startPosition, int endPosition);
 
   /**
-   * 보드별 리스트 개수를 조회합니다.
+   * 보드 ID로 리스트 개수를 조회합니다.
    */
-  long countByBoardId(String boardId);
+  Long countByBoardId(String boardId);
 
   /**
    * 보드 내에서 가장 높은 position 값을 조회합니다.
@@ -46,7 +43,7 @@ public interface BoardListJpaRepository extends JpaRepository<BoardListEntity, S
   Optional<Integer> findMaxPositionByBoardId(@Param("boardId") String boardId);
 
   /**
-   * 보드의 모든 리스트를 삭제합니다.
+   * 보드 ID로 리스트를 삭제합니다.
    */
   void deleteByBoardId(String boardId);
 
@@ -82,7 +79,7 @@ public interface BoardListJpaRepository extends JpaRepository<BoardListEntity, S
   List<BoardListEntity> findByBoardIdAndPositionGreaterThanEqual(String boardId, int position);
 
   /**
-   * 보드와 색상으로 리스트를 조회합니다.
+   * 보드 ID와 색상으로 리스트를 조회합니다.
    */
   List<BoardListEntity> findByBoardIdAndColor(String boardId, String color);
 }

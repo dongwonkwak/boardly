@@ -25,33 +25,33 @@ public class BoardRepositoryImpl implements BoardRepository {
     public Either<Failure, Board> save(Board board) {
         try {
             BoardEntity savedEntity;
-            
+
             // 새로운 객체인지 기존 객체인지 판단
             if (board.isNew()) {
                 // 새로운 객체 저장
-                log.debug("새로운 보드 저장: boardId={}, title={}, ownerId={}", 
-                    board.getBoardId().getId(), board.getTitle(), board.getOwnerId().getId());
+                log.debug("새로운 보드 저장: boardId={}, title={}, ownerId={}",
+                        board.getBoardId().getId(), board.getTitle(), board.getOwnerId().getId());
                 BoardEntity boardEntity = BoardEntity.fromDomainEntity(board);
                 savedEntity = boardJpaRepository.save(boardEntity);
-                log.debug("새로운 보드 저장 완료: boardId={}, title={}", 
-                    savedEntity.getBoardId(), savedEntity.getTitle());
+                log.debug("새로운 보드 저장 완료: boardId={}, title={}",
+                        savedEntity.getBoardId(), savedEntity.getTitle());
             } else {
                 // 기존 객체 업데이트
-                log.debug("기존 보드 업데이트: boardId={}, title={}", 
-                    board.getBoardId().getId(), board.getTitle());
+                log.debug("기존 보드 업데이트: boardId={}, title={}",
+                        board.getBoardId().getId(), board.getTitle());
                 Optional<BoardEntity> existingEntity = boardJpaRepository.findById(board.getBoardId().getId());
-                
+
                 if (existingEntity.isEmpty()) {
                     return Either.left(Failure.ofNotFound("BOARD_NOT_FOUND"));
                 }
-                
+
                 BoardEntity entityToUpdate = existingEntity.get();
                 entityToUpdate.updateFromDomainEntity(board);
                 savedEntity = boardJpaRepository.save(entityToUpdate);
             }
-            
+
             return Either.right(savedEntity.toDomainEntity());
-            
+
         } catch (DataIntegrityViolationException e) {
             log.error("보드 저장 중 제약 조건 위반 오류: {}", e.getMessage());
             return Either.left(Failure.ofConflict("BOARD_CONSTRAINT_VIOLATION"));
@@ -143,4 +143,4 @@ public class BoardRepositoryImpl implements BoardRepository {
         return boardJpaRepository.findByBoardIdAndOwnerId(boardId.getId(), ownerId.getId())
                 .map(BoardEntity::toDomainEntity);
     }
-} 
+}

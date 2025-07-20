@@ -66,7 +66,7 @@ public interface BoardRepository {
     List<Board> findByOwnerIdAndTitleContaining(UserId ownerId, String title);
 
     /**
-     * 소유자 ID와 보드 ID로 보드를 조회합니다 (권한 확인용).
+     * 소유자 ID와 보드 ID로 보드를 조회합니다.
      */
     Optional<Board> findByIdAndOwnerId(BoardId boardId, UserId ownerId);
-} 
+}

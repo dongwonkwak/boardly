@@ -3,12 +3,13 @@ package com.boardly.features.boardlist.domain.repository;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.user.domain.model.UserId;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface BoardListRepository {
-  
+
   /**
    * 새로운 보드 리스트를 저장합니다.
    * 
@@ -16,7 +17,7 @@ public interface BoardListRepository {
    * @return 저장된 보드 리스트
    */
   BoardList save(BoardList boardList);
-  
+
   /**
    * 리스트 ID로 보드 리스트를 조회합니다.
    * 
@@ -24,7 +25,7 @@ public interface BoardListRepository {
    * @return 보드 리스트 (존재하지 않으면 empty)
    */
   Optional<BoardList> findById(ListId listId);
-  
+
   /**
    * 보드 ID로 해당 보드의 모든 리스트를 조회합니다.
    * 
@@ -45,7 +46,7 @@ public interface BoardListRepository {
    * 보드 내 특정 위치 이후의 모든 리스트를 조회합니다.
    * position 업데이트 시 사용됩니다.
    * 
-   * @param boardId 보드의 고유 식별자
+   * @param boardId  보드의 고유 식별자
    * @param position 기준 위치
    * @return 기준 위치 이후의 리스트 목록
    */
@@ -54,14 +55,13 @@ public interface BoardListRepository {
   /**
    * 보드 내 특정 위치 범위의 리스트를 조회합니다.
    * 
-   * @param boardId 보드의 고유 식별자
+   * @param boardId       보드의 고유 식별자
    * @param startPosition 시작 위치 (inclusive)
-   * @param endPosition 끝 위치 (inclusive)
+   * @param endPosition   끝 위치 (inclusive)
    * @return 범위 내의 리스트 목록
    */
   List<BoardList> findByBoardIdAndPositionBetween(BoardId boardId, int startPosition, int endPosition);
 
-  
   /**
    * 보드 ID로 해당 보드의 리스트 개수를 조회합니다.
    * 
@@ -78,7 +78,7 @@ public interface BoardListRepository {
    * @return 가장 높은 position 값 (리스트가 없으면 Optional.empty())
    */
   Optional<Integer> findMaxPositionByBoardId(BoardId boardId);
-  
+
   /**
    * 보드 리스트를 삭제합니다.
    * 
@@ -100,7 +100,6 @@ public interface BoardListRepository {
    * @param boardId 보드의 고유 식별자
    */
   void deleteByBoardId(BoardId boardId);
-  
 
   /**
    * 리스트 ID가 존재하는지 확인합니다.
@@ -114,7 +113,7 @@ public interface BoardListRepository {
    * 보드 ID와 리스트 ID로 리스트를 조회합니다.
    * 권한 확인이 필요한 경우 사용됩니다.
    * 
-   * @param listId 리스트의 고유 식별자
+   * @param listId  리스트의 고유 식별자
    * @param boardId 보드의 고유 식별자
    * @return 리스트 엔티티 (존재하지 않으면 Optional.empty())
    */
@@ -124,7 +123,7 @@ public interface BoardListRepository {
    * 보드 내에서 제목으로 리스트를 검색합니다.
    * 
    * @param boardId 보드의 고유 식별자
-   * @param title 검색할 제목 (부분 일치)
+   * @param title   검색할 제목 (부분 일치)
    * @return 제목에 해당하는 리스트 목록
    */
   List<BoardList> findByBoardIdAndTitleContaining(BoardId boardId, String title);

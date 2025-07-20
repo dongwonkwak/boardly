@@ -23,9 +23,9 @@ public class Board extends BaseEntity {
     private boolean isStarred;
 
     @Builder
-    private Board(BoardId boardId, String title, String description, 
-                 boolean isArchived, UserId ownerId, boolean isStarred, 
-                 Instant createdAt, Instant updatedAt) {
+    private Board(BoardId boardId, String title, String description,
+            boolean isArchived, UserId ownerId, boolean isStarred,
+            Instant createdAt, Instant updatedAt) {
 
         super(createdAt, updatedAt);
         this.boardId = boardId;
@@ -42,15 +42,15 @@ public class Board extends BaseEntity {
     public static Board create(String title, String description, UserId ownerId) {
         Instant now = Instant.now();
         return Board.builder()
-            .boardId(new BoardId())
-            .title(title)
-            .description(description)
-            .isArchived(false)
-            .ownerId(ownerId)
-            .isStarred(false)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
+                .boardId(new BoardId())
+                .title(title)
+                .description(description)
+                .isArchived(false)
+                .ownerId(ownerId)
+                .isStarred(false)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 
     /**
@@ -109,10 +109,48 @@ public class Board extends BaseEntity {
         return !isArchived;
     }
 
+    /**
+     * 보드가 수정된 적이 있는지 확인
+     * (생성 시간과 수정 시간이 다른 경우)
+     */
+    public boolean hasBeenModified() {
+        return !getCreatedAt().equals(getUpdatedAt());
+    }
+
+    /**
+     * 사용자가 이 보드에 접근할 수 있는지 확인
+     */
+    public boolean canAccess(UserId userId) {
+        return this.ownerId.equals(userId);
+    }
+
+    /**
+     * 사용자가 이 보드를 수정할 수 있는지 확인
+     */
+    public boolean canModify(UserId userId) {
+        return canAccess(userId) && !isArchived;
+    }
+
+    /**
+     * 사용자가 이 보드를 아카이브할 수 있는지 확인
+     */
+    public boolean canArchive(UserId userId) {
+        return canAccess(userId);
+    }
+
+    /**
+     * 사용자가 이 보드의 즐겨찾기를 변경할 수 있는지 확인
+     */
+    public boolean canToggleStar(UserId userId) {
+        return canAccess(userId);
+    }
+
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         Board board = (Board) obj;
         return Objects.equals(boardId, board.boardId);
     }

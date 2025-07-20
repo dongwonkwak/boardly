@@ -51,4 +51,4 @@ public interface BoardJpaRepository extends JpaRepository<BoardEntity, String> {
      * 보드 ID가 존재하는지 확인합니다.
      */
     boolean existsByBoardId(String boardId);
-} 
+}

@@ -31,9 +31,9 @@ public class Card extends BaseEntity {
     this.listId = listId;
   }
 
-  public static Card create(CardId cardId, String title, String description, int position, ListId listId) {
+  public static Card create(String title, String description, int position, ListId listId) {
     return Card.builder()
-        .cardId(cardId)
+        .cardId(new CardId())
         .title(title.trim())
         .description(description != null ? description.trim() : null)
         .position(position)

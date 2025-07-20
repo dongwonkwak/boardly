@@ -27,14 +27,12 @@ import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.card.application.usecase.CardQueryUseCase;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
 
 import io.vavr.control.Either;

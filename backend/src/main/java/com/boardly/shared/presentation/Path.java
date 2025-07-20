@@ -14,6 +14,15 @@ public final class Path {
    */
   public static final String BOARD_LISTS = PREFIX + "/board-lists";
 
+  /*
+   * Card 관련 경로
+   */
+  public static final String CARDS = PREFIX + "/cards";
+  public static final String CARDS_BY_LIST = CARDS + "/lists/{listId}";
+  public static final String CARD_SEARCH = CARDS + "/lists/{listId}/search";
+  public static final String CARD_MOVE = CARDS + "/{cardId}/move";
+  public static final String CARD_CLONE = CARDS + "/{cardId}/clone";
+
   /**
    * 특정 보드의 리스트 목록 조회 경로
    */

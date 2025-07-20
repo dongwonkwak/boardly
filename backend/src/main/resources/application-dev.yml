@@ -56,6 +56,11 @@ app:
       - "${app.frontend.url}"
   frontend:
     url: http://localhost:5173
+    
+boardly:
+  card:
+    policy:
+      max-cards-per-list: 10
 
 logging:
   level:

@@ -10,3 +10,11 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+
+boardly:
+  card:
+    policy:
+      max-cards-per-list: 100
+      max-title-length: 200
+      max-description-length: 2000
+      max-search-results: 50

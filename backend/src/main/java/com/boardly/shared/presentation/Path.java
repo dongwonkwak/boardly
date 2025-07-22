@@ -18,6 +18,7 @@ public final class Path {
    * Card 관련 경로
    */
   public static final String CARDS = PREFIX + "/cards";
+  public static final String CARD_BY_ID = CARDS + "/{cardId}";
   public static final String CARDS_BY_LIST = CARDS + "/lists/{listId}";
   public static final String CARD_SEARCH = CARDS + "/lists/{listId}/search";
   public static final String CARD_MOVE = CARDS + "/{cardId}/move";

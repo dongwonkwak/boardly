@@ -21,12 +21,14 @@ import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
 import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
 import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
 import com.boardly.features.board.application.port.input.RemoveBoardMemberCommand;
+import com.boardly.features.board.application.port.input.DeleteBoardCommand;
 import com.boardly.features.board.application.usecase.CreateBoardUseCase;
 import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
 import com.boardly.features.board.application.usecase.ArchiveBoardUseCase;
 import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
 import com.boardly.features.board.application.usecase.ToggleStarBoardUseCase;
 import com.boardly.features.board.application.usecase.RemoveBoardMemberUseCase;
+import com.boardly.features.board.application.usecase.DeleteBoardUseCase;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
@@ -71,6 +73,7 @@ public class BoardController {
     private final ArchiveBoardUseCase archiveBoardUseCase;
     private final ToggleStarBoardUseCase toggleStarBoardUseCase;
     private final RemoveBoardMemberUseCase removeBoardMemberUseCase;
+    private final DeleteBoardUseCase deleteBoardUseCase;
     private final ApiFailureHandler failureHandler;
 
     @Operation(summary = "내 보드 목록 조회", description = "현재 사용자가 소유한 보드 목록을 조회합니다. 쿼리 파라미터로 아카이브된 보드 포함 여부를 설정할 수 있습니다.", tags = {
@@ -344,6 +347,40 @@ public class BoardController {
                 success -> {
                     log.info("보드 멤버 삭제 성공: boardId={}, targetUserId={}, requestedBy={}", boardId, targetUserId, userId);
                     return ResponseEntity.ok().build();
+                });
+    }
+
+    @Operation(summary = "보드 삭제", description = "보드를 영구적으로 삭제합니다. 보드와 관련된 모든 데이터(리스트, 카드, 멤버)가 함께 삭제됩니다.", tags = {
+            TAGS }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "보드 삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "보드 삭제 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "보드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<?> deleteBoard(
+            @Parameter(description = "삭제할 보드 ID", required = true) @PathVariable String boardId,
+            HttpServletRequest httpRequest,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
+        String userId = jwt.getSubject();
+        log.info("보드 삭제 요청: boardId={}, requestedBy={}", boardId, userId);
+
+        DeleteBoardCommand command = DeleteBoardCommand.of(
+                new BoardId(boardId),
+                new UserId(userId));
+
+        Either<Failure, Void> result = deleteBoardUseCase.deleteBoard(command);
+
+        return result.fold(
+                failureHandler::handleFailure,
+                success -> {
+                    log.info("보드 삭제 성공: boardId={}", boardId);
+                    return ResponseEntity.noContent().build();
                 });
     }
 }

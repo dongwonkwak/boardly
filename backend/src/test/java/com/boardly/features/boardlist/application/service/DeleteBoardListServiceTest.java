@@ -3,12 +3,14 @@ package com.boardly.features.boardlist.application.service;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.board.application.service.BoardPermissionService;
 import com.boardly.features.boardlist.application.port.input.DeleteBoardListCommand;
 import com.boardly.features.boardlist.application.validation.DeleteBoardListValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
+import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
@@ -44,6 +46,12 @@ class DeleteBoardListServiceTest {
         private BoardListRepository boardListRepository;
 
         @Mock
+        private CardRepository cardRepository;
+
+        @Mock
+        private BoardPermissionService boardPermissionService;
+
+        @Mock
         private ValidationMessageResolver validationMessageResolver;
 
         @BeforeEach
@@ -52,6 +60,8 @@ class DeleteBoardListServiceTest {
                                 deleteBoardListValidator,
                                 boardRepository,
                                 boardListRepository,
+                                cardRepository,
+                                boardPermissionService,
                                 validationMessageResolver);
         }
 
@@ -97,6 +107,10 @@ class DeleteBoardListServiceTest {
                                 .thenReturn(Optional.of(listToDelete));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardPermissionService.canWriteBoard(boardId, command.userId()))
+                                .thenReturn(Either.right(true));
+                when(cardRepository.deleteByListId(command.listId()))
+                                .thenReturn(Either.right(null));
                 when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 2))
                                 .thenReturn(List.of());
 
@@ -215,6 +229,10 @@ class DeleteBoardListServiceTest {
                                 .thenReturn(Optional.of(listToDelete));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardPermissionService.canWriteBoard(boardId, command.userId()))
+                                .thenReturn(Either.right(false));
+                when(validationMessageResolver.getMessage("validation.boardlist.delete.access.denied"))
+                                .thenReturn("리스트 삭제 권한이 없습니다");
 
                 // when
                 Either<Failure, Void> result = deleteBoardListService.deleteBoardList(command);
@@ -223,7 +241,7 @@ class DeleteBoardListServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft()).isInstanceOf(Failure.PermissionDenied.class);
                 Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) result.getLeft();
-                assertThat(permissionDenied.getErrorCode()).isEqualTo("UNAUTHORIZED_ACCESS");
+                assertThat(permissionDenied.getMessage()).isEqualTo("리스트 삭제 권한이 없습니다");
 
                 verify(deleteBoardListValidator).validate(command);
                 verify(boardListRepository).findById(command.listId());
@@ -247,6 +265,10 @@ class DeleteBoardListServiceTest {
                                 .thenReturn(Optional.of(listToDelete));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardPermissionService.canWriteBoard(boardId, command.userId()))
+                                .thenReturn(Either.right(true));
+                when(cardRepository.deleteByListId(command.listId()))
+                                .thenReturn(Either.right(null));
                 when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 2))
                                 .thenReturn(List.of(remainingList1, remainingList2));
 
@@ -279,6 +301,10 @@ class DeleteBoardListServiceTest {
                                 .thenReturn(Optional.of(listToDelete));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardPermissionService.canWriteBoard(boardId, command.userId()))
+                                .thenReturn(Either.right(true));
+                when(cardRepository.deleteByListId(command.listId()))
+                                .thenReturn(Either.right(null));
                 doThrow(new RuntimeException("데이터베이스 오류"))
                                 .when(boardListRepository).deleteById(command.listId());
 
@@ -355,6 +381,10 @@ class DeleteBoardListServiceTest {
                                 .thenReturn(Optional.of(listToDelete));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardPermissionService.canWriteBoard(boardId, command.userId()))
+                                .thenReturn(Either.right(true));
+                when(cardRepository.deleteByListId(command.listId()))
+                                .thenReturn(Either.right(null));
                 when(boardListRepository.findByBoardIdAndPositionGreaterThan(boardId, 2))
                                 .thenReturn(List.of(remainingList));
                 doThrow(new RuntimeException("재정렬 오류"))

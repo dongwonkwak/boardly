@@ -49,4 +49,9 @@ public interface BoardMemberJpaRepository extends JpaRepository<BoardMemberEntit
      * 보드 ID와 사용자 ID로 활성 멤버를 조회합니다.
      */
     Optional<BoardMemberEntity> findByBoardIdAndUserIdAndIsActiveTrue(String boardId, String userId);
+
+    /**
+     * 보드의 모든 멤버를 삭제합니다.
+     */
+    void deleteByBoardId(String boardId);
 }

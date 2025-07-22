@@ -67,4 +67,9 @@ public interface CardJpaRepository extends JpaRepository<CardEntity, String> {
    * 리스트의 모든 카드를 삭제
    */
   void deleteByListId(String listId);
+
+  /**
+   * 보드의 모든 카드를 삭제
+   */
+  void deleteByBoardId(String boardId);
 }

@@ -65,4 +65,10 @@ public interface BoardMemberRepository {
      * 보드의 활성 멤버 수를 조회합니다.
      */
     long countActiveByBoardId(BoardId boardId);
+
+    /**
+     * 보드의 모든 멤버를 삭제합니다.
+     * 보드 삭제 시 관련된 모든 멤버를 함께 삭제할 때 사용됩니다.
+     */
+    Either<Failure, Void> deleteByBoardId(BoardId boardId);
 }

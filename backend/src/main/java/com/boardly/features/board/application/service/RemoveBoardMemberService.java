@@ -5,7 +5,6 @@ import com.boardly.features.board.application.usecase.RemoveBoardMemberUseCase;
 import com.boardly.features.board.application.validation.RemoveBoardMemberValidator;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardMember;
-import com.boardly.features.board.domain.model.BoardMemberId;
 import com.boardly.features.board.domain.model.BoardRole;
 import com.boardly.features.board.domain.repository.BoardMemberRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;

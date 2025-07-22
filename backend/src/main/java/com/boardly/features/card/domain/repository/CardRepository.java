@@ -95,4 +95,10 @@ public interface CardRepository {
    * 리스트의 모든 카드를 삭제합니다.
    */
   Either<Failure, Void> deleteByListId(ListId listId);
+
+  /**
+   * 보드의 모든 카드를 삭제합니다.
+   * 보드 삭제 시 관련된 모든 카드를 함께 삭제할 때 사용됩니다.
+   */
+  Either<Failure, Void> deleteByBoardId(com.boardly.features.board.domain.model.BoardId boardId);
 }

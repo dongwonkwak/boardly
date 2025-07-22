@@ -51,6 +51,9 @@ class BoardControllerTest {
   private RemoveBoardMemberUseCase removeBoardMemberUseCase;
 
   @Mock
+  private DeleteBoardUseCase deleteBoardUseCase;
+
+  @Mock
   private ApiFailureHandler failureHandler;
 
   @Mock
@@ -67,6 +70,7 @@ class BoardControllerTest {
         archiveBoardUseCase,
         toggleStarBoardUseCase,
         removeBoardMemberUseCase,
+        deleteBoardUseCase,
         failureHandler);
   }
 

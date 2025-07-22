@@ -1,11 +1,13 @@
 package com.boardly.features.boardlist.application.service;
 
 import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.board.application.service.BoardPermissionService;
 import com.boardly.features.boardlist.application.port.input.DeleteBoardListCommand;
 import com.boardly.features.boardlist.application.usecase.DeleteBoardListUseCase;
 import com.boardly.features.boardlist.application.validation.DeleteBoardListValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
+import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.application.validation.ValidationResult;
@@ -34,6 +36,8 @@ public class DeleteBoardListService implements DeleteBoardListUseCase {
   private final DeleteBoardListValidator deleteBoardListValidator;
   private final BoardRepository boardRepository;
   private final BoardListRepository boardListRepository;
+  private final CardRepository cardRepository;
+  private final BoardPermissionService boardPermissionService;
   private final ValidationMessageResolver validationMessageResolver;
 
   @Override
@@ -69,21 +73,42 @@ public class DeleteBoardListService implements DeleteBoardListUseCase {
 
     var board = boardResult.get();
 
-    // 4. 권한 확인 (보드 소유자만 삭제 가능)
-    if (!board.getOwnerId().equals(command.userId())) {
-      log.warn("리스트 삭제 권한 없음: listId={}, userId={}, boardOwnerId={}",
-          command.listId().getId(), command.userId().getId(), board.getOwnerId().getId());
-      return Either.left(Failure.ofForbidden("UNAUTHORIZED_ACCESS"));
+    // 4. 권한 확인 (보드 소유자 또는 쓰기 권한이 있는 멤버만 삭제 가능)
+    var permissionResult = boardPermissionService.canWriteBoard(listToDelete.getBoardId(), command.userId());
+    if (permissionResult.isLeft()) {
+      log.warn("리스트 삭제 권한 확인 실패: listId={}, userId={}, error={}",
+          command.listId().getId(), command.userId().getId(), permissionResult.getLeft().getMessage());
+      return Either.left(permissionResult.getLeft());
     }
 
-    // 5. 리스트 삭제 및 position 재정렬
+    if (!permissionResult.get()) {
+      log.warn("리스트 삭제 권한 없음: listId={}, userId={}, boardId={}",
+          command.listId().getId(), command.userId().getId(), listToDelete.getBoardId().getId());
+      return Either.left(Failure.ofForbidden(
+          validationMessageResolver.getMessage("validation.boardlist.delete.access.denied")));
+    }
+
+    // 5. 리스트 삭제 및 연관 데이터 정리
     try {
-      // 리스트 삭제
+      // 5-1. 리스트의 모든 카드 삭제
+      log.debug("리스트의 카드들 삭제 시작: listId={}, title={}",
+          command.listId().getId(), listToDelete.getTitle());
+
+      var cardDeleteResult = cardRepository.deleteByListId(command.listId());
+      if (cardDeleteResult.isLeft()) {
+        log.error("리스트의 카드 삭제 실패: listId={}, error={}",
+            command.listId().getId(), cardDeleteResult.getLeft().getMessage());
+        return Either.left(cardDeleteResult.getLeft());
+      }
+
+      log.debug("리스트의 카드들 삭제 완료: listId={}", command.listId().getId());
+
+      // 5-2. 리스트 삭제
       boardListRepository.deleteById(command.listId());
       log.info("리스트 삭제 완료: listId={}, title={}",
           command.listId().getId(), listToDelete.getTitle());
 
-      // 이후 리스트들의 position 재정렬
+      // 5-3. 이후 리스트들의 position 재정렬
       reorderRemainingLists(listToDelete.getBoardId(), listToDelete.getPosition());
 
       return Either.right(null);

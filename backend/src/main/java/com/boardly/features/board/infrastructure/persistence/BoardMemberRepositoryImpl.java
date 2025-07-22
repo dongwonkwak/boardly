@@ -109,4 +109,17 @@ public class BoardMemberRepositoryImpl implements BoardMemberRepository {
         log.debug("countActiveByBoardId: boardId={}", boardId.getId());
         return boardMemberJpaRepository.countByBoardIdAndIsActiveTrue(boardId.getId());
     }
+
+    @Override
+    public Either<Failure, Void> deleteByBoardId(BoardId boardId) {
+        try {
+            log.debug("보드의 모든 멤버 삭제 시작: boardId={}", boardId.getId());
+            boardMemberJpaRepository.deleteByBoardId(boardId.getId());
+            log.debug("보드의 모든 멤버 삭제 완료: boardId={}", boardId.getId());
+            return Either.right(null);
+        } catch (Exception e) {
+            log.error("보드의 멤버 삭제 실패: boardId={}, error={}", boardId.getId(), e.getMessage(), e);
+            return Either.left(Failure.ofInternalServerError("보드의 멤버 삭제에 실패했습니다: " + e.getMessage()));
+        }
+    }
 }

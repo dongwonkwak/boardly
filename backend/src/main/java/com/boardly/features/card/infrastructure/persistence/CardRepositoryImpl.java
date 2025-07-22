@@ -233,4 +233,17 @@ public class CardRepositoryImpl implements CardRepository {
       return Either.left(Failure.ofInternalServerError("리스트의 카드 삭제에 실패했습니다: " + e.getMessage()));
     }
   }
+
+  @Override
+  public Either<Failure, Void> deleteByBoardId(com.boardly.features.board.domain.model.BoardId boardId) {
+    try {
+      log.debug("보드의 모든 카드 삭제 시작: boardId={}", boardId.getId());
+      cardJpaRepository.deleteByBoardId(boardId.getId());
+      log.debug("보드의 모든 카드 삭제 완료: boardId={}", boardId.getId());
+      return Either.right(null);
+    } catch (Exception e) {
+      log.error("보드의 카드 삭제 실패: boardId={}, error={}", boardId.getId(), e.getMessage(), e);
+      return Either.left(Failure.ofInternalServerError("보드의 카드 삭제에 실패했습니다: " + e.getMessage()));
+    }
+  }
 }

@@ -104,24 +104,24 @@ export default function Register() {
 				201() {
 					setShowWelcome(true);
 				},
-				409(error) {
+				409(error: { message?: string }) {
 					setFieldErrors((prev) => ({
 						...prev,
 						email: error.message || t("register.emailAlreadyExists", "이미 가입된 이메일입니다."),
 					}));
 				},
-				422(error) {
+				400(error: { details?: FieldViolation[]; message?: string }) {
 					const errorData = error.details;
-					if (errorData) {
+					if (errorData && errorData.length > 0) {
 						setFieldErrors((prev) => ({
 							...prev,
 							...handleFieldErrors(errorData),
 						}));
 					} else {
-						setError(t("register.validationError", "입력 정보를 확인해주세요."));
+						setError(error.message || t("register.validationError", "입력 정보를 확인해주세요."));
 					}
 				},
-				500(error) {
+				500(error: { message?: string }) {
 					setError(error.message || t("register.serverError", "서버 오류가 발생했습니다."));
 				},
 			});
@@ -137,8 +137,8 @@ export default function Register() {
 	const handleFieldErrors = (errorData: FieldViolation[]) => {
 		const newErrors: Record<string, string> = {};
 		errorData.forEach((err) => {
-			if (err.field) {
-				newErrors[err.field] = err.message || "";
+			if (err.field && err.message) {
+				newErrors[err.field] = err.message;
 			}
 		});
 		return newErrors;

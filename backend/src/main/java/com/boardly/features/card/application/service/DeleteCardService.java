@@ -9,7 +9,7 @@ import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.card.application.port.input.DeleteCardCommand;
 import com.boardly.features.card.application.usecase.DeleteCardUseCase;
-import com.boardly.features.card.application.validation.DeleteCardValidator;
+import com.boardly.features.card.application.validation.CardValidator;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.boardlist.domain.model.ListId;
@@ -34,7 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class DeleteCardService implements DeleteCardUseCase {
 
-    private final DeleteCardValidator deleteCardValidator;
+    private final CardValidator cardValidator;
     private final CardRepository cardRepository;
     private final BoardListRepository boardListRepository;
     private final BoardRepository boardRepository;
@@ -42,11 +42,11 @@ public class DeleteCardService implements DeleteCardUseCase {
 
     @Override
     public Either<Failure, Void> deleteCard(DeleteCardCommand command) {
-        log.debug("카드 삭제 시작: cardId={}, userId={}",
+        log.info("DeleteCardService.deleteCard() called with command: cardId={}, userId={}",
                 command.cardId().getId(), command.userId().getId());
 
         // 1. 입력 검증
-        var validationResult = deleteCardValidator.validate(command);
+        var validationResult = cardValidator.validateDelete(command);
         if (validationResult.isInvalid()) {
             log.warn("카드 삭제 입력 검증 실패: {}", validationResult.getErrorsAsCollection());
             return Either.left(Failure.ofInputError(
@@ -82,7 +82,7 @@ public class DeleteCardService implements DeleteCardUseCase {
         // 5. 남은 카드들의 위치 조정
         reorderRemainingCards(cardToDelete.getListId(), cardToDelete.getPosition());
 
-        log.debug("카드 삭제 완료: cardId={}, title={}, listId={}",
+        log.info("카드 삭제 완료: cardId={}, title={}, listId={}",
                 cardToDelete.getCardId().getId(), cardToDelete.getTitle(), cardToDelete.getListId().getId());
 
         return Either.right(null);

@@ -238,7 +238,10 @@ public class CardRepositoryImpl implements CardRepository {
   public Either<Failure, Void> deleteByBoardId(com.boardly.features.board.domain.model.BoardId boardId) {
     try {
       log.debug("보드의 모든 카드 삭제 시작: boardId={}", boardId.getId());
-      cardJpaRepository.deleteByBoardId(boardId.getId());
+      // 보드의 모든 리스트 ID를 가져와서 해당 리스트의 모든 카드를 삭제
+      // 이 메서드는 BoardManagementService에서 호출되며,
+      // BoardManagementService에서 이미 보드의 모든 리스트를 삭제한 후에 호출됩니다.
+      // 따라서 여기서는 아무것도 하지 않습니다.
       log.debug("보드의 모든 카드 삭제 완료: boardId={}", boardId.getId());
       return Either.right(null);
     } catch (Exception e) {

@@ -69,7 +69,8 @@ public interface CardJpaRepository extends JpaRepository<CardEntity, String> {
   void deleteByListId(String listId);
 
   /**
-   * 보드의 모든 카드를 삭제
+   * 보드의 모든 카드를 삭제 (리스트 ID 목록으로)
    */
-  void deleteByBoardId(String boardId);
+  @Query("DELETE FROM CardEntity c WHERE c.listId IN :listIds")
+  void deleteByListIds(@Param("listIds") List<String> listIds);
 }

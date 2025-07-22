@@ -1,7 +1,3 @@
----
-description: 서비스 클래스 작성 가이드
-alwaysApply: false
----
 # 서비스 클래스 작성 룰
 
 ## CRUD 기준 4개 클래스 분리 원칙
@@ -18,8 +14,10 @@ alwaysApply: false
 
 #### Create 서비스
 - `Create{Domain}UseCase` 인터페이스를 구현하는 서비스
+- `Clone{Domain}UseCase` 인터페이스를 구현하는 서비스
 - 새로운 엔티티 생성 담당
 - 예: `CreateBoardListUseCase` → `BoardListCreateService`
+- 예: `CloneBoardUseCase` → `BoardCreateService`
 
 #### Read 서비스  
 - `Get{Domain}UseCase` 인터페이스를 구현하는 서비스
@@ -44,139 +42,7 @@ alwaysApply: false
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class {Domain}CreateService implements Create{Domain}UseCase {
-    // Create 로직
-}
-
-@Slf4j  
-@Service
-@Transactional(readOnly = true)
-@RequiredArgsConstructor
-public class {Domain}ReadService implements Get{Domain}UseCase {
-    // Read 로직
-}
-
-@Slf4j
-@Service
-@Transactional
-@RequiredArgsConstructor
-public class {Domain}UpdateService implements Update{Domain}UseCase {
-    // Update 로직
-}
-
-@Slf4j
-@Service
-@Transactional
-@RequiredArgsConstructor
-public class {Domain}DeleteService implements Delete{Domain}UseCase {
-    // Delete 로직
-}
-```
-
-#### 3.2 트랜잭션 설정
-- **Create/Update/Delete 서비스**: `@Transactional` (기본값)
-- **Read 서비스**: `@Transactional(readOnly = true)`
-
-#### 3.3 공통 의존성
-모든 서비스 클래스는 다음 의존성을 포함해야 합니다:
-- `{Domain}Validator` - 입력 데이터 검증
-- `ValidationMessageResolver` - 다국어 메시지 처리
-- 관련 `Repository` 클래스들
-
-#### 3.4 메서드 구조
-각 서비스 메서드는 다음 구조를 따라야 합니다:
-
-```java
-@Override
-public Either<Failure, ResultType> methodName(Command command) {
-    log.info("{ServiceName}.{methodName}() called with command: {}", command);
-    
-    // 1. 입력 데이터 검증
-    ValidationResult<Command> validationResult = validator.validate(command);
-    if (validationResult.isInvalid()) {
-        return Either.left(Failure.ofInputError(...));
-    }
-    
-    // 2. 비즈니스 로직 검증
-    // 3. 권한 확인
-    // 4. 실제 처리 로직
-    // 5. 결과 반환
-}
-```
-
-### 4. 예외 처리 및 메시지
-
-#### 4.1 실패 처리
-- `Either<Failure, ResultType>` 패턴 사용
-- `ValidationMessageResolver`를 통한 다국어 메시지 처리
-- 하드코딩된 한국어 메시지 금지
-
-#### 4.2 로깅
-- 메서드 시작 시 info 레벨 로깅
-- 검증 실패 시 warn 레벨 로깅
-- 처리 완료 시 info 레벨 로깅
-
-### 5. 특수 케이스
-
-#### 5.1 복합 UseCase 처리
-하나의 서비스가 여러 UseCase를 구현하는 경우:
-- 주 기능에 따라 분류 (예: Update 서비스가 위치 변경도 처리)
-- 명확한 책임 분리 유지
-
-#### 5.2 도메인별 예외
-특정 도메인에만 해당하는 UseCase는 해당 도메인의 서비스에 포함
-
-### 6. 검증 체크리스트
-
-- [ ] 4개의 CRUD 서비스 클래스가 모두 존재하는가?
-- [ ] 각 서비스가 적절한 UseCase 인터페이스를 구현하는가?
-- [ ] Read 서비스에 `readOnly = true` 트랜잭션 설정이 되어 있는가?
-- [ ] `ValidationMessageResolver`를 사용하여 다국어 메시지를 처리하는가?
-- [ ] 적절한 로깅이 포함되어 있는가?
-- [ ] `Either<Failure, ResultType>` 패턴을 사용하는가?
-# 서비스 클래스 작성 룰
-
-## CRUD 기준 4개 클래스 분리 원칙
-
-### 1. 기본 구조
-각 도메인의 `application/service` 폴더는 CRUD 작업에 따라 4개의 서비스 클래스로 분리해야 합니다:
-
-- `{Domain}CreateService` - 생성 (Create)
-- `{Domain}ReadService` - 조회 (Read)  
-- `{Domain}UpdateService` - 수정 (Update)
-- `{Domain}DeleteService` - 삭제 (Delete)
-
-### 2. UseCase 인터페이스 기반 분류 기준
-
-#### Create 서비스
-- `Create{Domain}UseCase` 인터페이스를 구현하는 서비스
-- 새로운 엔티티 생성 담당
-- 예: `CreateBoardListUseCase` → `BoardListCreateService`
-
-#### Read 서비스  
-- `Get{Domain}UseCase` 인터페이스를 구현하는 서비스
-- 엔티티 조회 담당
-- 예: `GetBoardListsUseCase` → `BoardListReadService`
-
-#### Update 서비스
-- `Update{Domain}UseCase` 인터페이스를 구현하는 서비스
-- 기존 엔티티 수정 담당
-- 예: `UpdateBoardListUseCase` → `BoardListUpdateService`
-
-#### Delete 서비스
-- `Delete{Domain}UseCase` 인터페이스를 구현하는 서비스  
-- 엔티티 삭제 담당
-- 예: `DeleteBoardListUseCase` → `BoardListDeleteService`
-
-### 3. 클래스 작성 규칙
-
-#### 3.1 클래스명 규칙
-```java
-@Slf4j
-@Service
-@Transactional
-@RequiredArgsConstructor
-public class {Domain}CreateService implements Create{Domain}UseCase {
+public class {Domain}CreateService implements Create{Domain}UseCase, Clone{Domain}UseCase {
     // Create 로직
 }
 

@@ -8,6 +8,7 @@ import com.boardly.features.boardlist.application.validation.UpdateBoardListPosi
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
 import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.boardlist.domain.policy.BoardListMovePolicy;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -44,6 +45,9 @@ class UpdateBoardListPositionServiceTest {
         private BoardListRepository boardListRepository;
 
         @Mock
+        private BoardListMovePolicy boardListMovePolicy;
+
+        @Mock
         private ValidationMessageResolver validationMessageResolver;
 
         @BeforeEach
@@ -52,6 +56,7 @@ class UpdateBoardListPositionServiceTest {
                                 updateBoardListPositionValidator,
                                 boardRepository,
                                 boardListRepository,
+                                boardListMovePolicy,
                                 validationMessageResolver);
         }
 
@@ -103,6 +108,10 @@ class UpdateBoardListPositionServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(boardId))
                                 .thenReturn(originalLists);
+                when(boardListMovePolicy.canMoveWithinSameBoard(targetList, command.newPosition()))
+                                .thenReturn(Either.right(null));
+                when(boardListMovePolicy.hasPositionChanged(targetList, command.newPosition()))
+                                .thenReturn(true);
                 when(boardListRepository.saveAll(any()))
                                 .thenReturn(originalLists);
 
@@ -266,6 +275,8 @@ class UpdateBoardListPositionServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(boardId))
                                 .thenReturn(existingLists);
+                when(boardListMovePolicy.canMoveWithinSameBoard(targetList, command.newPosition()))
+                                .thenReturn(Either.left(Failure.ofBusinessRuleViolation("새로운 위치가 리스트 개수를 초과합니다")));
 
                 // when
                 Either<Failure, List<BoardList>> result = updateBoardListPositionService
@@ -273,9 +284,9 @@ class UpdateBoardListPositionServiceTest {
 
                 // then
                 assertThat(result.isLeft()).isTrue();
-                assertThat(result.getLeft()).isInstanceOf(Failure.ResourceConflict.class);
-                Failure.ResourceConflict resourceConflict = (Failure.ResourceConflict) result.getLeft();
-                assertThat(resourceConflict.getErrorCode()).isEqualTo("RESOURCE_CONFLICT");
+                assertThat(result.getLeft()).isInstanceOf(Failure.BusinessRuleViolation.class);
+                Failure.BusinessRuleViolation businessRuleViolation = (Failure.BusinessRuleViolation) result.getLeft();
+                assertThat(businessRuleViolation.getErrorCode()).isEqualTo("LIST_MOVE_POLICY_VIOLATION");
 
                 verify(updateBoardListPositionValidator).validate(command);
                 verify(boardListRepository).findById(command.listId());
@@ -306,6 +317,10 @@ class UpdateBoardListPositionServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(boardId))
                                 .thenReturn(originalLists);
+                when(boardListMovePolicy.canMoveWithinSameBoard(targetList, command.newPosition()))
+                                .thenReturn(Either.right(null));
+                when(boardListMovePolicy.hasPositionChanged(targetList, command.newPosition()))
+                                .thenReturn(false);
 
                 // when
                 Either<Failure, List<BoardList>> result = updateBoardListPositionService
@@ -344,6 +359,10 @@ class UpdateBoardListPositionServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(boardId))
                                 .thenReturn(existingLists);
+                when(boardListMovePolicy.canMoveWithinSameBoard(targetList, command.newPosition()))
+                                .thenReturn(Either.right(null));
+                when(boardListMovePolicy.hasPositionChanged(targetList, command.newPosition()))
+                                .thenReturn(true);
                 when(boardListRepository.saveAll(any()))
                                 .thenThrow(new RuntimeException("데이터베이스 오류"));
 
@@ -430,6 +449,10 @@ class UpdateBoardListPositionServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(boardId))
                                 .thenReturn(originalLists);
+                when(boardListMovePolicy.canMoveWithinSameBoard(targetList, command.newPosition()))
+                                .thenReturn(Either.right(null));
+                when(boardListMovePolicy.hasPositionChanged(targetList, command.newPosition()))
+                                .thenReturn(true);
                 when(boardListRepository.saveAll(any()))
                                 .thenAnswer(invocation -> {
                                         List<BoardList> savedLists = invocation.getArgument(0);

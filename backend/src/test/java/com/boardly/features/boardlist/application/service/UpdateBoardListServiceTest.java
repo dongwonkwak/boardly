@@ -8,6 +8,7 @@ import com.boardly.features.boardlist.application.validation.UpdateBoardListVali
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
 import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.boardlist.domain.policy.BoardListPolicyConfig;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -44,6 +45,9 @@ class UpdateBoardListServiceTest {
         private BoardListRepository boardListRepository;
 
         @Mock
+        private BoardListPolicyConfig boardListPolicyConfig;
+
+        @Mock
         private ValidationMessageResolver validationMessageResolver;
 
         @BeforeEach
@@ -52,6 +56,7 @@ class UpdateBoardListServiceTest {
                                 updateBoardListValidator,
                                 boardRepository,
                                 boardListRepository,
+                                boardListPolicyConfig,
                                 validationMessageResolver);
         }
 
@@ -104,6 +109,8 @@ class UpdateBoardListServiceTest {
                                 .thenReturn(Optional.of(existingList));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.save(any(BoardList.class)))
                                 .thenReturn(updatedList);
 
@@ -144,6 +151,8 @@ class UpdateBoardListServiceTest {
                                 .thenReturn(Optional.of(existingList));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.save(any(BoardList.class)))
                                 .thenReturn(updatedList);
 
@@ -313,6 +322,8 @@ class UpdateBoardListServiceTest {
                                 .thenReturn(Optional.of(existingList));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.save(any(BoardList.class)))
                                 .thenThrow(new RuntimeException("데이터베이스 오류"));
 
@@ -397,6 +408,8 @@ class UpdateBoardListServiceTest {
                                 .thenReturn(Optional.of(existingList));
                 when(boardRepository.findById(boardId))
                                 .thenReturn(Optional.of(board));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.save(any(BoardList.class)))
                                 .thenReturn(updatedList);
 

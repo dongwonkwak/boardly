@@ -18,3 +18,9 @@ boardly:
       max-title-length: 200
       max-description-length: 2000
       max-search-results: 50
+  boardlist:
+    policy:
+      max-lists-per-board: 20
+      recommended-lists-per-board: 10
+      warning-threshold: 15
+      max-title-length: 100

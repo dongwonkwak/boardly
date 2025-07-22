@@ -7,7 +7,8 @@ import com.boardly.features.boardlist.application.port.input.CreateBoardListComm
 import com.boardly.features.boardlist.application.validation.CreateBoardListValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
-import com.boardly.features.boardlist.domain.policy.ListLimitPolicy;
+import com.boardly.features.boardlist.domain.policy.BoardListCreationPolicy;
+import com.boardly.features.boardlist.domain.policy.BoardListPolicyConfig;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -44,7 +45,10 @@ class CreateBoardListServiceTest {
         private BoardListRepository boardListRepository;
 
         @Mock
-        private ListLimitPolicy listLimitPolicy;
+        private BoardListCreationPolicy boardListCreationPolicy;
+
+        @Mock
+        private BoardListPolicyConfig boardListPolicyConfig;
 
         @Mock
         private ValidationMessageResolver validationMessageResolver;
@@ -55,7 +59,8 @@ class CreateBoardListServiceTest {
                                 createBoardListValidator,
                                 boardRepository,
                                 boardListRepository,
-                                listLimitPolicy,
+                                boardListCreationPolicy,
+                                boardListPolicyConfig,
                                 validationMessageResolver);
         }
 
@@ -101,10 +106,10 @@ class CreateBoardListServiceTest {
                                 .thenReturn(ValidationResult.valid(command));
                 when(boardRepository.findById(command.boardId()))
                                 .thenReturn(Optional.of(board));
-                when(listLimitPolicy.canCreateList(0))
-                                .thenReturn(true);
-                when(boardListRepository.countByBoardId(command.boardId()))
-                                .thenReturn(0L);
+                when(boardListCreationPolicy.canCreateBoardList(command.boardId()))
+                                .thenReturn(Either.right(null));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.findMaxPositionByBoardId(command.boardId()))
                                 .thenReturn(Optional.empty());
                 when(boardListRepository.save(any(BoardList.class)))
@@ -123,8 +128,8 @@ class CreateBoardListServiceTest {
 
                 verify(createBoardListValidator).validateCreateBoardList(command);
                 verify(boardRepository).findById(command.boardId());
-                verify(listLimitPolicy).canCreateList(0);
-                verify(boardListRepository).countByBoardId(command.boardId());
+                verify(boardListCreationPolicy).canCreateBoardList(command.boardId());
+                verify(boardListPolicyConfig).getMaxTitleLength();
                 verify(boardListRepository).findMaxPositionByBoardId(command.boardId());
                 verify(boardListRepository).save(any(BoardList.class));
         }
@@ -146,10 +151,10 @@ class CreateBoardListServiceTest {
                                 .thenReturn(ValidationResult.valid(command));
                 when(boardRepository.findById(command.boardId()))
                                 .thenReturn(Optional.of(board));
-                when(listLimitPolicy.canCreateList(0))
-                                .thenReturn(true);
-                when(boardListRepository.countByBoardId(command.boardId()))
-                                .thenReturn(0L);
+                when(boardListCreationPolicy.canCreateBoardList(command.boardId()))
+                                .thenReturn(Either.right(null));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.findMaxPositionByBoardId(command.boardId()))
                                 .thenReturn(Optional.empty());
                 when(boardListRepository.save(any(BoardList.class)))
@@ -166,8 +171,8 @@ class CreateBoardListServiceTest {
 
                 verify(createBoardListValidator).validateCreateBoardList(command);
                 verify(boardRepository).findById(command.boardId());
-                verify(listLimitPolicy).canCreateList(0);
-                verify(boardListRepository).countByBoardId(command.boardId());
+                verify(boardListCreationPolicy).canCreateBoardList(command.boardId());
+                verify(boardListPolicyConfig).getMaxTitleLength();
                 verify(boardListRepository).findMaxPositionByBoardId(command.boardId());
                 verify(boardListRepository).save(any(BoardList.class));
         }
@@ -281,12 +286,9 @@ class CreateBoardListServiceTest {
                                 .thenReturn(ValidationResult.valid(command));
                 when(boardRepository.findById(command.boardId()))
                                 .thenReturn(Optional.of(board));
-                when(listLimitPolicy.canCreateList(10))
-                                .thenReturn(false);
-                when(boardListRepository.countByBoardId(command.boardId()))
-                                .thenReturn(10L);
-                when(validationMessageResolver.getMessage("error.business.list.limit.exceeded"))
-                                .thenReturn("리스트 생성 한도를 초과했습니다");
+                when(boardListCreationPolicy.canCreateBoardList(command.boardId()))
+                                .thenReturn(Either.left(
+                                                Failure.ofPermissionDenied("보드당 최대 20개의 리스트만 생성할 수 있습니다. (현재: 20개)")));
 
                 // when
                 Either<Failure, BoardList> result = createBoardListService.createBoardList(command);
@@ -295,18 +297,15 @@ class CreateBoardListServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft()).isInstanceOf(Failure.BusinessRuleViolation.class);
                 Failure.BusinessRuleViolation businessRuleViolation = (Failure.BusinessRuleViolation) result.getLeft();
-                assertThat(businessRuleViolation.getErrorCode()).isEqualTo("LIST_LIMIT_EXCEEDED");
+                assertThat(businessRuleViolation.getErrorCode()).isEqualTo("LIST_CREATION_POLICY_VIOLATION");
                 assertThat(businessRuleViolation.getContext()).isInstanceOf(Map.class);
                 @SuppressWarnings("unchecked")
                 Map<String, Object> context = (Map<String, Object>) businessRuleViolation.getContext();
                 assertThat(context).containsKey("boardId");
-                assertThat(context).containsKey("currentCount");
 
                 verify(createBoardListValidator).validateCreateBoardList(command);
                 verify(boardRepository).findById(command.boardId());
-                verify(listLimitPolicy).canCreateList(10);
-                verify(boardListRepository).countByBoardId(command.boardId());
-                verify(validationMessageResolver).getMessage("error.business.list.limit.exceeded");
+                verify(boardListCreationPolicy).canCreateBoardList(command.boardId());
         }
 
         @Test
@@ -321,10 +320,10 @@ class CreateBoardListServiceTest {
                                 .thenReturn(ValidationResult.valid(command));
                 when(boardRepository.findById(command.boardId()))
                                 .thenReturn(Optional.of(board));
-                when(listLimitPolicy.canCreateList(5))
-                                .thenReturn(true);
-                when(boardListRepository.countByBoardId(command.boardId()))
-                                .thenReturn(5L);
+                when(boardListCreationPolicy.canCreateBoardList(command.boardId()))
+                                .thenReturn(Either.right(null));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.findMaxPositionByBoardId(command.boardId()))
                                 .thenReturn(Optional.of(4));
                 when(boardListRepository.save(any(BoardList.class)))
@@ -339,8 +338,8 @@ class CreateBoardListServiceTest {
 
                 verify(createBoardListValidator).validateCreateBoardList(command);
                 verify(boardRepository).findById(command.boardId());
-                verify(listLimitPolicy).canCreateList(5);
-                verify(boardListRepository).countByBoardId(command.boardId());
+                verify(boardListCreationPolicy).canCreateBoardList(command.boardId());
+                verify(boardListPolicyConfig).getMaxTitleLength();
                 verify(boardListRepository).findMaxPositionByBoardId(command.boardId());
                 verify(boardListRepository).save(any(BoardList.class));
         }
@@ -356,10 +355,10 @@ class CreateBoardListServiceTest {
                                 .thenReturn(ValidationResult.valid(command));
                 when(boardRepository.findById(command.boardId()))
                                 .thenReturn(Optional.of(board));
-                when(listLimitPolicy.canCreateList(0))
-                                .thenReturn(true);
-                when(boardListRepository.countByBoardId(command.boardId()))
-                                .thenReturn(0L);
+                when(boardListCreationPolicy.canCreateBoardList(command.boardId()))
+                                .thenReturn(Either.right(null));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.findMaxPositionByBoardId(command.boardId()))
                                 .thenReturn(Optional.empty());
                 when(boardListRepository.save(any(BoardList.class)))
@@ -377,8 +376,8 @@ class CreateBoardListServiceTest {
 
                 verify(createBoardListValidator).validateCreateBoardList(command);
                 verify(boardRepository).findById(command.boardId());
-                verify(listLimitPolicy).canCreateList(0);
-                verify(boardListRepository).countByBoardId(command.boardId());
+                verify(boardListCreationPolicy).canCreateBoardList(command.boardId());
+                verify(boardListPolicyConfig).getMaxTitleLength();
                 verify(boardListRepository).findMaxPositionByBoardId(command.boardId());
                 verify(boardListRepository).save(any(BoardList.class));
         }
@@ -436,10 +435,10 @@ class CreateBoardListServiceTest {
                                 .thenReturn(ValidationResult.valid(command));
                 when(boardRepository.findById(command.boardId()))
                                 .thenReturn(Optional.of(board));
-                when(listLimitPolicy.canCreateList(0))
-                                .thenReturn(true);
-                when(boardListRepository.countByBoardId(command.boardId()))
-                                .thenReturn(0L);
+                when(boardListCreationPolicy.canCreateBoardList(command.boardId()))
+                                .thenReturn(Either.right(null));
+                when(boardListPolicyConfig.getMaxTitleLength())
+                                .thenReturn(100);
                 when(boardListRepository.findMaxPositionByBoardId(command.boardId()))
                                 .thenReturn(Optional.empty());
                 when(boardListRepository.save(any(BoardList.class)))
@@ -460,8 +459,8 @@ class CreateBoardListServiceTest {
 
                 verify(createBoardListValidator).validateCreateBoardList(command);
                 verify(boardRepository).findById(command.boardId());
-                verify(listLimitPolicy).canCreateList(0);
-                verify(boardListRepository).countByBoardId(command.boardId());
+                verify(boardListCreationPolicy).canCreateBoardList(command.boardId());
+                verify(boardListPolicyConfig).getMaxTitleLength();
                 verify(boardListRepository).findMaxPositionByBoardId(command.boardId());
                 verify(boardListRepository).save(any(BoardList.class));
         }

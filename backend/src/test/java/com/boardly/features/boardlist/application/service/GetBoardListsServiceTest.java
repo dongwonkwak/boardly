@@ -7,6 +7,7 @@ import com.boardly.features.boardlist.application.port.input.GetBoardListsComman
 import com.boardly.features.boardlist.application.validation.GetBoardListsValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
+import com.boardly.features.boardlist.domain.policy.BoardListCreationPolicy;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -43,6 +44,9 @@ class GetBoardListsServiceTest {
         private BoardListRepository boardListRepository;
 
         @Mock
+        private BoardListCreationPolicy boardListCreationPolicy;
+
+        @Mock
         private ValidationMessageResolver validationMessageResolver;
 
         @BeforeEach
@@ -51,6 +55,7 @@ class GetBoardListsServiceTest {
                                 getBoardListsValidator,
                                 boardRepository,
                                 boardListRepository,
+                                boardListCreationPolicy,
                                 validationMessageResolver);
         }
 
@@ -97,6 +102,8 @@ class GetBoardListsServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(command.boardId()))
                                 .thenReturn(expectedLists);
+                when(boardListCreationPolicy.getStatus(command.boardId()))
+                                .thenReturn(BoardListCreationPolicy.ListCountStatus.NORMAL);
 
                 // when
                 Either<Failure, List<BoardList>> result = getBoardListsService.getBoardLists(command);
@@ -110,6 +117,7 @@ class GetBoardListsServiceTest {
                 verify(getBoardListsValidator).validate(command);
                 verify(boardRepository).findById(command.boardId());
                 verify(boardListRepository).findByBoardIdOrderByPosition(command.boardId());
+                verify(boardListCreationPolicy).getStatus(command.boardId());
         }
 
         @Test
@@ -223,6 +231,8 @@ class GetBoardListsServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(command.boardId()))
                                 .thenReturn(List.of());
+                when(boardListCreationPolicy.getStatus(command.boardId()))
+                                .thenReturn(BoardListCreationPolicy.ListCountStatus.NORMAL);
 
                 // when
                 Either<Failure, List<BoardList>> result = getBoardListsService.getBoardLists(command);
@@ -234,6 +244,7 @@ class GetBoardListsServiceTest {
                 verify(getBoardListsValidator).validate(command);
                 verify(boardRepository).findById(command.boardId());
                 verify(boardListRepository).findByBoardIdOrderByPosition(command.boardId());
+                verify(boardListCreationPolicy).getStatus(command.boardId());
         }
 
         @Test
@@ -323,6 +334,8 @@ class GetBoardListsServiceTest {
                                 .thenReturn(Optional.of(board));
                 when(boardListRepository.findByBoardIdOrderByPosition(command.boardId()))
                                 .thenReturn(expectedLists);
+                when(boardListCreationPolicy.getStatus(command.boardId()))
+                                .thenReturn(BoardListCreationPolicy.ListCountStatus.NORMAL);
 
                 // when
                 Either<Failure, List<BoardList>> result = getBoardListsService.getBoardLists(command);
@@ -337,5 +350,6 @@ class GetBoardListsServiceTest {
                 verify(getBoardListsValidator).validate(command);
                 verify(boardRepository).findById(command.boardId());
                 verify(boardListRepository).findByBoardIdOrderByPosition(command.boardId());
+                verify(boardListCreationPolicy).getStatus(command.boardId());
         }
 }

@@ -5,6 +5,7 @@ import com.boardly.features.boardlist.application.port.input.UpdateBoardListComm
 import com.boardly.features.boardlist.application.usecase.UpdateBoardListUseCase;
 import com.boardly.features.boardlist.application.validation.UpdateBoardListValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
+import com.boardly.features.boardlist.domain.policy.BoardListPolicyConfig;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
@@ -35,6 +36,7 @@ public class UpdateBoardListService implements UpdateBoardListUseCase {
   private final UpdateBoardListValidator updateBoardListValidator;
   private final BoardRepository boardRepository;
   private final BoardListRepository boardListRepository;
+  private final BoardListPolicyConfig boardListPolicyConfig;
   private final ValidationMessageResolver validationMessageResolver;
 
   @Override
@@ -88,8 +90,16 @@ public class UpdateBoardListService implements UpdateBoardListUseCase {
 
     // 5. 리스트 정보 업데이트
     try {
-      // 제목 업데이트
+      // 제목 업데이트 (길이 제한 확인)
       if (command.title() != null) {
+        if (command.title().length() > boardListPolicyConfig.getMaxTitleLength()) {
+          log.warn("리스트 제목 길이 제한 초과: listId={}, titleLength={}, maxLength={}",
+              command.listId().getId(), command.title().length(), boardListPolicyConfig.getMaxTitleLength());
+          return Either.left(Failure.ofBusinessRuleViolation(
+              String.format("리스트 제목은 최대 %d자까지 입력할 수 있습니다.", boardListPolicyConfig.getMaxTitleLength()),
+              "TITLE_LENGTH_EXCEEDED",
+              Map.of("listId", command.listId().getId(), "titleLength", command.title().length())));
+        }
         currentList.updateTitle(command.title());
       }
 

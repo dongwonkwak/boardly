@@ -5,7 +5,8 @@ import com.boardly.features.boardlist.application.port.input.CreateBoardListComm
 import com.boardly.features.boardlist.application.usecase.CreateBoardListUseCase;
 import com.boardly.features.boardlist.application.validation.CreateBoardListValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.policy.ListLimitPolicy;
+import com.boardly.features.boardlist.domain.policy.BoardListCreationPolicy;
+import com.boardly.features.boardlist.domain.policy.BoardListPolicyConfig;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
@@ -31,7 +32,8 @@ public class CreateBoardListService implements CreateBoardListUseCase {
   private final CreateBoardListValidator createBoardListValidator;
   private final BoardRepository boardRepository;
   private final BoardListRepository boardListRepository;
-  private final ListLimitPolicy listLimitPolicy;
+  private final BoardListCreationPolicy boardListCreationPolicy;
+  private final BoardListPolicyConfig boardListPolicyConfig;
   private final ValidationMessageResolver validationMessageResolver;
 
   @Override
@@ -73,19 +75,28 @@ public class CreateBoardListService implements CreateBoardListUseCase {
     }
 
     // 3. 리스트 생성 정책 확인
-    var currentListCount = boardListRepository.countByBoardId(command.boardId());
-    if (!listLimitPolicy.canCreateList(currentListCount)) {
-      log.warn("리스트 생성 한도 초과: boardId={}, currentCount={}", command.boardId().getId(), currentListCount);
-      Map<String, Object> context = Map.of(
-          "boardId", command.boardId().getId(),
-          "currentCount", currentListCount);
+    var creationPolicyResult = boardListCreationPolicy.canCreateBoardList(command.boardId());
+    if (creationPolicyResult.isLeft()) {
+      log.warn("리스트 생성 정책 위반: boardId={}, error={}", command.boardId().getId(),
+          creationPolicyResult.getLeft().getMessage());
+      Map<String, Object> context = Map.of("boardId", command.boardId().getId());
       return Either.left(Failure.ofBusinessRuleViolation(
-          validationMessageResolver.getMessage("error.business.list.limit.exceeded"),
-          "LIST_LIMIT_EXCEEDED",
+          creationPolicyResult.getLeft().getMessage(),
+          "LIST_CREATION_POLICY_VIOLATION",
           context));
     }
 
-    // 4. 리스트 생성
+    // 4. 제목 길이 제한 확인
+    if (command.title().length() > boardListPolicyConfig.getMaxTitleLength()) {
+      log.warn("리스트 제목 길이 제한 초과: boardId={}, titleLength={}, maxLength={}",
+          command.boardId().getId(), command.title().length(), boardListPolicyConfig.getMaxTitleLength());
+      return Either.left(Failure.ofBusinessRuleViolation(
+          String.format("리스트 제목은 최대 %d자까지 입력할 수 있습니다.", boardListPolicyConfig.getMaxTitleLength()),
+          "TITLE_LENGTH_EXCEEDED",
+          Map.of("boardId", command.boardId().getId(), "titleLength", command.title().length())));
+    }
+
+    // 5. 리스트 생성
     try {
       // 다음 위치 계산
       var maxPositionResult = boardListRepository.findMaxPositionByBoardId(command.boardId());

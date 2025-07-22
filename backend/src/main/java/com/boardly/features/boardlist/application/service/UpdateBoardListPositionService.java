@@ -6,6 +6,7 @@ import com.boardly.features.boardlist.application.port.input.UpdateBoardListPosi
 import com.boardly.features.boardlist.application.usecase.UpdateBoardListPositionUseCase;
 import com.boardly.features.boardlist.application.validation.UpdateBoardListPositionValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
+import com.boardly.features.boardlist.domain.policy.BoardListMovePolicy;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
@@ -36,6 +37,7 @@ public class UpdateBoardListPositionService implements UpdateBoardListPositionUs
   private final UpdateBoardListPositionValidator updateBoardListPositionValidator;
   private final BoardRepository boardRepository;
   private final BoardListRepository boardListRepository;
+  private final BoardListMovePolicy boardListMovePolicy;
   private final ValidationMessageResolver validationMessageResolver;
 
   @Override
@@ -83,15 +85,19 @@ public class UpdateBoardListPositionService implements UpdateBoardListPositionUs
     // 5. 보드의 모든 리스트 조회
     List<BoardList> allLists = boardListRepository.findByBoardIdOrderByPosition(targetList.getBoardId());
 
-    // 6. 새로운 위치의 유효성 확인
-    if (command.newPosition() >= allLists.size()) {
-      log.warn("새로운 위치가 리스트 개수를 초과함: newPosition={}, totalLists={}",
-          command.newPosition(), allLists.size());
-      return Either.left(Failure.ofConflict("INVALID_POSITION"));
+    // 6. 리스트 이동 정책 확인
+    var movePolicyResult = boardListMovePolicy.canMoveWithinSameBoard(targetList, command.newPosition());
+    if (movePolicyResult.isLeft()) {
+      log.warn("리스트 이동 정책 위반: listId={}, newPosition={}, error={}",
+          command.listId().getId(), command.newPosition(), movePolicyResult.getLeft().getMessage());
+      return Either.left(Failure.ofBusinessRuleViolation(
+          movePolicyResult.getLeft().getMessage(),
+          "LIST_MOVE_POLICY_VIOLATION",
+          null));
     }
 
     // 7. 위치가 실제로 변경되는지 확인
-    if (currentPosition == command.newPosition()) {
+    if (!boardListMovePolicy.hasPositionChanged(targetList, command.newPosition())) {
       log.info("위치가 변경되지 않음: listId={}, currentPosition={}, newPosition={}",
           command.listId().getId(), currentPosition, command.newPosition());
       return Either.right(allLists);

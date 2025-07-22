@@ -5,6 +5,7 @@ import com.boardly.features.boardlist.application.port.input.GetBoardListsComman
 import com.boardly.features.boardlist.application.usecase.GetBoardListsUseCase;
 import com.boardly.features.boardlist.application.validation.GetBoardListsValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
+import com.boardly.features.boardlist.domain.policy.BoardListCreationPolicy;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
@@ -35,6 +36,7 @@ public class GetBoardListsService implements GetBoardListsUseCase {
   private final GetBoardListsValidator getBoardListsValidator;
   private final BoardRepository boardRepository;
   private final BoardListRepository boardListRepository;
+  private final BoardListCreationPolicy boardListCreationPolicy;
   private final ValidationMessageResolver validationMessageResolver;
 
   @Override
@@ -78,8 +80,15 @@ public class GetBoardListsService implements GetBoardListsUseCase {
     try {
       List<BoardList> boardLists = boardListRepository.findByBoardIdOrderByPosition(command.boardId());
 
-      log.info("보드 리스트 조회 완료: boardId={}, 리스트 개수={}",
-          command.boardId().getId(), boardLists.size());
+      // 5. 리스트 개수 상태 정보 로깅
+      var listCountStatus = boardListCreationPolicy.getStatus(command.boardId());
+      if (listCountStatus.requiresNotification()) {
+        log.warn("보드 리스트 개수 상태: boardId={}, status={}, message={}",
+            command.boardId().getId(), listCountStatus.getDisplayName(), listCountStatus.getMessage());
+      }
+
+      log.info("보드 리스트 조회 완료: boardId={}, 리스트 개수={}, 상태={}",
+          command.boardId().getId(), boardLists.size(), listCountStatus.getDisplayName());
       return Either.right(boardLists);
 
     } catch (Exception e) {

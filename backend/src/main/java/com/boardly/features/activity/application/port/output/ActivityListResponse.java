@@ -24,7 +24,7 @@ public record ActivityListResponse(
                 .build();
     }
 
-    public static ActivityListResponse withhPaging(
+    public static ActivityListResponse withPaging(
             List<ActivityResponse> activities,
             int totalCount,
             int currentPage,

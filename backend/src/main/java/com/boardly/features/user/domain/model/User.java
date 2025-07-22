@@ -24,9 +24,9 @@ public class User extends BaseEntity {
 
     @Builder
     private User(
-        UserId userId, String email, String hashedPassword, 
-        UserProfile userProfile, boolean isActive, Instant createdAt,
-        Instant updatedAt) {
+            UserId userId, String email, String hashedPassword,
+            UserProfile userProfile, boolean isActive, Instant createdAt,
+            Instant updatedAt) {
 
         super(createdAt, updatedAt);
         this.userId = userId;
@@ -42,14 +42,14 @@ public class User extends BaseEntity {
     public static User create(String email, String hashedPassword, UserProfile userProfile) {
         Instant now = Instant.now();
         return User.builder()
-            .userId(new UserId())
-            .email(email)
-            .hashedPassword(hashedPassword)
-            .userProfile(userProfile)
-            .isActive(true)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
+                .userId(new UserId())
+                .email(email)
+                .hashedPassword(hashedPassword)
+                .userProfile(userProfile)
+                .isActive(true)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 
     /**
@@ -89,10 +89,20 @@ public class User extends BaseEntity {
         return this.userProfile.getFullName();
     }
 
+    public String getFirstName() {
+        return this.userProfile.firstName();
+    }
+
+    public String getLastName() {
+        return this.userProfile.lastName();
+    }
+
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         User user = (User) obj;
         return Objects.equals(userId, user.userId);
     }

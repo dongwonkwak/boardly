@@ -2,7 +2,6 @@ package com.boardly.features.card.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -173,7 +172,8 @@ class CreateCardServiceTest {
                             .rejectedValue("너무 긴 설명...")
                             .build());
             when(cardValidator.validateCreate(validCommand))
-                    .thenReturn(ValidationResult.invalid(io.vavr.collection.List.ofAll(validationErrors)));
+                    .thenReturn(ValidationResult
+                            .invalid(io.vavr.collection.List.ofAll(validationErrors)));
 
             // when
             Either<Failure, Card> result = createCardService.createCard(validCommand);
@@ -221,7 +221,8 @@ class CreateCardServiceTest {
             // then
             assertThat(result.isLeft()).isTrue();
             assertThat(result.getLeft()).isInstanceOf(Failure.PermissionDenied.class);
-            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode()).isEqualTo("PERMISSION_DENIED");
+            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode())
+                    .isEqualTo("PERMISSION_DENIED");
         }
 
         @Test
@@ -451,7 +452,8 @@ class CreateCardServiceTest {
                             .rejectedValue(null)
                             .build());
             when(cardValidator.validateClone(validCommand))
-                    .thenReturn(ValidationResult.invalid(io.vavr.collection.List.ofAll(validationErrors)));
+                    .thenReturn(ValidationResult
+                            .invalid(io.vavr.collection.List.ofAll(validationErrors)));
 
             // when
             Either<Failure, Card> result = createCardService.cloneCard(validCommand);
@@ -501,7 +503,8 @@ class CreateCardServiceTest {
             // then
             assertThat(result.isLeft()).isTrue();
             assertThat(result.getLeft()).isInstanceOf(Failure.PermissionDenied.class);
-            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode()).isEqualTo("PERMISSION_DENIED");
+            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode())
+                    .isEqualTo("PERMISSION_DENIED");
         }
 
         @Test
@@ -529,7 +532,8 @@ class CreateCardServiceTest {
             // then
             assertThat(result.isLeft()).isTrue();
             assertThat(result.getLeft()).isInstanceOf(Failure.PermissionDenied.class);
-            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode()).isEqualTo("PERMISSION_DENIED");
+            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode())
+                    .isEqualTo("PERMISSION_DENIED");
         }
 
         @Test
@@ -691,7 +695,8 @@ class CreateCardServiceTest {
             // then
             assertThat(result.isLeft()).isTrue();
             assertThat(result.getLeft()).isInstanceOf(Failure.PermissionDenied.class);
-            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode()).isEqualTo("PERMISSION_DENIED");
+            assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode())
+                    .isEqualTo("PERMISSION_DENIED");
         }
 
         @Test

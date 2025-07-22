@@ -27,11 +27,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -128,7 +126,8 @@ class BoardListReadServiceTest {
         @DisplayName("유효한 데이터로 보드 리스트 조회가 성공해야 한다")
         void getBoardLists_withValidData_shouldReturnBoardLists() {
             // given
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
             ListCountStatus normalStatus = ListCountStatus.NORMAL;
 
             when(boardListValidator.validateGetBoardLists(validCommand))
@@ -158,7 +157,8 @@ class BoardListReadServiceTest {
         @DisplayName("빈 리스트가 있는 경우 빈 리스트를 반환해야 한다")
         void getBoardLists_withEmptyLists_shouldReturnEmptyList() {
             // given
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
             ListCountStatus normalStatus = ListCountStatus.NORMAL;
             List<BoardList> emptyList = List.of();
 
@@ -216,7 +216,8 @@ class BoardListReadServiceTest {
         @DisplayName("보드가 존재하지 않을 때 NotFound를 반환해야 한다")
         void getBoardLists_withNonExistentBoard_shouldReturnNotFound() {
             // given
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
 
             when(boardListValidator.validateGetBoardLists(validCommand))
                     .thenReturn(validValidationResult);
@@ -247,8 +248,10 @@ class BoardListReadServiceTest {
         void getBoardLists_withUnauthorizedAccess_shouldReturnPermissionDenied() {
             // given
             UserId unauthorizedUserId = new UserId("unauthorized-user-456");
-            GetBoardListsCommand unauthorizedCommand = new GetBoardListsCommand(testBoardId, unauthorizedUserId);
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(unauthorizedCommand);
+            GetBoardListsCommand unauthorizedCommand = new GetBoardListsCommand(testBoardId,
+                    unauthorizedUserId);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(unauthorizedCommand);
 
             when(boardListValidator.validateGetBoardLists(unauthorizedCommand))
                     .thenReturn(validValidationResult);
@@ -258,7 +261,8 @@ class BoardListReadServiceTest {
                     .thenReturn("보드에 접근할 권한이 없습니다");
 
             // when
-            Either<Failure, List<BoardList>> result = boardListReadService.getBoardLists(unauthorizedCommand);
+            Either<Failure, List<BoardList>> result = boardListReadService
+                    .getBoardLists(unauthorizedCommand);
 
             // then
             assertThat(result.isLeft()).isTrue();
@@ -278,7 +282,8 @@ class BoardListReadServiceTest {
         @DisplayName("리스트 조회 중 예외 발생 시 InternalError를 반환해야 한다")
         void getBoardLists_withQueryException_shouldReturnInternalError() {
             // given
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
             RuntimeException queryException = new RuntimeException("데이터베이스 연결 오류");
 
             when(boardListValidator.validateGetBoardLists(validCommand))
@@ -308,7 +313,8 @@ class BoardListReadServiceTest {
         @DisplayName("리스트 개수 상태가 알림이 필요한 경우 로그가 기록되어야 한다")
         void getBoardLists_withNotificationRequiredStatus_shouldLogWarning() {
             // given
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
             ListCountStatus warningStatus = ListCountStatus.WARNING;
 
             when(boardListValidator.validateGetBoardLists(validCommand))
@@ -342,7 +348,8 @@ class BoardListReadServiceTest {
         @DisplayName("보드 소유자가 자신의 보드 리스트를 조회할 때 성공해야 한다")
         void getBoardLists_withBoardOwner_shouldSucceed() {
             // given
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
             ListCountStatus normalStatus = ListCountStatus.NORMAL;
 
             when(boardListValidator.validateGetBoardLists(validCommand))
@@ -382,7 +389,8 @@ class BoardListReadServiceTest {
                     .updatedAt(Instant.now())
                     .build();
 
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
             ListCountStatus normalStatus = ListCountStatus.NORMAL;
 
             when(boardListValidator.validateGetBoardLists(validCommand))
@@ -416,7 +424,8 @@ class BoardListReadServiceTest {
         @DisplayName("리스트 조회 중 예외 발생 시 InternalError를 반환해야 한다")
         void getBoardLists_withQueryException_shouldReturnInternalError() {
             // given
-            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult.valid(validCommand);
+            ValidationResult<GetBoardListsCommand> validValidationResult = ValidationResult
+                    .valid(validCommand);
             RuntimeException queryException = new RuntimeException("데이터베이스 연결 오류");
 
             when(boardListValidator.validateGetBoardLists(validCommand))

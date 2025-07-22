@@ -38,13 +38,17 @@ class UpdateBoardServiceTest {
         @Mock
         private ValidationMessageResolver messageResolver;
 
+        @Mock
+        private BoardPermissionService boardPermissionService;
+
         private final UserId ownerId = new UserId();
         private final UserId otherUserId = new UserId();
         private final BoardId boardId = new BoardId();
 
         @BeforeEach
         void setUp() {
-                updateBoardService = new UpdateBoardService(updateBoardValidator, boardRepository, messageResolver);
+                updateBoardService = new UpdateBoardService(updateBoardValidator, boardRepository, messageResolver,
+                                boardPermissionService);
         }
 
         private UpdateBoardCommand createValidCommand() {

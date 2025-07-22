@@ -37,6 +37,7 @@ public class UpdateBoardService implements UpdateBoardUseCase {
     private final UpdateBoardValidator boardValidator;
     private final BoardRepository boardRepository;
     private final ValidationMessageResolver messageResolver;
+    private final BoardPermissionService boardPermissionService;
 
     /**
      * 보드를 업데이트합니다.
@@ -89,19 +90,21 @@ public class UpdateBoardService implements UpdateBoardUseCase {
     }
 
     /**
-     * 3단계: 권한 확인 (요청자가 보드 소유자인지 확인)
+     * 3단계: 권한 확인 (멤버 권한 시스템 사용)
      */
     private Either<Failure, BoardUpdateContext> verifyOwnership(BoardUpdateContext context) {
-        if (!context.board().getOwnerId().equals(context.command().requestedBy())) {
-            log.warn("보드 수정 권한 없음: boardId={}, ownerId={}, requestedBy={}",
-                    context.command().boardId().getId(),
-                    context.board().getOwnerId().getId(),
-                    context.command().requestedBy().getId());
-            return Either.left(
-                    Failure.ofPermissionDenied(
-                            messageResolver.getMessage("validation.board.modification.access.denied")));
-        }
-        return Either.right(context);
+        return boardPermissionService.canWriteBoard(context.command().boardId(), context.command().requestedBy())
+                .flatMap(canWrite -> {
+                    if (!canWrite) {
+                        log.warn("보드 수정 권한 없음: boardId={}, requestedBy={}",
+                                context.command().boardId().getId(),
+                                context.command().requestedBy().getId());
+                        return Either.left(
+                                Failure.ofPermissionDenied(
+                                        messageResolver.getMessage("validation.board.modification.access.denied")));
+                    }
+                    return Either.right(context);
+                });
     }
 
     /**

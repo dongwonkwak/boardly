@@ -145,6 +145,66 @@ public class Board extends BaseEntity {
         return canAccess(userId);
     }
 
+    /**
+     * 사용자가 이 보드에 접근할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canAccessWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasReadPermission() && !isArchived;
+    }
+
+    /**
+     * 사용자가 이 보드를 수정할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canModifyWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId) && !isArchived;
+        }
+        return role.hasWritePermission() && !isArchived;
+    }
+
+    /**
+     * 사용자가 이 보드를 아카이브할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canArchiveWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
+    /**
+     * 사용자가 이 보드의 즐겨찾기를 변경할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canToggleStarWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasWritePermission();
+    }
+
+    /**
+     * 사용자가 보드 멤버를 관리할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canManageMembersWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
+    /**
+     * 사용자가 보드 설정을 변경할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canManageBoardSettingsWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

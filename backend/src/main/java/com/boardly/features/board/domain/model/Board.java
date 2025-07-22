@@ -205,6 +205,16 @@ public class Board extends BaseEntity {
         return role.hasAdminPermission();
     }
 
+    /**
+     * 사용자가 보드를 삭제할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canDeleteWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)

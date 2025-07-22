@@ -223,4 +223,16 @@ public class CommonValidationRules {
                 maxLength(descriptionExtractor, "description", 2000, messageResolver),
                 noHtmlTags(descriptionExtractor, "description", messageResolver));
     }
+
+    /**
+     * 보드 멤버 역할 검증 (필수, 유효한 역할인지 확인)
+     */
+    public <T> Validator<T> boardMemberRoleRequired(Function<T, Object> roleExtractor) {
+        return Validator.fieldWithMessage(
+                roleExtractor,
+                value -> value != null,
+                "role",
+                "validation.board.member.role.required",
+                messageResolver);
+    }
 }

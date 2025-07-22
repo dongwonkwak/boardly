@@ -152,4 +152,18 @@ public class BoardPermissionService {
                     return board.canToggleStarWithRole(userId, role);
                 });
     }
+
+    /**
+     * 사용자가 보드를 삭제할 수 있는지 확인합니다.
+     */
+    public Either<Failure, Boolean> canDeleteBoard(BoardId boardId, UserId userId) {
+        return getUserBoardRole(boardId, userId)
+                .map(role -> {
+                    Board board = boardRepository.findById(boardId).orElse(null);
+                    if (board == null) {
+                        return false;
+                    }
+                    return board.canDeleteWithRole(userId, role);
+                });
+    }
 }

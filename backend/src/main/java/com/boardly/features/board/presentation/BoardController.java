@@ -22,13 +22,10 @@ import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
 import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
 import com.boardly.features.board.application.port.input.RemoveBoardMemberCommand;
 import com.boardly.features.board.application.port.input.DeleteBoardCommand;
-import com.boardly.features.board.application.usecase.CreateBoardUseCase;
-import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
-import com.boardly.features.board.application.usecase.ArchiveBoardUseCase;
-import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
-import com.boardly.features.board.application.usecase.ToggleStarBoardUseCase;
-import com.boardly.features.board.application.usecase.RemoveBoardMemberUseCase;
-import com.boardly.features.board.application.usecase.DeleteBoardUseCase;
+import com.boardly.features.board.application.service.BoardManagementService;
+import com.boardly.features.board.application.service.BoardMemberService;
+import com.boardly.features.board.application.service.BoardQueryService;
+import com.boardly.features.board.application.service.BoardInteractionService;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
@@ -67,13 +64,10 @@ public class BoardController {
 
     private static final String TAGS = "Board";
 
-    private final CreateBoardUseCase createBoardUseCase;
-    private final GetUserBoardsUseCase getUserBoardsUseCase;
-    private final UpdateBoardUseCase updateBoardUseCase;
-    private final ArchiveBoardUseCase archiveBoardUseCase;
-    private final ToggleStarBoardUseCase toggleStarBoardUseCase;
-    private final RemoveBoardMemberUseCase removeBoardMemberUseCase;
-    private final DeleteBoardUseCase deleteBoardUseCase;
+    private final BoardManagementService boardManagementService;
+    private final BoardMemberService boardMemberService;
+    private final BoardQueryService boardQueryService;
+    private final BoardInteractionService boardInteractionService;
     private final ApiFailureHandler failureHandler;
 
     @Operation(summary = "내 보드 목록 조회", description = "현재 사용자가 소유한 보드 목록을 조회합니다. 쿼리 파라미터로 아카이브된 보드 포함 여부를 설정할 수 있습니다.", tags = {
@@ -97,7 +91,7 @@ public class BoardController {
                 new UserId(userId),
                 includeArchived);
 
-        Either<Failure, List<Board>> result = getUserBoardsUseCase.getUserBoards(command);
+        Either<Failure, List<Board>> result = boardQueryService.getUserBoards(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -133,7 +127,7 @@ public class BoardController {
                 request.description(),
                 new UserId(userId));
 
-        Either<Failure, Board> result = createBoardUseCase.createBoard(command);
+        Either<Failure, Board> result = boardManagementService.createBoard(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -171,7 +165,7 @@ public class BoardController {
                 request.description(),
                 new UserId(userId));
 
-        Either<Failure, Board> result = updateBoardUseCase.updateBoard(command);
+        Either<Failure, Board> result = boardManagementService.updateBoard(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -204,7 +198,7 @@ public class BoardController {
                 new BoardId(boardId),
                 new UserId(userId));
 
-        Either<Failure, Board> result = archiveBoardUseCase.archiveBoard(command);
+        Either<Failure, Board> result = boardManagementService.archiveBoard(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -237,7 +231,7 @@ public class BoardController {
                 new BoardId(boardId),
                 new UserId(userId));
 
-        Either<Failure, Board> result = archiveBoardUseCase.unarchiveBoard(command);
+        Either<Failure, Board> result = boardManagementService.unarchiveBoard(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -270,7 +264,7 @@ public class BoardController {
                 new BoardId(boardId),
                 new UserId(userId));
 
-        Either<Failure, Board> result = toggleStarBoardUseCase.starringBoard(command);
+        Either<Failure, Board> result = boardInteractionService.starringBoard(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -303,7 +297,7 @@ public class BoardController {
                 new BoardId(boardId),
                 new UserId(userId));
 
-        Either<Failure, Board> result = toggleStarBoardUseCase.unstarringBoard(command);
+        Either<Failure, Board> result = boardInteractionService.unstarringBoard(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -340,7 +334,7 @@ public class BoardController {
                 new UserId(targetUserId),
                 new UserId(userId));
 
-        Either<Failure, Void> result = removeBoardMemberUseCase.removeBoardMember(command);
+        Either<Failure, Void> result = boardMemberService.removeBoardMember(command);
 
         return result.fold(
                 failureHandler::handleFailure,
@@ -374,7 +368,7 @@ public class BoardController {
                 new BoardId(boardId),
                 new UserId(userId));
 
-        Either<Failure, Void> result = deleteBoardUseCase.deleteBoard(command);
+        Either<Failure, Void> result = boardManagementService.deleteBoard(command);
 
         return result.fold(
                 failureHandler::handleFailure,

@@ -4,6 +4,7 @@ import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
 import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
@@ -16,13 +17,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * 보드 조회 서비스
+ * 
+ * <p>
+ * 보드 조회 관련 작업을 담당하는 통합 서비스입니다.
+ * </p>
+ */
 @Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class GetUserBoardsService implements GetUserBoardsUseCase {
+public class BoardQueryService implements GetUserBoardsUseCase {
 
     private final BoardRepository boardRepository;
+    private final UserFinder userFinder;
     private final ValidationMessageResolver validationMessageResolver;
 
     @Override
@@ -56,7 +65,13 @@ public class GetUserBoardsService implements GetUserBoardsUseCase {
                     List.of(violation)));
         }
 
-        // 2. 보드 목록 조회
+        // 2. 사용자 존재 확인
+        if (!userFinder.checkUserExists(command.ownerId())) {
+            return Either.left(Failure
+                    .ofNotFound(validationMessageResolver.getMessage("validation.user.not.found")));
+        }
+
+        // 3. 보드 목록 조회
         return Try.of(() -> {
             List<Board> boards;
 
@@ -83,9 +98,12 @@ public class GetUserBoardsService implements GetUserBoardsUseCase {
                 .fold(
                         throwable -> {
                             log.error("사용자 보드 목록 조회 중 예외 발생: ownerId={}, error={}",
-                                    command.ownerId(), throwable.getMessage(), throwable);
+                                    command.ownerId(), throwable.getMessage(),
+                                    throwable);
                             return Either
-                                    .left(Failure.ofInternalError(throwable.getMessage(), "BOARD_QUERY_ERROR", null));
+                                    .left(Failure.ofInternalError(
+                                            throwable.getMessage(),
+                                            "BOARD_QUERY_ERROR", null));
                         },
                         Either::right);
     }

@@ -3,6 +3,8 @@ package com.boardly.features.card.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.activity.domain.model.ActivityType;
 import com.boardly.features.card.application.port.input.UpdateCardCommand;
 import com.boardly.features.card.application.port.input.MoveCardCommand;
 import com.boardly.features.card.application.usecase.UpdateCardUseCase;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -47,6 +50,7 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
     private final BoardListRepository boardListRepository;
     private final BoardRepository boardRepository;
     private final ValidationMessageResolver validationMessageResolver;
+    private final ActivityHelper activityHelper;
 
     @Override
     public Either<Failure, Card> updateCard(UpdateCardCommand command) {
@@ -99,7 +103,7 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
         // 4. 이동 유형에 따른 처리
         if (command.targetListId() == null) {
             // 같은 리스트 내 이동
-            return moveWithinSameList(card, command.newPosition());
+            return moveWithinSameList(card, command.newPosition(), command.userId());
         } else {
             // 다른 리스트로 이동
             return moveToAnotherList(card, command.targetListId(), command.newPosition(), command.userId());
@@ -185,10 +189,13 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
      */
     private Either<Failure, CardUpdateContext> applyChangesToCard(CardUpdateContext context) {
         try {
+            // 이전 제목 저장
+            String oldTitle = context.card().getTitle();
+
             // 제목 업데이트
             context.card().updateTitle(context.command().title());
-            log.debug("카드 제목 업데이트: cardId={}, newTitle={}",
-                    context.command().cardId().getId(), context.command().title());
+            log.debug("카드 제목 업데이트: cardId={}, oldTitle={}, newTitle={}",
+                    context.command().cardId().getId(), oldTitle, context.command().title());
 
             // 설명 업데이트
             context.card().updateDescription(context.command().description());
@@ -196,7 +203,7 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
                     context.command().cardId().getId(),
                     context.command().description() != null ? context.command().description().length() : 0);
 
-            return Either.right(context);
+            return Either.right(new CardUpdateContext(context.command(), context.card(), oldTitle));
         } catch (Exception e) {
             log.error("카드 변경 중 오류 발생: cardId={}, error={}",
                     context.command().cardId().getId(), e.getMessage(), e);
@@ -210,14 +217,30 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
      */
     private Either<Failure, Card> saveUpdatedCard(CardUpdateContext context) {
         return cardRepository.save(context.card())
-                .peek(card -> log.info("카드 수정 완료: cardId={}, title={}",
-                        card.getCardId().getId(), card.getTitle()));
+                .peek(card -> {
+                    log.info("카드 수정 완료: cardId={}, title={}",
+                            card.getCardId().getId(), card.getTitle());
+
+                    // 활동 로그 기록
+                    var payload = Map.<String, Object>of(
+                            "oldTitle", context.oldTitle() != null ? context.oldTitle() : context.command().title(),
+                            "newTitle", context.command().title(),
+                            "cardId", card.getCardId().getId());
+
+                    activityHelper.logCardActivity(
+                            ActivityType.CARD_RENAME,
+                            context.command().userId(),
+                            payload,
+                            getBoardIdFromListId(card.getListId()),
+                            card.getListId(),
+                            card.getCardId());
+                });
     }
 
     /**
      * 같은 리스트 내에서 카드를 이동합니다.
      */
-    private Either<Failure, Card> moveWithinSameList(Card card, int newPosition) {
+    private Either<Failure, Card> moveWithinSameList(Card card, int newPosition, UserId userId) {
         log.debug("같은 리스트 내 카드 이동: cardId={}, oldPosition={}, newPosition={}",
                 card.getCardId().getId(), card.getPosition(), newPosition);
 
@@ -238,7 +261,12 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
                     log.debug("카드 위치 업데이트 완료: cardId={}, newPosition={}",
                             card.getCardId().getId(), newPosition);
 
-                    return cardRepository.save(card);
+                    return cardRepository.save(card)
+                            .peek(savedCard -> {
+                                // 같은 리스트 내 이동은 활동 로그에 기록하지 않음 (위치만 변경)
+                                log.debug("같은 리스트 내 카드 이동 완료: cardId={}, newPosition={}",
+                                        savedCard.getCardId().getId(), newPosition);
+                            });
                 });
     }
 
@@ -281,7 +309,24 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
                     log.debug("카드 이동 완료: cardId={}, newListId={}, newPosition={}",
                             card.getCardId().getId(), targetListId.getId(), newPosition);
 
-                    return cardRepository.save(card);
+                    return cardRepository.save(card)
+                            .peek(savedCard -> {
+                                // 활동 로그 기록
+                                var sourceList = boardListRepository.findById(card.getListId()).orElse(null);
+                                var targetList = boardListRepository.findById(targetListId).orElse(null);
+
+                                if (sourceList != null && targetList != null) {
+                                    activityHelper.logCardMove(
+                                            userId,
+                                            savedCard.getTitle(),
+                                            sourceList.getTitle(),
+                                            targetList.getTitle(),
+                                            getBoardIdFromListId(targetListId),
+                                            sourceList.getListId(),
+                                            targetList.getListId(),
+                                            savedCard.getCardId());
+                                }
+                            });
                 });
     }
 
@@ -372,10 +417,27 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
     }
 
     /**
+     * 리스트 ID로부터 보드 ID를 조회하는 헬퍼 메서드
+     */
+    private com.boardly.features.board.domain.model.BoardId getBoardIdFromListId(ListId listId) {
+        return boardListRepository.findById(listId)
+                .map(list -> list.getBoardId())
+                .orElse(null);
+    }
+
+    /**
      * 카드 업데이트 과정에서 사용되는 컨텍스트 객체
      */
     private record CardUpdateContext(
             UpdateCardCommand command,
-            Card card) {
+            Card card,
+            String oldTitle) {
+
+        /**
+         * 기본 생성자 (oldTitle이 null인 경우)
+         */
+        CardUpdateContext(UpdateCardCommand command, Card card) {
+            this(command, card, null);
+        }
     }
 }

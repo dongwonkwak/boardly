@@ -28,4 +28,9 @@ public final class Path {
    * 특정 보드의 리스트 목록 조회 경로
    */
   public static final String BOARD_LISTS_BY_BOARD = BOARD_LISTS + "/board/{boardId}";
+
+  /**
+   * Activity 관련 경로
+   */
+  public static final String ACTIVITIES = PREFIX + "/activities";
 }

@@ -90,10 +90,26 @@ public class ActivityReadService implements GetActivityUseCase {
             return activityRepository.findByBoardIdAndTimestampBetween(
                     query.boardId(), query.since(), query.until());
         } else if (query.since() != null) {
-            return activityRepository.findByBoardIdAndTimestampAfter(
-                    query.boardId(), query.since());
+            return fetchBoardActivitiesWithSinceAndPaging(query);
         } else {
             return fetchBoardActivitiesWithPaging(query);
+        }
+    }
+
+    /**
+     * 보드 활동 조회 (since 파라미터와 페이징 포함)
+     */
+    private List<Activity> fetchBoardActivitiesWithSinceAndPaging(GetActivityQuery query) {
+        int page = query.getPageOrDefault();
+        int size = query.getSizeOrDefault();
+        boolean hasPaging = page > 0 || size != 50;
+
+        if (hasPaging) {
+            return activityRepository.findByBoardIdAndTimestampAfter(
+                    query.boardId(), query.since(), page, size);
+        } else {
+            return activityRepository.findByBoardIdAndTimestampAfter(
+                    query.boardId(), query.since());
         }
     }
 
@@ -158,7 +174,11 @@ public class ActivityReadService implements GetActivityUseCase {
      */
     private long getTotalCount(GetActivityQuery query) {
         if (query.boardId() != null) {
-            return activityRepository.countByBoardId(query.boardId());
+            if (query.since() != null) {
+                return activityRepository.countByBoardIdAndTimestampAfter(query.boardId(), query.since());
+            } else {
+                return activityRepository.countByBoardId(query.boardId());
+            }
         } else {
             return activityRepository.countByActorId(query.userId());
         }

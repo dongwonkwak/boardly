@@ -54,6 +54,11 @@ public interface ActivityRepository {
     long countByBoardId(BoardId boardId);
 
     /**
+     * 특정 시점 이후의 보드 활동 개수를 조회합니다.
+     */
+    long countByBoardIdAndTimestampAfter(BoardId boardId, Instant after);
+
+    /**
      * 사용자의 활동 개수를 조회합니다.
      */
     long countByActorId(UserId userId);
@@ -62,6 +67,11 @@ public interface ActivityRepository {
      * 특정 시점 이후의 보드 활동을 조회합니다.
      */
     List<Activity> findByBoardIdAndTimestampAfter(BoardId boardId, Instant after);
+
+    /**
+     * 특정 시점 이후의 보드 활동을 페이징으로 조회합니다.
+     */
+    List<Activity> findByBoardIdAndTimestampAfter(BoardId boardId, Instant after, int page, int size);
 
     /**
      * 오래된 활동을 삭제합니다 (데이터 정리용).

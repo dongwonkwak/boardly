@@ -79,6 +79,16 @@ public interface ActivityJpaRepository extends JpaRepository<ActivityEntity, Str
     long countByBoardId(@Param("boardId") String boardId);
 
     /**
+     * 특정 보드의 활동 중 지정된 시간 이후의 활동 개수를 조회합니다.
+     * 
+     * @param boardId 조회할 보드 ID
+     * @param after   조회 시작 시간 (이후)
+     * @return 해당 보드의 지정 시간 이후 활동 총 개수
+     */
+    @Query("SELECT COUNT(a) FROM ActivityEntity a WHERE a.boardId = :boardId AND a.createdAt > :after")
+    long countByBoardIdAndCreatedAtAfter(@Param("boardId") String boardId, @Param("after") Instant after);
+
+    /**
      * 특정 사용자의 활동 개수를 조회합니다.
      * 
      * @param actorId 조회할 사용자 ID
@@ -97,6 +107,18 @@ public interface ActivityJpaRepository extends JpaRepository<ActivityEntity, Str
     @Query("SELECT a FROM ActivityEntity a WHERE a.boardId = :boardId AND a.createdAt > :after ORDER BY a.createdAt DESC")
     List<ActivityEntity> findByBoardIdAndCreatedAtAfter(@Param("boardId") String boardId,
             @Param("after") Instant after);
+
+    /**
+     * 특정 보드의 활동 중 지정된 시간 이후의 활동을 생성일시 역순으로 페이징하여 조회합니다.
+     * 
+     * @param boardId  조회할 보드 ID
+     * @param after    조회 시작 시간 (이후)
+     * @param pageable 페이징 정보 (페이지 번호, 크기 등)
+     * @return 해당 보드의 지정 시간 이후 활동 목록 (최신순, 페이징 적용)
+     */
+    @Query("SELECT a FROM ActivityEntity a WHERE a.boardId = :boardId AND a.createdAt > :after ORDER BY a.createdAt DESC")
+    List<ActivityEntity> findByBoardIdAndCreatedAtAfter(@Param("boardId") String boardId,
+            @Param("after") Instant after, Pageable pageable);
 
     /**
      * 지정된 시간 이전의 모든 활동을 삭제합니다.

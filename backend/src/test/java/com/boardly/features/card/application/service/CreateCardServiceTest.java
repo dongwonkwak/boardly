@@ -634,7 +634,6 @@ class CreateCardServiceTest {
         private ListId listId;
         private UserId userId;
         private BoardList boardList;
-        private Board board;
 
         @BeforeEach
         void setUp() {
@@ -644,10 +643,6 @@ class CreateCardServiceTest {
                     "테스트 리스트",
                     0,
                     new BoardId("board-123"));
-            board = Board.create(
-                    "테스트 보드",
-                    "테스트 보드 설명",
-                    userId);
         }
 
         @Test

@@ -47,21 +47,28 @@ public class OpenAPIConfig {
                         new Tag().name("Users").description("사용자 관리 API"),
                         new Tag().name("Boards").description("보드 관리 API"),
                         new Tag().name("BoardLists").description("리스트 관리 API"),
-                        new Tag().name("Cards").description("카드 관리 API")))
+                        new Tag().name("Cards").description("카드 관리 API"),
+                        new Tag().name("Activities").description("활동 관리 API")))
                 .servers(List.of(new Server().url(appUrl)))
                 .components(new Components()
                         .addSecuritySchemes("oauth2",
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.OAUTH2)
                                         .flows(new OAuthFlows()
-                                                .authorizationCode(new OAuthFlow()
-                                                        .authorizationUrl(authorizationUri)
-                                                        .tokenUrl(tokenUri)
-                                                        .scopes(new Scopes()
-                                                                .addString("read", "Read access")
-                                                                .addString("write", "Write access")
-                                                                .addString("openid", "OpenID Connect"))))))
-                .addSecurityItem(new SecurityRequirement().addList("oauth2", List.of("read", "write", "openid")));
+                                                .authorizationCode(
+                                                        new OAuthFlow()
+                                                                .authorizationUrl(
+                                                                        authorizationUri)
+                                                                .tokenUrl(tokenUri)
+                                                                .scopes(new Scopes()
+                                                                        .addString("read",
+                                                                                "Read access")
+                                                                        .addString("write",
+                                                                                "Write access")
+                                                                        .addString("openid",
+                                                                                "OpenID Connect"))))))
+                .addSecurityItem(new SecurityRequirement().addList("oauth2",
+                        List.of("read", "write", "openid")));
     }
 
 }

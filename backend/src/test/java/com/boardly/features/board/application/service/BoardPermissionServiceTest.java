@@ -43,7 +43,6 @@ class BoardPermissionServiceTest {
     private UserId testUserId;
     private UserId differentUserId;
     private Board testBoard;
-    private BoardMember testBoardMember;
 
     @BeforeEach
     void setUp() {
@@ -57,7 +56,6 @@ class BoardPermissionServiceTest {
         differentUserId = new UserId();
 
         testBoard = createTestBoard(testBoardId, testUserId);
-        testBoardMember = createTestBoardMember(testBoardId, testUserId, BoardRole.EDITOR);
     }
 
     // ==================== HELPER METHODS ====================

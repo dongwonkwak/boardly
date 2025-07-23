@@ -10,7 +10,6 @@ import com.boardly.features.boardlist.presentation.request.UpdateBoardListReques
 import com.boardly.features.boardlist.presentation.request.UpdateBoardListPositionRequest;
 import com.boardly.features.boardlist.presentation.response.BoardListResponse;
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.response.ErrorResponse;
@@ -197,7 +196,8 @@ class BoardListControllerTest {
                     CreateBoardListCommand cmd = invocation.getArgument(0);
                     // 실제 요청된 색상을 사용하여 BoardList 생성
                     String color = cmd.color() != null ? cmd.color().color() : "#0079BF";
-                    BoardList list = createSampleBoardList("list-new", cmd.title(), cmd.description(), 0, color,
+                    BoardList list = createSampleBoardList("list-new", cmd.title(),
+                            cmd.description(), 0, color,
                             cmd.boardId().getId());
                     return Either.right(list);
                 });
@@ -223,7 +223,8 @@ class BoardListControllerTest {
         String boardId = "board-123";
         String defaultColor = "#0079BF";
         CreateBoardListRequest request = new CreateBoardListRequest("새 리스트", "새 리스트 설명", null);
-        BoardList createdList = createSampleBoardList("list-new", "새 리스트", "새 리스트 설명", 0, defaultColor, boardId);
+        BoardList createdList = createSampleBoardList("list-new", "새 리스트", "새 리스트 설명", 0, defaultColor,
+                boardId);
 
         when(jwt.getSubject()).thenReturn(userId);
         when(createBoardListUseCase.createBoardList(any(CreateBoardListCommand.class)))
@@ -296,7 +297,8 @@ class BoardListControllerTest {
                         .rejectedValue("")
                         .build());
         Failure validationFailure = Failure.ofValidation("TITLE_REQUIRED", violations);
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .build();
 
         when(jwt.getSubject()).thenReturn(userId);
         when(createBoardListUseCase.createBoardList(any(CreateBoardListCommand.class)))
@@ -327,7 +329,8 @@ class BoardListControllerTest {
                     UpdateBoardListCommand cmd = invocation.getArgument(0);
                     // 실제 요청된 색상을 사용하여 BoardList 생성
                     String color = cmd.color() != null ? cmd.color().color() : "#0079BF";
-                    BoardList list = createSampleBoardList(cmd.listId().getId(), cmd.title(), cmd.description(), 0,
+                    BoardList list = createSampleBoardList(cmd.listId().getId(), cmd.title(),
+                            cmd.description(), 0,
                             color, "board-123");
                     return Either.right(list);
                 });
@@ -352,7 +355,8 @@ class BoardListControllerTest {
         String listId = "list-123";
         String originalColor = "#0079BF";
         UpdateBoardListRequest request = new UpdateBoardListRequest("수정된 리스트", "수정된 설명", null);
-        BoardList updatedList = createSampleBoardList(listId, "수정된 리스트", "수정된 설명", 0, originalColor, "board-123");
+        BoardList updatedList = createSampleBoardList(listId, "수정된 리스트", "수정된 설명", 0, originalColor,
+                "board-123");
 
         when(jwt.getSubject()).thenReturn(userId);
         when(updateBoardListUseCase.updateBoardList(any(UpdateBoardListCommand.class)))
@@ -426,7 +430,8 @@ class BoardListControllerTest {
                         .rejectedValue("")
                         .build());
         Failure validationFailure = Failure.ofValidation("TITLE_REQUIRED", violations);
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .build();
 
         when(jwt.getSubject()).thenReturn(userId);
         when(updateBoardListUseCase.updateBoardList(any(UpdateBoardListCommand.class)))
@@ -637,7 +642,8 @@ class BoardListControllerTest {
                         .rejectedValue(-1)
                         .build());
         Failure validationFailure = Failure.ofValidation("INVALID_POSITION", violations);
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .build();
 
         when(jwt.getSubject()).thenReturn(userId);
         when(updateBoardListPositionUseCase.updateBoardListPosition(any(UpdateBoardListPositionCommand.class)))

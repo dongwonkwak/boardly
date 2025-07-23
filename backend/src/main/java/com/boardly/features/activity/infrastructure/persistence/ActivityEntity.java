@@ -18,12 +18,10 @@ import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.activity.domain.model.ActivityId;
-import com.boardly.shared.domain.common.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

@@ -71,8 +71,6 @@ public class BoardListDeleteService implements DeleteBoardListUseCase {
             return Either.left(Failure.ofNotFound("BOARD_NOT_FOUND"));
         }
 
-        var board = boardResult.get();
-
         // 4. 권한 확인 (보드 소유자 또는 쓰기 권한이 있는 멤버만 삭제 가능)
         var permissionResult = boardPermissionService.canWriteBoard(listToDelete.getBoardId(), command.userId());
         if (permissionResult.isLeft()) {

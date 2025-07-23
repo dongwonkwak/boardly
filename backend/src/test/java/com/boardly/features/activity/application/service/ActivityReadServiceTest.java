@@ -2,10 +2,8 @@ package com.boardly.features.activity.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -204,6 +202,8 @@ class ActivityReadServiceTest {
                                         .boardId(boardId)
                                         .since(since)
                                         .until(until)
+                                        .page(0) // 기본값
+                                        .size(50) // 기본값으로 설정하여 페이징이 없는 것으로 간주
                                         .build();
 
                         List<Activity> mockActivities = createMockActivities();
@@ -217,6 +217,9 @@ class ActivityReadServiceTest {
                         assertThat(result.isRight()).isTrue();
                         ActivityListResponse response = result.get();
                         assertThat(response.activities()).hasSize(2);
+                        assertThat(response.totalCount()).isEqualTo(2);
+                        assertThat(response.currentPage()).isEqualTo(0);
+                        assertThat(response.totalPages()).isEqualTo(1);
 
                         verify(activityRepository).findByBoardIdAndTimestampBetween(boardId, since, until);
                 }
@@ -230,6 +233,8 @@ class ActivityReadServiceTest {
                         GetActivityQuery query = GetActivityQuery.builder()
                                         .boardId(boardId)
                                         .since(since)
+                                        .page(0) // 기본값
+                                        .size(50) // 기본값으로 설정하여 페이징이 없는 것으로 간주
                                         .build();
 
                         List<Activity> mockActivities = createMockActivities();
@@ -243,6 +248,9 @@ class ActivityReadServiceTest {
                         assertThat(result.isRight()).isTrue();
                         ActivityListResponse response = result.get();
                         assertThat(response.activities()).hasSize(2);
+                        assertThat(response.totalCount()).isEqualTo(2);
+                        assertThat(response.currentPage()).isEqualTo(0);
+                        assertThat(response.totalPages()).isEqualTo(1);
 
                         verify(activityRepository).findByBoardIdAndTimestampAfter(boardId, since);
                 }

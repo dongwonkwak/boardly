@@ -137,6 +137,12 @@ public class ActivityRepositoryImpl implements ActivityRepository {
     }
 
     @Override
+    public long countByBoardIdAndTimestampAfter(BoardId boardId, Instant after) {
+        log.debug("보드별 특정 시점 이후 활동 개수 조회: boardId={}, after={}", boardId.getId(), after);
+        return activityJpaRepository.countByBoardIdAndCreatedAtAfter(boardId.getId(), after);
+    }
+
+    @Override
     public long countByActorId(UserId userId) {
         log.debug("사용자별 활동 개수 조회: userId={}", userId.getId());
         return activityJpaRepository.countByActorId(userId.getId());
@@ -152,6 +158,22 @@ public class ActivityRepositoryImpl implements ActivityRepository {
                 .map(ActivityEntity::toDomainEntity)
                 .toList();
         log.debug("보드별 특정 시점 이후 활동 목록 조회 완료: boardId={}, 활동 개수={}", boardId.getId(),
+                activities.size());
+        return activities;
+    }
+
+    @Override
+    public List<Activity> findByBoardIdAndTimestampAfter(BoardId boardId, Instant after, int page, int size) {
+        log.debug("보드별 특정 시점 이후 활동 목록 페이징 조회: boardId={}, after={}, page={}, size={}",
+                boardId.getId(), after, page, size);
+
+        Pageable pageable = PageRequest.of(page, size);
+        List<ActivityEntity> entities = activityJpaRepository.findByBoardIdAndCreatedAtAfter(
+                boardId.getId(), after, pageable);
+        List<Activity> activities = entities.stream()
+                .map(ActivityEntity::toDomainEntity)
+                .toList();
+        log.debug("보드별 특정 시점 이후 활동 목록 페이징 조회 완료: boardId={}, 활동 개수={}", boardId.getId(),
                 activities.size());
         return activities;
     }

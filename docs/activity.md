@@ -400,6 +400,78 @@
 
 **예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드의 설명을 수정했습니다."
 
+#### 1.14 카드 제목 수정 (CARD_RENAME)
+
+**타입**: `CARD_RENAME`
+
+**설명**: 카드의 제목만 수정되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "oldTitle": "사용자 인증 기능 구현",
+  "newTitle": "JWT 인증 시스템 구현",
+  "cardId": "card_456"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `oldTitle` | string | 수정 전 카드 제목 |
+| `newTitle` | string | 수정 후 카드 제목 |
+| `cardId` | string | 카드 ID |
+
+**예시 메시지**: "홍길동님이 카드의 이름을 '사용자 인증 기능 구현'에서 'JWT 인증 시스템 구현'으로 변경했습니다."
+
+#### 1.15 카드 마감일 제거 (CARD_REMOVE_DUE_DATE)
+
+**타입**: `CARD_REMOVE_DUE_DATE`
+
+**설명**: 카드의 마감일이 제거되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "cardTitle": "JWT 인증 시스템 구현",
+  "cardId": "card_456",
+  "removedDueDate": "2025-08-15"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `cardTitle` | string | 카드 제목 |
+| `cardId` | string | 카드 ID |
+| `removedDueDate` | string | 제거된 마감일 |
+
+**예시 메시지**: "홍길동님이 'JWT 인증 시스템 구현' 카드의 마감일을 제거했습니다."
+
+#### 1.16 카드 보관 해제 (CARD_UNARCHIVE)
+
+**타입**: `CARD_UNARCHIVE`
+
+**설명**: 카드가 보관에서 복원되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "cardTitle": "JWT 인증 시스템 구현",
+  "cardId": "card_456",
+  "listName": "Done"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `cardTitle` | string | 복원된 카드의 제목 |
+| `cardId` | string | 카드 ID |
+| `listName` | string | 복원된 리스트 이름 |
+
+**예시 메시지**: "홍길동님이 'JWT 인증 시스템 구현' 카드를 보관에서 복원했습니다."
+
 ### 2. 리스트 관련 활동
 
 #### 2.1 리스트 생성 (LIST_CREATE)
@@ -504,7 +576,31 @@
 
 **예시 메시지**: "홍길동님이 'Done' 리스트를 보관했습니다."
 
-#### 2.5 리스트 이동 (LIST_MOVE)
+#### 2.5 리스트 보관 해제 (LIST_UNARCHIVE)
+
+**타입**: `LIST_UNARCHIVE`
+
+**설명**: 리스트가 보관에서 복원되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "listName": "Done",
+  "listId": "list_456",
+  "boardName": "프로젝트 A"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `listName` | string | 복원된 리스트 이름 |
+| `listId` | string | 리스트 ID |
+| `boardName` | string | 보드 이름 |
+
+**예시 메시지**: "홍길동님이 'Done' 리스트를 보관에서 복원했습니다."
+
+#### 2.6 리스트 이동 (LIST_MOVE)
 
 **타입**: `LIST_MOVE`
 
@@ -532,7 +628,7 @@
 
 **예시 메시지**: "홍길동님이 'In Progress' 리스트를 옮겼습니다."
 
-#### 2.6 리스트 삭제 (LIST_DELETE)
+#### 2.7 리스트 삭제 (LIST_DELETE)
 
 **타입**: `LIST_DELETE`
 
@@ -712,7 +808,55 @@
 
 **예시 메시지**: "홍길동님이 보드에서 김제인님을 제외했습니다."
 
-#### 3.7 보드 삭제 (BOARD_DELETE)
+#### 3.7 보드 아카이브 (BOARD_ARCHIVE)
+
+**타입**: `BOARD_ARCHIVE`
+
+**설명**: 보드가 아카이브되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "boardName": "웹 애플리케이션 개발",
+  "boardId": "board_123",
+  "listCount": 5,
+  "cardCount": 25
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `boardName` | string | 아카이브된 보드 이름 |
+| `boardId` | string | 보드 ID |
+| `listCount` | number | 아카이브된 리스트 수 |
+| `cardCount` | number | 아카이브된 카드 수 |
+
+**예시 메시지**: "홍길동님이 '웹 애플리케이션 개발' 보드를 아카이브했습니다."
+
+#### 3.8 보드 언아카이브 (BOARD_UNARCHIVE)
+
+**타입**: `BOARD_UNARCHIVE`
+
+**설명**: 보드가 아카이브에서 복원되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "boardName": "웹 애플리케이션 개발",
+  "boardId": "board_123"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `boardName` | string | 복원된 보드 이름 |
+| `boardId` | string | 보드 ID |
+
+**예시 메시지**: "홍길동님이 '웹 애플리케이션 개발' 보드를 아카이브에서 복원했습니다."
+
+#### 3.9 보드 삭제 (BOARD_DELETE)
 
 **타입**: `BOARD_DELETE`
 
@@ -790,7 +934,7 @@
 | `newLanguage` | string | 변경 후 언어 코드 |
 | `userId` | string | 사용자 ID |
 
-**예시 메시지**: "홍길동님이 언어 설정을 한국어에서 영어로 변경했습니다."
+**예시 메시지**: "홍길동님이 언어 설정을 변경했습니다."
 
 #### 4.3 사용자 비밀번호 변경 (USER_CHANGE_PASSWORD)
 
@@ -859,6 +1003,9 @@
 | `CARD_ADD_CHECKLIST` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에 {{checklistName}} 체크리스트를 추가했습니다.` | `{{actorFirstName}} {{actorLastName}} added the checklist {{checklistName}} to the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `checklistName` |
 | `CARD_DUPLICATE` | `{{actorLastName}}{{actorFirstName}}님이 {{originalCardTitle}} 카드를 복제하여 {{newCardTitle}} 카드를 생성했습니다.` | `{{actorFirstName}} {{actorLastName}} duplicated the card {{originalCardTitle}} to create the card {{newCardTitle}}.` | `actorLastName`, `actorFirstName`, `originalCardTitle`, `newCardTitle` |
 | `CARD_UPDATE_DESCRIPTION` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드의 설명을 수정했습니다.` | `{{actorFirstName}} {{actorLastName}} updated the description of the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle` |
+| `CARD_RENAME` | `{{actorLastName}}{{actorFirstName}}님이 카드의 이름을 {{oldTitle}}에서 {{newTitle}}(으)로 변경했습니다.` | `{{actorFirstName}} {{actorLastName}} renamed the card from {{oldTitle}} to {{newTitle}}.` | `actorLastName`, `actorFirstName`, `oldTitle`, `newTitle` |
+| `CARD_REMOVE_DUE_DATE` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드의 마감일을 제거했습니다.` | `{{actorFirstName}} {{actorLastName}} removed the due date from the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle` |
+| `CARD_UNARCHIVE` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드를 보관에서 복원했습니다.` | `{{actorFirstName}} {{actorLastName}} unarchived the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle` |
 
 ### 리스트 관련 활동
 
@@ -869,6 +1016,7 @@
 | `LIST_ARCHIVE` | `{{actorLastName}}{{actorFirstName}}님이 {{listName}} 리스트를 보관했습니다.` | `{{actorFirstName}} {{actorLastName}} archived the list {{listName}}.` | `actorLastName`, `actorFirstName`, `listName` |
 | `LIST_MOVE` | `{{actorLastName}}{{actorFirstName}}님이 {{listName}} 리스트를 옮겼습니다.` | `{{actorFirstName}} {{actorLastName}} moved the list {{listName}}.` | `actorLastName`, `actorFirstName`, `listName` |
 | `LIST_CHANGE_COLOR` | `{{actorLastName}}{{actorFirstName}}님이 {{listName}} 리스트의 색상을 변경했습니다.` | `{{actorFirstName}} {{actorLastName}} changed the color of the list {{listName}}.` | `actorLastName`, `actorFirstName`, `listName` |
+| `LIST_UNARCHIVE` | `{{actorLastName}}{{actorFirstName}}님이 {{listName}} 리스트를 보관에서 복원했습니다.` | `{{actorFirstName}} {{actorLastName}} unarchived the list {{listName}}.` | `actorLastName`, `actorFirstName`, `listName` |
 | `LIST_DELETE` | `{{actorLastName}}{{actorFirstName}}님이 {{listName}} 리스트와 {{cardCount}}개의 카드를 삭제했습니다.` | `{{actorFirstName}} {{actorLastName}} deleted the list {{listName}} and {{cardCount}} cards.` | `actorLastName`, `actorFirstName`, `listName`, `cardCount` |
 
 ### 보드 관련 활동
@@ -881,6 +1029,8 @@
 | `BOARD_MOVE` | `{{actorLastName}}{{actorFirstName}}님이 {{boardName}} 보드를 옮겼습니다.` | `{{actorFirstName}} {{actorLastName}} moved the board {{boardName}}.` | `actorLastName`, `actorFirstName`, `boardName` |
 | `BOARD_DELETE` | `{{actorLastName}}{{actorFirstName}}님이 {{boardName}} 보드와 {{listCount}}개의 리스트, {{cardCount}}개의 카드를 삭제했습니다.` | `{{actorFirstName}} {{actorLastName}} deleted the board {{boardName}} and {{listCount}} lists, {{cardCount}} cards.` | `actorLastName`, `actorFirstName`, `boardName`, `listCount`, `cardCount` |
 | `BOARD_UPDATE_DESCRIPTION` | `{{actorLastName}}{{actorFirstName}}님이 {{boardName}} 보드의 설명을 수정했습니다.` | `{{actorFirstName}} {{actorLastName}} updated the description of the board {{boardName}}.` | `actorLastName`, `actorFirstName`, `boardName` |
+| `BOARD_ARCHIVE` | `{{actorLastName}}{{actorFirstName}}님이 {{boardName}} 보드를 아카이브했습니다.` | `{{actorFirstName}} {{actorLastName}} archived the board {{boardName}}.` | `actorLastName`, `actorFirstName`, `boardName` |
+| `BOARD_UNARCHIVE` | `{{actorLastName}}{{actorFirstName}}님이 {{boardName}} 보드를 아카이브에서 복원했습니다.` | `{{actorFirstName}} {{actorLastName}} unarchived the board {{boardName}}.` | `actorLastName`, `actorFirstName`, `boardName` |
 | `BOARD_ADD_MEMBER` | `{{actorLastName}}{{actorFirstName}}님이 {{memberLastName}}{{memberFirstName}}님을 보드에 초대했습니다.` | `{{actorFirstName}} {{actorLastName}} invited {{memberFirstName}} {{memberLastName}} to the board.` | `actorLastName`, `actorFirstName`, `memberLastName`, `memberFirstName` |
 | `BOARD_REMOVE_MEMBER` | `{{actorLastName}}{{actorFirstName}}님이 보드에서 {{memberLastName}}{{memberFirstName}}님을 제외했습니다.` | `{{actorFirstName}} {{actorLastName}} removed {{memberFirstName}} {{memberLastName}} from the board.` | `actorLastName`, `actorFirstName`, `memberLastName`, `memberFirstName` |
 

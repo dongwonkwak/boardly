@@ -25,6 +25,10 @@
   ],
   "tags": [
     {
+      "name": "Activities",
+      "description": "활동 관리 API"
+    },
+    {
       "name": "Cards",
       "description": "카드 관리 API"
     },
@@ -2061,6 +2065,223 @@
         ]
       }
     },
+    "/api/activities/me": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "내 활동 목록 조회",
+        "description": "현재 사용자의 모든 활동 목록을 최신순으로 조회합니다.",
+        "operationId": "getMyActivities",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "페이지 번호 (0부터 시작, 기본값: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기 (기본값: 50, 최대: 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "활동 목록 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "활동 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/activities/boards/{boardId}": {
+      "get": {
+        "tags": [
+          "Activities"
+        ],
+        "summary": "보드 활동 목록 조회",
+        "description": "특정 보드의 활동 목록을 페이징과 시간 필터링을 통해 조회합니다.",
+        "operationId": "getBoardActivities",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "조회할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "페이지 번호 (0부터 시작, 기본값: 0)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "페이지 크기 (기본값: 50, 최대: 100)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "description": "특정 시점 이후 활동 조회 (ISO 8601 형식)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "활동 목록 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "활동 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
     "/api/boards/{boardId}/members/{targetUserId}": {
       "delete": {
         "tags": [
@@ -2517,6 +2738,108 @@
         "required": [
           "title"
         ]
+      },
+      "ActivityListResponse": {
+        "type": "object",
+        "properties": {
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ActivityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "CARD_CREATE",
+              "CARD_MOVE",
+              "CARD_RENAME",
+              "CARD_ARCHIVE",
+              "CARD_DELETE",
+              "CARD_ASSIGN_MEMBER",
+              "CARD_UNASSIGN_MEMBER",
+              "CARD_SET_DUE_DATE",
+              "CARD_ADD_COMMENT",
+              "CARD_ADD_ATTACHMENT",
+              "CARD_ADD_CHECKLIST",
+              "CARD_DUPLICATE",
+              "CARD_UPDATE_DESCRIPTION",
+              "LIST_CREATE",
+              "LIST_RENAME",
+              "LIST_ARCHIVE",
+              "LIST_MOVE",
+              "LIST_CHANGE_COLOR",
+              "LIST_DELETE",
+              "BOARD_CREATE",
+              "BOARD_RENAME",
+              "BOARD_ARCHIVE",
+              "BOARD_MOVE",
+              "BOARD_DELETE",
+              "BOARD_UPDATE_DESCRIPTION",
+              "BOARD_ADD_MEMBER",
+              "BOARD_REMOVE_MEMBER",
+              "BOARD_DUPLICATE",
+              "USER_UPDATE_PROFILE",
+              "USER_CHANGE_LANGUAGE",
+              "USER_CHANGE_PASSWORD",
+              "USER_DELETE_ACCOUNT"
+            ]
+          },
+          "actor": {
+            "$ref": "#/components/schemas/ActorResponse"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "ActorResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "profileImageUrl": {
+            "type": "string"
+          }
+        }
       }
     },
     "securitySchemes": {

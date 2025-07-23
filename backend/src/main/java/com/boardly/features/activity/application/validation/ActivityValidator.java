@@ -286,6 +286,7 @@ public class ActivityValidator {
                 type == ActivityType.BOARD_UPDATE_DESCRIPTION ||
                 type == ActivityType.BOARD_ADD_MEMBER ||
                 type == ActivityType.BOARD_REMOVE_MEMBER ||
+                type == ActivityType.BOARD_UPDATE_MEMBER_ROLE ||
                 type == ActivityType.BOARD_DUPLICATE);
     }
 }

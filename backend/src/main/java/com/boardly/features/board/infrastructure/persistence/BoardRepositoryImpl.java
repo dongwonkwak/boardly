@@ -1,5 +1,6 @@
 package com.boardly.features.board.infrastructure.persistence;
 
+import com.boardly.features.board.application.dto.BoardNameDto;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
@@ -142,5 +143,12 @@ public class BoardRepositoryImpl implements BoardRepository {
         log.debug("findByIdAndOwnerId: boardId={}, ownerId={}", boardId.getId(), ownerId.getId());
         return boardJpaRepository.findByBoardIdAndOwnerId(boardId.getId(), ownerId.getId())
                 .map(BoardEntity::toDomainEntity);
+    }
+
+    @Override
+    public Optional<BoardNameDto> findBoardNameById(BoardId boardId) {
+        log.debug("findBoardNameById: boardId={}", boardId.getId());
+        return boardJpaRepository.findBoardNameById(boardId.getId())
+                .map(entity -> new BoardNameDto(entity.getTitle()));
     }
 }

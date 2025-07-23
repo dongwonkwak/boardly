@@ -34,6 +34,7 @@ public enum ActivityType {
     BOARD_UPDATE_DESCRIPTION,
     BOARD_ADD_MEMBER,
     BOARD_REMOVE_MEMBER,
+    BOARD_UPDATE_MEMBER_ROLE,
     BOARD_DUPLICATE,
 
     // 사용자 관련

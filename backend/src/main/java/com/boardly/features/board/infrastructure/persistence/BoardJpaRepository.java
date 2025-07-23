@@ -51,4 +51,10 @@ public interface BoardJpaRepository extends JpaRepository<BoardEntity, String> {
      * 보드 ID가 존재하는지 확인합니다.
      */
     boolean existsByBoardId(String boardId);
+
+    /**
+     * 보드 ID로 보드 이름 정보만 조회
+     */
+    @Query("SELECT b FROM BoardEntity b WHERE b.boardId = :boardId")
+    Optional<BoardEntity> findBoardNameById(@Param("boardId") String boardId);
 }

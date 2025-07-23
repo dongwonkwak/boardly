@@ -1,22 +1,31 @@
 package com.boardly.features.board.application.service;
 
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.activity.domain.model.ActivityType;
+import com.boardly.features.board.application.dto.BoardNameDto;
 import com.boardly.features.board.application.port.input.*;
 import com.boardly.features.board.application.usecase.*;
 import com.boardly.features.board.application.validation.BoardValidator;
 import com.boardly.features.board.domain.model.Board;
+import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.model.BoardMember;
 import com.boardly.features.board.domain.repository.BoardMemberRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.user.application.dto.UserNameDto;
 import com.boardly.features.user.application.service.UserFinder;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.domain.repository.UserRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -40,7 +49,30 @@ public class BoardMemberService implements
     private final BoardPermissionService boardPermissionService;
     private final ValidationMessageResolver messageResolver;
     private final UserFinder userFinder;
+    private final UserRepository userRepository;
     private final BoardValidator boardValidator;
+    private final ActivityHelper activityHelper;
+
+    // ==================== CACHE METHODS ====================
+
+    /**
+     * 사용자 이름 정보를 캐시하여 조회
+     */
+    @Cacheable(value = "userNames", key = "#userId.id")
+    private UserNameDto getUserName(UserId userId) {
+        return userRepository.findUserNameById(userId)
+                .orElse(UserNameDto.defaultUser());
+    }
+
+    /**
+     * 보드 이름 정보를 캐시하여 조회
+     */
+    @Cacheable(value = "boardNames", key = "#boardId.id")
+    private String getBoardName(BoardId boardId) {
+        return boardRepository.findBoardNameById(boardId)
+                .orElse(BoardNameDto.defaultBoard())
+                .title();
+    }
 
     // ==================== ADD BOARD MEMBER ====================
 
@@ -61,7 +93,7 @@ public class BoardMemberService implements
                 .flatMap(board -> verifyManagementPermission(command, board))
                 .flatMap(board -> checkMemberAlreadyExists(command, board))
                 .flatMap(cmd -> createBoardMember(cmd))
-                .flatMap(this::saveBoardMember);
+                .flatMap(boardMember -> saveBoardMemberWithActivity(boardMember, command));
     }
 
     private Either<Failure, AddBoardMemberCommand> validateAddMemberInput(AddBoardMemberCommand command) {
@@ -101,9 +133,11 @@ public class BoardMemberService implements
                 .flatMap(canManage -> {
                     if (!canManage) {
                         log.warn("보드 멤버 관리 권한 없음: boardId={}, requestedBy={}",
-                                board.getBoardId().getId(), command.requestedBy().getId());
+                                board.getBoardId().getId(),
+                                command.requestedBy().getId());
                         return Either.left(Failure.ofPermissionDenied(
-                                messageResolver.getMessage("validation.board.member.management.denied")));
+                                messageResolver.getMessage(
+                                        "validation.board.member.management.denied")));
                     }
                     return Either.right(board);
                 });
@@ -138,11 +172,13 @@ public class BoardMemberService implements
         } catch (Exception e) {
             log.error("보드 멤버 생성 중 오류 발생: boardId={}, error={}",
                     command.boardId().getId(), e.getMessage(), e);
-            return Either.left(Failure.ofInternalError(e.getMessage(), "BOARD_MEMBER_CREATION_ERROR", null));
+            return Either.left(
+                    Failure.ofInternalError(e.getMessage(), "BOARD_MEMBER_CREATION_ERROR", null));
         }
     }
 
-    private Either<Failure, BoardMember> saveBoardMember(BoardMember boardMember) {
+    private Either<Failure, BoardMember> saveBoardMemberWithActivity(BoardMember boardMember,
+            AddBoardMemberCommand command) {
         return boardMemberRepository.save(boardMember)
                 .peek(savedMember -> {
                     log.info("보드 멤버 추가 완료: memberId={}, boardId={}, userId={}, role={}",
@@ -150,6 +186,20 @@ public class BoardMemberService implements
                             savedMember.getBoardId().getId(),
                             savedMember.getUserId().getId(),
                             savedMember.getRole());
+
+                    // 활동 로그 기록 - 캐시된 DTO 사용으로 쿼리 최소화
+                    UserNameDto userName = getUserName(savedMember.getUserId());
+                    String boardName = getBoardName(savedMember.getBoardId());
+
+                    activityHelper.logBoardActivity(
+                            ActivityType.BOARD_ADD_MEMBER,
+                            command.requestedBy(),
+                            Map.of(
+                                    "memberId", savedMember.getUserId().getId(),
+                                    "memberFirstName", userName.firstName(),
+                                    "memberLastName", userName.lastName(),
+                                    "boardName", boardName),
+                            savedMember.getBoardId());
                 });
     }
 
@@ -170,7 +220,7 @@ public class BoardMemberService implements
                 .flatMap(this::findBoardForMemberRemoval)
                 .flatMap(board -> verifyRemovePermission(command, board))
                 .flatMap(board -> findExistingMember(command, board))
-                .flatMap(this::performMemberRemoval);
+                .flatMap(member -> performMemberRemovalWithActivity(member, command));
     }
 
     private Either<Failure, RemoveBoardMemberCommand> validateRemoveMemberInput(RemoveBoardMemberCommand command) {
@@ -210,9 +260,11 @@ public class BoardMemberService implements
                 .flatMap(canManage -> {
                     if (!canManage) {
                         log.warn("보드 멤버 관리 권한 없음: boardId={}, requestedBy={}",
-                                board.getBoardId().getId(), command.requestedBy().getId());
+                                board.getBoardId().getId(),
+                                command.requestedBy().getId());
                         return Either.left(Failure.ofPermissionDenied(
-                                messageResolver.getMessage("validation.board.member.management.denied")));
+                                messageResolver.getMessage(
+                                        "validation.board.member.management.denied")));
                     }
                     return Either.right(board);
                 });
@@ -242,7 +294,22 @@ public class BoardMemberService implements
         return Either.right(member);
     }
 
-    private Either<Failure, Void> performMemberRemoval(BoardMember member) {
+    private Either<Failure, Void> performMemberRemovalWithActivity(BoardMember member,
+            RemoveBoardMemberCommand command) {
+        // 활동 로그 기록 (삭제 전에 기록) - 캐시된 DTO 사용으로 쿼리 최소화
+        UserNameDto userName = getUserName(member.getUserId());
+        String boardName = getBoardName(member.getBoardId());
+
+        activityHelper.logBoardActivity(
+                ActivityType.BOARD_REMOVE_MEMBER,
+                command.requestedBy(),
+                Map.of(
+                        "memberId", member.getUserId().getId(),
+                        "memberFirstName", userName.firstName(),
+                        "memberLastName", userName.lastName(),
+                        "boardName", boardName),
+                member.getBoardId());
+
         return boardMemberRepository.delete(member.getMemberId())
                 .peek(deletedMember -> {
                     log.info("보드 멤버 제거 완료: memberId={}, boardId={}, userId={}",
@@ -270,8 +337,7 @@ public class BoardMemberService implements
         return validateUpdateRoleInput(command)
                 .flatMap(this::findBoardForRoleUpdate)
                 .flatMap(board -> verifyRoleUpdatePermission(command, board))
-                .flatMap(board -> findMemberForRoleUpdate(command, board))
-                .flatMap(this::performRoleUpdate);
+                .flatMap(board -> findMemberForRoleUpdate(command, board));
     }
 
     private Either<Failure, UpdateBoardMemberRoleCommand> validateUpdateRoleInput(
@@ -312,15 +378,18 @@ public class BoardMemberService implements
                 .flatMap(canManage -> {
                     if (!canManage) {
                         log.warn("보드 멤버 관리 권한 없음: boardId={}, requestedBy={}",
-                                board.getBoardId().getId(), command.requestedBy().getId());
+                                board.getBoardId().getId(),
+                                command.requestedBy().getId());
                         return Either.left(Failure.ofPermissionDenied(
-                                messageResolver.getMessage("validation.board.member.management.denied")));
+                                messageResolver.getMessage(
+                                        "validation.board.member.management.denied")));
                     }
                     return Either.right(board);
                 });
     }
 
-    private Either<Failure, BoardMember> findMemberForRoleUpdate(UpdateBoardMemberRoleCommand command, Board board) {
+    private Either<Failure, BoardMember> findMemberForRoleUpdate(UpdateBoardMemberRoleCommand command,
+            Board board) {
         Optional<BoardMember> memberOpt = boardMemberRepository.findByBoardIdAndUserId(
                 board.getBoardId(), command.targetUserId());
 
@@ -341,35 +410,76 @@ public class BoardMemberService implements
                     messageResolver.getMessage("validation.board.owner.role.change.denied")));
         }
 
-        // 같은 역할로 변경하려는 경우
+        // 같은 역할로 변경하려는 경우 - 활동 로그만 기록하고 멤버 반환
         if (member.getRole().equals(command.newRole())) {
             log.info("멤버가 이미 해당 역할을 가지고 있음: boardId={}, targetUserId={}, role={}",
                     board.getBoardId().getId(), command.targetUserId().getId(), command.newRole());
+
+            // 활동 로그 기록 (변경 없이도 기록)
+            UserNameDto userName = getUserName(member.getUserId());
+            String boardName = getBoardName(member.getBoardId());
+
+            activityHelper.logBoardActivity(
+                    ActivityType.BOARD_UPDATE_MEMBER_ROLE,
+                    command.requestedBy(),
+                    Map.of(
+                            "memberId", member.getUserId().getId(),
+                            "memberFirstName", userName.firstName(),
+                            "memberLastName", userName.lastName(),
+                            "oldRole", member.getRole().toString(),
+                            "newRole", member.getRole().toString(),
+                            "boardName", boardName,
+                            "noChange", "true"),
+                    member.getBoardId());
+
             return Either.right(member);
         }
 
-        return Either.right(member);
+        // 다른 역할로 변경하는 경우 performRoleUpdate 호출
+        return performRoleUpdate(member, command);
     }
 
-    private Either<Failure, BoardMember> performRoleUpdate(BoardMember member) {
+    private Either<Failure, BoardMember> performRoleUpdate(BoardMember member, UpdateBoardMemberRoleCommand command) {
         try {
-            member.changeRole(member.getRole());
-            log.debug("보드 멤버 역할 변경 처리 완료: memberId={}, newRole={}",
-                    member.getMemberId().getId(), member.getRole());
+            // 역할 변경 전에 기존 역할 저장
+            var oldRole = member.getRole();
+
+            // 새로운 역할로 변경
+            member.changeRole(command.newRole());
+            log.debug("보드 멤버 역할 변경 처리 완료: memberId={}, oldRole={}, newRole={}",
+                    member.getMemberId().getId(), oldRole, command.newRole());
 
             return boardMemberRepository.save(member)
                     .peek(savedMember -> {
-                        log.info("보드 멤버 역할 변경 완료: memberId={}, boardId={}, userId={}, newRole={}",
+                        log.info("보드 멤버 역할 변경 완료: memberId={}, boardId={}, userId={}, oldRole={}, newRole={}",
                                 savedMember.getMemberId().getId(),
                                 savedMember.getBoardId().getId(),
                                 savedMember.getUserId().getId(),
+                                oldRole,
                                 savedMember.getRole());
+
+                        // 활동 로그 기록 - 캐시된 DTO 사용으로 쿼리 최소화
+                        UserNameDto userName = getUserName(savedMember.getUserId());
+                        String boardName = getBoardName(savedMember.getBoardId());
+
+                        activityHelper.logBoardActivity(
+                                ActivityType.BOARD_UPDATE_MEMBER_ROLE,
+                                command.requestedBy(),
+                                Map.of(
+                                        "memberId", savedMember.getUserId().getId(),
+                                        "memberFirstName", userName.firstName(),
+                                        "memberLastName", userName.lastName(),
+                                        "oldRole", oldRole.toString(),
+                                        "newRole", savedMember.getRole().toString(),
+                                        "boardName", boardName),
+                                savedMember.getBoardId());
                     });
 
         } catch (Exception e) {
             log.error("보드 멤버 역할 변경 중 오류 발생: memberId={}, error={}",
                     member.getMemberId().getId(), e.getMessage(), e);
-            return Either.left(Failure.ofInternalError(e.getMessage(), "BOARD_MEMBER_ROLE_UPDATE_ERROR", null));
+            return Either.left(Failure.ofInternalError(e.getMessage(), "BOARD_MEMBER_ROLE_UPDATE_ERROR",
+                    null));
         }
     }
 }

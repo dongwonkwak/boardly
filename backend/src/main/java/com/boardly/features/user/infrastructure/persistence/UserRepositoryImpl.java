@@ -1,5 +1,6 @@
 package com.boardly.features.user.infrastructure.persistence;
 
+import com.boardly.features.user.application.dto.UserNameDto;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.features.user.domain.repository.UserRepository;
@@ -23,7 +24,7 @@ public class UserRepositoryImpl implements UserRepository {
     public Either<Failure, User> save(User user) {
         try {
             UserEntity savedEntity;
-            
+
             // 새로운 객체인지 기존 객체인지 판단
             if (user.isNew()) {
                 // 새로운 객체 저장
@@ -35,18 +36,18 @@ public class UserRepositoryImpl implements UserRepository {
                 // 기존 객체 업데이트
                 log.debug("기존 사용자 업데이트: userId={}, email={}", user.getUserId().getId(), user.getEmail());
                 Optional<UserEntity> existingEntity = userJpaRepository.findById(user.getUserId().getId());
-                
+
                 if (existingEntity.isEmpty()) {
                     return Either.left(Failure.ofNotFound("USER_NOT_FOUND"));
                 }
-                
+
                 UserEntity entityToUpdate = existingEntity.get();
                 entityToUpdate.updateFromDomainEntity(user);
                 savedEntity = userJpaRepository.save(entityToUpdate);
             }
-            
+
             return Either.right(savedEntity.toDomainEntity());
-            
+
         } catch (DataIntegrityViolationException e) {
             log.error("사용자 저장 중 중복 이메일 오류: {}", e.getMessage());
             return Either.left(Failure.ofConflict("DUPLICATE_EMAIL"));
@@ -88,4 +89,11 @@ public class UserRepositoryImpl implements UserRepository {
     public boolean existsByEmail(String email) {
         return userJpaRepository.existsByEmail(email);
     }
-} 
+
+    @Override
+    public Optional<UserNameDto> findUserNameById(UserId userId) {
+        log.debug("findUserNameById: userId={}", userId.getId());
+        return userJpaRepository.findUserNameById(userId.getId())
+                .map(entity -> new UserNameDto(entity.getFirstName(), entity.getLastName()));
+    }
+}

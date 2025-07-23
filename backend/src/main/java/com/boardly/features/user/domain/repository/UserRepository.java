@@ -1,5 +1,6 @@
 package com.boardly.features.user.domain.repository;
 
+import com.boardly.features.user.application.dto.UserNameDto;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.Failure;
@@ -37,4 +38,9 @@ public interface UserRepository {
      * 이메일이 이미 존재하는지 확인합니다.
      */
     boolean existsByEmail(String email);
-} 
+
+    /**
+     * 사용자 ID로 사용자 이름 정보를 조회합니다.
+     */
+    Optional<UserNameDto> findUserNameById(UserId userId);
+}

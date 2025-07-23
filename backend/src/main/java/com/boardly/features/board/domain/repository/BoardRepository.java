@@ -1,5 +1,6 @@
 package com.boardly.features.board.domain.repository;
 
+import com.boardly.features.board.application.dto.BoardNameDto;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.domain.model.UserId;
@@ -69,4 +70,9 @@ public interface BoardRepository {
      * 소유자 ID와 보드 ID로 보드를 조회합니다.
      */
     Optional<Board> findByIdAndOwnerId(BoardId boardId, UserId ownerId);
+
+    /**
+     * 보드 ID로 보드 이름 정보를 조회합니다.
+     */
+    Optional<BoardNameDto> findBoardNameById(BoardId boardId);
 }

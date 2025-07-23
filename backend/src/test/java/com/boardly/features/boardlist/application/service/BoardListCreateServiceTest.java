@@ -1,5 +1,6 @@
 package com.boardly.features.boardlist.application.service;
 
+import com.boardly.features.activity.application.helper.ActivityHelper;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
@@ -7,6 +8,7 @@ import com.boardly.features.boardlist.application.port.input.CreateBoardListComm
 import com.boardly.features.boardlist.application.validation.BoardListValidator;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListColor;
+import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.policy.BoardListCreationPolicy;
 import com.boardly.features.boardlist.domain.policy.BoardListPolicyConfig;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
@@ -25,6 +27,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +62,9 @@ class BoardListCreateServiceTest {
         @Mock
         private ValidationMessageResolver validationMessageResolver;
 
+        @Mock
+        private ActivityHelper activityHelper;
+
         @InjectMocks
         private BoardListCreateService boardListCreateService;
 
@@ -65,6 +72,7 @@ class BoardListCreateServiceTest {
         private BoardId testBoardId;
         private Board testBoard;
         private CreateBoardListCommand validCommand;
+        private BoardList createdBoardList;
 
         @BeforeEach
         void setUp() {
@@ -89,23 +97,24 @@ class BoardListCreateServiceTest {
                                 "테스트 리스트",
                                 "테스트 리스트 설명",
                                 ListColor.defaultColor());
+
+                createdBoardList = BoardList.create(
+                                "테스트 리스트",
+                                "테스트 리스트 설명",
+                                0,
+                                ListColor.defaultColor(),
+                                testBoardId);
         }
 
         @Nested
-        @DisplayName("createBoardList 메서드 테스트")
-        class CreateBoardListTest {
+        @DisplayName("성공 케이스")
+        class SuccessCases {
 
                 @Test
                 @DisplayName("유효한 정보로 리스트 생성이 성공해야 한다")
                 void createBoardList_withValidData_shouldReturnCreatedBoardList() {
                         // given
                         ValidationResult<CreateBoardListCommand> validResult = ValidationResult.valid(validCommand);
-                        BoardList createdBoardList = BoardList.create(
-                                        "테스트 리스트",
-                                        "테스트 리스트 설명",
-                                        0,
-                                        ListColor.defaultColor(),
-                                        testBoardId);
 
                         when(boardListValidator.validateCreateBoardList(validCommand)).thenReturn(validResult);
                         when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
@@ -131,6 +140,12 @@ class BoardListCreateServiceTest {
                         verify(boardListCreationPolicy).canCreateBoardList(testBoardId);
                         verify(boardListRepository).findMaxPositionByBoardId(testBoardId);
                         verify(boardListRepository).save(any(BoardList.class));
+                        verify(activityHelper).logListCreate(
+                                        eq(testUserId),
+                                        eq("테스트 리스트"),
+                                        eq("테스트 보드"),
+                                        eq(testBoardId),
+                                        any(ListId.class));
                 }
 
                 @Test
@@ -138,7 +153,7 @@ class BoardListCreateServiceTest {
                 void createBoardList_withExistingLists_shouldCreateAtNextPosition() {
                         // given
                         ValidationResult<CreateBoardListCommand> validResult = ValidationResult.valid(validCommand);
-                        BoardList createdBoardList = BoardList.create(
+                        BoardList createdBoardListAtPosition3 = BoardList.create(
                                         "테스트 리스트",
                                         "테스트 리스트 설명",
                                         3,
@@ -150,7 +165,7 @@ class BoardListCreateServiceTest {
                         when(boardListCreationPolicy.canCreateBoardList(testBoardId)).thenReturn(Either.right(null));
                         when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
                         when(boardListRepository.findMaxPositionByBoardId(testBoardId)).thenReturn(Optional.of(2));
-                        when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardList);
+                        when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardListAtPosition3);
 
                         // when
                         Either<Failure, BoardList> result = boardListCreateService.createBoardList(validCommand);
@@ -159,7 +174,127 @@ class BoardListCreateServiceTest {
                         assertThat(result.isRight()).isTrue();
                         verify(boardListRepository).findMaxPositionByBoardId(testBoardId);
                         verify(boardListRepository).save(argThat(boardList -> boardList.getPosition() == 3));
+                        verify(activityHelper).logListCreate(
+                                        eq(testUserId),
+                                        eq("테스트 리스트"),
+                                        eq("테스트 보드"),
+                                        eq(testBoardId),
+                                        any(ListId.class));
                 }
+
+                @Test
+                @DisplayName("빈 설명으로 리스트 생성이 성공해야 한다")
+                void createBoardList_withEmptyDescription_shouldSucceed() {
+                        // given
+                        CreateBoardListCommand emptyDescriptionCommand = new CreateBoardListCommand(
+                                        testBoardId,
+                                        testUserId,
+                                        "테스트 리스트",
+                                        "",
+                                        ListColor.defaultColor());
+
+                        ValidationResult<CreateBoardListCommand> validResult = ValidationResult
+                                        .valid(emptyDescriptionCommand);
+                        BoardList createdBoardListWithEmptyDesc = BoardList.create(
+                                        "테스트 리스트",
+                                        "",
+                                        0,
+                                        ListColor.defaultColor(),
+                                        testBoardId);
+
+                        when(boardListValidator.validateCreateBoardList(emptyDescriptionCommand))
+                                        .thenReturn(validResult);
+                        when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+                        when(boardListCreationPolicy.canCreateBoardList(testBoardId)).thenReturn(Either.right(null));
+                        when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
+                        when(boardListRepository.findMaxPositionByBoardId(testBoardId)).thenReturn(Optional.empty());
+                        when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardListWithEmptyDesc);
+
+                        // when
+                        Either<Failure, BoardList> result = boardListCreateService
+                                        .createBoardList(emptyDescriptionCommand);
+
+                        // then
+                        assertThat(result.isRight()).isTrue();
+                        assertThat(result.get().getDescription()).isEqualTo("");
+                }
+
+                @Test
+                @DisplayName("null 설명으로 리스트 생성이 성공해야 한다")
+                void createBoardList_withNullDescription_shouldSucceed() {
+                        // given
+                        CreateBoardListCommand nullDescriptionCommand = new CreateBoardListCommand(
+                                        testBoardId,
+                                        testUserId,
+                                        "테스트 리스트",
+                                        null,
+                                        ListColor.defaultColor());
+
+                        ValidationResult<CreateBoardListCommand> validResult = ValidationResult
+                                        .valid(nullDescriptionCommand);
+                        BoardList createdBoardListWithNullDesc = BoardList.create(
+                                        "테스트 리스트",
+                                        null,
+                                        0,
+                                        ListColor.defaultColor(),
+                                        testBoardId);
+
+                        when(boardListValidator.validateCreateBoardList(nullDescriptionCommand))
+                                        .thenReturn(validResult);
+                        when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+                        when(boardListCreationPolicy.canCreateBoardList(testBoardId)).thenReturn(Either.right(null));
+                        when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
+                        when(boardListRepository.findMaxPositionByBoardId(testBoardId)).thenReturn(Optional.empty());
+                        when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardListWithNullDesc);
+
+                        // when
+                        Either<Failure, BoardList> result = boardListCreateService
+                                        .createBoardList(nullDescriptionCommand);
+
+                        // then
+                        assertThat(result.isRight()).isTrue();
+                        assertThat(result.get().getDescription()).isNull();
+                }
+
+                @Test
+                @DisplayName("제목 길이가 정확히 최대 길이일 때 성공해야 한다")
+                void createBoardList_withExactMaxTitleLength_shouldSucceed() {
+                        // given
+                        String maxLengthTitle = "a".repeat(100);
+                        CreateBoardListCommand maxLengthCommand = new CreateBoardListCommand(
+                                        testBoardId,
+                                        testUserId,
+                                        maxLengthTitle,
+                                        "테스트 리스트 설명",
+                                        ListColor.defaultColor());
+
+                        ValidationResult<CreateBoardListCommand> validResult = ValidationResult.valid(maxLengthCommand);
+                        BoardList createdBoardListWithMaxTitle = BoardList.create(
+                                        maxLengthTitle,
+                                        "테스트 리스트 설명",
+                                        0,
+                                        ListColor.defaultColor(),
+                                        testBoardId);
+
+                        when(boardListValidator.validateCreateBoardList(maxLengthCommand)).thenReturn(validResult);
+                        when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+                        when(boardListCreationPolicy.canCreateBoardList(testBoardId)).thenReturn(Either.right(null));
+                        when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
+                        when(boardListRepository.findMaxPositionByBoardId(testBoardId)).thenReturn(Optional.empty());
+                        when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardListWithMaxTitle);
+
+                        // when
+                        Either<Failure, BoardList> result = boardListCreateService.createBoardList(maxLengthCommand);
+
+                        // then
+                        assertThat(result.isRight()).isTrue();
+                        assertThat(result.get().getTitle()).isEqualTo(maxLengthTitle);
+                }
+        }
+
+        @Nested
+        @DisplayName("입력 검증 실패 케이스")
+        class InputValidationFailureCases {
 
                 @Test
                 @DisplayName("입력 검증 실패 시 InputError를 반환해야 한다")
@@ -185,8 +320,14 @@ class BoardListCreateServiceTest {
 
                         verify(boardListValidator).validateCreateBoardList(validCommand);
                         verify(validationMessageResolver).getMessage("validation.input.invalid");
-                        verifyNoInteractions(boardRepository, boardListCreationPolicy, boardListRepository);
+                        verifyNoInteractions(boardRepository, boardListCreationPolicy, boardListRepository,
+                                        activityHelper);
                 }
+        }
+
+        @Nested
+        @DisplayName("보드 접근 실패 케이스")
+        class BoardAccessFailureCases {
 
                 @Test
                 @DisplayName("보드가 존재하지 않을 때 NotFound를 반환해야 한다")
@@ -208,12 +349,14 @@ class BoardListCreateServiceTest {
                         Failure.NotFound notFound = (Failure.NotFound) result.getLeft();
                         assertThat(notFound.getMessage()).isEqualTo("보드를 찾을 수 없습니다");
                         assertThat(notFound.getErrorCode()).isEqualTo("BOARD_NOT_FOUND");
-                        assertThat(notFound.getContext()).isNotNull();
+                        assertThat(notFound.getContext()).isInstanceOf(Map.class);
+                        assertThat((Map<String, Object>) notFound.getContext()).containsEntry("boardId",
+                                        testBoardId.getId());
 
                         verify(boardListValidator).validateCreateBoardList(validCommand);
                         verify(boardRepository).findById(testBoardId);
                         verify(validationMessageResolver).getMessage("validation.board.not.found");
-                        verifyNoInteractions(boardListCreationPolicy, boardListRepository);
+                        verifyNoInteractions(boardListCreationPolicy, boardListRepository, activityHelper);
                 }
 
                 @Test
@@ -245,13 +388,22 @@ class BoardListCreateServiceTest {
                         Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) result.getLeft();
                         assertThat(permissionDenied.getMessage()).isEqualTo("보드 수정 권한이 없습니다");
                         assertThat(permissionDenied.getErrorCode()).isEqualTo("UNAUTHORIZED_ACCESS");
-                        assertThat(permissionDenied.getContext()).isNotNull();
+                        assertThat(permissionDenied.getContext()).isInstanceOf(Map.class);
+                        assertThat((Map<String, Object>) permissionDenied.getContext()).containsEntry("boardId",
+                                        testBoardId.getId());
+                        assertThat((Map<String, Object>) permissionDenied.getContext()).containsEntry("userId",
+                                        unauthorizedUserId.getId());
 
                         verify(boardListValidator).validateCreateBoardList(unauthorizedCommand);
                         verify(boardRepository).findById(testBoardId);
                         verify(validationMessageResolver).getMessage("validation.board.modification.access.denied");
-                        verifyNoInteractions(boardListCreationPolicy, boardListRepository);
+                        verifyNoInteractions(boardListCreationPolicy, boardListRepository, activityHelper);
                 }
+        }
+
+        @Nested
+        @DisplayName("비즈니스 규칙 위반 케이스")
+        class BusinessRuleViolationCases {
 
                 @Test
                 @DisplayName("리스트 생성 정책 위반 시 BusinessRuleViolation을 반환해야 한다")
@@ -275,12 +427,14 @@ class BoardListCreateServiceTest {
                                         .getLeft();
                         assertThat(businessRuleViolation.getMessage()).isEqualTo("보드당 최대 20개의 리스트만 생성할 수 있습니다");
                         assertThat(businessRuleViolation.getErrorCode()).isEqualTo("LIST_CREATION_POLICY_VIOLATION");
-                        assertThat(businessRuleViolation.getContext()).isNotNull();
+                        assertThat(businessRuleViolation.getContext()).isInstanceOf(Map.class);
+                        assertThat((Map<String, Object>) businessRuleViolation.getContext()).containsEntry("boardId",
+                                        testBoardId.getId());
 
                         verify(boardListValidator).validateCreateBoardList(validCommand);
                         verify(boardRepository).findById(testBoardId);
                         verify(boardListCreationPolicy).canCreateBoardList(testBoardId);
-                        verifyNoInteractions(boardListRepository);
+                        verifyNoInteractions(boardListRepository, activityHelper);
                 }
 
                 @Test
@@ -312,14 +466,23 @@ class BoardListCreateServiceTest {
                                         .getLeft();
                         assertThat(businessRuleViolation.getMessage()).isEqualTo("리스트 제목은 최대 100자까지 입력할 수 있습니다.");
                         assertThat(businessRuleViolation.getErrorCode()).isEqualTo("TITLE_LENGTH_EXCEEDED");
-                        assertThat(businessRuleViolation.getContext()).isNotNull();
+                        assertThat(businessRuleViolation.getContext()).isInstanceOf(Map.class);
+                        assertThat((Map<String, Object>) businessRuleViolation.getContext()).containsEntry("boardId",
+                                        testBoardId.getId());
+                        assertThat((Map<String, Object>) businessRuleViolation.getContext())
+                                        .containsEntry("titleLength", 101);
 
                         verify(boardListValidator).validateCreateBoardList(longTitleCommand);
                         verify(boardRepository).findById(testBoardId);
                         verify(boardListCreationPolicy).canCreateBoardList(testBoardId);
                         verify(boardListPolicyConfig, times(3)).getMaxTitleLength();
-                        verifyNoMoreInteractions(boardListRepository);
+                        verifyNoInteractions(boardListRepository, activityHelper);
                 }
+        }
+
+        @Nested
+        @DisplayName("시스템 오류 케이스")
+        class SystemErrorCases {
 
                 @Test
                 @DisplayName("리스트 저장 중 예외 발생 시 InternalError를 반환해야 한다")
@@ -350,6 +513,7 @@ class BoardListCreateServiceTest {
                         verify(boardListCreationPolicy).canCreateBoardList(testBoardId);
                         verify(boardListRepository).findMaxPositionByBoardId(testBoardId);
                         verify(boardListRepository).save(any(BoardList.class));
+                        verifyNoInteractions(activityHelper);
                 }
 
                 @Test
@@ -380,34 +544,21 @@ class BoardListCreateServiceTest {
                         verify(boardListCreationPolicy).canCreateBoardList(testBoardId);
                         verify(boardListRepository).findMaxPositionByBoardId(testBoardId);
                         verify(boardListRepository, never()).save(any(BoardList.class));
+                        verifyNoInteractions(activityHelper);
                 }
         }
 
         @Nested
-        @DisplayName("경계값 테스트")
-        class BoundaryValueTest {
+        @DisplayName("ActivityHelper 호출 검증")
+        class ActivityHelperVerification {
 
                 @Test
-                @DisplayName("제목 길이가 정확히 최대 길이일 때 성공해야 한다")
-                void createBoardList_withExactMaxTitleLength_shouldSucceed() {
+                @DisplayName("리스트 생성 성공 시 ActivityHelper.logListCreate가 호출되어야 한다")
+                void createBoardList_success_shouldCallActivityHelper() {
                         // given
-                        String maxLengthTitle = "a".repeat(100);
-                        CreateBoardListCommand maxLengthCommand = new CreateBoardListCommand(
-                                        testBoardId,
-                                        testUserId,
-                                        maxLengthTitle,
-                                        "테스트 리스트 설명",
-                                        ListColor.defaultColor());
+                        ValidationResult<CreateBoardListCommand> validResult = ValidationResult.valid(validCommand);
 
-                        ValidationResult<CreateBoardListCommand> validResult = ValidationResult.valid(maxLengthCommand);
-                        BoardList createdBoardList = BoardList.create(
-                                        maxLengthTitle,
-                                        "테스트 리스트 설명",
-                                        0,
-                                        ListColor.defaultColor(),
-                                        testBoardId);
-
-                        when(boardListValidator.validateCreateBoardList(maxLengthCommand)).thenReturn(validResult);
+                        when(boardListValidator.validateCreateBoardList(validCommand)).thenReturn(validResult);
                         when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
                         when(boardListCreationPolicy.canCreateBoardList(testBoardId)).thenReturn(Either.right(null));
                         when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
@@ -415,85 +566,35 @@ class BoardListCreateServiceTest {
                         when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardList);
 
                         // when
-                        Either<Failure, BoardList> result = boardListCreateService.createBoardList(maxLengthCommand);
+                        Either<Failure, BoardList> result = boardListCreateService.createBoardList(validCommand);
 
                         // then
                         assertThat(result.isRight()).isTrue();
-                        assertThat(result.get().getTitle()).isEqualTo(maxLengthTitle);
+                        verify(activityHelper).logListCreate(
+                                        eq(testUserId),
+                                        eq("테스트 리스트"),
+                                        eq("테스트 보드"),
+                                        eq(testBoardId),
+                                        any(ListId.class));
                 }
 
                 @Test
-                @DisplayName("빈 설명으로 리스트 생성이 성공해야 한다")
-                void createBoardList_withEmptyDescription_shouldSucceed() {
+                @DisplayName("리스트 생성 실패 시 ActivityHelper가 호출되지 않아야 한다")
+                void createBoardList_failure_shouldNotCallActivityHelper() {
                         // given
-                        CreateBoardListCommand emptyDescriptionCommand = new CreateBoardListCommand(
-                                        testBoardId,
-                                        testUserId,
-                                        "테스트 리스트",
-                                        "",
-                                        ListColor.defaultColor());
+                        ValidationResult<CreateBoardListCommand> invalidResult = ValidationResult.invalid(
+                                        "title", "제목은 필수입니다", validCommand);
 
-                        ValidationResult<CreateBoardListCommand> validResult = ValidationResult
-                                        .valid(emptyDescriptionCommand);
-                        BoardList createdBoardList = BoardList.create(
-                                        "테스트 리스트",
-                                        "",
-                                        0,
-                                        ListColor.defaultColor(),
-                                        testBoardId);
-
-                        when(boardListValidator.validateCreateBoardList(emptyDescriptionCommand))
-                                        .thenReturn(validResult);
-                        when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
-                        when(boardListCreationPolicy.canCreateBoardList(testBoardId)).thenReturn(Either.right(null));
-                        when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
-                        when(boardListRepository.findMaxPositionByBoardId(testBoardId)).thenReturn(Optional.empty());
-                        when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardList);
+                        when(validationMessageResolver.getMessage("validation.input.invalid"))
+                                        .thenReturn("입력이 유효하지 않습니다");
+                        when(boardListValidator.validateCreateBoardList(validCommand)).thenReturn(invalidResult);
 
                         // when
-                        Either<Failure, BoardList> result = boardListCreateService
-                                        .createBoardList(emptyDescriptionCommand);
+                        Either<Failure, BoardList> result = boardListCreateService.createBoardList(validCommand);
 
                         // then
-                        assertThat(result.isRight()).isTrue();
-                        assertThat(result.get().getDescription()).isEqualTo("");
-                }
-
-                @Test
-                @DisplayName("null 설명으로 리스트 생성이 성공해야 한다")
-                void createBoardList_withNullDescription_shouldSucceed() {
-                        // given
-                        CreateBoardListCommand nullDescriptionCommand = new CreateBoardListCommand(
-                                        testBoardId,
-                                        testUserId,
-                                        "테스트 리스트",
-                                        null,
-                                        ListColor.defaultColor());
-
-                        ValidationResult<CreateBoardListCommand> validResult = ValidationResult
-                                        .valid(nullDescriptionCommand);
-                        BoardList createdBoardList = BoardList.create(
-                                        "테스트 리스트",
-                                        null,
-                                        0,
-                                        ListColor.defaultColor(),
-                                        testBoardId);
-
-                        when(boardListValidator.validateCreateBoardList(nullDescriptionCommand))
-                                        .thenReturn(validResult);
-                        when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
-                        when(boardListCreationPolicy.canCreateBoardList(testBoardId)).thenReturn(Either.right(null));
-                        when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
-                        when(boardListRepository.findMaxPositionByBoardId(testBoardId)).thenReturn(Optional.empty());
-                        when(boardListRepository.save(any(BoardList.class))).thenReturn(createdBoardList);
-
-                        // when
-                        Either<Failure, BoardList> result = boardListCreateService
-                                        .createBoardList(nullDescriptionCommand);
-
-                        // then
-                        assertThat(result.isRight()).isTrue();
-                        assertThat(result.get().getDescription()).isNull();
+                        assertThat(result.isLeft()).isTrue();
+                        verifyNoInteractions(activityHelper);
                 }
         }
 }

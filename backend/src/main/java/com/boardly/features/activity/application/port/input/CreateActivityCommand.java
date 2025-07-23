@@ -26,6 +26,17 @@ public record CreateActivityCommand(
         ListId listId, // optional
         CardId cardId // optional
 ) {
+
+    public static CreateActivityCommand of(
+            ActivityType type,
+            UserId actorId,
+            Map<String, Object> payload,
+            BoardId boardId,
+            ListId listId,
+            CardId cardId) {
+        return new CreateActivityCommand(type, actorId, payload, boardId, listId, cardId);
+    }
+
     public static CreateActivityCommand forCard(
             ActivityType type,
             UserId actorId,

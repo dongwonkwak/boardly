@@ -1,5 +1,7 @@
 package com.boardly.features.boardlist.application.service;
 
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.activity.domain.model.ActivityType;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.application.port.input.UpdateBoardListCommand;
 import com.boardly.features.boardlist.application.port.input.UpdateBoardListPositionCommand;
@@ -42,6 +44,7 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
     private final BoardListPolicyConfig boardListPolicyConfig;
     private final BoardListMovePolicy boardListMovePolicy;
     private final ValidationMessageResolver validationMessageResolver;
+    private final ActivityHelper activityHelper;
 
     @Override
     public Either<Failure, BoardList> updateBoardList(UpdateBoardListCommand command) {
@@ -63,7 +66,7 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
         if (listResult.isEmpty()) {
             log.warn("리스트를 찾을 수 없음: listId={}", command.listId().getId());
             return Either.left(Failure.ofNotFound(
-                    validationMessageResolver.getMessage("error.service.card.move.list_not_found"),
+                    validationMessageResolver.getMessage("validation.boardlist.not.found"),
                     "LIST_NOT_FOUND",
                     Map.of("listId", command.listId().getId())));
         }
@@ -87,7 +90,7 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
             log.warn("리스트 수정 권한 없음: listId={}, userId={}, boardOwnerId={}",
                     command.listId().getId(), command.userId().getId(), board.getOwnerId().getId());
             return Either.left(Failure.ofPermissionDenied(
-                    validationMessageResolver.getMessage("validation.board.modification.access.denied"),
+                    validationMessageResolver.getMessage("validation.boardlist.update.access.denied"),
                     "UNAUTHORIZED_ACCESS",
                     Map.of("listId", command.listId().getId(), "userId", command.userId().getId())));
         }
@@ -101,7 +104,8 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
                             command.listId().getId(), command.title().length(),
                             boardListPolicyConfig.getMaxTitleLength());
                     return Either.left(Failure.ofBusinessRuleViolation(
-                            String.format("리스트 제목은 최대 %d자까지 입력할 수 있습니다.", boardListPolicyConfig.getMaxTitleLength()),
+                            validationMessageResolver.getMessage("validation.boardlist.title.length.exceeded",
+                                    boardListPolicyConfig.getMaxTitleLength()),
                             "TITLE_LENGTH_EXCEEDED",
                             Map.of("listId", command.listId().getId(), "titleLength", command.title().length())));
                 }
@@ -120,6 +124,37 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
 
             var savedList = boardListRepository.save(currentList);
 
+            // 활동 로그 기록
+            if (command.title() != null) {
+                // 리스트 이름 변경 활동 로그
+                var payload = Map.<String, Object>of(
+                        "oldName", currentList.getTitle(),
+                        "newName", command.title(),
+                        "listId", savedList.getListId().getId(),
+                        "boardName", board.getTitle());
+                activityHelper.logListActivity(
+                        ActivityType.LIST_RENAME,
+                        command.userId(),
+                        payload,
+                        savedList.getBoardId(),
+                        savedList.getListId());
+            }
+
+            if (command.color() != null) {
+                // 리스트 색상 변경 활동 로그
+                var payload = Map.<String, Object>of(
+                        "listName", savedList.getTitle(),
+                        "listId", savedList.getListId().getId(),
+                        "oldColor", currentList.getColor(),
+                        "newColor", command.color());
+                activityHelper.logListActivity(
+                        ActivityType.LIST_CHANGE_COLOR,
+                        command.userId(),
+                        payload,
+                        savedList.getBoardId(),
+                        savedList.getListId());
+            }
+
             log.info("리스트 수정 완료: listId={}, title={}",
                     savedList.getListId().getId(), savedList.getTitle());
             return Either.right(savedList);
@@ -128,9 +163,9 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
             log.error("리스트 수정 중 예외 발생: listId={}, error={}",
                     command.listId().getId(), e.getMessage(), e);
             return Either.left(Failure.ofInternalError(
-                    e.getMessage(),
+                    validationMessageResolver.getMessage("validation.boardlist.update.error"),
                     "BOARD_LIST_UPDATE_ERROR",
-                    null));
+                    Map.of("listId", command.listId().getId(), "error", e.getMessage())));
         }
     }
 
@@ -156,7 +191,10 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
         var listResult = boardListRepository.findById(command.listId());
         if (listResult.isEmpty()) {
             log.warn("리스트를 찾을 수 없음: listId={}", command.listId().getId());
-            return Either.left(Failure.ofNotFound("LIST_NOT_FOUND"));
+            return Either.left(Failure.ofNotFound(
+                    validationMessageResolver.getMessage("validation.boardlist.not.found"),
+                    "LIST_NOT_FOUND",
+                    Map.of("listId", command.listId().getId())));
         }
 
         var targetList = listResult.get();
@@ -166,7 +204,10 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
         var boardResult = boardRepository.findById(targetList.getBoardId());
         if (boardResult.isEmpty()) {
             log.warn("보드를 찾을 수 없음: boardId={}", targetList.getBoardId().getId());
-            return Either.left(Failure.ofNotFound("BOARD_NOT_FOUND"));
+            return Either.left(Failure.ofNotFound(
+                    validationMessageResolver.getMessage("validation.board.not.found"),
+                    "BOARD_NOT_FOUND",
+                    Map.of("boardId", targetList.getBoardId().getId())));
         }
 
         var board = boardResult.get();
@@ -175,7 +216,10 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
         if (!board.getOwnerId().equals(command.userId())) {
             log.warn("리스트 위치 변경 권한 없음: listId={}, userId={}, boardOwnerId={}",
                     command.listId().getId(), command.userId().getId(), board.getOwnerId().getId());
-            return Either.left(Failure.ofForbidden("UNAUTHORIZED_ACCESS"));
+            return Either.left(Failure.ofPermissionDenied(
+                    validationMessageResolver.getMessage("validation.boardlist.update.access.denied"),
+                    "UNAUTHORIZED_ACCESS",
+                    Map.of("listId", command.listId().getId(), "userId", command.userId().getId())));
         }
 
         // 5. 보드의 모든 리스트 조회
@@ -187,9 +231,9 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
             log.warn("리스트 이동 정책 위반: listId={}, newPosition={}, error={}",
                     command.listId().getId(), command.newPosition(), movePolicyResult.getLeft().getMessage());
             return Either.left(Failure.ofBusinessRuleViolation(
-                    movePolicyResult.getLeft().getMessage(),
+                    validationMessageResolver.getMessage("validation.boardlist.move.policy.violation"),
                     "LIST_MOVE_POLICY_VIOLATION",
-                    null));
+                    Map.of("listId", command.listId().getId(), "newPosition", command.newPosition())));
         }
 
         // 7. 위치가 실제로 변경되는지 확인
@@ -206,6 +250,20 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
             // 9. 변경된 리스트들을 배치로 저장
             List<BoardList> savedLists = boardListRepository.saveAll(updatedLists);
 
+            // 활동 로그 기록 (리스트 이동)
+            var payload = Map.<String, Object>of(
+                    "listName", targetList.getTitle(),
+                    "listId", targetList.getListId().getId(),
+                    "boardName", board.getTitle(),
+                    "oldPosition", currentPosition,
+                    "newPosition", command.newPosition());
+            activityHelper.logListActivity(
+                    ActivityType.LIST_MOVE,
+                    command.userId(),
+                    payload,
+                    targetList.getBoardId(),
+                    targetList.getListId());
+
             log.info("보드 리스트 위치 변경 완료: listId={}, oldPosition={}, newPosition={}, updatedLists={}",
                     command.listId().getId(), currentPosition, command.newPosition(), savedLists.size());
             return Either.right(savedLists);
@@ -213,7 +271,10 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
         } catch (Exception e) {
             log.error("보드 리스트 위치 변경 중 예외 발생: listId={}, error={}",
                     command.listId().getId(), e.getMessage(), e);
-            return Either.left(Failure.ofInternalServerError(e.getMessage()));
+            return Either.left(Failure.ofInternalError(
+                    validationMessageResolver.getMessage("validation.boardlist.position.update.error"),
+                    "BOARD_LIST_POSITION_UPDATE_ERROR",
+                    Map.of("listId", command.listId().getId(), "error", e.getMessage())));
         }
     }
 

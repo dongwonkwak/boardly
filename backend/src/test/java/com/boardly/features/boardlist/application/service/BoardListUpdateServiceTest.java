@@ -1,5 +1,7 @@
 package com.boardly.features.boardlist.application.service;
 
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.activity.domain.model.ActivityType;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
@@ -63,6 +65,9 @@ class BoardListUpdateServiceTest {
     @Mock
     private ValidationMessageResolver validationMessageResolver;
 
+    @Mock
+    private ActivityHelper activityHelper;
+
     @InjectMocks
     private BoardListUpdateService boardListUpdateService;
 
@@ -115,6 +120,23 @@ class BoardListUpdateServiceTest {
                 testListId,
                 testUserId,
                 2);
+
+        // 기본 메시지 설정은 각 테스트에서 개별적으로 설정
+    }
+
+    // ==================== Helper Methods ====================
+
+    private BoardList createBoardList(String title, int position) {
+        return BoardList.builder()
+                .listId(new ListId())
+                .title(title)
+                .description("설명")
+                .position(position)
+                .color(ListColor.defaultColor())
+                .boardId(testBoardId)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
     }
 
     @Nested
@@ -125,8 +147,7 @@ class BoardListUpdateServiceTest {
         @DisplayName("유효한 데이터로 리스트 수정 시 성공해야 한다")
         void updateBoardList_withValidData_shouldReturnUpdatedBoardList() {
             // given
-            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult
-                    .valid(validUpdateCommand);
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(validUpdateCommand);
             when(boardListValidator.validateUpdateBoardList(validUpdateCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
@@ -144,6 +165,18 @@ class BoardListUpdateServiceTest {
             assertThat(updatedList.getColor()).isEqualTo(ListColor.of("#0079BF"));
 
             verify(boardListRepository).save(any(BoardList.class));
+            verify(activityHelper).logListActivity(
+                    eq(ActivityType.LIST_RENAME),
+                    eq(testUserId),
+                    any(Map.class),
+                    eq(testBoardId),
+                    eq(testListId));
+            verify(activityHelper).logListActivity(
+                    eq(ActivityType.LIST_CHANGE_COLOR),
+                    eq(testUserId),
+                    any(Map.class),
+                    eq(testBoardId),
+                    eq(testListId));
         }
 
         @Test
@@ -169,6 +202,56 @@ class BoardListUpdateServiceTest {
             assertThat(updatedList.getTitle()).isEqualTo("새로운 제목");
             assertThat(updatedList.getDescription()).isEqualTo("기존 리스트 설명"); // 기존 값 유지
             assertThat(updatedList.getColor()).isEqualTo(ListColor.defaultColor()); // 기존 값 유지
+
+            verify(activityHelper).logListActivity(
+                    eq(ActivityType.LIST_RENAME),
+                    eq(testUserId),
+                    any(Map.class),
+                    eq(testBoardId),
+                    eq(testListId));
+            verify(activityHelper, never()).logListActivity(
+                    eq(ActivityType.LIST_CHANGE_COLOR),
+                    any(),
+                    any(),
+                    any(),
+                    any());
+        }
+
+        @Test
+        @DisplayName("색상만 수정할 때 성공해야 한다")
+        void updateBoardList_withColorOnly_shouldReturnUpdatedBoardList() {
+            // given
+            UpdateBoardListCommand colorOnlyCommand = new UpdateBoardListCommand(
+                    testListId, testUserId, null, null, ListColor.of("#FF6B6B"));
+
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(colorOnlyCommand);
+            when(boardListValidator.validateUpdateBoardList(colorOnlyCommand)).thenReturn(validResult);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+            when(boardListRepository.save(any(BoardList.class))).thenReturn(testBoardList);
+
+            // when
+            Either<Failure, BoardList> result = boardListUpdateService.updateBoardList(colorOnlyCommand);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            BoardList updatedList = result.get();
+            assertThat(updatedList.getTitle()).isEqualTo("기존 리스트 제목"); // 기존 값 유지
+            assertThat(updatedList.getDescription()).isEqualTo("기존 리스트 설명"); // 기존 값 유지
+            assertThat(updatedList.getColor()).isEqualTo(ListColor.of("#FF6B6B"));
+
+            verify(activityHelper, never()).logListActivity(
+                    eq(ActivityType.LIST_RENAME),
+                    any(),
+                    any(),
+                    any(),
+                    any());
+            verify(activityHelper).logListActivity(
+                    eq(ActivityType.LIST_CHANGE_COLOR),
+                    eq(testUserId),
+                    any(Map.class),
+                    eq(testBoardId),
+                    eq(testListId));
         }
 
         @Test
@@ -176,10 +259,8 @@ class BoardListUpdateServiceTest {
         void updateBoardList_withInvalidData_shouldReturnInputError() {
             // given
             List<FieldViolation> validationErrors = List.of(
-                    FieldViolation.builder().field("title").message("제목은 필수입니다").rejectedValue(null)
-                            .build(),
-                    FieldViolation.builder().field("title").message("제목 길이가 너무 깁니다")
-                            .rejectedValue("").build());
+                    FieldViolation.builder().field("title").message("제목은 필수입니다").rejectedValue(null).build(),
+                    FieldViolation.builder().field("title").message("제목 길이가 너무 깁니다").rejectedValue("").build());
             ValidationResult<UpdateBoardListCommand> invalidResult = ValidationResult
                     .invalid(io.vavr.collection.List.ofAll(validationErrors));
             when(boardListValidator.validateUpdateBoardList(validUpdateCommand)).thenReturn(invalidResult);
@@ -203,11 +284,10 @@ class BoardListUpdateServiceTest {
         @DisplayName("리스트가 존재하지 않을 때 NotFound를 반환해야 한다")
         void updateBoardList_withNonExistentList_shouldReturnNotFound() {
             // given
-            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult
-                    .valid(validUpdateCommand);
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(validUpdateCommand);
             when(boardListValidator.validateUpdateBoardList(validUpdateCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.empty());
-            when(validationMessageResolver.getMessage("error.service.card.move.list_not_found"))
+            when(validationMessageResolver.getMessage("validation.boardlist.not.found"))
                     .thenReturn("리스트를 찾을 수 없습니다");
 
             // when
@@ -220,16 +300,14 @@ class BoardListUpdateServiceTest {
             Failure.NotFound notFound = (Failure.NotFound) failure;
             assertThat(notFound.getErrorCode()).isEqualTo("LIST_NOT_FOUND");
             assertThat(notFound.getMessage()).isEqualTo("리스트를 찾을 수 없습니다");
-            assertThat((Map<String, Object>) notFound.getContext()).containsEntry("listId",
-                    testListId.getId());
+            assertThat((Map<String, Object>) notFound.getContext()).containsEntry("listId", testListId.getId());
         }
 
         @Test
         @DisplayName("보드가 존재하지 않을 때 NotFound를 반환해야 한다")
         void updateBoardList_withNonExistentBoard_shouldReturnNotFound() {
             // given
-            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult
-                    .valid(validUpdateCommand);
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(validUpdateCommand);
             when(boardListValidator.validateUpdateBoardList(validUpdateCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.empty());
@@ -246,8 +324,7 @@ class BoardListUpdateServiceTest {
             Failure.NotFound notFound = (Failure.NotFound) failure;
             assertThat(notFound.getErrorCode()).isEqualTo("BOARD_NOT_FOUND");
             assertThat(notFound.getMessage()).isEqualTo("보드를 찾을 수 없습니다");
-            assertThat((Map<String, Object>) notFound.getContext()).containsEntry("boardId",
-                    testBoardId.getId());
+            assertThat((Map<String, Object>) notFound.getContext()).containsEntry("boardId", testBoardId.getId());
         }
 
         @Test
@@ -258,13 +335,12 @@ class BoardListUpdateServiceTest {
             UpdateBoardListCommand unauthorizedCommand = new UpdateBoardListCommand(
                     testListId, unauthorizedUserId, "새로운 제목", null, null);
 
-            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult
-                    .valid(unauthorizedCommand);
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(unauthorizedCommand);
             when(boardListValidator.validateUpdateBoardList(unauthorizedCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
-            when(validationMessageResolver.getMessage("validation.board.modification.access.denied"))
-                    .thenReturn("수정 권한이 없습니다");
+            when(validationMessageResolver.getMessage("validation.boardlist.update.access.denied"))
+                    .thenReturn("리스트 수정 권한이 없습니다");
 
             // when
             Either<Failure, BoardList> result = boardListUpdateService.updateBoardList(unauthorizedCommand);
@@ -275,9 +351,8 @@ class BoardListUpdateServiceTest {
             assertThat(failure).isInstanceOf(Failure.PermissionDenied.class);
             Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) failure;
             assertThat(permissionDenied.getErrorCode()).isEqualTo("UNAUTHORIZED_ACCESS");
-            assertThat(permissionDenied.getMessage()).isEqualTo("수정 권한이 없습니다");
-            assertThat((Map<String, Object>) permissionDenied.getContext()).containsEntry("listId",
-                    testListId.getId());
+            assertThat(permissionDenied.getMessage()).isEqualTo("리스트 수정 권한이 없습니다");
+            assertThat((Map<String, Object>) permissionDenied.getContext()).containsEntry("listId", testListId.getId());
             assertThat((Map<String, Object>) permissionDenied.getContext()).containsEntry("userId",
                     unauthorizedUserId.getId());
         }
@@ -295,6 +370,8 @@ class BoardListUpdateServiceTest {
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
+            when(validationMessageResolver.getMessage("validation.boardlist.title.length.exceeded", 100))
+                    .thenReturn("리스트 제목은 최대 100자까지 입력할 수 있습니다");
 
             // when
             Either<Failure, BoardList> result = boardListUpdateService.updateBoardList(longTitleCommand);
@@ -308,21 +385,21 @@ class BoardListUpdateServiceTest {
             assertThat(businessRuleViolation.getMessage()).contains("리스트 제목은 최대 100자까지 입력할 수 있습니다");
             assertThat((Map<String, Object>) businessRuleViolation.getContext()).containsEntry("listId",
                     testListId.getId());
-            assertThat((Map<String, Object>) businessRuleViolation.getContext())
-                    .containsEntry("titleLength", 101);
+            assertThat((Map<String, Object>) businessRuleViolation.getContext()).containsEntry("titleLength", 101);
         }
 
         @Test
         @DisplayName("저장 중 예외 발생 시 InternalError를 반환해야 한다")
         void updateBoardList_withSaveException_shouldReturnInternalError() {
             // given
-            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult
-                    .valid(validUpdateCommand);
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(validUpdateCommand);
             when(boardListValidator.validateUpdateBoardList(validUpdateCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
             when(boardListRepository.save(any(BoardList.class))).thenThrow(new RuntimeException("저장 실패"));
+            when(validationMessageResolver.getMessage("validation.boardlist.update.error"))
+                    .thenReturn("리스트 수정 중 오류가 발생했습니다");
 
             // when
             Either<Failure, BoardList> result = boardListUpdateService.updateBoardList(validUpdateCommand);
@@ -333,7 +410,9 @@ class BoardListUpdateServiceTest {
             assertThat(failure).isInstanceOf(Failure.InternalError.class);
             Failure.InternalError internalError = (Failure.InternalError) failure;
             assertThat(internalError.getErrorCode()).isEqualTo("BOARD_LIST_UPDATE_ERROR");
-            assertThat(internalError.getMessage()).isEqualTo("저장 실패");
+            assertThat(internalError.getMessage()).isEqualTo("리스트 수정 중 오류가 발생했습니다");
+            assertThat((Map<String, Object>) internalError.getContext()).containsEntry("listId", testListId.getId());
+            assertThat((Map<String, Object>) internalError.getContext()).containsEntry("error", "저장 실패");
         }
     }
 
@@ -345,18 +424,25 @@ class BoardListUpdateServiceTest {
         @DisplayName("유효한 위치 변경 시 성공해야 한다")
         void updateBoardListPosition_withValidPosition_shouldReturnUpdatedLists() {
             // given
+            BoardList targetList = BoardList.builder()
+                    .listId(testListId)
+                    .title("리스트2")
+                    .description("설명")
+                    .position(1)
+                    .color(ListColor.defaultColor())
+                    .boardId(testBoardId)
+                    .createdAt(Instant.now())
+                    .updatedAt(Instant.now())
+                    .build();
+
             List<BoardList> allLists = List.of(
                     createBoardList("리스트1", 0),
-                    createBoardList("리스트2", 1),
+                    targetList,
                     createBoardList("리스트3", 2));
 
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(validPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
-                    .thenReturn(validResult);
-            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(allLists.get(1))); // position
-                                                                                                     // 1의
-                                                                                                     // 리스트
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(validPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand)).thenReturn(validResult);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(targetList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(allLists);
             when(boardListMovePolicy.canMoveWithinSameBoard(any(), eq(2))).thenReturn(Either.right(null));
@@ -372,6 +458,12 @@ class BoardListUpdateServiceTest {
             List<BoardList> updatedLists = result.get();
             assertThat(updatedLists).hasSize(3);
             verify(boardListRepository).saveAll(anyList());
+            verify(activityHelper).logListActivity(
+                    eq(ActivityType.LIST_MOVE),
+                    eq(testUserId),
+                    any(Map.class),
+                    eq(testBoardId),
+                    eq(testListId));
         }
 
         @Test
@@ -383,13 +475,9 @@ class BoardListUpdateServiceTest {
                     createBoardList("리스트2", 1),
                     createBoardList("리스트3", 2));
 
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(validPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
-                    .thenReturn(validResult);
-            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(allLists.get(1))); // position
-                                                                                                     // 1의
-                                                                                                     // 리스트
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(validPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand)).thenReturn(validResult);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(allLists.get(1))); // position 1의 리스트
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(allLists);
             when(boardListMovePolicy.canMoveWithinSameBoard(any(), eq(2))).thenReturn(Either.right(null));
@@ -404,6 +492,12 @@ class BoardListUpdateServiceTest {
             List<BoardList> returnedLists = result.get();
             assertThat(returnedLists).isEqualTo(allLists);
             verify(boardListRepository, never()).saveAll(anyList());
+            verify(activityHelper, never()).logListActivity(
+                    eq(ActivityType.LIST_MOVE),
+                    any(),
+                    any(),
+                    any(),
+                    any());
         }
 
         @Test
@@ -411,12 +505,10 @@ class BoardListUpdateServiceTest {
         void updateBoardListPosition_withInvalidData_shouldReturnInputError() {
             // given
             List<FieldViolation> validationErrors = List.of(
-                    FieldViolation.builder().field("newPosition").message("위치는 0 이상이어야 합니다")
-                            .rejectedValue(-1).build());
+                    FieldViolation.builder().field("newPosition").message("위치는 0 이상이어야 합니다").rejectedValue(-1).build());
             ValidationResult<UpdateBoardListPositionCommand> invalidResult = ValidationResult
                     .invalid(io.vavr.collection.List.ofAll(validationErrors));
-            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
-                    .thenReturn(invalidResult);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand)).thenReturn(invalidResult);
             when(validationMessageResolver.getMessage("validation.input.invalid"))
                     .thenReturn("입력값이 유효하지 않습니다");
 
@@ -438,11 +530,11 @@ class BoardListUpdateServiceTest {
         @DisplayName("리스트가 존재하지 않을 때 NotFound를 반환해야 한다")
         void updateBoardListPosition_withNonExistentList_shouldReturnNotFound() {
             // given
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(validPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
-                    .thenReturn(validResult);
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(validPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("validation.boardlist.not.found"))
+                    .thenReturn("리스트를 찾을 수 없습니다");
 
             // when
             Either<Failure, List<BoardList>> result = boardListUpdateService
@@ -453,19 +545,21 @@ class BoardListUpdateServiceTest {
             Failure failure = result.getLeft();
             assertThat(failure).isInstanceOf(Failure.NotFound.class);
             Failure.NotFound notFound = (Failure.NotFound) failure;
-            assertThat(notFound.getErrorCode()).isEqualTo("NOT_FOUND");
+            assertThat(notFound.getErrorCode()).isEqualTo("LIST_NOT_FOUND");
+            assertThat(notFound.getMessage()).isEqualTo("리스트를 찾을 수 없습니다");
+            assertThat((Map<String, Object>) notFound.getContext()).containsEntry("listId", testListId.getId());
         }
 
         @Test
         @DisplayName("보드가 존재하지 않을 때 NotFound를 반환해야 한다")
         void updateBoardListPosition_withNonExistentBoard_shouldReturnNotFound() {
             // given
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(validPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
-                    .thenReturn(validResult);
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(validPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.empty());
+            when(validationMessageResolver.getMessage("validation.board.not.found"))
+                    .thenReturn("보드를 찾을 수 없습니다");
 
             // when
             Either<Failure, List<BoardList>> result = boardListUpdateService
@@ -476,23 +570,25 @@ class BoardListUpdateServiceTest {
             Failure failure = result.getLeft();
             assertThat(failure).isInstanceOf(Failure.NotFound.class);
             Failure.NotFound notFound = (Failure.NotFound) failure;
-            assertThat(notFound.getErrorCode()).isEqualTo("NOT_FOUND");
+            assertThat(notFound.getErrorCode()).isEqualTo("BOARD_NOT_FOUND");
+            assertThat(notFound.getMessage()).isEqualTo("보드를 찾을 수 없습니다");
+            assertThat((Map<String, Object>) notFound.getContext()).containsEntry("boardId", testBoardId.getId());
         }
 
         @Test
-        @DisplayName("권한이 없을 때 Forbidden을 반환해야 한다")
-        void updateBoardListPosition_withUnauthorizedAccess_shouldReturnForbidden() {
+        @DisplayName("권한이 없을 때 PermissionDenied를 반환해야 한다")
+        void updateBoardListPosition_withUnauthorizedAccess_shouldReturnPermissionDenied() {
             // given
             UserId unauthorizedUserId = new UserId("unauthorized-user-456");
             UpdateBoardListPositionCommand unauthorizedCommand = new UpdateBoardListPositionCommand(
                     testListId, unauthorizedUserId, 2);
 
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(unauthorizedCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(unauthorizedCommand))
-                    .thenReturn(validResult);
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(unauthorizedCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(unauthorizedCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+            when(validationMessageResolver.getMessage("validation.boardlist.update.access.denied"))
+                    .thenReturn("리스트 수정 권한이 없습니다");
 
             // when
             Either<Failure, List<BoardList>> result = boardListUpdateService
@@ -504,6 +600,10 @@ class BoardListUpdateServiceTest {
             assertThat(failure).isInstanceOf(Failure.PermissionDenied.class);
             Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) failure;
             assertThat(permissionDenied.getErrorCode()).isEqualTo("UNAUTHORIZED_ACCESS");
+            assertThat(permissionDenied.getMessage()).isEqualTo("리스트 수정 권한이 없습니다");
+            assertThat((Map<String, Object>) permissionDenied.getContext()).containsEntry("listId", testListId.getId());
+            assertThat((Map<String, Object>) permissionDenied.getContext()).containsEntry("userId",
+                    unauthorizedUserId.getId());
         }
 
         @Test
@@ -515,15 +615,15 @@ class BoardListUpdateServiceTest {
                     createBoardList("리스트2", 1),
                     createBoardList("리스트3", 2));
 
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(validPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
-                    .thenReturn(validResult);
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(validPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(allLists.get(1)));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(allLists);
             when(boardListMovePolicy.canMoveWithinSameBoard(any(), eq(2)))
                     .thenReturn(Either.left(Failure.ofBusinessRuleViolation("이동할 수 없는 위치입니다")));
+            when(validationMessageResolver.getMessage("validation.boardlist.move.policy.violation"))
+                    .thenReturn("리스트 이동 정책을 위반했습니다");
 
             // when
             Either<Failure, List<BoardList>> result = boardListUpdateService
@@ -535,28 +635,31 @@ class BoardListUpdateServiceTest {
             assertThat(failure).isInstanceOf(Failure.BusinessRuleViolation.class);
             Failure.BusinessRuleViolation businessRuleViolation = (Failure.BusinessRuleViolation) failure;
             assertThat(businessRuleViolation.getErrorCode()).isEqualTo("LIST_MOVE_POLICY_VIOLATION");
-            assertThat(businessRuleViolation.getMessage()).isEqualTo("이동할 수 없는 위치입니다");
+            assertThat(businessRuleViolation.getMessage()).isEqualTo("리스트 이동 정책을 위반했습니다");
+            assertThat((Map<String, Object>) businessRuleViolation.getContext()).containsEntry("listId",
+                    testListId.getId());
+            assertThat((Map<String, Object>) businessRuleViolation.getContext()).containsEntry("newPosition", 2);
         }
 
         @Test
-        @DisplayName("저장 중 예외 발생 시 InternalServerError를 반환해야 한다")
-        void updateBoardListPosition_withSaveException_shouldReturnInternalServerError() {
+        @DisplayName("저장 중 예외 발생 시 InternalError를 반환해야 한다")
+        void updateBoardListPosition_withSaveException_shouldReturnInternalError() {
             // given
             List<BoardList> allLists = List.of(
                     createBoardList("리스트1", 0),
                     createBoardList("리스트2", 1),
                     createBoardList("리스트3", 2));
 
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(validPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
-                    .thenReturn(validResult);
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(validPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(allLists.get(1)));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(allLists);
             when(boardListMovePolicy.canMoveWithinSameBoard(any(), eq(2))).thenReturn(Either.right(null));
             when(boardListMovePolicy.hasPositionChanged(any(), eq(2))).thenReturn(true);
             when(boardListRepository.saveAll(anyList())).thenThrow(new RuntimeException("저장 실패"));
+            when(validationMessageResolver.getMessage("validation.boardlist.position.update.error"))
+                    .thenReturn("리스트 위치 변경 중 오류가 발생했습니다");
 
             // when
             Either<Failure, List<BoardList>> result = boardListUpdateService
@@ -567,8 +670,10 @@ class BoardListUpdateServiceTest {
             Failure failure = result.getLeft();
             assertThat(failure).isInstanceOf(Failure.InternalError.class);
             Failure.InternalError internalError = (Failure.InternalError) failure;
-            assertThat(internalError.getErrorCode()).isEqualTo("INTERNAL_ERROR");
-            assertThat(internalError.getMessage()).isEqualTo("저장 실패");
+            assertThat(internalError.getErrorCode()).isEqualTo("BOARD_LIST_POSITION_UPDATE_ERROR");
+            assertThat(internalError.getMessage()).isEqualTo("리스트 위치 변경 중 오류가 발생했습니다");
+            assertThat((Map<String, Object>) internalError.getContext()).containsEntry("listId", testListId.getId());
+            assertThat((Map<String, Object>) internalError.getContext()).containsEntry("error", "저장 실패");
         }
     }
 
@@ -596,6 +701,8 @@ class BoardListUpdateServiceTest {
 
             // then
             assertThat(result.isRight()).isTrue();
+            BoardList updatedList = result.get();
+            assertThat(updatedList.getTitle()).isEqualTo(exactMaxTitle);
         }
 
         @Test
@@ -610,10 +717,8 @@ class BoardListUpdateServiceTest {
                     createBoardList("리스트2", 1),
                     createBoardList("리스트3", 2));
 
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(zeroPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(zeroPositionCommand))
-                    .thenReturn(validResult);
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(zeroPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(zeroPositionCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(allLists.get(1)));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(allLists);
@@ -627,6 +732,8 @@ class BoardListUpdateServiceTest {
 
             // then
             assertThat(result.isRight()).isTrue();
+            List<BoardList> updatedLists = result.get();
+            assertThat(updatedLists).hasSize(3);
         }
 
         @Test
@@ -641,10 +748,8 @@ class BoardListUpdateServiceTest {
                     createBoardList("리스트2", 1),
                     createBoardList("리스트3", 2));
 
-            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult
-                    .valid(lastPositionCommand);
-            when(boardListValidator.validateUpdateBoardListPosition(lastPositionCommand))
-                    .thenReturn(validResult);
+            ValidationResult<UpdateBoardListPositionCommand> validResult = ValidationResult.valid(lastPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(lastPositionCommand)).thenReturn(validResult);
             when(boardListRepository.findById(testListId)).thenReturn(Optional.of(allLists.get(0)));
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(allLists);
@@ -658,21 +763,111 @@ class BoardListUpdateServiceTest {
 
             // then
             assertThat(result.isRight()).isTrue();
+            List<BoardList> updatedLists = result.get();
+            assertThat(updatedLists).hasSize(3);
+        }
+
+        @Test
+        @DisplayName("빈 제목으로 수정할 때 성공해야 한다")
+        void updateBoardList_withEmptyTitle_shouldSucceed() {
+            // given
+            UpdateBoardListCommand emptyTitleCommand = new UpdateBoardListCommand(
+                    testListId, testUserId, "", null, null);
+
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(emptyTitleCommand);
+            when(boardListValidator.validateUpdateBoardList(emptyTitleCommand)).thenReturn(validResult);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+            when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
+            when(boardListRepository.save(any(BoardList.class))).thenReturn(testBoardList);
+
+            // when
+            Either<Failure, BoardList> result = boardListUpdateService.updateBoardList(emptyTitleCommand);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+            BoardList updatedList = result.get();
+            assertThat(updatedList.getTitle()).isEqualTo("");
         }
     }
 
-    // ==================== Helper Methods ====================
+    @Nested
+    @DisplayName("통합 테스트")
+    class IntegrationTest {
 
-    private BoardList createBoardList(String title, int position) {
-        return BoardList.builder()
-                .listId(new ListId())
-                .title(title)
-                .description("설명")
-                .position(position)
-                .color(ListColor.defaultColor())
-                .boardId(testBoardId)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
-                .build();
+        @Test
+        @DisplayName("리스트 수정 후 위치 변경이 정상적으로 작동해야 한다")
+        void updateBoardListThenPosition_shouldWorkCorrectly() {
+            // given - 리스트 수정
+            ValidationResult<UpdateBoardListCommand> validUpdateResult = ValidationResult.valid(validUpdateCommand);
+            when(boardListValidator.validateUpdateBoardList(validUpdateCommand)).thenReturn(validUpdateResult);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+            when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
+            when(boardListRepository.save(any(BoardList.class))).thenReturn(testBoardList);
+
+            // when - 리스트 수정
+            Either<Failure, BoardList> updateResult = boardListUpdateService.updateBoardList(validUpdateCommand);
+
+            // then - 수정 성공 확인
+            assertThat(updateResult.isRight()).isTrue();
+
+            // given - 위치 변경
+            List<BoardList> allLists = List.of(
+                    createBoardList("리스트1", 0),
+                    testBoardList, // 수정된 리스트
+                    createBoardList("리스트3", 2));
+
+            ValidationResult<UpdateBoardListPositionCommand> validPositionResult = ValidationResult
+                    .valid(validPositionCommand);
+            when(boardListValidator.validateUpdateBoardListPosition(validPositionCommand))
+                    .thenReturn(validPositionResult);
+            when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(allLists);
+            when(boardListMovePolicy.canMoveWithinSameBoard(any(), eq(2))).thenReturn(Either.right(null));
+            when(boardListMovePolicy.hasPositionChanged(any(), eq(2))).thenReturn(true);
+            when(boardListRepository.saveAll(anyList())).thenReturn(allLists);
+
+            // when - 위치 변경
+            Either<Failure, List<BoardList>> positionResult = boardListUpdateService
+                    .updateBoardListPosition(validPositionCommand);
+
+            // then - 위치 변경 성공 확인
+            assertThat(positionResult.isRight()).isTrue();
+            List<BoardList> updatedLists = positionResult.get();
+            assertThat(updatedLists).hasSize(3);
+        }
+
+        @Test
+        @DisplayName("활동 로그가 올바르게 기록되어야 한다")
+        void activityLogging_shouldWorkCorrectly() {
+            // given
+            ValidationResult<UpdateBoardListCommand> validResult = ValidationResult.valid(validUpdateCommand);
+            when(boardListValidator.validateUpdateBoardList(validUpdateCommand)).thenReturn(validResult);
+            when(boardListRepository.findById(testListId)).thenReturn(Optional.of(testBoardList));
+            when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
+            when(boardListPolicyConfig.getMaxTitleLength()).thenReturn(100);
+            when(boardListRepository.save(any(BoardList.class))).thenReturn(testBoardList);
+
+            // when
+            Either<Failure, BoardList> result = boardListUpdateService.updateBoardList(validUpdateCommand);
+
+            // then
+            assertThat(result.isRight()).isTrue();
+
+            // 활동 로그 검증
+            verify(activityHelper).logListActivity(
+                    eq(ActivityType.LIST_RENAME),
+                    eq(testUserId),
+                    any(Map.class),
+                    eq(testBoardId),
+                    eq(testListId));
+
+            verify(activityHelper).logListActivity(
+                    eq(ActivityType.LIST_CHANGE_COLOR),
+                    eq(testUserId),
+                    any(Map.class),
+                    eq(testBoardId),
+                    eq(testListId));
+        }
     }
 }

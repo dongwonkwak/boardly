@@ -13,6 +13,8 @@ import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.activity.domain.model.ActivityType;
 import io.vavr.control.Either;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -58,6 +60,9 @@ class BoardManagementServiceTest {
         @Mock
         private ValidationMessageResolver validationMessageResolver;
 
+        @Mock
+        private ActivityHelper activityHelper;
+
         @BeforeEach
         void setUp() {
                 boardManagementService = new BoardManagementService(
@@ -68,7 +73,8 @@ class BoardManagementServiceTest {
                                 boardMemberRepository,
                                 boardPermissionService,
                                 userFinder,
-                                validationMessageResolver);
+                                validationMessageResolver,
+                                activityHelper);
         }
 
         // ==================== HELPER METHODS ====================
@@ -113,6 +119,19 @@ class BoardManagementServiceTest {
                                 .build();
         }
 
+        private Board createValidBoardWithDifferentTitle(BoardId boardId, UserId ownerId, boolean isArchived) {
+                return Board.builder()
+                                .boardId(boardId)
+                                .title("기존 제목")
+                                .description("기존 설명")
+                                .isArchived(isArchived)
+                                .ownerId(ownerId)
+                                .isStarred(false)
+                                .createdAt(Instant.now())
+                                .updatedAt(Instant.now())
+                                .build();
+        }
+
         private ValidationResult<CreateBoardCommand> createInvalidValidationResult() {
                 return ValidationResult.invalid("title", "제목은 필수입니다", null);
         }
@@ -132,8 +151,8 @@ class BoardManagementServiceTest {
         // ==================== CREATE BOARD TESTS ====================
 
         @Test
-        @DisplayName("유효한 정보로 보드 생성이 성공해야 한다")
-        void createBoard_withValidData_shouldReturnCreatedBoard() {
+        @DisplayName("유효한 정보로 보드 생성이 성공하고 활동 로그가 기록되어야 한다")
+        void createBoard_withValidData_shouldReturnCreatedBoardAndLogActivity() {
                 // given
                 CreateBoardCommand command = createValidCreateCommand();
                 Board createdBoard = createValidBoard(new BoardId(), command.ownerId(), false);
@@ -152,11 +171,15 @@ class BoardManagementServiceTest {
                 assertThat(result.get().getTitle()).isEqualTo(createdBoard.getTitle());
                 assertThat(result.get().getDescription()).isEqualTo(createdBoard.getDescription());
                 verify(boardRepository).save(any(Board.class));
+                verify(activityHelper).logBoardCreate(
+                                eq(command.ownerId()),
+                                eq(command.title()),
+                                eq(createdBoard.getBoardId()));
         }
 
         @Test
-        @DisplayName("입력 검증 실패 시 InputError를 반환해야 한다")
-        void createBoard_withInvalidData_shouldReturnInputError() {
+        @DisplayName("입력 검증 실패 시 InputError를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void createBoard_withInvalidData_shouldReturnInputErrorAndNotLogActivity() {
                 // given
                 CreateBoardCommand command = createValidCreateCommand();
 
@@ -173,11 +196,12 @@ class BoardManagementServiceTest {
                 assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
                 assertThat(result.getLeft().getMessage()).isEqualTo("입력이 유효하지 않습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardCreate(any(), any(), any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 사용자로 보드 생성 시도 시 NotFound 오류를 반환해야 한다")
-        void createBoard_withNonExistentUser_shouldReturnNotFoundFailure() {
+        @DisplayName("존재하지 않는 사용자로 보드 생성 시도 시 NotFound 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void createBoard_withNonExistentUser_shouldReturnNotFoundFailureAndNotLogActivity() {
                 // given
                 CreateBoardCommand command = createValidCreateCommand();
 
@@ -194,11 +218,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("사용자를 찾을 수 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardCreate(any(), any(), any());
         }
 
         @Test
-        @DisplayName("보드 저장 중 예외 발생 시 InternalServerError를 반환해야 한다")
-        void createBoard_withSaveException_shouldReturnInternalServerError() {
+        @DisplayName("보드 저장 중 예외 발생 시 InternalServerError를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void createBoard_withSaveException_shouldReturnInternalServerErrorAndNotLogActivity() {
                 // given
                 CreateBoardCommand command = createValidCreateCommand();
 
@@ -214,19 +239,19 @@ class BoardManagementServiceTest {
                 // then
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
+                verify(activityHelper, never()).logBoardCreate(any(), any(), any());
         }
 
         // ==================== UPDATE BOARD TESTS ====================
 
         @Test
-        @DisplayName("유효한 정보로 보드 업데이트가 성공해야 한다")
-        void updateBoard_withValidData_shouldReturnUpdatedBoard() {
+        @DisplayName("유효한 정보로 보드 업데이트가 성공하고 활동 로그가 기록되어야 한다")
+        void updateBoard_withValidData_shouldReturnUpdatedBoardAndLogActivity() {
                 // given
-                UpdateBoardCommand command = createValidUpdateCommand();
-                Board existingBoard = createValidBoard(command.boardId(), command.requestedBy(), false);
-                Board updatedBoard = createValidBoard(command.boardId(), command.requestedBy(), false);
-                updatedBoard.updateTitle(command.title());
-                updatedBoard.updateDescription(command.description());
+                BoardId boardId = new BoardId();
+                UserId userId = new UserId();
+                UpdateBoardCommand command = UpdateBoardCommand.of(boardId, "새로운 제목", "새로운 설명", userId);
+                Board existingBoard = createValidBoardWithDifferentTitle(boardId, userId, false);
 
                 when(boardValidator.validateUpdate(command))
                                 .thenReturn(ValidationResult.valid(command));
@@ -236,7 +261,10 @@ class BoardManagementServiceTest {
                 when(boardPermissionService.canWriteBoard(command.boardId(), command.requestedBy()))
                                 .thenReturn(Either.right(true));
                 when(boardRepository.save(any(Board.class)))
-                                .thenReturn(Either.right(updatedBoard));
+                                .thenAnswer(invocation -> {
+                                        Board savedBoard = invocation.getArgument(0);
+                                        return Either.right(savedBoard);
+                                });
 
                 // when
                 Either<Failure, Board> result = boardManagementService.updateBoard(command);
@@ -246,11 +274,99 @@ class BoardManagementServiceTest {
                 assertThat(result.get().getTitle()).isEqualTo(command.title());
                 assertThat(result.get().getDescription()).isEqualTo(command.description());
                 verify(boardRepository).save(any(Board.class));
+                verify(activityHelper).logBoardActivity(
+                                eq(ActivityType.BOARD_RENAME),
+                                eq(command.requestedBy()),
+                                any(),
+                                eq(boardId));
+                verify(activityHelper).logBoardActivity(
+                                eq(ActivityType.BOARD_UPDATE_DESCRIPTION),
+                                eq(command.requestedBy()),
+                                any(),
+                                eq(boardId));
         }
 
         @Test
-        @DisplayName("입력 검증 실패 시 InputError를 반환해야 한다")
-        void updateBoard_withInvalidData_shouldReturnInputError() {
+        @DisplayName("제목만 변경된 보드 업데이트 시 제목 변경 활동 로그만 기록되어야 한다")
+        void updateBoard_withTitleChangeOnly_shouldLogOnlyTitleChangeActivity() {
+                // given
+                BoardId boardId = new BoardId();
+                UserId userId = new UserId();
+                UpdateBoardCommand command = UpdateBoardCommand.of(boardId, "새로운 제목", null, userId);
+                Board existingBoard = createValidBoardWithDifferentTitle(boardId, userId, false);
+
+                when(boardValidator.validateUpdate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(userFinder.checkUserExists(command.requestedBy())).thenReturn(true);
+                when(boardRepository.findById(command.boardId()))
+                                .thenReturn(java.util.Optional.of(existingBoard));
+                when(boardPermissionService.canWriteBoard(command.boardId(), command.requestedBy()))
+                                .thenReturn(Either.right(true));
+                when(boardRepository.save(any(Board.class)))
+                                .thenAnswer(invocation -> {
+                                        Board savedBoard = invocation.getArgument(0);
+                                        return Either.right(savedBoard);
+                                });
+
+                // when
+                Either<Failure, Board> result = boardManagementService.updateBoard(command);
+
+                // then
+                assertThat(result.isRight()).isTrue();
+                verify(activityHelper).logBoardActivity(
+                                eq(ActivityType.BOARD_RENAME),
+                                eq(command.requestedBy()),
+                                any(),
+                                eq(boardId));
+                verify(activityHelper, never()).logBoardActivity(
+                                eq(ActivityType.BOARD_UPDATE_DESCRIPTION),
+                                any(),
+                                any(),
+                                any());
+        }
+
+        @Test
+        @DisplayName("설명만 변경된 보드 업데이트 시 설명 변경 활동 로그만 기록되어야 한다")
+        void updateBoard_withDescriptionChangeOnly_shouldLogOnlyDescriptionChangeActivity() {
+                // given
+                BoardId boardId = new BoardId();
+                UserId userId = new UserId();
+                UpdateBoardCommand command = UpdateBoardCommand.of(boardId, null, "새로운 설명", userId);
+                Board existingBoard = createValidBoardWithDifferentTitle(boardId, userId, false);
+
+                when(boardValidator.validateUpdate(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(userFinder.checkUserExists(command.requestedBy())).thenReturn(true);
+                when(boardRepository.findById(command.boardId()))
+                                .thenReturn(java.util.Optional.of(existingBoard));
+                when(boardPermissionService.canWriteBoard(command.boardId(), command.requestedBy()))
+                                .thenReturn(Either.right(true));
+                when(boardRepository.save(any(Board.class)))
+                                .thenAnswer(invocation -> {
+                                        Board savedBoard = invocation.getArgument(0);
+                                        return Either.right(savedBoard);
+                                });
+
+                // when
+                Either<Failure, Board> result = boardManagementService.updateBoard(command);
+
+                // then
+                assertThat(result.isRight()).isTrue();
+                verify(activityHelper, never()).logBoardActivity(
+                                eq(ActivityType.BOARD_RENAME),
+                                any(),
+                                any(),
+                                any());
+                verify(activityHelper).logBoardActivity(
+                                eq(ActivityType.BOARD_UPDATE_DESCRIPTION),
+                                eq(command.requestedBy()),
+                                any(),
+                                eq(boardId));
+        }
+
+        @Test
+        @DisplayName("입력 검증 실패 시 InputError를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void updateBoard_withInvalidData_shouldReturnInputErrorAndNotLogActivity() {
                 // given
                 UpdateBoardCommand command = createValidUpdateCommand();
 
@@ -267,11 +383,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 사용자로 보드 업데이트 시도 시 NotFound 오류를 반환해야 한다")
-        void updateBoard_withNonExistentUser_shouldReturnNotFoundFailure() {
+        @DisplayName("존재하지 않는 사용자로 보드 업데이트 시도 시 NotFound 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void updateBoard_withNonExistentUser_shouldReturnNotFoundFailureAndNotLogActivity() {
                 // given
                 UpdateBoardCommand command = createValidUpdateCommand();
 
@@ -286,11 +403,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("사용자를 찾을 수 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 보드 업데이트 시도 시 NotFound 오류를 반환해야 한다")
-        void updateBoard_withNonExistentBoard_shouldReturnNotFoundFailure() {
+        @DisplayName("존재하지 않는 보드 업데이트 시도 시 NotFound 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void updateBoard_withNonExistentBoard_shouldReturnNotFoundFailureAndNotLogActivity() {
                 // given
                 UpdateBoardCommand command = createValidUpdateCommand();
 
@@ -309,11 +427,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("보드를 찾을 수 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("권한이 없는 사용자가 보드 업데이트 시도 시 PermissionDenied 오류를 반환해야 한다")
-        void updateBoard_withoutPermission_shouldReturnPermissionDeniedFailure() {
+        @DisplayName("권한이 없는 사용자가 보드 업데이트 시도 시 PermissionDenied 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void updateBoard_withoutPermission_shouldReturnPermissionDeniedFailureAndNotLogActivity() {
                 // given
                 UpdateBoardCommand command = createValidUpdateCommand();
                 Board existingBoard = createValidBoard(command.boardId(), command.requestedBy(), false);
@@ -335,11 +454,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("보드 수정 권한이 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("아카이브된 보드 업데이트 시도 시 Conflict 오류를 반환해야 한다")
-        void updateBoard_withArchivedBoard_shouldReturnConflictFailure() {
+        @DisplayName("아카이브된 보드 업데이트 시도 시 Conflict 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void updateBoard_withArchivedBoard_shouldReturnConflictFailureAndNotLogActivity() {
                 // given
                 UpdateBoardCommand command = createValidUpdateCommand();
                 Board archivedBoard = createValidBoard(command.boardId(), command.requestedBy(), true);
@@ -361,11 +481,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("아카이브된 보드는 수정할 수 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("변경 사항이 없는 보드 업데이트 시 기존 보드를 반환해야 한다")
-        void updateBoard_withNoChanges_shouldReturnExistingBoard() {
+        @DisplayName("변경 사항이 없는 보드 업데이트 시 기존 보드를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void updateBoard_withNoChanges_shouldReturnExistingBoardAndNotLogActivity() {
                 // given
                 BoardId boardId = new BoardId();
                 UserId userId = new UserId();
@@ -387,13 +508,14 @@ class BoardManagementServiceTest {
                 assertThat(result.isRight()).isTrue();
                 assertThat(result.get()).isEqualTo(existingBoard);
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         // ==================== DELETE BOARD TESTS ====================
 
         @Test
-        @DisplayName("유효한 정보로 보드 삭제가 성공해야 한다")
-        void deleteBoard_withValidData_shouldReturnSuccess() {
+        @DisplayName("유효한 정보로 보드 삭제가 성공하고 활동 로그가 기록되어야 한다")
+        void deleteBoard_withValidData_shouldReturnSuccessAndLogActivity() {
                 // given
                 DeleteBoardCommand command = createValidDeleteCommand();
                 Board board = createValidBoard(command.boardId(), command.requestedBy(), false);
@@ -421,11 +543,16 @@ class BoardManagementServiceTest {
                 verify(boardListRepository).deleteByBoardId(command.boardId());
                 verify(boardMemberRepository).deleteByBoardId(command.boardId());
                 verify(boardRepository).delete(command.boardId());
+                verify(activityHelper).logBoardActivity(
+                                eq(ActivityType.BOARD_DELETE),
+                                eq(command.requestedBy()),
+                                any(),
+                                eq(board.getBoardId()));
         }
 
         @Test
-        @DisplayName("입력 검증 실패 시 InputError를 반환해야 한다")
-        void deleteBoard_withInvalidData_shouldReturnInputError() {
+        @DisplayName("입력 검증 실패 시 InputError를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void deleteBoard_withInvalidData_shouldReturnInputErrorAndNotLogActivity() {
                 // given
                 DeleteBoardCommand command = createValidDeleteCommand();
 
@@ -441,11 +568,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
                 verify(boardRepository, never()).delete(any(BoardId.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 사용자로 보드 삭제 시도 시 NotFound 오류를 반환해야 한다")
-        void deleteBoard_withNonExistentUser_shouldReturnNotFoundFailure() {
+        @DisplayName("존재하지 않는 사용자로 보드 삭제 시도 시 NotFound 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void deleteBoard_withNonExistentUser_shouldReturnNotFoundFailureAndNotLogActivity() {
                 // given
                 DeleteBoardCommand command = createValidDeleteCommand();
 
@@ -462,11 +590,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("사용자를 찾을 수 없습니다");
                 verify(boardRepository, never()).delete(any(BoardId.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 보드 삭제 시도 시 NotFound 오류를 반환해야 한다")
-        void deleteBoard_withNonExistentBoard_shouldReturnNotFoundFailure() {
+        @DisplayName("존재하지 않는 보드 삭제 시도 시 NotFound 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void deleteBoard_withNonExistentBoard_shouldReturnNotFoundFailureAndNotLogActivity() {
                 // given
                 DeleteBoardCommand command = createValidDeleteCommand();
 
@@ -485,11 +614,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("보드를 찾을 수 없습니다");
                 verify(boardRepository, never()).delete(any(BoardId.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("권한이 없는 사용자가 보드 삭제 시도 시 PermissionDenied 오류를 반환해야 한다")
-        void deleteBoard_withoutPermission_shouldReturnPermissionDeniedFailure() {
+        @DisplayName("권한이 없는 사용자가 보드 삭제 시도 시 PermissionDenied 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void deleteBoard_withoutPermission_shouldReturnPermissionDeniedFailureAndNotLogActivity() {
                 // given
                 DeleteBoardCommand command = createValidDeleteCommand();
                 Board board = createValidBoard(command.boardId(), command.requestedBy(), false);
@@ -511,13 +641,14 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("보드 삭제 권한이 없습니다");
                 verify(boardRepository, never()).delete(any(BoardId.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         // ==================== ARCHIVE BOARD TESTS ====================
 
         @Test
-        @DisplayName("유효한 정보로 보드 아카이브가 성공해야 한다")
-        void archiveBoard_withValidData_shouldReturnArchivedBoard() {
+        @DisplayName("유효한 정보로 보드 아카이브가 성공하고 활동 로그가 기록되어야 한다")
+        void archiveBoard_withValidData_shouldReturnArchivedBoardAndLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
                 Board unarchivedBoard = createValidBoard(command.boardId(), command.requestedBy(), false);
@@ -540,11 +671,16 @@ class BoardManagementServiceTest {
                 assertThat(result.isRight()).isTrue();
                 assertThat(result.get().isArchived()).isTrue();
                 verify(boardRepository).save(any(Board.class));
+                verify(activityHelper).logBoardActivity(
+                                eq(ActivityType.BOARD_ARCHIVE),
+                                eq(command.requestedBy()),
+                                any(),
+                                eq(archivedBoard.getBoardId()));
         }
 
         @Test
-        @DisplayName("이미 아카이브된 보드에 아카이브 시도 시 기존 보드를 반환해야 한다")
-        void archiveBoard_withAlreadyArchivedBoard_shouldReturnExistingBoard() {
+        @DisplayName("이미 아카이브된 보드에 아카이브 시도 시 기존 보드를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void archiveBoard_withAlreadyArchivedBoard_shouldReturnExistingBoardAndNotLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
                 Board archivedBoard = createValidBoard(command.boardId(), command.requestedBy(), true);
@@ -564,11 +700,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isRight()).isTrue();
                 assertThat(result.get()).isEqualTo(archivedBoard);
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("입력 검증 실패 시 InputError를 반환해야 한다")
-        void archiveBoard_withInvalidData_shouldReturnInputError() {
+        @DisplayName("입력 검증 실패 시 InputError를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void archiveBoard_withInvalidData_shouldReturnInputErrorAndNotLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
 
@@ -584,11 +721,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft()).isInstanceOf(Failure.InputError.class);
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 사용자로 보드 아카이브 시도 시 NotFound 오류를 반환해야 한다")
-        void archiveBoard_withNonExistentUser_shouldReturnNotFoundFailure() {
+        @DisplayName("존재하지 않는 사용자로 보드 아카이브 시도 시 NotFound 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void archiveBoard_withNonExistentUser_shouldReturnNotFoundFailureAndNotLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
 
@@ -605,11 +743,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("사용자를 찾을 수 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("존재하지 않는 보드 아카이브 시도 시 NotFound 오류를 반환해야 한다")
-        void archiveBoard_withNonExistentBoard_shouldReturnNotFoundFailure() {
+        @DisplayName("존재하지 않는 보드 아카이브 시도 시 NotFound 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void archiveBoard_withNonExistentBoard_shouldReturnNotFoundFailureAndNotLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
 
@@ -628,11 +767,12 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("보드를 찾을 수 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         @Test
-        @DisplayName("권한이 없는 사용자가 보드 아카이브 시도 시 PermissionDenied 오류를 반환해야 한다")
-        void archiveBoard_withoutPermission_shouldReturnPermissionDeniedFailure() {
+        @DisplayName("권한이 없는 사용자가 보드 아카이브 시도 시 PermissionDenied 오류를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void archiveBoard_withoutPermission_shouldReturnPermissionDeniedFailureAndNotLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
                 Board board = createValidBoard(command.boardId(), command.requestedBy(), false);
@@ -654,13 +794,14 @@ class BoardManagementServiceTest {
                 assertThat(result.isLeft()).isTrue();
                 assertThat(result.getLeft().getMessage()).isEqualTo("보드 아카이브 권한이 없습니다");
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 
         // ==================== UNARCHIVE BOARD TESTS ====================
 
         @Test
-        @DisplayName("유효한 정보로 보드 언아카이브가 성공해야 한다")
-        void unarchiveBoard_withValidData_shouldReturnUnarchivedBoard() {
+        @DisplayName("유효한 정보로 보드 언아카이브가 성공하고 활동 로그가 기록되어야 한다")
+        void unarchiveBoard_withValidData_shouldReturnUnarchivedBoardAndLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
                 Board archivedBoard = createValidBoard(command.boardId(), command.requestedBy(), true);
@@ -683,11 +824,16 @@ class BoardManagementServiceTest {
                 assertThat(result.isRight()).isTrue();
                 assertThat(result.get().isArchived()).isFalse();
                 verify(boardRepository).save(any(Board.class));
+                verify(activityHelper).logBoardActivity(
+                                eq(ActivityType.BOARD_UNARCHIVE),
+                                eq(command.requestedBy()),
+                                any(),
+                                eq(unarchivedBoard.getBoardId()));
         }
 
         @Test
-        @DisplayName("이미 활성 상태인 보드에 언아카이브 시도 시 기존 보드를 반환해야 한다")
-        void unarchiveBoard_withAlreadyActiveBoard_shouldReturnExistingBoard() {
+        @DisplayName("이미 활성 상태인 보드에 언아카이브 시도 시 기존 보드를 반환하고 활동 로그가 기록되지 않아야 한다")
+        void unarchiveBoard_withAlreadyActiveBoard_shouldReturnExistingBoardAndNotLogActivity() {
                 // given
                 ArchiveBoardCommand command = createValidArchiveCommand();
                 Board activeBoard = createValidBoard(command.boardId(), command.requestedBy(), false);
@@ -707,5 +853,6 @@ class BoardManagementServiceTest {
                 assertThat(result.isRight()).isTrue();
                 assertThat(result.get()).isEqualTo(activeBoard);
                 verify(boardRepository, never()).save(any(Board.class));
+                verify(activityHelper, never()).logBoardActivity(any(), any(), any(), any());
         }
 }

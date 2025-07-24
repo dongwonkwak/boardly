@@ -93,6 +93,7 @@
 - `orange-red`: 주황색-빨간색 그라데이션
 - `purple-pink`: 보라색-분홍색 그라데이션
 - `gray-slate`: 회색-슬레이트 그라데이션
+- `indigo-blue`: 인디고-파란색 그라데이션
 
 ### Activity 객체
 

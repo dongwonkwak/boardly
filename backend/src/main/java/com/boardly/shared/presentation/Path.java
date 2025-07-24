@@ -8,6 +8,7 @@ public final class Path {
   public static final String PREFIX = "/api";
   public static final String USERS = PREFIX + "/users";
   public static final String BOARDS = PREFIX + "/boards";
+  public static final String DASHBOARD = PREFIX + "/dashboard";
 
   /*
    * Board List

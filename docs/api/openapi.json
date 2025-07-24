@@ -41,6 +41,10 @@
       "description": "카드 관련 API"
     },
     {
+      "name": "Dashboard",
+      "description": "대시보드 관리 API"
+    },
+    {
       "name": "BoardLists",
       "description": "리스트 관리 API"
     },
@@ -1878,6 +1882,86 @@
         ]
       }
     },
+    "/api/dashboard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "대시보드 조회",
+        "description": "현재 사용자의 대시보드 정보를 조회합니다. 보드 목록, 최근 활동, 통계 정보를 포함합니다.",
+        "operationId": "getDashboard",
+        "responses": {
+          "200": {
+            "description": "대시보드 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "대시보드 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "사용자를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
     "/api/cards/lists/{listId}": {
       "get": {
         "tags": [
@@ -2739,35 +2823,6 @@
           "title"
         ]
       },
-      "ActivityListResponse": {
-        "type": "object",
-        "properties": {
-          "activities": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActivityResponse"
-            }
-          },
-          "totalCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "currentPage": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "hasNextPage": {
-            "type": "boolean"
-          },
-          "hasPreviousPage": {
-            "type": "boolean"
-          }
-        }
-      },
       "ActivityResponse": {
         "type": "object",
         "properties": {
@@ -2799,11 +2854,13 @@
               "BOARD_CREATE",
               "BOARD_RENAME",
               "BOARD_ARCHIVE",
+              "BOARD_UNARCHIVE",
               "BOARD_MOVE",
               "BOARD_DELETE",
               "BOARD_UPDATE_DESCRIPTION",
               "BOARD_ADD_MEMBER",
               "BOARD_REMOVE_MEMBER",
+              "BOARD_UPDATE_MEMBER_ROLE",
               "BOARD_DUPLICATE",
               "USER_UPDATE_PROFILE",
               "USER_CHANGE_LANGUAGE",
@@ -2838,6 +2895,111 @@
           },
           "profileImageUrl": {
             "type": "string"
+          }
+        }
+      },
+      "BoardSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "listCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cardCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "color": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "DashboardResponse": {
+        "type": "object",
+        "properties": {
+          "boards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardSummaryDto"
+            }
+          },
+          "recentActivity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            }
+          },
+          "statistics": {
+            "$ref": "#/components/schemas/DashboardStatisticsDto"
+          }
+        }
+      },
+      "DashboardStatisticsDto": {
+        "type": "object",
+        "properties": {
+          "totalBoards": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCards": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "starredBoards": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "archivedBoards": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ActivityListResponse": {
+        "type": "object",
+        "properties": {
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
           }
         }
       }

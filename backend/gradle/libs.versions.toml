@@ -18,7 +18,6 @@ springdoc-openapi-starter-webmvc-ui = "2.8.9"
 openapi-gradle-plugin = "1.9.0"
 ulid-creator = "5.2.3"
 caffeine = "3.2.2"
-prettytime = "5.0.9.Final"
 
 [libraries]
 # Spring Boot Starters
@@ -39,7 +38,6 @@ vavr = { module = "io.vavr:vavr", version.ref = "vavr" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi-starter-webmvc-ui" }
 ulid-creator = { module = "com.github.f4b6a3:ulid-creator", version.ref = "ulid-creator" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
-prettytime = { module = "org.ocpsoft.prettytime:prettytime", version.ref = "prettytime" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
@@ -57,12 +55,6 @@ spring-boot-dependencies = [
 
 spring-test-dependencies = ["spring-boot-starter-test", "spring-security-test"]
 
-common-dependencies = [
-  "commons-lang3",
-  "vavr",
-  "ulid-creator",
-  "caffeine",
-  "prettytime",
-]
+common-dependencies = ["commons-lang3", "vavr", "ulid-creator", "caffeine"]
 
 springdoc-dependencies = ["springdoc-openapi-starter-webmvc-ui"]

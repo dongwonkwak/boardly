@@ -9,10 +9,12 @@ import lombok.Builder;
 
 @Builder
 public record ActivityResponse(
-        String id,
-        ActivityType type,
-        ActorResponse actor,
-        Instant timestamp,
-        Map<String, Object> payload) {
+                String id,
+                ActivityType type,
+                ActorResponse actor,
+                Instant timestamp,
+                Map<String, Object> payload,
+                String boardName,
+                String boardId) {
 
 }

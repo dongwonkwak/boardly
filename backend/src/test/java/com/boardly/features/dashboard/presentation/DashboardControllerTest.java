@@ -275,6 +275,8 @@ class DashboardControllerTest {
                                 .build())
                         .timestamp(Instant.now())
                         .payload(java.util.Map.of("title", "새로운 카드"))
+                        .boardName("프로젝트 A")
+                        .boardId("board_123")
                         .build(),
                 ActivityResponse.builder()
                         .id("activity-2")
@@ -288,6 +290,8 @@ class DashboardControllerTest {
                                 .build())
                         .timestamp(Instant.now())
                         .payload(java.util.Map.of("description", "보드 설명 업데이트"))
+                        .boardName("프로젝트 B")
+                        .boardId("board_456")
                         .build());
 
         DashboardStatisticsDto statistics = DashboardStatisticsDto.builder()

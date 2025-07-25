@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +40,8 @@ import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 
 import io.vavr.control.Either;
+import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.board.application.dto.BoardNameDto;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ActivityReadService 테스트")
@@ -46,6 +49,9 @@ class ActivityReadServiceTest {
 
         @Mock
         private ActivityRepository activityRepository;
+
+        @Mock
+        private BoardRepository boardRepository;
 
         @Mock
         private MessageSource messageSource;
@@ -56,7 +62,7 @@ class ActivityReadServiceTest {
         @BeforeEach
         void setUp() {
                 messageResolver = new ValidationMessageResolver(messageSource);
-                activityReadService = new ActivityReadService(activityRepository, messageResolver);
+                activityReadService = new ActivityReadService(activityRepository, boardRepository, messageResolver);
         }
 
         @Nested
@@ -382,6 +388,10 @@ class ActivityReadServiceTest {
                                         .thenReturn(mockActivities);
                         when(activityRepository.countByBoardId(boardId)).thenReturn(1L);
 
+                        // BoardRepository 모킹 추가
+                        when(boardRepository.findBoardNameById(boardId))
+                                        .thenReturn(Optional.of(new BoardNameDto("프로젝트 A")));
+
                         // when
                         Either<Failure, ActivityListResponse> result = activityReadService.getActivities(query);
 
@@ -394,6 +404,8 @@ class ActivityReadServiceTest {
                         assertThat(activityResponse.id()).isEqualTo("activity-123");
                         assertThat(activityResponse.type()).isEqualTo(ActivityType.CARD_CREATE);
                         assertThat(activityResponse.timestamp()).isEqualTo(Instant.parse("2024-01-01T00:00:00Z"));
+                        assertThat(activityResponse.boardId()).isEqualTo("board-123");
+                        assertThat(activityResponse.boardName()).isEqualTo("프로젝트 A");
 
                         ActorResponse actorResponse = activityResponse.actor();
                         assertThat(actorResponse.id()).isEqualTo("user-123");
@@ -417,6 +429,7 @@ class ActivityReadServiceTest {
         private Activity createMockActivity() {
                 ActivityId activityId = new ActivityId("activity-123");
                 UserId actorId = new UserId("user-123");
+                BoardId boardId = new BoardId("board-123");
                 Actor actor = Actor.builder()
                                 .id(actorId.getId())
                                 .firstName("홍")
@@ -435,12 +448,14 @@ class ActivityReadServiceTest {
                                 .actor(actor)
                                 .timestamp(Instant.parse("2024-01-01T00:00:00Z"))
                                 .payload(payload)
+                                .boardId(boardId)
                                 .build();
         }
 
         private Activity createMockActivity2() {
                 ActivityId activityId = new ActivityId("activity-456");
                 UserId actorId = new UserId("user-456");
+                BoardId boardId = new BoardId("board-456");
                 Actor actor = Actor.builder()
                                 .id(actorId.getId())
                                 .firstName("김")
@@ -458,6 +473,7 @@ class ActivityReadServiceTest {
                                 .actor(actor)
                                 .timestamp(Instant.parse("2024-01-02T00:00:00Z"))
                                 .payload(payload)
+                                .boardId(boardId)
                                 .build();
         }
 }

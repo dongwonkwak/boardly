@@ -13,6 +13,8 @@ import com.boardly.features.activity.application.port.output.ActorResponse;
 import com.boardly.features.activity.application.usecase.GetActivityUseCase;
 import com.boardly.features.activity.domain.model.Activity;
 import com.boardly.features.activity.domain.repository.ActivityRepository;
+import com.boardly.features.board.application.dto.BoardNameDto;
+import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 
@@ -27,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ActivityReadService implements GetActivityUseCase {
 
     private final ActivityRepository activityRepository;
+    private final BoardRepository boardRepository;
     private final ValidationMessageResolver messageResolver;
 
     @Override
@@ -195,12 +198,24 @@ public class ActivityReadService implements GetActivityUseCase {
                 .profileImageUrl(activity.getActor().getProfileImageUrl())
                 .build();
 
+        // 보드 정보 조회
+        String boardName = null;
+        String boardId = null;
+        if (activity.getBoardId() != null) {
+            boardId = activity.getBoardId().getId();
+            boardName = boardRepository.findBoardNameById(activity.getBoardId())
+                    .map(BoardNameDto::title)
+                    .orElse(null);
+        }
+
         return ActivityResponse.builder()
                 .id(activity.getId().getId())
                 .type(activity.getType())
                 .actor(actorResponse)
                 .timestamp(activity.getTimestamp())
                 .payload(activity.getPayload().getData())
+                .boardName(boardName)
+                .boardId(boardId)
                 .build();
     }
 }

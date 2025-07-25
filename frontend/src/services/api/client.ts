@@ -123,6 +123,51 @@ export type CreateBoardListRequest = {
     color?: string;
     listColor?: ListColor;
 };
+export type BoardSummaryDto = {
+    id?: string;
+    title?: string;
+    description?: string;
+    createdAt?: string;
+    listCount?: number;
+    cardCount?: number;
+    isStarred?: boolean;
+    color?: string;
+    role?: string;
+};
+export type ActorResponse = {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    profileImageUrl?: string;
+};
+export type ActivityResponse = {
+    id?: string;
+    "type"?: "CARD_CREATE" | "CARD_MOVE" | "CARD_RENAME" | "CARD_ARCHIVE" | "CARD_DELETE" | "CARD_ASSIGN_MEMBER" | "CARD_UNASSIGN_MEMBER" | "CARD_SET_DUE_DATE" | "CARD_ADD_COMMENT" | "CARD_ADD_ATTACHMENT" | "CARD_ADD_CHECKLIST" | "CARD_DUPLICATE" | "CARD_UPDATE_DESCRIPTION" | "LIST_CREATE" | "LIST_RENAME" | "LIST_ARCHIVE" | "LIST_MOVE" | "LIST_CHANGE_COLOR" | "LIST_DELETE" | "BOARD_CREATE" | "BOARD_RENAME" | "BOARD_ARCHIVE" | "BOARD_UNARCHIVE" | "BOARD_MOVE" | "BOARD_DELETE" | "BOARD_UPDATE_DESCRIPTION" | "BOARD_ADD_MEMBER" | "BOARD_REMOVE_MEMBER" | "BOARD_UPDATE_MEMBER_ROLE" | "BOARD_DUPLICATE" | "USER_UPDATE_PROFILE" | "USER_CHANGE_LANGUAGE" | "USER_CHANGE_PASSWORD" | "USER_DELETE_ACCOUNT";
+    actor?: ActorResponse;
+    timestamp?: string;
+    payload?: {
+        [key: string]: unknown;
+    };
+};
+export type DashboardStatisticsDto = {
+    totalBoards?: number;
+    totalCards?: number;
+    starredBoards?: number;
+    archivedBoards?: number;
+};
+export type DashboardResponse = {
+    boards?: BoardSummaryDto[];
+    recentActivity?: ActivityResponse[];
+    statistics?: DashboardStatisticsDto;
+};
+export type ActivityListResponse = {
+    activities?: ActivityResponse[];
+    totalCount?: number;
+    currentPage?: number;
+    totalPages?: number;
+    hasNextPage?: boolean;
+    hasPreviousPage?: boolean;
+};
 /**
  * 사용자 업데이트
  */
@@ -292,7 +337,34 @@ export function updateBoard(boardId: string, updateBoardRequest: UpdateBoardRequ
     }));
 }
 /**
- * 보드 리스트 수정
+ * 보드 삭제
+ */
+export function deleteBoard(boardId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 204;
+        data: object;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/boards/${encodeURIComponent(boardId)}`, {
+        ...opts,
+        method: "DELETE"
+    });
+}
+/**
+ * 보드 리스트 수정 (Update)
  */
 export function updateBoardList(listId: string, updateBoardListRequest: UpdateBoardListRequest, opts?: Oazapfts.RequestOpts) {
     return oazapfts.fetchJson<{
@@ -317,7 +389,7 @@ export function updateBoardList(listId: string, updateBoardListRequest: UpdateBo
     }));
 }
 /**
- * 보드 리스트 삭제
+ * 보드 리스트 삭제 (Delete)
  */
 export function deleteBoardList(listId: string, opts?: Oazapfts.RequestOpts) {
     return oazapfts.fetchJson<{
@@ -341,7 +413,7 @@ export function deleteBoardList(listId: string, opts?: Oazapfts.RequestOpts) {
     });
 }
 /**
- * 보드 리스트 위치 변경
+ * 보드 리스트 위치 변경 (Update Position)
  */
 export function updateBoardListPosition(listId: string, updateBoardListPositionRequest: UpdateBoardListPositionRequest, opts?: Oazapfts.RequestOpts) {
     return oazapfts.fetchJson<{
@@ -583,7 +655,7 @@ export function archiveBoard(boardId: string, opts?: Oazapfts.RequestOpts) {
     });
 }
 /**
- * 보드 리스트 목록 조회
+ * 보드 리스트 목록 조회 (Read)
  */
 export function getBoardLists(boardId: string, opts?: Oazapfts.RequestOpts) {
     return oazapfts.fetchJson<{
@@ -606,7 +678,7 @@ export function getBoardLists(boardId: string, opts?: Oazapfts.RequestOpts) {
     });
 }
 /**
- * 보드 리스트 생성
+ * 보드 리스트 생성 (Create)
  */
 export function createBoardList(boardId: string, createBoardListRequest: CreateBoardListRequest, opts?: Oazapfts.RequestOpts) {
     return oazapfts.fetchJson<{
@@ -629,6 +701,32 @@ export function createBoardList(boardId: string, createBoardListRequest: CreateB
         method: "POST",
         body: createBoardListRequest
     }));
+}
+/**
+ * 대시보드 조회
+ */
+export function getDashboard(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: DashboardResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>("/api/dashboard", {
+        ...opts
+    });
 }
 /**
  * 리스트별 카드 목록 조회
@@ -679,5 +777,98 @@ export function searchCards(listId: string, searchTerm: string, opts?: Oazapfts.
         searchTerm
     }))}`, {
         ...opts
+    });
+}
+/**
+ * 내 활동 목록 조회
+ */
+export function getMyActivities({ page, size }: {
+    page?: number;
+    size?: number;
+} = {}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: ActivityListResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/activities/me${QS.query(QS.explode({
+        page,
+        size
+    }))}`, {
+        ...opts
+    });
+}
+/**
+ * 보드 활동 목록 조회
+ */
+export function getBoardActivities(boardId: string, { page, size, since }: {
+    page?: number;
+    size?: number;
+    since?: string;
+} = {}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: ActivityListResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/activities/boards/${encodeURIComponent(boardId)}${QS.query(QS.explode({
+        page,
+        size,
+        since
+    }))}`, {
+        ...opts
+    });
+}
+/**
+ * 보드 멤버 삭제
+ */
+export function removeBoardMember(boardId: string, targetUserId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: object;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 409;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/boards/${encodeURIComponent(boardId)}/members/${encodeURIComponent(targetUserId)}`, {
+        ...opts,
+        method: "DELETE"
     });
 }

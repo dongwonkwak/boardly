@@ -1,179 +1,265 @@
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { useOAuth } from "@/hooks/useAuth";
 import { useApi } from "@/hooks/useApi";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { Activity } from "@/components/dashboard/Activity";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { ProfileCard } from "@/components/dashboard/ProfileCard";
+import { CreateBoardModal } from "@/components/dashboard/CreateBoardModal";
+import { StatsCards } from "@/components/dashboard/StatsCards";
+import { PageHeader } from "@/components/dashboard/PageHeader";
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
+import { 
+  Plus,
+  MoreVertical, 
+  Activity as ActivityIcon,
+  Search,
+  Star
+} from "lucide-react";
 import type * as apiClient from "@/services/api/client";
+import { BoardSection } from "@/components/dashboard/BoardSection";
+
+type ViewMode = 'grid' | 'list';
+
+interface BoardCardProps {
+  board: apiClient.BoardResponse;
+  viewMode: ViewMode;
+}
+
+function BoardCard({ board, viewMode }: BoardCardProps) {
+  const colors = [
+    'bg-gradient-to-br from-blue-500 to-purple-600',
+    'bg-gradient-to-br from-green-500 to-teal-600',
+    'bg-gradient-to-br from-orange-500 to-red-600',
+    'bg-gradient-to-br from-purple-500 to-pink-600',
+    'bg-gradient-to-br from-indigo-500 to-blue-600',
+    'bg-gradient-to-br from-pink-500 to-rose-600'
+  ];
+  
+  const colorIndex = (Number(board.boardId) || 0) % colors.length;
+  const color = colors[colorIndex];
+
+  if (viewMode === 'grid') {
+    return (
+      <div className="group bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:-translate-y-1">
+        <div className={`h-32 rounded-t-xl ${color} p-6 relative overflow-hidden`}>
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10">
+            <div className="flex justify-between items-start">
+              <h4 className="text-white font-semibold text-lg truncate pr-4">
+                {board.title || '제목 없음'}
+              </h4>
+              <button type="button" className="text-white/80 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="absolute bottom-4 right-4">
+              <Star className="w-5 h-5 text-yellow-300" />
+            </div>
+          </div>
+        </div>
+        <div className="p-6">
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+            {board.description || '설명이 없습니다'}
+          </p>
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <div className="flex items-center space-x-4">
+              <span>4개 리스트</span>
+              <span>12개 카드</span>
+            </div>
+            <span>{new Date(board.updatedAt || board.createdAt || Date.now()).toLocaleDateString()}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // List view
+  return (
+    <div className="flex items-center justify-between p-6 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0">
+      <div className="flex items-center space-x-4">
+        <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center`}>
+          <span className="text-white font-bold">
+            {(board.title || '제목 없음').charAt(0)}
+          </span>
+        </div>
+        <div>
+          <div className="flex items-center space-x-2">
+            <h4 className="font-semibold text-gray-900">{board.title || '제목 없음'}</h4>
+            <Star className="w-4 h-4 text-yellow-500" />
+          </div>
+          <p className="text-gray-600 text-sm">{board.description || '설명이 없습니다'}</p>
+        </div>
+      </div>
+      <div className="flex items-center space-x-6 text-sm text-gray-500">
+        <span>4개 리스트</span>
+        <span>12개 카드</span>
+        <span>{new Date(board.updatedAt || board.createdAt || Date.now()).toLocaleDateString()}</span>
+        <button type="button" className="text-gray-400 hover:text-gray-600">
+          <MoreVertical className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
-  const { user: oauthUser, isLoading } = useOAuth();
+  const { user: oauthUser } = useOAuth();
   const { authenticated } = useApi();
-  const [boards, setBoards] = useState<apiClient.BoardResponse[]>([]);
-  const [loadingBoards, setLoadingBoards] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [boards, setBoards] = useState<any[]>([]);
+  const [isLoadingBoards, setIsLoadingBoards] = useState(false);
 
-  useEffect(() => {
-    console.log("OIDC User Info:", oauthUser);
-  }, [oauthUser]);
-
-  // 보드 목록 조회 예시
-  const handleLoadBoards = async () => {
-    if (!authenticated) {
-      console.log("인증되지 않은 상태입니다.");
-      return;
-    }
-
-    setLoadingBoards(true);
-    try {
-      const result = await (authenticated.getMyBoards as typeof apiClient.getMyBoards)({ includeArchived: false });
-      if (result.status === 200) {
-        setBoards(result.data || []);
-        console.log("보드 목록:", result.data);
+  // 더미 활동 데이터
+  const dummyActivities = [
+    {
+      id: "activity_9c8b7a6d",
+      type: "CARD_MOVE",
+      actor: {
+        id: "user_101",
+        firstName: "개발",
+        lastName: "김",
+        profileImageUrl: "https://placehold.co/40x40/0284C7/FFFFFF?text=김"
+      },
+      timestamp: "2025-01-20T15:30:00.123Z",
+      payload: {
+        cardTitle: "API 설계",
+        sourceListName: "진행 중",
+        destListName: "완료",
+        cardId: "card_456",
+        sourceListId: "list_123",
+        destListId: "list_789"
       }
-    } catch (error) {
-      console.error("보드 목록 조회 실패:", error);
-    } finally {
-      setLoadingBoards(false);
+    },
+    {
+      id: "activity_8b7a6c5d",
+      type: "CARD_CREATE",
+      actor: {
+        id: "user_101",
+        firstName: "개발",
+        lastName: "김",
+        profileImageUrl: "https://placehold.co/40x40/0284C7/FFFFFF?text=김"
+      },
+      timestamp: "2025-01-20T12:45:00.456Z",
+      payload: {
+        listName: "할 일",
+        cardTitle: "사용자 인증 구현",
+        listId: "list_123",
+        cardId: "card_789"
+      }
+    },
+    {
+      id: "activity_7a6b5c4d",
+      type: "BOARD_CREATE",
+      actor: {
+        id: "user_101",
+        firstName: "개발",
+        lastName: "김",
+        profileImageUrl: "https://placehold.co/40x40/0284C7/FFFFFF?text=김"
+      },
+      timestamp: "2025-01-19T09:15:00.789Z",
+      payload: {
+        boardName: "독서 계획",
+        boardId: "board_4"
+      }
     }
+  ];
+
+
+
+  const openCreateModal = () => {
+    setIsCreateModalOpen(true);
   };
 
-  // 새 보드 생성 예시
-  const handleCreateBoard = async () => {
-    if (!authenticated) {
-      console.log("인증되지 않은 상태입니다.");
-      return;
-    }
-
-    try {
-      const result = await (authenticated.createBoard as typeof apiClient.createBoard)({
-        title: "새 보드",
-        description: "새로 생성된 보드입니다."
-      });
-      if (result.status === 201) {
-        console.log("보드 생성 성공:", result.data);
-        // 보드 목록 새로고침
-        handleLoadBoards();
-      }
-    } catch (error) {
-      console.error("보드 생성 실패:", error);
-    }
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
   };
+
+
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">대시보드</h1>
-        
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>사용자 정보</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading || !oauthUser ? (
-                <p className="text-gray-500">로딩 중...</p>
-              ) : oauthUser.profile ? (
-                <div className="space-y-2">
-                  <p><strong>이름:</strong> {
-                    oauthUser.profile.name || 
-                    `${oauthUser.profile.given_name || ""} ${oauthUser.profile.family_name || ""}`.trim() || 
-                    "N/A"
-                  }</p>
-                  <p><strong>이메일:</strong> {oauthUser.profile.email || "N/A"}</p>
-                  <p><strong>사용자 ID:</strong> {oauthUser.profile.sub || "N/A"}</p>
-                  {oauthUser.profile.preferred_username && (
-                    <p><strong>사용자명:</strong> {oauthUser.profile.preferred_username}</p>
-                  )}
-                  {oauthUser.profile.email_verified !== undefined && (
-                    <p><strong>이메일 인증:</strong> {oauthUser.profile.email_verified ? "인증됨" : "미인증"}</p>
-                  )}
-                  {oauthUser.profile.locale && (
-                    <p><strong>언어:</strong> {oauthUser.profile.locale}</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-500">사용자 정보를 불러올 수 없습니다.</p>
-              )}
-            </CardContent>
-          </Card>
+      <ErrorBoundary>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        {/* Header */}
+        <DashboardHeader
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>인증 정보</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p><strong>토큰 만료:</strong> {oauthUser?.expires_at ? new Date(oauthUser.expires_at * 1000).toLocaleString() : "N/A"}</p>
-                <p><strong>스코프:</strong> {oauthUser?.scope || "N/A"}</p>
-                <p><strong>토큰 타입:</strong> {oauthUser?.token_type || "N/A"}</p>
-                {oauthUser?.session_state && (
-                  <p><strong>세션 상태:</strong> {oauthUser.session_state}</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Main Content */}
+            <div className="flex-1">
+              {/* Page Header */}
+              <PageHeader
+                title="내 보드"
+                description="프로젝트와 작업을 체계적으로 관리하세요"
+                buttonText="새 보드 만들기"
+                onButtonClick={openCreateModal}
+                buttonDisabled={!authenticated}
+              />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>액세스 토큰</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 break-all">
-                {oauthUser?.access_token ? `${oauthUser.access_token.substring(0, 50)}...` : "N/A"}
-              </p>
-              {oauthUser?.id_token && (
-                <div className="mt-3">
-                  <p className="text-sm font-medium text-gray-700 mb-1">ID 토큰:</p>
-                  <p className="text-sm text-gray-600 break-all">
-                    {oauthUser.id_token.substring(0, 50)}...
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              {/* Stats Cards */}
+              <StatsCards />
 
-          {/* 새로운 API 클라이언트 사용 예시 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>API 테스트</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Button 
-                  onClick={handleLoadBoards} 
-                  disabled={!authenticated || loadingBoards}
-                  className="w-full"
-                >
-                  {loadingBoards ? "로딩 중..." : "보드 목록 조회"}
-                </Button>
-                
-                <Button 
-                  onClick={handleCreateBoard} 
-                  disabled={!authenticated}
-                  variant="outline"
-                  className="w-full"
-                >
-                  새 보드 생성
-                </Button>
+              {/* Boards Section */}
+              <BoardSection
+                boards={boards}
+                viewMode={viewMode}
+                searchQuery={searchQuery}
+                isLoadingBoards={isLoadingBoards}
+                onOpenCreateModal={openCreateModal}
+                authenticated={!!authenticated}
+              />
+            </div>
 
-                {boards.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium mb-2">보드 목록 ({boards.length}개):</p>
-                    <div className="space-y-1">
-                      {boards.map((board) => (
-                        <div key={board.boardId || `${board.title}-${board.createdAt}`} className="text-sm p-2 bg-gray-50 rounded">
-                          <p className="font-medium">{board.title}</p>
-                          <p className="text-gray-600">{board.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            {/* Sidebar */}
+            <div className="w-full lg:w-80 space-y-6">
+              <ProfileCard 
+                user={{
+                  name: oauthUser?.profile?.name,
+                  givenName: oauthUser?.profile?.given_name,
+                  familyName: oauthUser?.profile?.family_name,
+                  email: oauthUser?.profile?.email
+                }}
+              />
+              
+              <Activity activities={dummyActivities} />
+              
+              <QuickActions 
+                actions={[
+                  {
+                    id: 'create-board',
+                    label: '새 보드 만들기',
+                    icon: <Plus className="w-4 h-4 mr-3 text-blue-600" />,
+                    onClick: openCreateModal,
+                    disabled: !authenticated
+                  }
+                ]}
+              />
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Create Board Modal */}
+      <CreateBoardModal
+        isOpen={isCreateModalOpen}
+        onClose={closeCreateModal}
+        createBoard={authenticated?.createBoard as any}
+        onSuccess={() => {
+          // 보드 생성 성공 후 처리
+          closeCreateModal();
+        }}
+      />
+        </ErrorBoundary>
     </ProtectedRoute>
   );
 } 

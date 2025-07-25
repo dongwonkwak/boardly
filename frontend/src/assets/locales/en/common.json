@@ -133,6 +133,21 @@
 		"feature_desc": "This module lets you see all the tasks of a project and organize them in different boards according to their status, just like Trello.",
 		"get_now": "Get Now →"
 	},
+	"time": {
+		"justNow": "just now",
+		"minute": "minute ago",
+		"minutes": "minutes ago",
+		"hour": "hour ago",
+		"hours": "hours ago",
+		"day": "day ago",
+		"days": "days ago",
+		"week": "week ago",
+		"weeks": "weeks ago",
+		"month": "month ago",
+		"months": "months ago",
+		"year": "year ago",
+		"years": "years ago"
+	},
 	"register": {
 		"title": "Sign Up",
 		"subtitle": "Create your first board in just a few minutes",
@@ -244,5 +259,23 @@
 		"checking": "Checking authentication...",
 		"login_required": "Login Required",
 		"login_required_desc": "Please log in to access this page."
+	},
+	"board": {
+		"create": {
+			"title": "Create New Board",
+			"boardTitle": "Board Title",
+			"boardTitleRequired": "Board Title *",
+			"description": "Description (Optional)",
+			"titlePlaceholder": "e.g. Web Development Project",
+			"descriptionPlaceholder": "Enter a brief description for the board",
+			"cancel": "Cancel",
+			"create": "Create Board",
+			"creating": "Creating...",
+			"titleRequired": "Please enter a title",
+			"titleTooLong": "Title must be within 50 characters",
+			"descriptionTooLong": "Description must be within 200 characters",
+			"createError": "Failed to create board",
+			"characters": "characters"
+		}
 	}
 }

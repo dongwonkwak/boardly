@@ -6,7 +6,8 @@ import LoadingButton from "@/components/common/LoadingButton";
 import { useTranslation } from "react-i18next";
 import { useCurrentLanguage, useLanguageStore } from "@/store/languageStore";
 import { useNavigate } from "react-router-dom";
-import { registerUser, type FieldViolation } from "@/services/api/client";
+import { publicApi } from "@/services/api/authApi";
+import type { FieldViolation } from "@/services/api/client";
 import { handle } from "@oazapfts/runtime";
 import log from "@/utils/logger";
 
@@ -100,7 +101,7 @@ export default function Register() {
 				lastName: data.lastName,
 			};
 
-			await handle(registerUser(registerData), {
+			await handle((publicApi.registerUser as any)(registerData), {
 				201() {
 					setShowWelcome(true);
 				},

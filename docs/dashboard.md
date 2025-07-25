@@ -51,7 +51,9 @@
         "cardId": "card_456",
         "sourceListId": "list_123",
         "destListId": "list_789"
-      }
+      },
+      "boardName": "프로젝트 A",
+      "boardId": "board_123"
     }
   ],
   "statistics": {

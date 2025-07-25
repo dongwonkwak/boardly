@@ -24,7 +24,9 @@
     "cardTitle": "새 기능 기획",
     "listId": "list_123",
     "cardId": "card_456"
-  }
+  },
+  "boardName": "프로젝트 A",
+  "boardId": "board_123"
 }
 ```
 

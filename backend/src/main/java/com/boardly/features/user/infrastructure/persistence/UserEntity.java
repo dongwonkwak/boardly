@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.features.user.domain.model.UserProfile;
-import com.boardly.shared.domain.common.BaseEntity;
 
 import java.time.Instant;
 
@@ -16,7 +15,7 @@ import java.time.Instant;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserEntity extends BaseEntity {
+public class UserEntity {
 
     @Id
     @Column(name = "user_id", nullable = false)
@@ -37,15 +36,21 @@ public class UserEntity extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     @Version
     @Column(name = "version")
     private Long version;
 
     @Builder
-    private UserEntity(String userId, String email, String hashedPassword, 
-                      String firstName, String lastName, boolean isActive,
-                      Instant createdAt, Instant updatedAt) {
-        super(createdAt, updatedAt);
+    private UserEntity(String userId, String email, String hashedPassword,
+            String firstName, String lastName, boolean isActive,
+            Instant createdAt, Instant updatedAt) {
+
         this.userId = userId;
         this.email = email;
         this.hashedPassword = hashedPassword;
@@ -94,13 +99,15 @@ public class UserEntity extends BaseEntity {
         this.firstName = user.getUserProfile().firstName();
         this.lastName = user.getUserProfile().lastName();
         this.isActive = user.isActive();
-        markAsUpdated(); // BaseEntity의 메서드 사용
+        this.updatedAt = Instant.now();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         UserEntity that = (UserEntity) obj;
         return userId != null && userId.equals(that.userId);
     }

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.domain.model.UserId;
-import com.boardly.shared.domain.common.BaseEntity;
 
 import java.time.Instant;
 
@@ -16,7 +15,7 @@ import java.time.Instant;
 @Table(name = "boards")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BoardEntity extends BaseEntity {
+public class BoardEntity {
 
     @Id
     @Column(name = "board_id", nullable = false)
@@ -37,22 +36,29 @@ public class BoardEntity extends BaseEntity {
     @Column(name = "is_starred", nullable = false)
     private boolean isStarred;
 
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     @Version
     @Column(name = "version")
     private Long version;
 
     @Builder
-    private BoardEntity(String boardId, String title, String description, 
-                       boolean isArchived, String ownerId,
-                       boolean isStarred,
-                       Instant createdAt, Instant updatedAt) {
-        super(createdAt, updatedAt);
+    private BoardEntity(String boardId, String title, String description,
+            boolean isArchived, String ownerId,
+            boolean isStarred,
+            Instant createdAt, Instant updatedAt) {
         this.boardId = boardId;
         this.title = title;
         this.description = description;
         this.isArchived = isArchived;
         this.ownerId = ownerId;
         this.isStarred = isStarred;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     /**
@@ -95,13 +101,15 @@ public class BoardEntity extends BaseEntity {
         this.description = board.getDescription();
         this.isArchived = board.isArchived();
         this.ownerId = board.getOwnerId().getId();
-        markAsUpdated(); // BaseEntity의 메서드 사용
+        this.updatedAt = Instant.now();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         BoardEntity that = (BoardEntity) obj;
         return boardId != null && boardId.equals(that.boardId);
     }
@@ -110,4 +118,4 @@ public class BoardEntity extends BaseEntity {
     public int hashCode() {
         return boardId != null ? boardId.hashCode() : 0;
     }
-} 
+}

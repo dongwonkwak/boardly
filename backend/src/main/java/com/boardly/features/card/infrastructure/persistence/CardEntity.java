@@ -5,7 +5,6 @@ import java.time.Instant;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.shared.domain.common.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "cards")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CardEntity extends BaseEntity {
+public class CardEntity {
   @Id
   @Column(name = "card_id", nullable = false)
   private String cardId;
@@ -38,6 +37,12 @@ public class CardEntity extends BaseEntity {
   @Column(name = "list_id", nullable = false)
   private String listId;
 
+  @Column(name = "created_at", nullable = false)
+  private Instant createdAt;
+
+  @Column(name = "updated_at", nullable = false)
+  private Instant updatedAt;
+
   @Version
   @Column(name = "version")
   private Long version;
@@ -46,12 +51,13 @@ public class CardEntity extends BaseEntity {
   private CardEntity(String cardId, String title, String description,
       int position, String listId,
       Instant createdAt, Instant updatedAt) {
-    super(createdAt, updatedAt);
     this.cardId = cardId;
     this.title = title;
     this.description = description;
     this.position = position;
     this.listId = listId;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
   }
 
   /**
@@ -64,8 +70,8 @@ public class CardEntity extends BaseEntity {
         .description(this.description)
         .position(this.position)
         .listId(new ListId(this.listId))
-        .createdAt(this.getCreatedAt())
-        .updatedAt(this.getUpdatedAt())
+        .createdAt(this.createdAt)
+        .updatedAt(this.updatedAt)
         .build();
   }
 
@@ -92,7 +98,7 @@ public class CardEntity extends BaseEntity {
     this.description = card.getDescription();
     this.position = card.getPosition();
     this.listId = card.getListId().getId();
-    markAsUpdated(); // BaseEntity의 메서드 사용
+    this.updatedAt = Instant.now();
   }
 
   /**
@@ -100,7 +106,7 @@ public class CardEntity extends BaseEntity {
    */
   public void updateTitle(String title) {
     this.title = title;
-    markAsUpdated();
+    this.updatedAt = Instant.now();
   }
 
   /**
@@ -108,7 +114,7 @@ public class CardEntity extends BaseEntity {
    */
   public void updateDescription(String description) {
     this.description = description;
-    markAsUpdated();
+    this.updatedAt = Instant.now();
   }
 
   /**
@@ -116,7 +122,7 @@ public class CardEntity extends BaseEntity {
    */
   public void updatePosition(int position) {
     this.position = position;
-    markAsUpdated();
+    this.updatedAt = Instant.now();
   }
 
   /**
@@ -124,7 +130,7 @@ public class CardEntity extends BaseEntity {
    */
   public void updateListId(String listId) {
     this.listId = listId;
-    markAsUpdated();
+    this.updatedAt = Instant.now();
   }
 
   @Override
@@ -145,6 +151,6 @@ public class CardEntity extends BaseEntity {
   @Override
   public String toString() {
     return String.format("CardEntity{cardId='%s', title='%s', position=%d, listId='%s', createdAt=%s, updatedAt=%s}",
-        cardId, title, position, listId, getCreatedAt(), getUpdatedAt());
+        cardId, title, position, listId, createdAt, updatedAt);
   }
 }

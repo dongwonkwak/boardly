@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.shared.domain.common.BaseEntity;
 
 import java.time.Instant;
 
@@ -16,7 +15,7 @@ import java.time.Instant;
 @Table(name = "board_lists")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BoardListEntity extends BaseEntity {
+public class BoardListEntity {
 
     @Id
     @Column(name = "list_id", nullable = false)
@@ -37,21 +36,28 @@ public class BoardListEntity extends BaseEntity {
     @Column(name = "board_id", nullable = false)
     private String boardId;
 
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     @Version
     @Column(name = "version")
     private Long version;
 
     @Builder
-    private BoardListEntity(String listId, String title, String description, 
-                           int position, String color, String boardId,
-                           Instant createdAt, Instant updatedAt) {
-        super(createdAt, updatedAt);
+    private BoardListEntity(String listId, String title, String description,
+            int position, String color, String boardId,
+            Instant createdAt, Instant updatedAt) {
         this.listId = listId;
         this.title = title;
         this.description = description;
         this.position = position;
         this.color = color;
         this.boardId = boardId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     /**
@@ -65,8 +71,8 @@ public class BoardListEntity extends BaseEntity {
                 .position(this.position)
                 .color(com.boardly.features.boardlist.domain.model.ListColor.of(this.color))
                 .boardId(new BoardId(this.boardId))
-                .createdAt(this.getCreatedAt())
-                .updatedAt(this.getUpdatedAt())
+                .createdAt(this.createdAt)
+                .updatedAt(this.updatedAt)
                 .build();
     }
 
@@ -94,7 +100,7 @@ public class BoardListEntity extends BaseEntity {
         this.description = boardList.getDescription();
         this.position = boardList.getPosition();
         this.color = boardList.getColor().color();
-        markAsUpdated(); // BaseEntity의 메서드 사용
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -102,7 +108,7 @@ public class BoardListEntity extends BaseEntity {
      */
     public void updateTitle(String title) {
         this.title = title;
-        markAsUpdated();
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -110,7 +116,7 @@ public class BoardListEntity extends BaseEntity {
      */
     public void updateDescription(String description) {
         this.description = description;
-        markAsUpdated();
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -118,7 +124,7 @@ public class BoardListEntity extends BaseEntity {
      */
     public void updatePosition(int position) {
         this.position = position;
-        markAsUpdated();
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -126,13 +132,15 @@ public class BoardListEntity extends BaseEntity {
      */
     public void updateColor(String color) {
         this.color = color;
-        markAsUpdated();
+        this.updatedAt = Instant.now();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         BoardListEntity that = (BoardListEntity) obj;
         return listId != null && listId.equals(that.listId);
     }
@@ -144,7 +152,8 @@ public class BoardListEntity extends BaseEntity {
 
     @Override
     public String toString() {
-        return String.format("BoardListEntity{listId='%s', title='%s', position=%d, color='%s', boardId='%s', createdAt=%s, updatedAt=%s}",
-                listId, title, position, color, boardId, getCreatedAt(), getUpdatedAt());
+        return String.format(
+                "BoardListEntity{listId='%s', title='%s', position=%d, color='%s', boardId='%s', createdAt=%s, updatedAt=%s}",
+                listId, title, position, color, boardId, createdAt, updatedAt);
     }
-} 
+}

@@ -10,7 +10,6 @@ import com.boardly.features.board.domain.model.BoardMemberId;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.model.BoardRole;
 import com.boardly.features.user.domain.model.UserId;
-import com.boardly.shared.domain.common.BaseEntity;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -19,7 +18,7 @@ import java.util.Objects;
 @Table(name = "board_members")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BoardMemberEntity extends BaseEntity {
+public class BoardMemberEntity {
 
     @Id
     @Column(name = "member_id", nullable = false)
@@ -38,6 +37,12 @@ public class BoardMemberEntity extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     @Version
     @Column(name = "version")
     private Long version;
@@ -46,12 +51,13 @@ public class BoardMemberEntity extends BaseEntity {
     private BoardMemberEntity(String memberId, String boardId, String userId,
             BoardRole role, boolean isActive,
             Instant createdAt, Instant updatedAt) {
-        super(createdAt, updatedAt);
         this.memberId = memberId;
         this.boardId = boardId;
         this.userId = userId;
         this.role = role;
         this.isActive = isActive;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     /**
@@ -64,8 +70,8 @@ public class BoardMemberEntity extends BaseEntity {
                 .userId(new UserId(userId))
                 .role(role)
                 .isActive(isActive)
-                .createdAt(getCreatedAt())
-                .updatedAt(getUpdatedAt())
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
                 .build();
     }
 
@@ -90,7 +96,7 @@ public class BoardMemberEntity extends BaseEntity {
     public void updateFromDomain(BoardMember boardMember) {
         this.role = boardMember.getRole();
         this.isActive = boardMember.isActive();
-        setUpdatedAt(boardMember.getUpdatedAt());
+        this.updatedAt = boardMember.getUpdatedAt();
     }
 
     @Override

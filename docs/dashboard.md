@@ -29,7 +29,7 @@
       "listCount": 4,
       "cardCount": 12,
       "isStarred": true,
-      "color": "blue-purple",
+      "color": "indigo-blue",
       "role": "owner"
     }
   ],
@@ -88,12 +88,12 @@
 #### Color 타입
 
 사용 가능한 보드 색상 테마:
-- `blue-purple`: 파란색-보라색 그라데이션
-- `green-teal`: 초록색-청록색 그라데이션
-- `orange-red`: 주황색-빨간색 그라데이션
-- `purple-pink`: 보라색-분홍색 그라데이션
-- `gray-slate`: 회색-슬레이트 그라데이션
-- `indigo-blue`: 인디고-파란색 그라데이션
+- `blue-purple`: 파란색-보라색 그라데이션 (`bg-gradient-to-br from-blue-500 to-purple-600`)
+- `green-teal`: 초록색-청록색 그라데이션 (`bg-gradient-to-br from-green-500 to-teal-600`)
+- `orange-red`: 주황색-빨간색 그라데이션 (`bg-gradient-to-br from-orange-500 to-red-600`)
+- `purple-pink`: 보라색-분홍색 그라데이션 (`bg-gradient-to-br from-purple-500 to-pink-600`)
+- `indigo-blue`: 인디고-파란색 그라데이션 (`bg-gradient-to-br from-indigo-500 to-blue-600`)
+- `pink-rose`: 분홍색-장미색 그라데이션 (`bg-gradient-to-br from-pink-500 to-rose-600`)
 
 ### Activity 객체
 

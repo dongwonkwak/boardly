@@ -1,11 +1,111 @@
----
-description: UI Components and Styling
-alwaysApply: false
----
-
 # UI Components and Styling
 
 ## UI Framework
 
 - lucide-react를 사용해서 components 생성
-- 모든 Component는 국제회 요구 사항을 고려합니다.
+- 모든 Component는 국제화 요구 사항을 고려합니다.
+
+## 국제화 (i18n) 규칙
+
+### 새로운 UI 컴포넌트 생성 시 필수 사항:
+
+1. **텍스트 문자열 처리**:
+
+   - 하드코딩된 텍스트 사용 금지
+   - 모든 사용자에게 보이는 텍스트는 i18n 키로 관리
+   - `useTranslation` 훅 사용 필수
+
+2. **번역 키 네이밍 규칙**:
+
+   - 컴포넌트별로 네임스페이스 사용: `componentName.keyName`
+   - 예: `button.submit`, `modal.confirm`, `form.email`
+   - 계층 구조로 관리: `common.actions.save`, `auth.login.title`
+
+3. **번역 파일 구조**:
+
+   - `src/assets/locales/ko/` - 한국어 번역
+   - `src/assets/locales/en/` - 영어 번역
+   - 컴포넌트별로 별도 파일 생성 권장
+
+4. **컴포넌트 예시**:
+
+```tsx
+import { useTranslation } from "react-i18next";
+
+const MyComponent = () => {
+  const { t } = useTranslation("componentName");
+
+  return <button>{t("submit")}</button>;
+};
+```
+
+5. **번역 키 추가 순서**:
+
+   - 컴포넌트 생성 시 먼저 번역 키 정의
+   - 한국어 번역 파일에 키 추가
+   - 영어 번역 파일에 키 추가
+   - 컴포넌트에서 `useTranslation` 사용
+
+6. **동적 텍스트 처리**:
+
+   - 변수가 포함된 텍스트는 interpolation 사용
+   - 예: `t('welcome', { name: userName })`
+
+7. **언어 초기화 및 상태 관리**:
+
+   - `useLanguageStore`를 사용하여 저장된 언어 설정 불러오기
+   - 컴포넌트 마운트 시 `useEffect`를 통해 언어 초기화 수행
+   - `isInitialized` 상태를 확인하여 중복 초기화 방지
+
+```tsx
+import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
+import { useLanguageStore } from "@/store/languageStore";
+
+const MyComponent = () => {
+  const { t } = useTranslation("componentName");
+  const { initializeLanguage, isInitialized } = useLanguageStore();
+
+  // 컴포넌트 마운트 시 언어 초기화
+  useEffect(() => {
+    if (!isInitialized) {
+      initializeLanguage();
+    }
+  }, [isInitialized, initializeLanguage]);
+
+  return <button>{t("submit")}</button>;
+};
+```
+
+8. **국제화된 시간/날짜 포맷팅**:
+
+   - `Intl.RelativeTimeFormat`을 사용하여 상대적 시간 표시
+   - 현재 언어에 따른 locale 설정 함수 구현
+   - 시간대별 적절한 단위 선택 (초, 분, 시간, 일, 주, 개월, 년)
+
+```tsx
+// 현재 언어에 따른 locale 설정
+const getLocale = (): string => {
+  switch (currentLanguage) {
+    case "ko":
+      return "ko-KR";
+    case "en":
+      return "en-US";
+    default:
+      return "en-US";
+  }
+};
+
+// 상대적 시간 포맷팅 함수
+const formatTimeAgo = (timestamp: string, locale: string): string => {
+  // 시간 차이 계산 및 적절한 단위 선택 로직
+  return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(
+    value,
+    unit
+  );
+};
+```
+
+6. **동적 텍스트 처리**:
+   - 변수가 포함된 텍스트는 interpolation 사용
+   - 예: `t('welcome', { name: userName })`

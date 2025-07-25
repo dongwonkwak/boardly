@@ -1,0 +1,182 @@
+# API 사용 규칙
+
+## 백엔드 API 호출 규칙
+
+### 1. client.ts 직접 호출 금지
+
+- `src/services/api/client.ts`는 OpenAPI 스펙에서 자동 생성되는 파일로 직접 호출하지 않습니다
+- 이 파일은 OpenAPI 스펙에서 자동 생성되며, 인증 로직이 포함되어 있지 않습니다
+
+### 2. useApi 훅을 통한 API 호출
+
+모든 백엔드 API 호출은 `src/hooks/useApi.ts`의 `useApi` 훅을 통해 수행해야 합니다:
+
+```typescript
+// ❌ 잘못된 방법 - client.ts 직접 호출
+import * as apiClient from "@/services/api/client";
+const result = await apiClient.someFunction();
+
+// ✅ 올바른 방법 - useApi 훅 사용
+import { useApi } from "@/hooks/useApi";
+
+function MyComponent() {
+  const { authenticated, public: publicApi } = useApi();
+
+  // 인증이 필요한 API 호출
+  const handleAuthenticatedCall = async () => {
+    if (authenticated) {
+      const result = await authenticated.someFunction();
+    }
+  };
+
+  // 공개 API 호출
+  const handlePublicCall = async () => {
+    const result = await publicApi.registerUser(data);
+  };
+}
+```
+
+### 3. API 분류
+
+#### 인증이 필요한 API
+
+- `useApi()` 훅에서 반환되는 `authenticated` 객체를 사용
+- 자동으로 Authorization 헤더가 추가됩니다
+- 사용자 관련 API, 보호된 리소스 접근 등
+- `authenticated`가 `null`일 수 있으므로 항상 null 체크 필요
+
+#### 공개 API (인증 불필요)
+
+- `useApi()` 훅에서 반환되는 `public` 객체를 통해 직접 호출
+- 화이트리스트 방식으로 관리
+- 현재 공개 API: `registerUser`
+
+### 4. 새로운 API 추가 시
+
+1. `src/services/api/client.ts`는 OpenAPI 스펙에서 자동 생성되므로 수정하지 않음
+2. `authApi.ts`의 `PUBLIC_APIS` Set에 공개 API 함수명 추가
+3. 인증이 필요한 API는 자동으로 처리됨
+
+### 5. 사용 예시
+
+```typescript
+import { useApi } from "@/hooks/useApi";
+
+function UserProfile() {
+  const { authenticated, public: publicApi } = useApi();
+
+  // 인증된 사용자 API 호출
+  const fetchUserProfile = async () => {
+    if (authenticated) {
+      const userProfile = await authenticated.getUserProfile();
+      const updatedUser = await authenticated.updateUser(updateData);
+    }
+  };
+
+  // 공개 API 호출
+  const registerNewUser = async () => {
+    const newUser = await publicApi.registerUser(registerData);
+  };
+}
+```
+
+### 6. 실제 컴포넌트 예제 (Register.tsx)
+
+```typescript
+// ❌ 잘못된 방법 - client.ts 직접 호출
+import { registerUser, type FieldViolation } from "@/services/api/client";
+
+const onSubmit = async (data: RegisterFormData) => {
+  const registerData = {
+    email: data.email,
+    password: data.password,
+    firstName: data.firstName,
+    lastName: data.lastName,
+  };
+
+  await handle(registerUser(registerData), {
+    201() {
+      setShowWelcome(true);
+    },
+    409(error: { message?: string }) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        email: error.message || "이미 가입된 이메일입니다.",
+      }));
+    },
+    // ... 기타 에러 처리
+  });
+};
+
+// ✅ 올바른 방법 - useApi 훅 사용
+import { useApi } from "@/hooks/useApi";
+import type { FieldViolation } from "@/services/api/client";
+
+function Register() {
+  const { public: publicApi } = useApi();
+
+  const onSubmit = async (data: RegisterFormData) => {
+    const registerData = {
+      email: data.email,
+      password: data.password,
+      firstName: data.firstName,
+      lastName: data.lastName,
+    };
+
+    await handle((publicApi.registerUser as any)(registerData), {
+      201() {
+        setShowWelcome(true);
+      },
+      409(error: { message?: string }) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          email: error.message || "이미 가입된 이메일입니다.",
+        }));
+      },
+      // ... 기타 에러 처리
+    });
+  };
+}
+```
+
+**주요 변경사항:**
+
+1. `src/services/api/client.ts`에서 직접 import하는 대신 `useApi` 훅 사용
+2. 타입 정의는 `src/services/api/client.ts`에서 import (타입만 사용)
+3. `registerUser` 함수 호출을 `publicApi.registerUser`로 변경
+4. 인증이 필요 없는 공개 API이므로 `public` 객체 사용
+
+### 7. 인증 상태 확인
+
+```typescript
+import { useApi } from "@/hooks/useApi";
+
+function MyComponent() {
+  const { authenticated, isAuthenticated, accessToken } = useApi();
+
+  // 인증 상태 확인
+  if (!isAuthenticated) {
+    return <div>로그인이 필요합니다.</div>;
+  }
+
+  // 인증된 API 사용
+  const handleApiCall = async () => {
+    if (authenticated) {
+      const result = await authenticated.someFunction();
+    }
+  };
+}
+```
+
+### 8. 에러 처리
+
+- API 호출 시 적절한 에러 핸들링 구현
+- 네트워크 오류, 인증 오류, 서버 오류 등을 구분하여 처리
+- `authenticated`가 `null`인 경우 처리
+
+### 9. 타입 안전성
+
+- TypeScript 타입을 활용하여 API 요청/응답 타입 보장
+- `apiClient`에서 제공하는 타입 정의 활용
+
+---

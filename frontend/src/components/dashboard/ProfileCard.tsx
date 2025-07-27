@@ -1,5 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Settings, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useOAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface UserProfile {
   name?: string;
@@ -12,19 +15,30 @@ interface UserProfile {
 interface ProfileCardProps {
   user?: UserProfile;
   onSettings?: () => void;
-  onLogout?: () => void;
 }
 
 export function ProfileCard({ 
   user, 
-  onSettings = () => console.log('설정'),
-  onLogout = () => console.log('로그아웃')
+  onSettings = () => console.log('설정')
 }: ProfileCardProps) {
+  const { t } = useTranslation('common');
+  const { logout } = useOAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+  
   const displayName = user?.name || 
     `${user?.givenName || ''} ${user?.familyName || ''}`.trim() || 
-    '사용자';
+    t('profile.defaultUser');
   
-  const displayEmail = user?.email || 'user@example.com';
+  const displayEmail = user?.email || t('profile.defaultEmail');
   const avatarInitial = displayName.charAt(0);
 
   return (
@@ -47,15 +61,15 @@ export function ProfileCard({
           className="flex-1 flex items-center justify-center px-3 py-2 text-sm"
         >
           <Settings className="w-4 h-4 mr-2" />
-          설정
+          {t('profile.settings')}
         </Button>
         <Button 
           variant="outline" 
-          onClick={onLogout}
+          onClick={handleLogout}
           className="flex-1 flex items-center justify-center px-3 py-2 text-sm"
         >
           <LogOut className="w-4 h-4 mr-2" />
-          로그아웃
+          {t('profile.logout')}
         </Button>
       </div>
     </div>

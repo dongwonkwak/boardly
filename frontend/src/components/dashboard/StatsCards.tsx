@@ -1,4 +1,5 @@
 import { Calendar, Star, Archive, Layers } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface StatsCardsProps {
   totalBoards?: number;
@@ -13,12 +14,14 @@ export function StatsCards({
   favorites = 0, 
   archived = 0 
 }: StatsCardsProps) {
+  const { t } = useTranslation('common');
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">전체 보드</p>
+            <p className="text-sm font-medium text-gray-600">{t('stats.totalBoards')}</p>
             <p className="text-2xl font-bold text-gray-900">{totalBoards}</p>
           </div>
           <div className="p-3 bg-blue-100 rounded-lg">
@@ -30,7 +33,7 @@ export function StatsCards({
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">전체 카드</p>
+            <p className="text-sm font-medium text-gray-600">{t('stats.totalCards')}</p>
             <p className="text-2xl font-bold text-gray-900">{totalCards}</p>
           </div>
           <div className="p-3 bg-green-100 rounded-lg">
@@ -42,7 +45,7 @@ export function StatsCards({
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">즐겨찾기</p>
+            <p className="text-sm font-medium text-gray-600">{t('stats.favorites')}</p>
             <p className="text-2xl font-bold text-gray-900">{favorites}</p>
           </div>
           <div className="p-3 bg-yellow-100 rounded-lg">
@@ -54,7 +57,7 @@ export function StatsCards({
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">보관함</p>
+            <p className="text-sm font-medium text-gray-600">{t('stats.archived')}</p>
             <p className="text-2xl font-bold text-gray-900">{archived}</p>
           </div>
           <div className="p-3 bg-gray-100 rounded-lg">

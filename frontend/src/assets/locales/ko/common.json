@@ -131,7 +131,13 @@
 		"feature_label": "Boardly",
 		"feature_title": "작업을 보드 스타일로 한눈에 관리하세요",
 		"feature_desc": "이 모듈은 프로젝트의 모든 작업을 한눈에 보고, Trello처럼 상태별로 보드에 정리할 수 있습니다.",
-		"get_now": "지금 시작하기 →"
+		"get_now": "지금 시작하기 →",
+		"pageTitle": "내 보드",
+		"pageDescription": "프로젝트와 작업을 체계적으로 관리하세요",
+		"createBoardButton": "새 보드 만들기",
+		"header": {
+			"searchPlaceholder": "보드 검색..."
+		}
 	},
 	"time": {
 		"justNow": "방금 전",
@@ -276,6 +282,44 @@
 			"descriptionTooLong": "설명은 200자 이내로 입력해주세요",
 			"createError": "보드 생성 실패",
 			"characters": "자"
+		},
+		"section": {
+			"recentBoards": "최근 보드",
+			"searchResults": "\"{{query}}\" 검색 결과",
+			"resultCount": "{{count}}개 결과",
+			"noTitle": "제목 없음",
+			"noDescription": "설명이 없습니다",
+			"listCount": "{{count}}개 리스트",
+			"cardCount": "{{count}}개 카드",
+			"loading": {
+				"title": "보드를 불러오는 중...",
+				"description": "잠시만 기다려주세요"
+			},
+			"empty": {
+				"noBoards": "보드가 없습니다",
+				"noSearchResults": "검색 결과가 없습니다",
+				"noBoardsDescription": "새로운 보드를 만들어 프로젝트를 시작해보세요",
+				"noSearchResultsDescription": "다른 검색어로 시도해보세요",
+				"createFirstBoard": "첫 번째 보드 만들기"
+			}
 		}
+	},
+	"profile": {
+		"defaultUser": "사용자",
+		"defaultEmail": "user@example.com",
+		"settings": "설정",
+		"logout": "로그아웃"
+	},
+	"quickActions": {
+		"title": "빠른 작업",
+		"createBoard": "새 보드 만들기",
+		"inviteTeam": "팀원 초대하기",
+		"viewArchived": "보관된 보드 보기"
+	},
+	"stats": {
+		"totalBoards": "전체 보드",
+		"totalCards": "전체 카드",
+		"favorites": "즐겨찾기",
+		"archived": "보관함"
 	}
 }

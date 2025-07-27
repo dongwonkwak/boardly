@@ -131,7 +131,13 @@
 		"feature_label": "Boardly",
 		"feature_title": "Watch your tasks board-style with Kanban Board",
 		"feature_desc": "This module lets you see all the tasks of a project and organize them in different boards according to their status, just like Trello.",
-		"get_now": "Get Now →"
+		"get_now": "Get Now →",
+		"pageTitle": "My Boards",
+		"pageDescription": "Organize your projects and tasks systematically",
+		"createBoardButton": "Create New Board",
+		"header": {
+			"searchPlaceholder": "Search boards..."
+		}
 	},
 	"time": {
 		"justNow": "just now",
@@ -276,6 +282,44 @@
 			"descriptionTooLong": "Description must be within 200 characters",
 			"createError": "Failed to create board",
 			"characters": "characters"
+		},
+		"section": {
+			"recentBoards": "Recent Boards",
+			"searchResults": "Search results for \"{{query}}\"",
+			"resultCount": "{{count}} results",
+			"noTitle": "No Title",
+			"noDescription": "No description",
+			"listCount": "{{count}} lists",
+			"cardCount": "{{count}} cards",
+			"loading": {
+				"title": "Loading boards...",
+				"description": "Please wait a moment"
+			},
+			"empty": {
+				"noBoards": "No boards",
+				"noSearchResults": "No search results",
+				"noBoardsDescription": "Create a new board to start your project",
+				"noSearchResultsDescription": "Try a different search term",
+				"createFirstBoard": "Create First Board"
+			}
 		}
+	},
+	"profile": {
+		"defaultUser": "User",
+		"defaultEmail": "user@example.com",
+		"settings": "Settings",
+		"logout": "Logout"
+	},
+	"quickActions": {
+		"title": "Quick Actions",
+		"createBoard": "Create New Board",
+		"inviteTeam": "Invite Team Members",
+		"viewArchived": "View Archived Boards"
+	},
+	"stats": {
+		"totalBoards": "Total Boards",
+		"totalCards": "Total Cards",
+		"favorites": "Favorites",
+		"archived": "Archived"
 	}
 }

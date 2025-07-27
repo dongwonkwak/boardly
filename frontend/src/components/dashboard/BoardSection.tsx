@@ -1,6 +1,8 @@
 import { Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type * as apiClient from "@/services/api/client";
+import { getBoardThemeColor } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 type ViewMode = 'grid' | 'list';
 
@@ -10,21 +12,57 @@ interface BoardCardProps {
   onToggleStar?: (boardId: string) => void;
 }
 
+// 즐겨찾기 버튼 컴포넌트
+function StarButton({ 
+  isStarred, 
+  onToggle, 
+  size = 'md' 
+}: { 
+  isStarred: boolean; 
+  onToggle: (e: React.MouseEvent) => void; 
+  size?: 'sm' | 'md';
+}) {
+  const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
+  const colorClasses = isStarred 
+    ? (size === 'sm' ? 'text-yellow-500' : 'text-yellow-400') 
+    : (size === 'sm' ? 'text-gray-300 hover:text-yellow-400' : 'text-white/60 hover:text-yellow-300');
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`${sizeClasses} transition-colors ${colorClasses}`}
+      aria-label={isStarred ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+    >
+      <svg className={sizeClasses} fill={isStarred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+      </svg>
+    </button>
+  );
+}
+
+// 더보기 버튼 컴포넌트
+function MoreButton({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  const sizeClasses = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
+  const colorClasses = size === 'sm' ? 'text-gray-400 hover:text-gray-600' : 'text-white/80 hover:text-white';
+
+  return (
+    <button type="button" className={`${colorClasses} opacity-0 group-hover:opacity-100 transition-opacity`} aria-label="더보기">
+      <svg className={sizeClasses} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+      </svg>
+    </button>
+  );
+}
+
 function BoardCard({ board, viewMode, onToggleStar }: BoardCardProps) {
-  const gradientThemes = {
-    'blue-purple': 'bg-gradient-to-br from-blue-500 to-purple-600',
-    'green-teal': 'bg-gradient-to-br from-green-500 to-teal-600',
-    'orange-red': 'bg-gradient-to-br from-orange-500 to-red-600',
-    'purple-pink': 'bg-gradient-to-br from-purple-500 to-pink-600',
-    'indigo-blue': 'bg-gradient-to-br from-indigo-500 to-blue-600',
-    'pink-rose': 'bg-gradient-to-br from-pink-500 to-rose-600'
-  }
-  
-  // board.color가 있으면 사용, 없으면 기본 색상 배열에서 선택
-  const themeKeys = Object.keys(gradientThemes);
-  const color = board.color ? 
-    gradientThemes[board.color as keyof typeof gradientThemes] 
-    : gradientThemes[themeKeys[(Number(board.id) || 0) % themeKeys.length] as keyof typeof gradientThemes];
+  const { t } = useTranslation('common');
+  const color = getBoardThemeColor(board.id || '', board.color);
+
+  const handleStarToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleStar?.(board.id || '');
+  };
 
   if (viewMode === 'grid') {
     return (
@@ -34,41 +72,23 @@ function BoardCard({ board, viewMode, onToggleStar }: BoardCardProps) {
           <div className="relative z-10">
             <div className="flex justify-between items-start">
               <h4 className="text-white font-semibold text-lg truncate pr-4">
-                {board.title || '제목 없음'}
+                {board.title || t('board.section.noTitle')}
               </h4>
-              <button type="button" className="text-white/80 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity" aria-label="더보기">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              </button>
+              <MoreButton />
             </div>
             <div className="absolute bottom-4 right-4">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleStar?.(board.id || '');
-                }}
-                className={`w-5 h-5 transition-colors ${
-                  board.isStarred ? 'text-yellow-400' : 'text-white/60 hover:text-yellow-300'
-                }`}
-                aria-label={board.isStarred ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-              >
-                <svg className="w-5 h-5" fill={board.isStarred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              </button>
+              <StarButton isStarred={board.isStarred || false} onToggle={handleStarToggle} />
             </div>
           </div>
         </div>
         <div className="p-6">
           <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-            {board.description || '설명이 없습니다'}
+            {board.description || t('board.section.noDescription')}
           </p>
           <div className="flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center space-x-4">
-              <span>{board.listCount || 0}개 리스트</span>
-              <span>{board.cardCount || 0}개 카드</span>
+              <span>{t('board.section.listCount', { count: board.listCount || 0 })}</span>
+              <span>{t('board.section.cardCount', { count: board.cardCount || 0 })}</span>
             </div>
             <span>{new Date(board.createdAt || Date.now()).toLocaleDateString()}</span>
           </div>
@@ -81,42 +101,24 @@ function BoardCard({ board, viewMode, onToggleStar }: BoardCardProps) {
   return (
     <div className="flex items-center justify-between p-6 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0">
       <div className="flex items-center space-x-4">
-        <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center`}>
+                <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center`}>
           <span className="text-white font-bold">
-            {(board.title || '제목 없음').charAt(0)}
+            {(board.title || t('board.section.noTitle')).charAt(0)}
           </span>
         </div>
         <div>
           <div className="flex items-center space-x-2">
-            <h4 className="font-semibold text-gray-900">{board.title || '제목 없음'}</h4>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleStar?.(board.id || '');
-              }}
-              className={`w-4 h-4 transition-colors ${
-                board.isStarred ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'
-              }`}
-              aria-label={board.isStarred ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-            >
-              <svg className="w-4 h-4" fill={board.isStarred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            </button>
+            <h4 className="font-semibold text-gray-900">{board.title || t('board.section.noTitle')}</h4>
+            <StarButton isStarred={board.isStarred || false} onToggle={handleStarToggle} size="sm" />
           </div>
-          <p className="text-gray-600 text-sm">{board.description || '설명이 없습니다'}</p>
+          <p className="text-gray-600 text-sm">{board.description || t('board.section.noDescription')}</p>
         </div>
       </div>
       <div className="flex items-center space-x-6 text-sm text-gray-500">
-        <span>{board.listCount || 0}개 리스트</span>
-        <span>{board.cardCount || 0}개 카드</span>
+        <span>{t('board.section.listCount', { count: board.listCount || 0 })}</span>
+        <span>{t('board.section.cardCount', { count: board.cardCount || 0 })}</span>
         <span>{new Date(board.createdAt || Date.now()).toLocaleDateString()}</span>
-        <button type="button" className="text-gray-400 hover:text-gray-600" aria-label="더보기">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-          </svg>
-        </button>
+        <MoreButton size="sm" />
       </div>
     </div>
   );
@@ -141,6 +143,7 @@ export function BoardSection({
   authenticated,
   onToggleStar
 }: BoardSectionProps) {
+  const { t } = useTranslation('common');
   const filteredBoards = boards.filter(board =>
     (board.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (board.description || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -150,10 +153,10 @@ export function BoardSection({
     <div className="mb-8">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-semibold text-gray-900">
-          {searchQuery ? `"${searchQuery}" 검색 결과` : '최근 보드'}
+          {searchQuery ? t('board.section.searchResults', { query: searchQuery }) : t('board.section.recentBoards')}
         </h3>
         {searchQuery && (
-          <span className="text-sm text-gray-500">{filteredBoards.length}개 결과</span>
+          <span className="text-sm text-gray-500">{t('board.section.resultCount', { count: filteredBoards.length })}</span>
         )}
       </div>
 
@@ -168,8 +171,8 @@ export function BoardSection({
                 </svg>
               </div>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">보드를 불러오는 중...</h3>
-            <p className="text-gray-600">잠시만 기다려주세요</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('board.section.loading.title')}</h3>
+            <p className="text-gray-600">{t('board.section.loading.description')}</p>
           </div>
         </div>
       ) : (
@@ -198,12 +201,12 @@ export function BoardSection({
             <Search className="w-8 h-8 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchQuery ? '검색 결과가 없습니다' : '보드가 없습니다'}
+            {searchQuery ? t('board.section.empty.noSearchResults') : t('board.section.empty.noBoards')}
           </h3>
           <p className="text-gray-600 mb-6">
             {searchQuery 
-              ? '다른 검색어로 시도해보세요' 
-              : '새로운 보드를 만들어 프로젝트를 시작해보세요'
+              ? t('board.section.empty.noSearchResultsDescription')
+              : t('board.section.empty.noBoardsDescription')
             }
           </p>
           {!searchQuery && (
@@ -213,7 +216,7 @@ export function BoardSection({
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />
-              첫 번째 보드 만들기
+              {t('board.section.empty.createFirstBoard')}
             </Button>
           )}
         </div>

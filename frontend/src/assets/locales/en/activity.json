@@ -33,5 +33,9 @@
   "USER_UPDATE_PROFILE": "{{actorFirstName}} {{actorLastName}} updated their profile.",
   "USER_CHANGE_LANGUAGE": "{{actorFirstName}} {{actorLastName}} changed their language setting.",
   "USER_CHANGE_PASSWORD": "{{actorFirstName}} {{actorLastName}} changed their password.",
-  "USER_DELETE_ACCOUNT": "{{actorFirstName}} {{actorLastName}} deleted their account. ({{boardCount}} boards, {{listCount}} lists, {{cardCount}} cards deleted)"
+  "USER_DELETE_ACCOUNT": "{{actorFirstName}} {{actorLastName}} deleted their account. ({{boardCount}} boards, {{listCount}} lists, {{cardCount}} cards deleted)",
+  "recentActivity": "Recent Activity",
+  "noActivities": "No activities yet",
+  "unknownBoard": "Unknown",
+  "viewAllActivities": "View All Activities"
 } 

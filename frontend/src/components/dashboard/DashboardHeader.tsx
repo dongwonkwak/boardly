@@ -1,5 +1,6 @@
 import { Search, Grid, List, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
 
 interface DashboardHeaderProps {
   searchQuery: string;
@@ -14,6 +15,8 @@ export function DashboardHeader({
   viewMode, 
   setViewMode 
 }: DashboardHeaderProps) {
+  const { t } = useTranslation('common');
+  
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50 backdrop-blur-md bg-white/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,7 +35,7 @@ export function DashboardHeader({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 type="text"
-                placeholder="보드 검색..."
+                placeholder={t('dashboard.header.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"

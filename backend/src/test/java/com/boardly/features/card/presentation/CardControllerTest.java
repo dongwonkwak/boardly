@@ -4,10 +4,12 @@ import com.boardly.features.card.application.port.input.*;
 import com.boardly.features.card.application.usecase.*;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.card.presentation.request.*;
 import com.boardly.features.card.presentation.response.CardResponse;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.response.ErrorResponse;
@@ -55,6 +57,12 @@ class CardControllerTest {
         private DeleteCardUseCase deleteCardUseCase;
 
         @Mock
+        private ManageCardMemberUseCase manageCardMemberUseCase;
+
+        @Mock
+        private ManageCardLabelUseCase manageCardLabelUseCase;
+
+        @Mock
         private ApiFailureHandler failureHandler;
 
         @Mock
@@ -74,6 +82,8 @@ class CardControllerTest {
                                 moveCardUseCase,
                                 cloneCardUseCase,
                                 deleteCardUseCase,
+                                manageCardMemberUseCase,
+                                manageCardLabelUseCase,
                                 failureHandler);
         }
 
@@ -87,6 +97,10 @@ class CardControllerTest {
                                 .createdAt(Instant.now())
                                 .updatedAt(Instant.now())
                                 .build();
+        }
+
+        private CardMember createSampleCardMember(String userId) {
+                return new CardMember(new UserId(userId));
         }
 
         private Failure createSampleFailure(String message) {
@@ -145,6 +159,29 @@ class CardControllerTest {
 
                         // then
                         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        verify(failureHandler).handleFailure(failure);
+                }
+
+                @Test
+                @DisplayName("카드 생성 실패 - 권한 없음")
+                void createCard_Forbidden() {
+                        // given
+                        String userId = "user-123";
+                        CreateCardRequest request = new CreateCardRequest("테스트 카드", "테스트 설명", "list-123");
+                        Failure failure = Failure.ofForbidden("카드 생성 권한이 없습니다");
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(createCardUseCase.createCard(any(CreateCardCommand.class)))
+                                        .thenReturn(Either.left(failure));
+                        when(failureHandler.handleFailure(failure))
+                                        .thenReturn(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                                                        .body(ErrorResponse.of("FORBIDDEN", "카드 생성 권한이 없습니다")));
+
+                        // when
+                        ResponseEntity<?> response = controller.createCard(request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
                         verify(failureHandler).handleFailure(failure);
                 }
         }
@@ -591,9 +628,10 @@ class CardControllerTest {
                         when(jwt.getSubject()).thenReturn(userId);
                         when(deleteCardUseCase.deleteCard(any(DeleteCardCommand.class)))
                                         .thenReturn(Either.left(failure));
-                                    when(failureHandler.handleFailure(failure))
-                    .thenReturn(ResponseEntity.status(HttpStatus.CONFLICT)
-                            .body(ErrorResponse.of("CONFLICT", "아카이브된 보드의 카드는 삭제할 수 없습니다")));
+                        when(failureHandler.handleFailure(failure))
+                                        .thenReturn(ResponseEntity.status(HttpStatus.CONFLICT)
+                                                        .body(ErrorResponse.of("CONFLICT",
+                                                                        "아카이브된 보드의 카드는 삭제할 수 없습니다")));
 
                         // when
                         ResponseEntity<?> response = controller.deleteCard(cardId, httpRequest, jwt);
@@ -687,6 +725,312 @@ class CardControllerTest {
                         // then
                         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
                         verify(failureHandler).handleFailure(failure);
+                }
+        }
+
+        @Nested
+        @DisplayName("카드 멤버 관리 테스트")
+        class CardMemberManagementTest {
+
+                @Test
+                @DisplayName("카드 멤버 할당 성공")
+                void assignCardMember_Success() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String memberId = "member-456";
+                        AssignCardMemberRequest request = new AssignCardMemberRequest(memberId);
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardMemberUseCase.assignMember(any(AssignCardMemberCommand.class)))
+                                        .thenReturn(Either.right(null));
+
+                        // when
+                        ResponseEntity<?> response = controller.assignCardMember(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        verify(manageCardMemberUseCase).assignMember(any(AssignCardMemberCommand.class));
+                }
+
+                @Test
+                @DisplayName("카드 멤버 할당 실패 - 멤버가 이미 할당되어 있음")
+                void assignCardMember_AlreadyAssigned() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String memberId = "member-456";
+                        AssignCardMemberRequest request = new AssignCardMemberRequest(memberId);
+                        Failure failure = Failure.ofConflict("멤버가 이미 할당되어 있습니다");
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardMemberUseCase.assignMember(any(AssignCardMemberCommand.class)))
+                                        .thenReturn(Either.left(failure));
+                        when(failureHandler.handleFailure(failure))
+                                        .thenReturn(ResponseEntity.status(HttpStatus.CONFLICT)
+                                                        .body(ErrorResponse.of("CONFLICT", "멤버가 이미 할당되어 있습니다")));
+
+                        // when
+                        ResponseEntity<?> response = controller.assignCardMember(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+                        verify(failureHandler).handleFailure(failure);
+                }
+
+                @Test
+                @DisplayName("카드 멤버 해제 성공")
+                void unassignCardMember_Success() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String memberId = "member-456";
+                        UnassignCardMemberRequest request = new UnassignCardMemberRequest(memberId);
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardMemberUseCase.unassignMember(any(UnassignCardMemberCommand.class)))
+                                        .thenReturn(Either.right(null));
+
+                        // when
+                        ResponseEntity<?> response = controller.unassignCardMember(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        verify(manageCardMemberUseCase).unassignMember(any(UnassignCardMemberCommand.class));
+                }
+
+                @Test
+                @DisplayName("카드 멤버 해제 실패 - 멤버가 할당되어 있지 않음")
+                void unassignCardMember_NotAssigned() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String memberId = "member-456";
+                        UnassignCardMemberRequest request = new UnassignCardMemberRequest(memberId);
+                        Failure failure = createSampleFailure("멤버가 할당되어 있지 않습니다");
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardMemberUseCase.unassignMember(any(UnassignCardMemberCommand.class)))
+                                        .thenReturn(Either.left(failure));
+                        when(failureHandler.handleFailure(failure))
+                                        .thenReturn(ResponseEntity.badRequest()
+                                                        .body(ErrorResponse.of("BAD_REQUEST", "멤버가 할당되어 있지 않습니다")));
+
+                        // when
+                        ResponseEntity<?> response = controller.unassignCardMember(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        verify(failureHandler).handleFailure(failure);
+                }
+
+                @Test
+                @DisplayName("카드 멤버 목록 조회 성공")
+                void getCardMembers_Success() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        List<CardMember> members = List.of(
+                                        createSampleCardMember("member-1"),
+                                        createSampleCardMember("member-2"));
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardMemberUseCase.getCardMembers(any(CardId.class), any(UserId.class)))
+                                        .thenReturn(members);
+
+                        // when
+                        ResponseEntity<?> response = controller.getCardMembers(cardId, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        assertThat(response.getBody()).isInstanceOf(List.class);
+
+                        @SuppressWarnings("unchecked")
+                        List<CardMember> memberList = (List<CardMember>) response.getBody();
+                        assertThat(memberList).hasSize(2);
+                        assertThat(memberList.get(0).getUserId().getId()).isEqualTo("member-1");
+                        assertThat(memberList.get(1).getUserId().getId()).isEqualTo("member-2");
+
+                        verify(manageCardMemberUseCase).getCardMembers(any(CardId.class), any(UserId.class));
+                }
+
+                @Test
+                @DisplayName("카드 멤버 목록 조회 성공 - 빈 목록")
+                void getCardMembers_Success_EmptyList() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        List<CardMember> members = List.of();
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardMemberUseCase.getCardMembers(any(CardId.class), any(UserId.class)))
+                                        .thenReturn(members);
+
+                        // when
+                        ResponseEntity<?> response = controller.getCardMembers(cardId, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        assertThat(response.getBody()).isInstanceOf(List.class);
+
+                        @SuppressWarnings("unchecked")
+                        List<CardMember> memberList = (List<CardMember>) response.getBody();
+                        assertThat(memberList).isEmpty();
+
+                        verify(manageCardMemberUseCase).getCardMembers(any(CardId.class), any(UserId.class));
+                }
+        }
+
+        @Nested
+        @DisplayName("카드 라벨 관리 테스트")
+        class CardLabelManagementTest {
+
+                @Test
+                @DisplayName("카드 라벨 추가 성공")
+                void addCardLabel_Success() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String labelId = "label-456";
+                        AddCardLabelRequest request = new AddCardLabelRequest(labelId);
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardLabelUseCase.addLabel(any(AddCardLabelCommand.class)))
+                                        .thenReturn(Either.right(null));
+
+                        // when
+                        ResponseEntity<?> response = controller.addCardLabel(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        verify(manageCardLabelUseCase).addLabel(any(AddCardLabelCommand.class));
+                }
+
+                @Test
+                @DisplayName("카드 라벨 추가 실패 - 라벨이 이미 추가되어 있음")
+                void addCardLabel_AlreadyAdded() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String labelId = "label-456";
+                        AddCardLabelRequest request = new AddCardLabelRequest(labelId);
+                        Failure failure = Failure.ofConflict("라벨이 이미 추가되어 있습니다");
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardLabelUseCase.addLabel(any(AddCardLabelCommand.class)))
+                                        .thenReturn(Either.left(failure));
+                        when(failureHandler.handleFailure(failure))
+                                        .thenReturn(ResponseEntity.status(HttpStatus.CONFLICT)
+                                                        .body(ErrorResponse.of("CONFLICT", "라벨이 이미 추가되어 있습니다")));
+
+                        // when
+                        ResponseEntity<?> response = controller.addCardLabel(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+                        verify(failureHandler).handleFailure(failure);
+                }
+
+                @Test
+                @DisplayName("카드 라벨 제거 성공")
+                void removeCardLabel_Success() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String labelId = "label-456";
+                        RemoveCardLabelRequest request = new RemoveCardLabelRequest(labelId);
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardLabelUseCase.removeLabel(any(RemoveCardLabelCommand.class)))
+                                        .thenReturn(Either.right(null));
+
+                        // when
+                        ResponseEntity<?> response = controller.removeCardLabel(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        verify(manageCardLabelUseCase).removeLabel(any(RemoveCardLabelCommand.class));
+                }
+
+                @Test
+                @DisplayName("카드 라벨 제거 실패 - 라벨이 추가되어 있지 않음")
+                void removeCardLabel_NotAdded() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        String labelId = "label-456";
+                        RemoveCardLabelRequest request = new RemoveCardLabelRequest(labelId);
+                        Failure failure = createSampleFailure("라벨이 추가되어 있지 않습니다");
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardLabelUseCase.removeLabel(any(RemoveCardLabelCommand.class)))
+                                        .thenReturn(Either.left(failure));
+                        when(failureHandler.handleFailure(failure))
+                                        .thenReturn(ResponseEntity.badRequest()
+                                                        .body(ErrorResponse.of("BAD_REQUEST", "라벨이 추가되어 있지 않습니다")));
+
+                        // when
+                        ResponseEntity<?> response = controller.removeCardLabel(cardId, request, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        verify(failureHandler).handleFailure(failure);
+                }
+
+                @Test
+                @DisplayName("카드 라벨 목록 조회 성공")
+                void getCardLabels_Success() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        List<LabelId> labels = List.of(
+                                        new LabelId("label-1"),
+                                        new LabelId("label-2"));
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardLabelUseCase.getCardLabels(any(CardId.class), any(UserId.class)))
+                                        .thenReturn(labels);
+
+                        // when
+                        ResponseEntity<?> response = controller.getCardLabels(cardId, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        assertThat(response.getBody()).isInstanceOf(List.class);
+
+                        @SuppressWarnings("unchecked")
+                        List<LabelId> labelList = (List<LabelId>) response.getBody();
+                        assertThat(labelList).hasSize(2);
+                        assertThat(labelList.get(0).getId()).isEqualTo("label-1");
+                        assertThat(labelList.get(1).getId()).isEqualTo("label-2");
+
+                        verify(manageCardLabelUseCase).getCardLabels(any(CardId.class), any(UserId.class));
+                }
+
+                @Test
+                @DisplayName("카드 라벨 목록 조회 성공 - 빈 목록")
+                void getCardLabels_Success_EmptyList() {
+                        // given
+                        String userId = "user-123";
+                        String cardId = "card-123";
+                        List<LabelId> labels = List.of();
+
+                        when(jwt.getSubject()).thenReturn(userId);
+                        when(manageCardLabelUseCase.getCardLabels(any(CardId.class), any(UserId.class)))
+                                        .thenReturn(labels);
+
+                        // when
+                        ResponseEntity<?> response = controller.getCardLabels(cardId, httpRequest, jwt);
+
+                        // then
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+                        assertThat(response.getBody()).isInstanceOf(List.class);
+
+                        @SuppressWarnings("unchecked")
+                        List<LabelId> labelList = (List<LabelId>) response.getBody();
+                        assertThat(labelList).isEmpty();
+
+                        verify(manageCardLabelUseCase).getCardLabels(any(CardId.class), any(UserId.class));
                 }
         }
 }

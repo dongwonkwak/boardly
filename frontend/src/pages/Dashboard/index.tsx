@@ -2,6 +2,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { useOAuth } from "@/hooks/useAuth";
 import { useApi } from "@/hooks/useApi";
+import { useDashboard } from "@/hooks/useDashboard";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useMemo } from "react";
 import { Activity } from "@/components/dashboard/Activity";
@@ -20,11 +21,12 @@ import {
 } from "lucide-react";
 import type * as apiClient from "@/services/api/client";
 import { BoardSection } from "@/components/dashboard/BoardSection";
+import { useDashboardStore } from "@/store/dashboardStore";
 
 type ViewMode = 'grid' | 'list';
 
 interface BoardCardProps {
-  board: apiClient.BoardResponse;
+  board: apiClient.BoardSummaryDto;
   viewMode: ViewMode;
 }
 
@@ -38,7 +40,7 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
     'bg-gradient-to-br from-pink-500 to-rose-600'
   ];
   
-  const colorIndex = (Number(board.boardId) || 0) % colors.length;
+  const colorIndex = (Number(board.id) || 0) % colors.length;
   const color = colors[colorIndex];
 
   if (viewMode === 'grid') {
@@ -69,7 +71,7 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
               <span>4개 리스트</span>
               <span>12개 카드</span>
             </div>
-            <span>{new Date(board.updatedAt || board.createdAt || Date.now()).toLocaleDateString()}</span>
+            <span>{new Date(board.createdAt || Date.now()).toLocaleDateString()}</span>
           </div>
         </div>
       </div>
@@ -96,7 +98,7 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
       <div className="flex items-center space-x-6 text-sm text-gray-500">
         <span>4개 리스트</span>
         <span>12개 카드</span>
-        <span>{new Date(board.updatedAt || board.createdAt || Date.now()).toLocaleDateString()}</span>
+        <span>{new Date(board.createdAt || Date.now()).toLocaleDateString()}</span>
         <button type="button" className="text-gray-400 hover:text-gray-600">
           <MoreVertical className="w-5 h-5" />
         </button>
@@ -108,66 +110,28 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
 export default function Dashboard() {
   const { user: oauthUser } = useOAuth();
   const { authenticated } = useApi();
+  const { loadDashboardData, handleCreateBoardSuccess } = useDashboard();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [boards, setBoards] = useState<any[]>([]);
-  const [isLoadingBoards, setIsLoadingBoards] = useState(false);
+  
+  // 스토어에서 데이터 가져오기
+  const { 
+    boards, 
+    isLoadingBoards, 
+    stats, 
+    activities,
+    searchQuery, 
+    setSearchQuery 
+  } = useDashboardStore();
 
-  // 더미 활동 데이터
-  const dummyActivities = [
-    {
-      id: "activity_9c8b7a6d",
-      type: "CARD_MOVE",
-      actor: {
-        id: "user_101",
-        firstName: "개발",
-        lastName: "김",
-        profileImageUrl: "https://placehold.co/40x40/0284C7/FFFFFF?text=김"
-      },
-      timestamp: "2025-01-20T15:30:00.123Z",
-      payload: {
-        cardTitle: "API 설계",
-        sourceListName: "진행 중",
-        destListName: "완료",
-        cardId: "card_456",
-        sourceListId: "list_123",
-        destListId: "list_789"
-      }
-    },
-    {
-      id: "activity_8b7a6c5d",
-      type: "CARD_CREATE",
-      actor: {
-        id: "user_101",
-        firstName: "개발",
-        lastName: "김",
-        profileImageUrl: "https://placehold.co/40x40/0284C7/FFFFFF?text=김"
-      },
-      timestamp: "2025-01-20T12:45:00.456Z",
-      payload: {
-        listName: "할 일",
-        cardTitle: "사용자 인증 구현",
-        listId: "list_123",
-        cardId: "card_789"
-      }
-    },
-    {
-      id: "activity_7a6b5c4d",
-      type: "BOARD_CREATE",
-      actor: {
-        id: "user_101",
-        firstName: "개발",
-        lastName: "김",
-        profileImageUrl: "https://placehold.co/40x40/0284C7/FFFFFF?text=김"
-      },
-      timestamp: "2025-01-19T09:15:00.789Z",
-      payload: {
-        boardName: "독서 계획",
-        boardId: "board_4"
-      }
+  // 페이지 로드 시 대시보드 데이터 가져오기
+  useEffect(() => {
+    if (authenticated) {
+      loadDashboardData();
     }
-  ];
+  }, [authenticated, loadDashboardData]);
+
+
 
 
 
@@ -207,7 +171,12 @@ export default function Dashboard() {
               />
 
               {/* Stats Cards */}
-              <StatsCards />
+              <StatsCards 
+                totalBoards={stats.totalBoards}
+                totalCards={stats.totalCards}
+                favorites={stats.starredBoards}
+                archived={stats.archivedBoards}
+              />
 
               {/* Boards Section */}
               <BoardSection
@@ -231,7 +200,7 @@ export default function Dashboard() {
                 }}
               />
               
-              <Activity activities={dummyActivities} />
+              <Activity activities={activities as any} />
               
               <QuickActions 
                 actions={[
@@ -256,6 +225,7 @@ export default function Dashboard() {
         createBoard={authenticated?.createBoard as any}
         onSuccess={() => {
           // 보드 생성 성공 후 처리
+          handleCreateBoardSuccess();
           closeCreateModal();
         }}
       />

@@ -148,6 +148,8 @@ export type ActivityResponse = {
     payload?: {
         [key: string]: unknown;
     };
+    boardName?: string;
+    boardId?: string;
 };
 export type DashboardStatisticsDto = {
     totalBoards?: number;

@@ -5,22 +5,26 @@ import type * as apiClient from "@/services/api/client";
 type ViewMode = 'grid' | 'list';
 
 interface BoardCardProps {
-  board: apiClient.BoardResponse;
+  board: apiClient.BoardSummaryDto;
   viewMode: ViewMode;
+  onToggleStar?: (boardId: string) => void;
 }
 
-function BoardCard({ board, viewMode }: BoardCardProps) {
-  const colors = [
-    'bg-gradient-to-br from-blue-500 to-purple-600',
-    'bg-gradient-to-br from-green-500 to-teal-600',
-    'bg-gradient-to-br from-orange-500 to-red-600',
-    'bg-gradient-to-br from-purple-500 to-pink-600',
-    'bg-gradient-to-br from-indigo-500 to-blue-600',
-    'bg-gradient-to-br from-pink-500 to-rose-600'
-  ];
+function BoardCard({ board, viewMode, onToggleStar }: BoardCardProps) {
+  const gradientThemes = {
+    'blue-purple': 'bg-gradient-to-br from-blue-500 to-purple-600',
+    'green-teal': 'bg-gradient-to-br from-green-500 to-teal-600',
+    'orange-red': 'bg-gradient-to-br from-orange-500 to-red-600',
+    'purple-pink': 'bg-gradient-to-br from-purple-500 to-pink-600',
+    'indigo-blue': 'bg-gradient-to-br from-indigo-500 to-blue-600',
+    'pink-rose': 'bg-gradient-to-br from-pink-500 to-rose-600'
+  }
   
-  const colorIndex = (Number(board.boardId) || 0) % colors.length;
-  const color = colors[colorIndex];
+  // board.color가 있으면 사용, 없으면 기본 색상 배열에서 선택
+  const themeKeys = Object.keys(gradientThemes);
+  const color = board.color ? 
+    gradientThemes[board.color as keyof typeof gradientThemes] 
+    : gradientThemes[themeKeys[(Number(board.id) || 0) % themeKeys.length] as keyof typeof gradientThemes];
 
   if (viewMode === 'grid') {
     return (
@@ -39,9 +43,21 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
               </button>
             </div>
             <div className="absolute bottom-4 right-4">
-              <svg className="w-5 h-5 text-yellow-300" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleStar?.(board.id || '');
+                }}
+                className={`w-5 h-5 transition-colors ${
+                  board.isStarred ? 'text-yellow-400' : 'text-white/60 hover:text-yellow-300'
+                }`}
+                aria-label={board.isStarred ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+              >
+                <svg className="w-5 h-5" fill={board.isStarred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -51,10 +67,10 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
           </p>
           <div className="flex items-center justify-between text-xs text-gray-500">
             <div className="flex items-center space-x-4">
-              <span>4개 리스트</span>
-              <span>12개 카드</span>
+              <span>{board.listCount || 0}개 리스트</span>
+              <span>{board.cardCount || 0}개 카드</span>
             </div>
-            <span>{new Date(board.updatedAt || board.createdAt || Date.now()).toLocaleDateString()}</span>
+            <span>{new Date(board.createdAt || Date.now()).toLocaleDateString()}</span>
           </div>
         </div>
       </div>
@@ -73,17 +89,29 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
         <div>
           <div className="flex items-center space-x-2">
             <h4 className="font-semibold text-gray-900">{board.title || '제목 없음'}</h4>
-            <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleStar?.(board.id || '');
+              }}
+              className={`w-4 h-4 transition-colors ${
+                board.isStarred ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'
+              }`}
+              aria-label={board.isStarred ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            >
+              <svg className="w-4 h-4" fill={board.isStarred ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </button>
           </div>
           <p className="text-gray-600 text-sm">{board.description || '설명이 없습니다'}</p>
         </div>
       </div>
       <div className="flex items-center space-x-6 text-sm text-gray-500">
-        <span>4개 리스트</span>
-        <span>12개 카드</span>
-        <span>{new Date(board.updatedAt || board.createdAt || Date.now()).toLocaleDateString()}</span>
+        <span>{board.listCount || 0}개 리스트</span>
+        <span>{board.cardCount || 0}개 카드</span>
+        <span>{new Date(board.createdAt || Date.now()).toLocaleDateString()}</span>
         <button type="button" className="text-gray-400 hover:text-gray-600" aria-label="더보기">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
@@ -95,12 +123,13 @@ function BoardCard({ board, viewMode }: BoardCardProps) {
 }
 
 interface BoardSectionProps {
-  boards: apiClient.BoardResponse[];
+  boards: apiClient.BoardSummaryDto[];
   viewMode: ViewMode;
   searchQuery: string;
   isLoadingBoards: boolean;
   onOpenCreateModal: () => void;
   authenticated: boolean;
+  onToggleStar?: (boardId: string) => void;
 }
 
 export function BoardSection({ 
@@ -109,7 +138,8 @@ export function BoardSection({
   searchQuery, 
   isLoadingBoards, 
   onOpenCreateModal, 
-  authenticated 
+  authenticated,
+  onToggleStar
 }: BoardSectionProps) {
   const filteredBoards = boards.filter(board =>
     (board.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -147,14 +177,14 @@ export function BoardSection({
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBoards.map((board) => (
-                <BoardCard key={board.boardId || `${board.title}-${board.createdAt}`} board={board} viewMode={viewMode} />
+                <BoardCard key={board.id || `${board.title}-${board.createdAt}`} board={board} viewMode={viewMode} onToggleStar={onToggleStar} />
               ))}
             </div>
           ) : filteredBoards.length > 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
               <div className="overflow-hidden">
                 {filteredBoards.map((board) => (
-                  <BoardCard key={board.boardId || `${board.title}-${board.createdAt}`} board={board} viewMode={viewMode} />
+                  <BoardCard key={board.id || `${board.title}-${board.createdAt}`} board={board} viewMode={viewMode} onToggleStar={onToggleStar} />
                 ))}
               </div>
             </div>

@@ -2878,6 +2878,12 @@
           "payload": {
             "type": "object",
             "additionalProperties": {}
+          },
+          "boardName": {
+            "type": "string"
+          },
+          "boardId": {
+            "type": "string"
           }
         }
       },

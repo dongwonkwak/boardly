@@ -21,6 +21,7 @@ import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.board.domain.repository.BoardRepository;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class CommentCreateService implements CreateCommentUseCase {
     private final CommentRepository commentRepository;
     private final CardRepository cardRepository;
     private final BoardListRepository boardListRepository;
+    private final BoardRepository boardRepository;
     private final ActivityHelper activityHelper;
 
     @Override
@@ -144,6 +146,10 @@ public class CommentCreateService implements CreateCommentUseCase {
      * 활동 로그를 기록합니다.
      */
     private void logActivity(CreateCommentCommand command, Card card, BoardList boardList, Comment savedComment) {
+        // 보드 정보 조회
+        var boardOpt = boardRepository.findById(boardList.getBoardId());
+        String boardName = boardOpt.map(board -> board.getTitle()).orElse("알 수 없는 보드");
+
         var payload = Map.<String, Object>of(
                 "commentId", savedComment.getCommentId().getId(),
                 "content", command.content(),
@@ -154,6 +160,7 @@ public class CommentCreateService implements CreateCommentUseCase {
                 ActivityType.CARD_ADD_COMMENT,
                 command.authorId(),
                 payload,
+                boardName,
                 boardList.getBoardId(),
                 card.getListId(),
                 command.cardId());

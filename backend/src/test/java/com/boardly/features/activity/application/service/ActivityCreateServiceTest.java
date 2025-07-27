@@ -96,6 +96,7 @@ class ActivityCreateServiceTest {
                                         ActivityType.CARD_CREATE,
                                         actorId,
                                         payload,
+                                        "프로젝트 A",
                                         boardId,
                                         listId,
                                         cardId);
@@ -136,6 +137,7 @@ class ActivityCreateServiceTest {
                                         ActivityType.LIST_CREATE,
                                         actorId,
                                         payload,
+                                        "프로젝트 A",
                                         boardId,
                                         listId);
 
@@ -169,6 +171,7 @@ class ActivityCreateServiceTest {
                                         ActivityType.BOARD_CREATE,
                                         actorId,
                                         payload,
+                                        "프로젝트 A",
                                         boardId);
 
                         User user = createMockUser(actorId);
@@ -208,6 +211,7 @@ class ActivityCreateServiceTest {
                                         ActivityType.CARD_CREATE,
                                         actorId,
                                         payload,
+                                        "프로젝트 A",
                                         boardId,
                                         listId,
                                         cardId);
@@ -243,6 +247,7 @@ class ActivityCreateServiceTest {
                                         ActivityType.CARD_CREATE,
                                         actorId,
                                         payload,
+                                        "프로젝트 A",
                                         boardId,
                                         listId,
                                         cardId);
@@ -277,6 +282,7 @@ class ActivityCreateServiceTest {
                                         ActivityType.CARD_CREATE,
                                         actorId,
                                         payload,
+                                        "프로젝트 A",
                                         boardId,
                                         listId,
                                         cardId);
@@ -318,6 +324,7 @@ class ActivityCreateServiceTest {
                                         ActivityType.CARD_CREATE,
                                         actorId,
                                         payload,
+                                        "프로젝트 A",
                                         boardId,
                                         listId,
                                         cardId);
@@ -325,7 +332,8 @@ class ActivityCreateServiceTest {
                         User user = createMockUser(actorId);
 
                         // when
-                        ActivityCreationContext context = new ActivityCreationContext(command, user, null, null, null);
+                        ActivityCreationContext context = new ActivityCreationContext(command, user, null, null, null,
+                                        "프로젝트 A");
 
                         // then
                         assertThat(context.getCommand()).isEqualTo(command);
@@ -333,6 +341,7 @@ class ActivityCreateServiceTest {
                         assertThat(context.getActor()).isNull();
                         assertThat(context.getPayload()).isNull();
                         assertThat(context.getActivity()).isNull();
+                        assertThat(context.getBoardName()).isEqualTo("프로젝트 A");
                 }
         }
 
@@ -354,6 +363,7 @@ class ActivityCreateServiceTest {
                                                 user.getLastName(),
                                                 ""),
                                 com.boardly.features.activity.domain.model.Payload.of(command.payload()),
+                                command.boardName(),
                                 command.boardId(),
                                 command.listId(),
                                 command.cardId());

@@ -168,6 +168,9 @@ public class Card extends BaseEntity {
     }
 
     public void assignMember(UserId userId) {
+        if (assignedMembers == null) {
+            assignedMembers = new HashSet<>();
+        }
         if (assignedMembers.stream().anyMatch(member -> member.getUserId().equals(userId))) {
             return;
         }
@@ -176,6 +179,9 @@ public class Card extends BaseEntity {
     }
 
     public void unassignMember(UserId userId) {
+        if (assignedMembers == null) {
+            return;
+        }
         assignedMembers.removeIf(member -> member.getUserId().equals(userId));
         markAsUpdated();
     }
@@ -248,6 +254,9 @@ public class Card extends BaseEntity {
      * 특정 사용자가 담당자인지 확인
      */
     public boolean isAssignedTo(UserId userId) {
+        if (assignedMembers == null) {
+            return false;
+        }
         return assignedMembers.stream()
                 .anyMatch(member -> member.getUserId().equals(userId));
     }

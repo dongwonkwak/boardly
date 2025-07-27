@@ -160,10 +160,15 @@ public class CreateCardService implements CreateCardUseCase, CloneCardUseCase {
      * 카드 생성 활동 로그 기록
      */
     private void logCardCreateActivity(CreateCardCommand command, BoardList boardList, Card savedCard) {
+        // 보드 정보 조회
+        var boardOpt = boardRepository.findById(boardList.getBoardId());
+        String boardName = boardOpt.map(board -> board.getTitle()).orElse("알 수 없는 보드");
+
         activityHelper.logCardCreate(
                 command.userId(),
                 boardList.getTitle(),
                 savedCard.getTitle(),
+                boardName,
                 boardList.getBoardId(),
                 savedCard.getListId(),
                 savedCard.getCardId());
@@ -263,17 +268,23 @@ public class CreateCardService implements CreateCardUseCase, CloneCardUseCase {
     private void logCardDuplicateActivity(CloneCardCommand command, Card originalCard, Card savedClonedCard) {
         BoardList targetList = boardListRepository.findById(savedClonedCard.getListId()).get();
 
+        // 보드 정보 조회
+        var boardOpt = boardRepository.findById(targetList.getBoardId());
+        String boardName = boardOpt.map(board -> board.getTitle()).orElse("알 수 없는 보드");
+
         Map<String, Object> payload = Map.of(
                 "originalCardTitle", originalCard.getTitle(),
                 "newCardTitle", savedClonedCard.getTitle(),
                 "originalCardId", originalCard.getCardId().getId(),
                 "newCardId", savedClonedCard.getCardId().getId(),
-                "listName", targetList.getTitle());
+                "listName", targetList.getTitle(),
+                "boardName", boardName);
 
         activityHelper.logCardActivity(
                 ActivityType.CARD_DUPLICATE,
                 command.userId(),
                 payload,
+                boardName,
                 targetList.getBoardId(),
                 savedClonedCard.getListId(),
                 savedClonedCard.getCardId());

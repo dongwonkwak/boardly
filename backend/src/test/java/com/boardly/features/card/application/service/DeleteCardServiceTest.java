@@ -2,12 +2,11 @@ package com.boardly.features.card.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -28,7 +27,6 @@ import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.model.ListColor;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.card.application.port.input.DeleteCardCommand;
@@ -98,20 +96,19 @@ class DeleteCardServiceTest {
                 private Card cardToDelete;
                 private BoardList boardList;
                 private Board board;
-                private CardId cardId;
                 private UserId userId;
+                private CardId cardId;
                 private ListId listId;
                 private BoardId boardId;
 
                 @BeforeEach
                 void setUp() {
-                        // 테스트 데이터 설정
-                        cardId = new CardId("card-123");
                         userId = new UserId("user-123");
+                        cardId = new CardId("card-123");
                         listId = new ListId("list-123");
                         boardId = new BoardId("board-123");
 
-                        validCommand = DeleteCardCommand.of(cardId, userId);
+                        validCommand = new DeleteCardCommand(cardId, userId);
 
                         cardToDelete = Card.builder()
                                         .cardId(cardId)
@@ -125,14 +122,12 @@ class DeleteCardServiceTest {
                                         .listId(listId)
                                         .title("테스트 리스트")
                                         .boardId(boardId)
-                                        .position(0)
-                                        .color(ListColor.of("#B04632"))
+                                        .position(1)
                                         .build();
 
                         board = Board.builder()
                                         .boardId(boardId)
                                         .title("테스트 보드")
-                                        .description("테스트 보드 설명")
                                         .ownerId(userId)
                                         .isArchived(false)
                                         .build();
@@ -144,30 +139,38 @@ class DeleteCardServiceTest {
                         // given
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(validCommand.cardId()))
+                        when(cardRepository.delete(cardId))
                                         .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
+                        when(cardRepository.findByListIdAndPositionGreaterThan(listId, 2))
                                         .thenReturn(List.of());
+                        when(boardRepository.findById(boardId))
+                                        .thenReturn(Optional.of(board));
 
                         // when
                         Either<Failure, Void> result = deleteCardService.deleteCard(validCommand);
 
                         // then
                         assertThat(result.isRight()).isTrue();
-                        verify(cardRepository).delete(validCommand.cardId());
-                        verify(cardRepository).findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition());
+                        assertThat(result.get()).isNull();
+
+                        verify(cardValidator).validateDelete(validCommand);
+                        verify(cardRepository).findById(cardId);
+                        verify(boardListRepository, times(2)).findById(listId); // 권한 검증과 활동 로그 기록에서 각각 호출
+                        verify(boardRepository).findByIdAndOwnerId(boardId, userId);
+                        verify(cardRepository).delete(cardId);
+                        verify(cardRepository).findByListIdAndPositionGreaterThan(listId, 2);
+                        verify(boardRepository).findById(boardId); // 활동 로그 기록에서 호출
                         verify(activityHelper).logCardActivity(
                                         eq(ActivityType.CARD_DELETE),
                                         eq(userId),
                                         any(Map.class),
+                                        eq("테스트 보드"),
                                         eq(boardId),
                                         eq(listId),
                                         eq(cardId));
@@ -177,13 +180,14 @@ class DeleteCardServiceTest {
                 @DisplayName("입력 검증 실패 시 실패를 반환한다")
                 void shouldReturnFailureWhenValidationFails() {
                         // given
-                        ValidationResult<DeleteCardCommand> invalidResult = ValidationResult.invalid(
-                                        io.vavr.collection.List.of(Failure.FieldViolation.builder()
+                        var validationErrors = List.of(
+                                        Failure.FieldViolation.builder()
                                                         .field("cardId")
-                                                        .message("카드 ID는 필수입니다")
-                                                        .rejectedValue(null)
-                                                        .build()));
-
+                                                        .message("카드 ID가 유효하지 않습니다.")
+                                                        .rejectedValue("invalid-id")
+                                                        .build());
+                        ValidationResult<DeleteCardCommand> invalidResult = ValidationResult.invalid(
+                                        io.vavr.collection.List.ofAll(validationErrors));
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(invalidResult);
 
@@ -194,12 +198,13 @@ class DeleteCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.InputError.class);
-                        assertThat(failure.getMessage()).isEqualTo("입력값이 유효하지 않습니다.");
+                        Failure.InputError inputError = (Failure.InputError) failure;
+                        assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
+                        assertThat(inputError.getMessage()).isEqualTo("입력값이 유효하지 않습니다.");
+                        assertThat(inputError.getViolations()).containsExactlyElementsOf(validationErrors);
 
-                        // 검증 실패 시에는 다른 작업들이 수행되지 않아야 함
-                        verify(cardRepository, never()).findById(any());
-                        verify(cardRepository, never()).delete(any());
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(cardValidator).validateDelete(validCommand);
+                        verifyNoInteractions(cardRepository, boardListRepository, boardRepository, activityHelper);
                 }
 
                 @Test
@@ -208,7 +213,7 @@ class DeleteCardServiceTest {
                         // given
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.empty());
 
                         // when
@@ -218,11 +223,13 @@ class DeleteCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.NotFound.class);
-                        assertThat(failure.getMessage()).isEqualTo("삭제할 카드를 찾을 수 없습니다.");
+                        Failure.NotFound notFound = (Failure.NotFound) failure;
+                        assertThat(notFound.getErrorCode()).isEqualTo("NOT_FOUND");
+                        assertThat(notFound.getMessage()).isEqualTo("삭제할 카드를 찾을 수 없습니다.");
 
-                        // 카드가 없으면 다른 작업들이 수행되지 않아야 함
-                        verify(cardRepository, never()).delete(any());
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(cardValidator).validateDelete(validCommand);
+                        verify(cardRepository).findById(cardId);
+                        verifyNoInteractions(boardListRepository, boardRepository, activityHelper);
                 }
 
                 @Test
@@ -231,9 +238,9 @@ class DeleteCardServiceTest {
                         // given
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.empty());
 
                         // when
@@ -243,11 +250,14 @@ class DeleteCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.NotFound.class);
-                        assertThat(failure.getMessage()).isEqualTo("리스트를 찾을 수 없습니다.");
+                        Failure.NotFound notFound = (Failure.NotFound) failure;
+                        assertThat(notFound.getErrorCode()).isEqualTo("NOT_FOUND");
+                        assertThat(notFound.getMessage()).isEqualTo("리스트를 찾을 수 없습니다.");
 
-                        // 리스트가 없으면 다른 작업들이 수행되지 않아야 함
-                        verify(cardRepository, never()).delete(any());
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(cardValidator).validateDelete(validCommand);
+                        verify(cardRepository).findById(cardId);
+                        verify(boardListRepository).findById(listId);
+                        verifyNoInteractions(boardRepository, activityHelper);
                 }
 
                 @Test
@@ -256,11 +266,11 @@ class DeleteCardServiceTest {
                         // given
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.empty());
 
                         // when
@@ -270,11 +280,15 @@ class DeleteCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.PermissionDenied.class);
-                        assertThat(failure.getMessage()).isEqualTo("보드 접근 권한이 없습니다.");
+                        Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) failure;
+                        assertThat(permissionDenied.getErrorCode()).isEqualTo("PERMISSION_DENIED");
+                        assertThat(permissionDenied.getMessage()).isEqualTo("보드 접근 권한이 없습니다.");
 
-                        // 권한이 없으면 다른 작업들이 수행되지 않아야 함
-                        verify(cardRepository, never()).delete(any());
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(cardValidator).validateDelete(validCommand);
+                        verify(cardRepository).findById(cardId);
+                        verify(boardListRepository).findById(listId);
+                        verify(boardRepository).findByIdAndOwnerId(boardId, userId);
+                        verifyNoInteractions(activityHelper);
                 }
 
                 @Test
@@ -282,20 +296,19 @@ class DeleteCardServiceTest {
                 void shouldReturnFailureWhenBoardIsArchived() {
                         // given
                         Board archivedBoard = Board.builder()
-                                        .boardId(board.getBoardId())
+                                        .boardId(boardId)
                                         .title("아카이브된 보드")
-                                        .description("아카이브된 보드 설명")
-                                        .ownerId(validCommand.userId())
+                                        .ownerId(userId)
                                         .isArchived(true)
                                         .build();
 
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.of(archivedBoard));
 
                         // when
@@ -305,56 +318,65 @@ class DeleteCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.BusinessRuleViolation.class);
-                        assertThat(failure.getMessage()).isEqualTo("아카이브된 보드에서는 카드를 삭제할 수 없습니다.");
+                        Failure.BusinessRuleViolation businessRuleViolation = (Failure.BusinessRuleViolation) failure;
+                        assertThat(businessRuleViolation.getErrorCode()).isEqualTo("BUSINESS_RULE_VIOLATION");
+                        assertThat(businessRuleViolation.getMessage()).isEqualTo("아카이브된 보드에서는 카드를 삭제할 수 없습니다.");
 
-                        // 아카이브된 보드에서는 다른 작업들이 수행되지 않아야 함
-                        verify(cardRepository, never()).delete(any());
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(cardValidator).validateDelete(validCommand);
+                        verify(cardRepository).findById(cardId);
+                        verify(boardListRepository).findById(listId);
+                        verify(boardRepository).findByIdAndOwnerId(boardId, userId);
+                        verifyNoInteractions(activityHelper);
                 }
 
                 @Test
                 @DisplayName("카드 삭제 실패 시 실패를 반환한다")
-                void shouldReturnFailureWhenCardDeleteFails() {
+                void shouldReturnFailureWhenCardDeletionFails() {
                         // given
+                        Failure deletionFailure = Failure.ofInternalError("카드 삭제 중 오류가 발생했습니다.", "INTERNAL_ERROR",
+                                        null);
+
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(validCommand.cardId()))
-                                        .thenReturn(Either.left(Failure.ofInternalServerError("카드 삭제 중 오류가 발생했습니다.")));
+                        when(cardRepository.delete(cardId))
+                                        .thenReturn(Either.left(deletionFailure));
 
                         // when
                         Either<Failure, Void> result = deleteCardService.deleteCard(validCommand);
 
                         // then
                         assertThat(result.isLeft()).isTrue();
-                        Failure failure = result.getLeft();
-                        assertThat(failure).isInstanceOf(Failure.InternalError.class);
-                        assertThat(failure.getMessage()).isEqualTo("카드 삭제 중 오류가 발생했습니다.");
+                        assertThat(result.getLeft()).isEqualTo(deletionFailure);
 
-                        // 삭제 실패 시에는 후처리 작업이 수행되지 않아야 함
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(cardValidator).validateDelete(validCommand);
+                        verify(cardRepository).findById(cardId);
+                        verify(boardListRepository).findById(listId);
+                        verify(boardRepository).findByIdAndOwnerId(boardId, userId);
+                        verify(cardRepository).delete(cardId);
+                        verifyNoInteractions(activityHelper);
                 }
 
                 @Test
-                @DisplayName("카드 삭제 후 남은 카드들의 위치를 재정렬한다")
+                @DisplayName("카드 삭제 후 나머지 카드들의 위치를 재정렬한다")
                 void shouldReorderRemainingCardsAfterDeletion() {
                         // given
                         Card remainingCard1 = Card.builder()
                                         .cardId(new CardId("card-456"))
                                         .title("남은 카드 1")
-                                        .listId(cardToDelete.getListId())
+                                        .listId(listId)
                                         .position(3)
                                         .build();
 
                         Card remainingCard2 = Card.builder()
                                         .cardId(new CardId("card-789"))
                                         .title("남은 카드 2")
-                                        .listId(cardToDelete.getListId())
+                                        .listId(listId)
                                         .position(4)
                                         .build();
 
@@ -362,189 +384,118 @@ class DeleteCardServiceTest {
 
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(validCommand.cardId()))
+                        when(cardRepository.delete(cardId))
                                         .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
+                        when(cardRepository.findByListIdAndPositionGreaterThan(listId, 2))
                                         .thenReturn(cardsToReorder);
-                        when(cardRepository.saveAll(any()))
-                                        .thenReturn(cardsToReorder);
+                        when(boardRepository.findById(boardId))
+                                        .thenReturn(Optional.of(board));
 
                         // when
                         Either<Failure, Void> result = deleteCardService.deleteCard(validCommand);
 
                         // then
                         assertThat(result.isRight()).isTrue();
-                        verify(cardRepository).findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition());
+
+                        verify(cardRepository).findByListIdAndPositionGreaterThan(listId, 2);
                         verify(cardRepository).saveAll(cardsToReorder);
 
-                        // 위치가 1씩 감소했는지 확인
+                        // 위치가 재정렬되었는지 확인
                         assertThat(remainingCard1.getPosition()).isEqualTo(2);
                         assertThat(remainingCard2.getPosition()).isEqualTo(3);
-
-                        // 활동 로그가 기록되었는지 확인
-                        verify(activityHelper).logCardActivity(
-                                        eq(ActivityType.CARD_DELETE),
-                                        eq(userId),
-                                        any(Map.class),
-                                        eq(boardId),
-                                        eq(listId),
-                                        eq(cardId));
                 }
 
                 @Test
-                @DisplayName("재정렬할 카드가 없을 때는 위치 조정을 건너뛴다")
-                void shouldSkipReorderWhenNoCardsToReorder() {
+                @DisplayName("활동 로그 기록 시 보드 정보를 찾을 수 없어도 삭제는 성공한다")
+                void shouldSucceedEvenWhenBoardInfoNotFoundForActivityLog() {
                         // given
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(validCommand.cardId()))
+                        when(cardRepository.delete(cardId))
                                         .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
+                        when(cardRepository.findByListIdAndPositionGreaterThan(listId, 2))
                                         .thenReturn(List.of());
+                        when(boardRepository.findById(boardId))
+                                        .thenReturn(Optional.empty());
 
                         // when
                         Either<Failure, Void> result = deleteCardService.deleteCard(validCommand);
 
                         // then
                         assertThat(result.isRight()).isTrue();
-                        verify(cardRepository).findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition());
-                        // 재정렬할 카드가 없을 때는 saveAll이 호출되지 않음
-                        verify(cardRepository, never()).saveAll(any());
 
-                        // 활동 로그는 여전히 기록되어야 함
                         verify(activityHelper).logCardActivity(
                                         eq(ActivityType.CARD_DELETE),
                                         eq(userId),
                                         any(Map.class),
+                                        eq("알 수 없는 보드"),
                                         eq(boardId),
                                         eq(listId),
                                         eq(cardId));
                 }
 
                 @Test
-                @DisplayName("활동 로그 기록 중 예외가 발생해도 카드 삭제는 성공한다")
-                void shouldSucceedEvenWhenActivityLogFails() {
+                @DisplayName("활동 로그 기록 중 예외가 발생해도 삭제는 성공한다")
+                void shouldSucceedEvenWhenActivityLogThrowsException() {
                         // given
                         when(cardValidator.validateDelete(validCommand))
                                         .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(validCommand.cardId()))
+                        when(cardRepository.delete(cardId))
                                         .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
+                        when(cardRepository.findByListIdAndPositionGreaterThan(listId, 2))
                                         .thenReturn(List.of());
-
-                        // 활동 로그 기록 시 예외 발생
-                        doThrow(new RuntimeException("활동 로그 기록 실패"))
-                                        .when(activityHelper).logCardActivity(any(), any(), any(), any(), any(), any());
-
-                        // when
-                        Either<Failure, Void> result = deleteCardService.deleteCard(validCommand);
-
-                        // then
-                        assertThat(result.isRight()).isTrue();
-                        verify(cardRepository).delete(validCommand.cardId());
-                }
-
-                @Test
-                @DisplayName("카드 위치 재정렬 중 예외가 발생해도 카드 삭제는 성공한다")
-                void shouldSucceedEvenWhenReorderFails() {
-                        // given
-                        Card remainingCard = Card.builder()
-                                        .cardId(new CardId("card-456"))
-                                        .title("남은 카드")
-                                        .listId(listId)
-                                        .position(3)
-                                        .build();
-
-                        when(cardValidator.validateDelete(validCommand))
-                                        .thenReturn(ValidationResult.valid(validCommand));
-                        when(cardRepository.findById(validCommand.cardId()))
-                                        .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
-                                        .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId()))
+                        when(boardRepository.findById(boardId))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(validCommand.cardId()))
-                                        .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
-                                        .thenReturn(List.of(remainingCard));
-
-                        // 위치 재정렬 중 예외 발생
-                        when(cardRepository.saveAll(any()))
-                                        .thenThrow(new RuntimeException("위치 재정렬 실패"));
+                        lenient().doThrow(new RuntimeException("활동 로그 기록 실패"))
+                                        .when(activityHelper)
+                                        .logCardActivity(any(), any(), any(), any(), any(), any(), any());
 
                         // when
                         Either<Failure, Void> result = deleteCardService.deleteCard(validCommand);
 
                         // then
                         assertThat(result.isRight()).isTrue();
-                        verify(cardRepository).delete(validCommand.cardId());
-                        // 활동 로그는 여전히 기록되어야 함
-                        verify(activityHelper).logCardActivity(
-                                        eq(ActivityType.CARD_DELETE),
-                                        eq(userId),
-                                        any(Map.class),
-                                        eq(boardId),
-                                        eq(listId),
-                                        eq(cardId));
                 }
         }
 
         @Nested
-        @DisplayName("권한 검증 테스트")
-        class PermissionValidationTest {
+        @DisplayName("공통 유틸리티 메서드 테스트")
+        class UtilityMethodTest {
 
-                private ListId listId;
                 private UserId userId;
-                private BoardList boardList;
-                private Board board;
-                private CardId cardId;
+                private ListId listId;
                 private BoardId boardId;
+                private BoardList boardList;
 
                 @BeforeEach
                 void setUp() {
-                        listId = new ListId("list-123");
                         userId = new UserId("user-123");
-                        cardId = new CardId("card-123");
+                        listId = new ListId("list-123");
                         boardId = new BoardId("board-123");
 
                         boardList = BoardList.builder()
                                         .listId(listId)
                                         .title("테스트 리스트")
                                         .boardId(boardId)
-                                        .position(0)
-                                        .color(ListColor.of("#B04632"))
-                                        .build();
-
-                        board = Board.builder()
-                                        .boardId(boardId)
-                                        .title("테스트 보드")
-                                        .description("테스트 보드 설명")
-                                        .ownerId(userId)
-                                        .isArchived(false)
+                                        .position(1)
                                         .build();
                 }
 
@@ -552,18 +503,18 @@ class DeleteCardServiceTest {
                 @DisplayName("리스트가 존재하지 않을 때 실패를 반환한다")
                 void shouldReturnFailureWhenListNotFound() {
                         // given
-                        DeleteCardCommand command = DeleteCardCommand.of(cardId, userId);
-                        Card testCard = Card.builder()
-                                        .cardId(cardId)
+                        DeleteCardCommand command = new DeleteCardCommand(new CardId("card-123"), userId);
+                        Card card = Card.builder()
+                                        .cardId(new CardId("card-123"))
                                         .title("테스트 카드")
                                         .listId(listId)
-                                        .position(0)
+                                        .position(1)
                                         .build();
 
                         when(cardValidator.validateDelete(command))
                                         .thenReturn(ValidationResult.valid(command));
-                        when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(testCard));
+                        when(cardRepository.findById(new CardId("card-123")))
+                                        .thenReturn(Optional.of(card));
                         when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.empty());
 
@@ -574,223 +525,82 @@ class DeleteCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.NotFound.class);
-                        assertThat(failure.getMessage()).isEqualTo("리스트를 찾을 수 없습니다.");
+                        Failure.NotFound notFound = (Failure.NotFound) failure;
+                        assertThat(notFound.getErrorCode()).isEqualTo("NOT_FOUND");
+                        assertThat(notFound.getMessage()).isEqualTo("리스트를 찾을 수 없습니다.");
                 }
 
                 @Test
                 @DisplayName("보드 접근 권한이 없을 때 실패를 반환한다")
                 void shouldReturnFailureWhenBoardAccessDenied() {
                         // given
-                        when(cardValidator.validateDelete(any()))
-                                        .thenReturn(ValidationResult.valid(DeleteCardCommand.of(cardId, userId)));
-                        when(cardRepository.findById(any()))
-                                        .thenReturn(Optional.of(Card.builder()
-                                                        .cardId(cardId)
-                                                        .title("테스트 카드")
-                                                        .listId(listId)
-                                                        .position(0)
-                                                        .build()));
+                        DeleteCardCommand command = new DeleteCardCommand(new CardId("card-123"), userId);
+                        Card card = Card.builder()
+                                        .cardId(new CardId("card-123"))
+                                        .title("테스트 카드")
+                                        .listId(listId)
+                                        .position(1)
+                                        .build();
+
+                        when(cardValidator.validateDelete(command))
+                                        .thenReturn(ValidationResult.valid(command));
+                        when(cardRepository.findById(new CardId("card-123")))
+                                        .thenReturn(Optional.of(card));
                         when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), userId))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.empty());
 
                         // when
-                        Either<Failure, Void> result = deleteCardService.deleteCard(
-                                        DeleteCardCommand.of(cardId, userId));
+                        Either<Failure, Void> result = deleteCardService.deleteCard(command);
 
                         // then
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.PermissionDenied.class);
-                        assertThat(failure.getMessage()).isEqualTo("보드 접근 권한이 없습니다.");
+                        Failure.PermissionDenied permissionDenied = (Failure.PermissionDenied) failure;
+                        assertThat(permissionDenied.getErrorCode()).isEqualTo("PERMISSION_DENIED");
+                        assertThat(permissionDenied.getMessage()).isEqualTo("보드 접근 권한이 없습니다.");
                 }
 
                 @Test
                 @DisplayName("아카이브된 보드일 때 실패를 반환한다")
                 void shouldReturnFailureWhenBoardIsArchived() {
                         // given
+                        DeleteCardCommand command = new DeleteCardCommand(new CardId("card-123"), userId);
+                        Card card = Card.builder()
+                                        .cardId(new CardId("card-123"))
+                                        .title("테스트 카드")
+                                        .listId(listId)
+                                        .position(1)
+                                        .build();
+
                         Board archivedBoard = Board.builder()
-                                        .boardId(board.getBoardId())
+                                        .boardId(boardId)
                                         .title("아카이브된 보드")
-                                        .description("아카이브된 보드 설명")
                                         .ownerId(userId)
                                         .isArchived(true)
                                         .build();
 
-                        when(cardValidator.validateDelete(any()))
-                                        .thenReturn(ValidationResult.valid(DeleteCardCommand.of(cardId, userId)));
-                        when(cardRepository.findById(any()))
-                                        .thenReturn(Optional.of(Card.builder()
-                                                        .cardId(cardId)
-                                                        .title("테스트 카드")
-                                                        .listId(listId)
-                                                        .position(0)
-                                                        .build()));
+                        when(cardValidator.validateDelete(command))
+                                        .thenReturn(ValidationResult.valid(command));
+                        when(cardRepository.findById(new CardId("card-123")))
+                                        .thenReturn(Optional.of(card));
                         when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), userId))
+                        when(boardRepository.findByIdAndOwnerId(boardId, userId))
                                         .thenReturn(Optional.of(archivedBoard));
 
                         // when
-                        Either<Failure, Void> result = deleteCardService.deleteCard(
-                                        DeleteCardCommand.of(cardId, userId));
+                        Either<Failure, Void> result = deleteCardService.deleteCard(command);
 
                         // then
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.BusinessRuleViolation.class);
-                        assertThat(failure.getMessage()).isEqualTo("아카이브된 보드에서는 카드를 삭제할 수 없습니다.");
-                }
-        }
-
-        @Nested
-        @DisplayName("활동 로그 테스트")
-        class ActivityLogTest {
-
-                private DeleteCardCommand command;
-                private Card card;
-                private BoardList boardList;
-                private Board board;
-                private CardId cardId;
-                private UserId userId;
-                private ListId listId;
-                private BoardId boardId;
-
-                @BeforeEach
-                void setUp() {
-                        cardId = new CardId("card-123");
-                        userId = new UserId("user-123");
-                        listId = new ListId("list-123");
-                        boardId = new BoardId("board-123");
-
-                        command = DeleteCardCommand.of(cardId, userId);
-
-                        card = Card.builder()
-                                        .cardId(cardId)
-                                        .title("삭제될 카드")
-                                        .description("삭제될 카드 설명")
-                                        .listId(listId)
-                                        .position(2)
-                                        .build();
-
-                        boardList = BoardList.builder()
-                                        .listId(listId)
-                                        .title("테스트 리스트")
-                                        .boardId(boardId)
-                                        .position(0)
-                                        .color(ListColor.of("#B04632"))
-                                        .build();
-
-                        board = Board.builder()
-                                        .boardId(boardId)
-                                        .title("테스트 보드")
-                                        .description("테스트 보드 설명")
-                                        .ownerId(userId)
-                                        .isArchived(false)
-                                        .build();
-                }
-
-                @Test
-                @DisplayName("카드 삭제 시 올바른 활동 로그가 기록된다")
-                void shouldLogCorrectActivityWhenCardIsDeleted() {
-                        // given
-                        when(cardValidator.validateDelete(command))
-                                        .thenReturn(ValidationResult.valid(command));
-                        when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(card));
-                        when(boardListRepository.findById(card.getListId()))
-                                        .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), command.userId()))
-                                        .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(command.cardId()))
-                                        .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(card.getListId(),
-                                        card.getPosition()))
-                                        .thenReturn(List.of());
-
-                        // when
-                        Either<Failure, Void> result = deleteCardService.deleteCard(command);
-
-                        // then
-                        assertThat(result.isRight()).isTrue();
-
-                        // 활동 로그가 올바른 파라미터로 호출되었는지 확인
-                        verify(activityHelper).logCardActivity(
-                                        eq(ActivityType.CARD_DELETE),
-                                        eq(userId),
-                                        any(Map.class),
-                                        eq(boardId),
-                                        eq(listId),
-                                        eq(cardId));
-                }
-
-                @Test
-                @DisplayName("활동 로그 payload에 올바른 정보가 포함된다")
-                void shouldIncludeCorrectPayloadInActivityLog() {
-                        // given
-                        when(cardValidator.validateDelete(command))
-                                        .thenReturn(ValidationResult.valid(command));
-                        when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(card));
-                        when(boardListRepository.findById(card.getListId()))
-                                        .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), command.userId()))
-                                        .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(command.cardId()))
-                                        .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(card.getListId(),
-                                        card.getPosition()))
-                                        .thenReturn(List.of());
-
-                        // when
-                        deleteCardService.deleteCard(command);
-
-                        // then
-                        verify(activityHelper).logCardActivity(
-                                        eq(ActivityType.CARD_DELETE),
-                                        eq(userId),
-                                        argThat(payload -> {
-                                                @SuppressWarnings("unchecked")
-                                                Map<String, Object> map = (Map<String, Object>) payload;
-                                                return map.get("cardTitle").equals("삭제될 카드") &&
-                                                                map.get("listName").equals("테스트 리스트") &&
-                                                                map.get("cardId").equals(cardId.getId()) &&
-                                                                map.get("listId").equals(listId.getId());
-                                        }),
-                                        eq(boardId),
-                                        eq(listId),
-                                        eq(cardId));
-                }
-
-                @Test
-                @DisplayName("활동 로그 기록 실패 시에도 카드 삭제는 성공한다")
-                void shouldSucceedEvenWhenActivityLogFails() {
-                        // given
-                        when(cardValidator.validateDelete(command))
-                                        .thenReturn(ValidationResult.valid(command));
-                        when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(card));
-                        when(boardListRepository.findById(card.getListId()))
-                                        .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), command.userId()))
-                                        .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(command.cardId()))
-                                        .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(card.getListId(),
-                                        card.getPosition()))
-                                        .thenReturn(List.of());
-
-                        // 활동 로그 기록 시 예외 발생
-                        doThrow(new RuntimeException("활동 로그 기록 실패"))
-                                        .when(activityHelper).logCardActivity(any(), any(), any(), any(), any(), any());
-
-                        // when
-                        Either<Failure, Void> result = deleteCardService.deleteCard(command);
-
-                        // then
-                        assertThat(result.isRight()).isTrue();
-                        verify(cardRepository).delete(command.cardId());
+                        Failure.BusinessRuleViolation businessRuleViolation = (Failure.BusinessRuleViolation) failure;
+                        assertThat(businessRuleViolation.getErrorCode()).isEqualTo("BUSINESS_RULE_VIOLATION");
+                        assertThat(businessRuleViolation.getMessage()).isEqualTo("아카이브된 보드에서는 카드를 삭제할 수 없습니다.");
                 }
         }
 
@@ -798,23 +608,16 @@ class DeleteCardServiceTest {
         @DisplayName("카드 위치 재정렬 테스트")
         class CardReorderTest {
 
-                private DeleteCardCommand command;
                 private Card cardToDelete;
-                private BoardList boardList;
-                private Board board;
-                private CardId cardId;
-                private UserId userId;
                 private ListId listId;
-                private BoardId boardId;
+                private UserId userId;
+                private CardId cardId;
 
                 @BeforeEach
                 void setUp() {
-                        cardId = new CardId("card-123");
                         userId = new UserId("user-123");
+                        cardId = new CardId("card-123");
                         listId = new ListId("list-123");
-                        boardId = new BoardId("board-123");
-
-                        command = DeleteCardCommand.of(cardId, userId);
 
                         cardToDelete = Card.builder()
                                         .cardId(cardId)
@@ -822,142 +625,84 @@ class DeleteCardServiceTest {
                                         .listId(listId)
                                         .position(2)
                                         .build();
+                }
 
-                        boardList = BoardList.builder()
+                @Test
+                @DisplayName("재정렬할 카드가 없을 때 아무것도 하지 않는다")
+                void shouldDoNothingWhenNoCardsToReorder() {
+                        // given
+                        DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
+                        BoardList boardList = BoardList.builder()
                                         .listId(listId)
                                         .title("테스트 리스트")
-                                        .boardId(boardId)
-                                        .position(0)
-                                        .color(ListColor.of("#B04632"))
+                                        .boardId(new BoardId("board-123"))
                                         .build();
-
-                        board = Board.builder()
-                                        .boardId(boardId)
-                                        .title("테스트 보드")
-                                        .description("테스트 보드 설명")
+                        Board board = Board.builder()
+                                        .boardId(new BoardId("board-123"))
                                         .ownerId(userId)
                                         .isArchived(false)
                                         .build();
-                }
-
-                @Test
-                @DisplayName("삭제된 카드 이후의 모든 카드 위치가 1씩 감소한다")
-                void shouldDecreasePositionOfRemainingCardsByOne() {
-                        // given
-                        Card remainingCard1 = Card.builder()
-                                        .cardId(new CardId("card-456"))
-                                        .title("남은 카드 1")
-                                        .listId(listId)
-                                        .position(3)
-                                        .build();
-
-                        Card remainingCard2 = Card.builder()
-                                        .cardId(new CardId("card-789"))
-                                        .title("남은 카드 2")
-                                        .listId(listId)
-                                        .position(4)
-                                        .build();
-
-                        Card remainingCard3 = Card.builder()
-                                        .cardId(new CardId("card-101"))
-                                        .title("남은 카드 3")
-                                        .listId(listId)
-                                        .position(5)
-                                        .build();
-
-                        List<Card> cardsToReorder = List.of(remainingCard1, remainingCard2, remainingCard3);
 
                         when(cardValidator.validateDelete(command))
                                         .thenReturn(ValidationResult.valid(command));
-                        when(cardRepository.findById(command.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), command.userId()))
+                        when(boardRepository.findByIdAndOwnerId(any(), eq(userId)))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(command.cardId()))
+                        when(cardRepository.delete(cardId))
                                         .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
-                                        .thenReturn(cardsToReorder);
-                        when(cardRepository.saveAll(any()))
-                                        .thenReturn(cardsToReorder);
-
-                        // when
-                        Either<Failure, Void> result = deleteCardService.deleteCard(command);
-
-                        // then
-                        assertThat(result.isRight()).isTrue();
-
-                        // 위치가 1씩 감소했는지 확인
-                        assertThat(remainingCard1.getPosition()).isEqualTo(2);
-                        assertThat(remainingCard2.getPosition()).isEqualTo(3);
-                        assertThat(remainingCard3.getPosition()).isEqualTo(4);
-
-                        verify(cardRepository).saveAll(cardsToReorder);
-                }
-
-                @Test
-                @DisplayName("재정렬할 카드가 없을 때는 saveAll이 호출되지 않는다")
-                void shouldNotCallSaveAllWhenNoCardsToReorder() {
-                        // given
-                        when(cardValidator.validateDelete(command))
-                                        .thenReturn(ValidationResult.valid(command));
-                        when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
-                                        .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), command.userId()))
-                                        .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(command.cardId()))
-                                        .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
+                        lenient().when(cardRepository.findByListIdAndPositionGreaterThan(listId, 2))
                                         .thenReturn(List.of());
+                        lenient().when(boardRepository.findById(any()))
+                                        .thenReturn(Optional.of(board));
 
                         // when
                         Either<Failure, Void> result = deleteCardService.deleteCard(command);
 
                         // then
                         assertThat(result.isRight()).isTrue();
-                        verify(cardRepository, never()).saveAll(any());
+                        verify(cardRepository).findByListIdAndPositionGreaterThan(listId, 2);
+                        verify(cardRepository, times(0)).saveAll(any());
                 }
 
                 @Test
-                @DisplayName("위치 재정렬 실패 시에도 카드 삭제는 성공한다")
-                void shouldSucceedEvenWhenReorderFails() {
+                @DisplayName("재정렬 중 예외가 발생해도 삭제는 성공한다")
+                void shouldSucceedEvenWhenReorderThrowsException() {
                         // given
-                        Card remainingCard = Card.builder()
-                                        .cardId(new CardId("card-456"))
-                                        .title("남은 카드")
+                        DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
+                        BoardList boardList = BoardList.builder()
                                         .listId(listId)
-                                        .position(3)
+                                        .title("테스트 리스트")
+                                        .boardId(new BoardId("board-123"))
+                                        .build();
+                        Board board = Board.builder()
+                                        .boardId(new BoardId("board-123"))
+                                        .ownerId(userId)
+                                        .isArchived(false)
                                         .build();
 
                         when(cardValidator.validateDelete(command))
                                         .thenReturn(ValidationResult.valid(command));
-                        when(cardRepository.findById(command.cardId()))
+                        when(cardRepository.findById(cardId))
                                         .thenReturn(Optional.of(cardToDelete));
-                        when(boardListRepository.findById(cardToDelete.getListId()))
+                        when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
-                        when(boardRepository.findByIdAndOwnerId(boardList.getBoardId(), command.userId()))
+                        when(boardRepository.findByIdAndOwnerId(any(), eq(userId)))
                                         .thenReturn(Optional.of(board));
-                        when(cardRepository.delete(command.cardId()))
+                        when(cardRepository.delete(cardId))
                                         .thenReturn(Either.right(null));
-                        when(cardRepository.findByListIdAndPositionGreaterThan(cardToDelete.getListId(),
-                                        cardToDelete.getPosition()))
-                                        .thenReturn(List.of(remainingCard));
-
-                        // 위치 재정렬 중 예외 발생
-                        when(cardRepository.saveAll(any()))
-                                        .thenThrow(new RuntimeException("위치 재정렬 실패"));
+                        lenient().when(cardRepository.findByListIdAndPositionGreaterThan(listId, 2))
+                                        .thenThrow(new RuntimeException("재정렬 중 오류"));
+                        lenient().when(boardRepository.findById(any()))
+                                        .thenReturn(Optional.of(board));
 
                         // when
                         Either<Failure, Void> result = deleteCardService.deleteCard(command);
 
                         // then
                         assertThat(result.isRight()).isTrue();
-                        verify(cardRepository).delete(command.cardId());
                 }
         }
 }

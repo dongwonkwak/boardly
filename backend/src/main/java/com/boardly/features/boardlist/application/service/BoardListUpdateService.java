@@ -136,6 +136,7 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
                         ActivityType.LIST_RENAME,
                         command.userId(),
                         payload,
+                        board.getTitle(),
                         savedList.getBoardId(),
                         savedList.getListId());
             }
@@ -151,6 +152,7 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
                         ActivityType.LIST_CHANGE_COLOR,
                         command.userId(),
                         payload,
+                        board.getTitle(),
                         savedList.getBoardId(),
                         savedList.getListId());
             }
@@ -261,6 +263,7 @@ public class BoardListUpdateService implements UpdateBoardListUseCase, UpdateBoa
                     ActivityType.LIST_MOVE,
                     command.userId(),
                     payload,
+                    board.getTitle(),
                     targetList.getBoardId(),
                     targetList.getListId());
 

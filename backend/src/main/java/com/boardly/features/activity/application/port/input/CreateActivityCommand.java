@@ -22,6 +22,7 @@ public record CreateActivityCommand(
         ActivityType type,
         UserId actorId,
         Map<String, Object> payload,
+        String boardName,
         BoardId boardId, // optional
         ListId listId, // optional
         CardId cardId // optional
@@ -31,44 +32,49 @@ public record CreateActivityCommand(
             ActivityType type,
             UserId actorId,
             Map<String, Object> payload,
+            String boardName,
             BoardId boardId,
             ListId listId,
             CardId cardId) {
-        return new CreateActivityCommand(type, actorId, payload, boardId, listId, cardId);
+        return new CreateActivityCommand(type, actorId, payload, boardName, boardId, listId, cardId);
     }
 
     public static CreateActivityCommand forCard(
             ActivityType type,
             UserId actorId,
             Map<String, Object> payload,
+            String boardName,
             BoardId boardId,
             ListId listId,
             CardId cardId) {
-        return new CreateActivityCommand(type, actorId, payload, boardId, listId, cardId);
+        return new CreateActivityCommand(type, actorId, payload, boardName, boardId, listId, cardId);
     }
 
     public static CreateActivityCommand forList(
             ActivityType type,
             UserId actorId,
             Map<String, Object> payload,
+            String boardName,
             BoardId boardId,
             ListId listId) {
-        return new CreateActivityCommand(type, actorId, payload, boardId, listId, null);
+        return new CreateActivityCommand(type, actorId, payload, boardName, boardId, listId, null);
     }
 
     public static CreateActivityCommand forBoard(
             ActivityType type,
             UserId actorId,
             Map<String, Object> payload,
+            String boardName,
             BoardId boardId) {
-        return new CreateActivityCommand(type, actorId, payload, boardId, null, null);
+        return new CreateActivityCommand(type, actorId, payload, boardName, boardId, null, null);
     }
 
     public static CreateActivityCommand forUser(
             ActivityType type,
             UserId actorId,
             Map<String, Object> payload,
+            String boardName,
             UserId userId) {
-        return new CreateActivityCommand(type, actorId, payload, null, null, null);
+        return new CreateActivityCommand(type, actorId, payload, boardName, null, null, null);
     }
 }

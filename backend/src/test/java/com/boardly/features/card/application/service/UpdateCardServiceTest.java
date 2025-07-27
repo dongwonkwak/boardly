@@ -5,10 +5,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -87,27 +89,27 @@ class UpdateCardServiceTest {
 
                 // 공통으로 사용되는 메시지 설정
                 lenient().when(validationMessageResolver.getMessage("validation.input.invalid"))
-                                .thenReturn("입력값이 유효하지 않습니다.");
+                                .thenReturn("validation.input.invalid");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.update.not_found"))
-                                .thenReturn("카드를 찾을 수 없습니다.");
+                                .thenReturn("error.service.card.update.not_found");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.update.list_not_found"))
-                                .thenReturn("리스트를 찾을 수 없습니다.");
+                                .thenReturn("error.service.card.update.list_not_found");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.update.access_denied"))
-                                .thenReturn("보드 접근 권한이 없습니다.");
+                                .thenReturn("error.service.card.update.access_denied");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.update.archived_board"))
-                                .thenReturn("아카이브된 보드의 카드는 수정할 수 없습니다.");
+                                .thenReturn("error.service.card.update.archived_board");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.update.error"))
-                                .thenReturn("카드 수정 중 오류가 발생했습니다.");
+                                .thenReturn("error.service.card.update.error");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.move.not_found"))
-                                .thenReturn("이동할 카드를 찾을 수 없습니다.");
+                                .thenReturn("error.service.card.move.not_found");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.move.list_not_found"))
-                                .thenReturn("리스트를 찾을 수 없습니다.");
+                                .thenReturn("error.service.card.move.list_not_found");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.move.access_denied"))
-                                .thenReturn("보드 접근 권한이 없습니다.");
+                                .thenReturn("error.service.card.move.access_denied");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.move.archived_board"))
-                                .thenReturn("아카이브된 보드의 카드는 이동할 수 없습니다.");
+                                .thenReturn("error.service.card.move.archived_board");
                 lenient().when(validationMessageResolver.getMessage("error.service.card.move.target_list_not_found"))
-                                .thenReturn("대상 리스트를 찾을 수 없습니다.");
+                                .thenReturn("error.service.card.move.target_list_not_found");
         }
 
         @Nested
@@ -180,17 +182,19 @@ class UpdateCardServiceTest {
                         assertThat(result.get()).isEqualTo(existingCard);
                         verify(cardValidator).validateUpdate(validCommand);
                         verify(cardRepository).findById(validCommand.cardId());
-                        verify(boardListRepository, times(3)).findById(existingCard.getListId());
+                        verify(boardListRepository, times(4)).findById(existingCard.getListId());
                         verify(boardRepository).findByIdAndOwnerId(boardList.getBoardId(), validCommand.userId());
-                        verify(boardRepository).findById(boardList.getBoardId());
+                        verify(boardRepository, times(2)).findById(boardList.getBoardId());
                         verify(cardRepository).save(existingCard);
                         verify(activityHelper).logCardActivity(
                                         eq(ActivityType.CARD_RENAME),
                                         eq(validCommand.userId()),
                                         any(Map.class),
+                                        any(String.class), // boardName
                                         eq(board.getBoardId()),
                                         eq(existingCard.getListId()),
                                         eq(existingCard.getCardId()));
+
                 }
 
                 @Test
@@ -200,12 +204,12 @@ class UpdateCardServiceTest {
                         List<Failure.FieldViolation> validationErrors = List.of(
                                         Failure.FieldViolation.builder()
                                                         .field("title")
-                                                        .message("제목은 필수입니다.")
+                                                        .message("validation.card.title.required")
                                                         .rejectedValue(null)
                                                         .build(),
                                         Failure.FieldViolation.builder()
                                                         .field("description")
-                                                        .message("설명이 너무 깁니다.")
+                                                        .message("validation.card.description.too_long")
                                                         .rejectedValue("너무 긴 설명...")
                                                         .build());
                         when(cardValidator.validateUpdate(validCommand))
@@ -221,7 +225,8 @@ class UpdateCardServiceTest {
                         Failure.InputError inputError = (Failure.InputError) result.getLeft();
                         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
                         assertThat(inputError.getViolations()).containsExactlyElementsOf(validationErrors);
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any(),
+                                        any());
                 }
 
                 @Test
@@ -239,7 +244,8 @@ class UpdateCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
                         assertThat(((Failure.NotFound) result.getLeft()).getErrorCode()).isEqualTo("NOT_FOUND");
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any(),
+                                        any());
                 }
 
                 @Test
@@ -258,7 +264,8 @@ class UpdateCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
                         assertThat(((Failure.NotFound) result.getLeft()).getErrorCode()).isEqualTo("NOT_FOUND");
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any(),
+                                        any());
                 }
 
                 @Test
@@ -280,7 +287,8 @@ class UpdateCardServiceTest {
                         assertThat(result.getLeft()).isInstanceOf(Failure.PermissionDenied.class);
                         assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode())
                                         .isEqualTo("PERMISSION_DENIED");
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any(),
+                                        any());
                 }
 
                 @Test
@@ -313,7 +321,8 @@ class UpdateCardServiceTest {
                         assertThat(result.getLeft()).isInstanceOf(Failure.ResourceConflict.class);
                         assertThat(((Failure.ResourceConflict) result.getLeft()).getErrorCode())
                                         .isEqualTo("RESOURCE_CONFLICT");
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any(),
+                                        any());
                 }
 
                 @Test
@@ -328,7 +337,8 @@ class UpdateCardServiceTest {
                                         .thenReturn(Optional.of(board));
                         when(boardRepository.findById(boardList.getBoardId())).thenReturn(Optional.of(board));
                         when(cardRepository.save(any(Card.class)))
-                                        .thenReturn(Either.left(Failure.ofInternalServerError("저장 실패")));
+                                        .thenReturn(Either.left(Failure
+                                                        .ofInternalServerError("error.service.card.save.failed")));
 
                         // when
                         Either<Failure, Card> result = updateCardService.updateCard(validCommand);
@@ -338,7 +348,8 @@ class UpdateCardServiceTest {
                         assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
                         assertThat(((Failure.InternalError) result.getLeft()).getErrorCode())
                                         .isEqualTo("INTERNAL_ERROR");
-                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any());
+                        verify(activityHelper, never()).logCardActivity(any(), any(), any(), any(), any(), any(),
+                                        any());
                 }
 
                 @Test
@@ -369,6 +380,7 @@ class UpdateCardServiceTest {
                                         eq(ActivityType.CARD_RENAME),
                                         eq(commandWithNullDescription.userId()),
                                         any(Map.class),
+                                        any(String.class), // boardName
                                         eq(board.getBoardId()),
                                         eq(existingCard.getListId()),
                                         eq(existingCard.getCardId()));
@@ -472,7 +484,7 @@ class UpdateCardServiceTest {
                         verify(cardRepository).save(existingCard);
                         // 같은 리스트 내 이동은 활동 로그에 기록하지 않음
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -500,11 +512,9 @@ class UpdateCardServiceTest {
                         when(cardRepository.findByListIdAndPositionGreaterThan(any(), anyInt()))
                                         .thenReturn(List.of());
                         when(cardRepository.save(existingCard)).thenReturn(Either.right(existingCard));
-                        // 활동 로그에서 사용하는 리스트 조회를 위한 모킹
-                        when(boardListRepository.findById(sourceBoardList.getListId()))
-                                        .thenReturn(Optional.of(sourceBoardList));
-                        when(boardListRepository.findById(targetBoardList.getListId()))
-                                        .thenReturn(Optional.of(targetBoardList));
+                        // 활동 로그에서 사용하는 보드 조회를 위한 모킹
+                        when(boardRepository.findById(targetBoardList.getBoardId()))
+                                        .thenReturn(Optional.of(board));
 
                         // when
                         Either<Failure, Card> result = updateCardService.moveCard(differentListMoveCommand);
@@ -514,8 +524,9 @@ class UpdateCardServiceTest {
                         assertThat(result.get()).isEqualTo(existingCard);
                         verify(cardValidator).validateMove(differentListMoveCommand);
                         verify(cardRepository).findById(differentListMoveCommand.cardId());
-                        verify(boardListRepository, times(6)).findById(any());
+                        verify(boardListRepository, times(7)).findById(any());
                         verify(boardRepository, times(2)).findByIdAndOwnerId(any(), any());
+                        verify(boardRepository, times(1)).findById(any());
                         verify(cardMovePolicy).canMoveToAnotherList(existingCard,
                                         differentListMoveCommand.targetListId(),
                                         differentListMoveCommand.newPosition());
@@ -523,10 +534,11 @@ class UpdateCardServiceTest {
                         verify(activityHelper).logCardMove(
                                         eq(differentListMoveCommand.userId()),
                                         eq(existingCard.getTitle()),
+                                        eq(sourceBoardList.getTitle()),
                                         eq(targetBoardList.getTitle()),
-                                        eq(targetBoardList.getTitle()),
-                                        eq(board.getBoardId()),
-                                        eq(targetBoardList.getListId()),
+                                        any(String.class), // boardName
+                                        eq(targetBoardList.getBoardId()),
+                                        eq(sourceBoardList.getListId()),
                                         eq(targetBoardList.getListId()),
                                         eq(existingCard.getCardId()));
                 }
@@ -538,7 +550,7 @@ class UpdateCardServiceTest {
                         List<Failure.FieldViolation> validationErrors = List.of(
                                         Failure.FieldViolation.builder()
                                                         .field("newPosition")
-                                                        .message("새로운 위치는 0 이상이어야 합니다.")
+                                                        .message("validation.card.position.invalid")
                                                         .rejectedValue(-1)
                                                         .build());
                         when(cardValidator.validateMove(sameListMoveCommand))
@@ -555,7 +567,7 @@ class UpdateCardServiceTest {
                         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
                         assertThat(inputError.getViolations()).containsExactlyElementsOf(validationErrors);
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -574,7 +586,7 @@ class UpdateCardServiceTest {
                         assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
                         assertThat(((Failure.NotFound) result.getLeft()).getErrorCode()).isEqualTo("NOT_FOUND");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -595,7 +607,7 @@ class UpdateCardServiceTest {
                         assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
                         assertThat(((Failure.NotFound) result.getLeft()).getErrorCode()).isEqualTo("NOT_FOUND");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -621,7 +633,7 @@ class UpdateCardServiceTest {
                         assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode())
                                         .isEqualTo("PERMISSION_DENIED");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -657,7 +669,7 @@ class UpdateCardServiceTest {
                         assertThat(((Failure.ResourceConflict) result.getLeft()).getErrorCode())
                                         .isEqualTo("RESOURCE_CONFLICT");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -685,7 +697,7 @@ class UpdateCardServiceTest {
                         assertThat(result.getLeft()).isInstanceOf(Failure.NotFound.class);
                         assertThat(((Failure.NotFound) result.getLeft()).getErrorCode()).isEqualTo("NOT_FOUND");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -715,7 +727,7 @@ class UpdateCardServiceTest {
                         assertThat(((Failure.PermissionDenied) result.getLeft()).getErrorCode())
                                         .isEqualTo("PERMISSION_DENIED");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -732,7 +744,8 @@ class UpdateCardServiceTest {
                                         sameListMoveCommand.userId()))
                                         .thenReturn(Optional.of(board));
                         when(cardMovePolicy.canMoveWithinSameList(existingCard, sameListMoveCommand.newPosition()))
-                                        .thenReturn(Either.left(Failure.ofConflict("이동할 수 없는 위치입니다.")));
+                                        .thenReturn(Either.left(Failure
+                                                        .ofConflict("error.service.card.move.invalid_position")));
 
                         // when
                         Either<Failure, Card> result = updateCardService.moveCard(sameListMoveCommand);
@@ -743,7 +756,7 @@ class UpdateCardServiceTest {
                         assertThat(((Failure.ResourceConflict) result.getLeft()).getErrorCode())
                                         .isEqualTo("RESOURCE_CONFLICT");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -767,7 +780,8 @@ class UpdateCardServiceTest {
                                         .thenReturn(Optional.of(board));
                         when(cardMovePolicy.canMoveToAnotherList(existingCard, differentListMoveCommand.targetListId(),
                                         differentListMoveCommand.newPosition()))
-                                        .thenReturn(Either.left(Failure.ofConflict("대상 리스트의 카드 개수 제한을 초과했습니다.")));
+                                        .thenReturn(Either.left(Failure
+                                                        .ofConflict("error.service.card.move.list_limit_exceeded")));
 
                         // when
                         Either<Failure, Card> result = updateCardService.moveCard(differentListMoveCommand);
@@ -776,9 +790,9 @@ class UpdateCardServiceTest {
                         assertThat(result.isLeft()).isTrue();
                         Failure failure = result.getLeft();
                         assertThat(failure).isInstanceOf(Failure.ResourceConflict.class);
-                        assertThat(failure.getMessage()).isEqualTo("대상 리스트의 카드 개수 제한을 초과했습니다.");
+                        assertThat(failure.getMessage()).isEqualTo("error.service.card.move.list_limit_exceeded");
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test
@@ -814,7 +828,7 @@ class UpdateCardServiceTest {
                         // 같은 위치로 이동할 때는 저장하지 않음
                         verify(cardRepository, never()).save(any(Card.class));
                         verify(activityHelper, never()).logCardMove(any(), any(), any(), any(), any(), any(), any(),
-                                        any());
+                                        any(), any());
                 }
 
                 @Test

@@ -260,10 +260,15 @@ public class DeleteCardService implements DeleteCardUseCase {
     private void recordActivityLog(UserId userId, Card card,
             BoardList boardList, Map<String, Object> payload) {
 
+        // 보드 정보 조회
+        var boardOpt = boardRepository.findById(boardList.getBoardId());
+        String boardName = boardOpt.map(board -> board.getTitle()).orElse("알 수 없는 보드");
+
         activityHelper.logCardActivity(
                 ActivityType.CARD_DELETE,
                 userId,
                 payload,
+                boardName,
                 boardList.getBoardId(),
                 card.getListId(),
                 card.getCardId());

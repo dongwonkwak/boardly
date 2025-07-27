@@ -19,6 +19,9 @@ import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Activity 생성 과정의 중간 데이터를 담는 헬퍼 클래스
  */
@@ -29,6 +32,7 @@ class ActivityCreationContext {
     Actor actor;
     Payload payload;
     Activity activity;
+    String boardName;
 }
 
 @Slf4j
@@ -75,7 +79,7 @@ public class ActivityCreateService implements CreateActivityUseCase {
     private Either<Failure, ActivityCreationContext> findUser(CreateActivityCommand command) {
         try {
             User user = userFinder.findUserOrThrow(command.actorId());
-            return Either.right(new ActivityCreationContext(command, user, null, null, null));
+            return Either.right(new ActivityCreationContext(command, user, null, null, null, command.boardName()));
         } catch (Exception e) {
             log.warn("Activity creation failed due to user not found: {}", command.actorId(), e);
             return Either.left(Failure.ofNotFound(
@@ -94,16 +98,23 @@ public class ActivityCreateService implements CreateActivityUseCase {
                 context.getUser().getFirstName(),
                 context.getUser().getLastName(),
                 ""); // UserProfile에는 profileImageUrl이 없으므로 빈 문자열 사용
-        return Either.right(new ActivityCreationContext(context.getCommand(), context.getUser(), actor, null, null));
+        return Either.right(new ActivityCreationContext(context.getCommand(), context.getUser(), actor, null, null,
+                context.getBoardName()));
     }
 
     /**
      * Payload 생성
      */
     private Either<Failure, ActivityCreationContext> createPayload(ActivityCreationContext context) {
-        Payload payload = Payload.of(context.getCommand().payload());
+        // boardName을 payload에 포함
+        Map<String, Object> payloadWithBoardName = new HashMap<>(context.getCommand().payload());
+        if (context.getBoardName() != null) {
+            payloadWithBoardName.put("boardName", context.getBoardName());
+        }
+
+        Payload payload = Payload.of(payloadWithBoardName);
         return Either.right(new ActivityCreationContext(context.getCommand(), context.getUser(), context.getActor(),
-                payload, null));
+                payload, null, context.getBoardName()));
     }
 
     /**
@@ -114,11 +125,12 @@ public class ActivityCreateService implements CreateActivityUseCase {
                 context.getCommand().type(),
                 context.getActor(),
                 context.getPayload(),
+                context.getBoardName(),
                 context.getCommand().boardId(),
                 context.getCommand().listId(),
                 context.getCommand().cardId());
         return Either.right(new ActivityCreationContext(context.getCommand(), context.getUser(), context.getActor(),
-                context.getPayload(), activity));
+                context.getPayload(), activity, context.getBoardName()));
     }
 
     /**

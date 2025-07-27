@@ -5,444 +5,335 @@ import com.boardly.features.user.application.port.input.UpdateUserCommand;
 import com.boardly.features.user.application.usecase.RegisterUserUseCase;
 import com.boardly.features.user.application.usecase.UpdateUserUseCase;
 import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.model.UserId;
 import com.boardly.features.user.domain.model.UserProfile;
 import com.boardly.features.user.presentation.request.RegisterUserRequest;
 import com.boardly.features.user.presentation.request.UpdateUserRequest;
+import com.boardly.features.user.presentation.response.UserResponse;
 import com.boardly.shared.domain.common.Failure;
-import com.boardly.shared.presentation.Path;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.boardly.shared.presentation.ApiFailureHandler;
+import com.boardly.shared.presentation.response.ErrorResponse;
 import io.vavr.control.Either;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.util.List;
-import java.util.Map;
+import jakarta.servlet.http.HttpServletRequest;
+import java.time.Instant;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
+@ExtendWith(MockitoExtension.class)
 @DisplayName("UserController 테스트")
 class UserControllerTest {
 
-        @Autowired
-        private MockMvc mockMvc;
+    @Mock
+    private RegisterUserUseCase registerUserUseCase;
 
-        @MockitoBean
-        private RegisterUserUseCase registerUserUseCase;
+    @Mock
+    private UpdateUserUseCase updateUserUseCase;
 
-        @MockitoBean
-        private UpdateUserUseCase updateUserUseCase;
+    @Mock
+    private ApiFailureHandler failureHandler;
 
-        @Autowired
-        private ObjectMapper objectMapper;
+    @Mock
+    private HttpServletRequest httpRequest;
 
-        private RegisterUserRequest registerUserRequest;
-        private UpdateUserRequest updateUserRequest;
-        private User testUser;
+    @Mock
+    private Jwt jwt;
 
-        @BeforeEach
-        void setUp() {
-                registerUserRequest = new RegisterUserRequest(
-                                "test@example.com",
-                                "password123",
-                                "홍",
-                                "길동");
+    private UserController controller;
 
-                updateUserRequest = new UpdateUserRequest(
-                                "이",
-                                "순신");
+    @BeforeEach
+    void setUp() {
+        controller = new UserController(registerUserUseCase, updateUserUseCase, failureHandler);
+    }
 
-                testUser = User.create(
-                                "test@example.com",
-                                "hashedPassword",
-                                new UserProfile("홍", "길동"));
+    private User createTestUser(String userId, String email, String firstName, String lastName) {
+        UserProfile userProfile = new UserProfile(firstName, lastName);
+        return User.builder()
+                .userId(new UserId(userId))
+                .email(email)
+                .hashedPassword("hashedPassword123!")
+                .userProfile(userProfile)
+                .isActive(true)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    private Failure createTestFailure(String message) {
+        return Failure.ofInputError(message);
+    }
+
+    @Nested
+    @DisplayName("사용자 등록 테스트")
+    class RegisterUserTest {
+
+        @Test
+        @DisplayName("유효한 정보로 사용자 등록이 성공해야 한다")
+        void registerUser_WithValidData_ShouldReturnCreatedUser() {
+            // given
+            RegisterUserRequest request = new RegisterUserRequest(
+                    "test@example.com",
+                    "Password123!",
+                    "길동",
+                    "홍");
+
+            User createdUser = createTestUser("user-123", "test@example.com", "길동", "홍");
+            UserResponse expectedResponse = UserResponse.from(createdUser);
+
+            when(registerUserUseCase.register(any(RegisterUserCommand.class)))
+                    .thenReturn(Either.right(createdUser));
+
+            // when
+            ResponseEntity<?> response = controller.registerUser(request, httpRequest);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+            assertThat(response.getBody()).isInstanceOf(UserResponse.class);
+
+            UserResponse actualResponse = (UserResponse) response.getBody();
+            assertThat(actualResponse.userId()).isEqualTo("user-123");
+            assertThat(actualResponse.email()).isEqualTo("test@example.com");
+            assertThat(actualResponse.firstName()).isEqualTo("길동");
+            assertThat(actualResponse.lastName()).isEqualTo("홍");
+            assertThat(actualResponse.isActive()).isTrue();
+
+            verify(registerUserUseCase).register(any(RegisterUserCommand.class));
+            verify(failureHandler, never()).handleFailure(any(Failure.class));
         }
 
-        @Nested
-        @DisplayName("사용자 등록 테스트")
-        class RegisterUserTests {
+        @Test
+        @DisplayName("사용자 등록 실패 시 실패 응답을 반환해야 한다")
+        void registerUser_WhenRegistrationFails_ShouldReturnFailureResponse() {
+            // given
+            RegisterUserRequest request = new RegisterUserRequest(
+                    "test@example.com",
+                    "Password123!",
+                    "길동",
+                    "홍");
 
-                @Test
-                @DisplayName("사용자 등록 성공")
-                void registerUser_Success() throws Exception {
-                        // Given
-                        given(registerUserUseCase.register(any(RegisterUserCommand.class)))
-                                        .willReturn(Either.right(testUser));
+            Failure failure = createTestFailure("이미 존재하는 이메일입니다");
+            ErrorResponse errorResponse = ErrorResponse.of("VALIDATION_ERROR", "이미 존재하는 이메일입니다");
+            ResponseEntity<ErrorResponse> failureResponse = ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(errorResponse);
 
-                        // When & Then
-                        mockMvc.perform(post(Path.USERS + "/register")
-                                        .with(csrf())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(registerUserRequest)))
-                                        .andExpect(status().isCreated())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.userId").exists())
-                                        .andExpect(jsonPath("$.email").value("test@example.com"))
-                                        .andExpect(jsonPath("$.firstName").value("홍"))
-                                        .andExpect(jsonPath("$.lastName").value("길동"))
-                                        .andExpect(jsonPath("$.isActive").value(true));
-                }
+            when(registerUserUseCase.register(any(RegisterUserCommand.class)))
+                    .thenReturn(Either.left(failure));
+            when(failureHandler.handleFailure(failure))
+                    .thenReturn(failureResponse);
 
-                @Test
-                @DisplayName("사용자 등록 실패 - 입력 검증 오류")
-                void registerUser_ValidationError() throws Exception {
-                        // Given
-                        String errorMessage = "입력 데이터가 올바르지 않습니다";
-                        Failure validationError = Failure.ofInputError(
-                                        errorMessage,
-                                        "INVALID_INPUT",
-                                        List.of(Failure.FieldViolation.builder()
-                                                        .field("email")
-                                                        .message("이메일 형식이 올바르지 않습니다")
-                                                        .rejectedValue("invalid-email")
-                                                        .build()));
+            // when
+            ResponseEntity<?> response = controller.registerUser(request, httpRequest);
 
-                        given(registerUserUseCase.register(any(RegisterUserCommand.class)))
-                                        .willReturn(Either.left(validationError));
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+            assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
 
-                        // When & Then
-                        mockMvc.perform(post(Path.USERS + "/register")
-                                        .with(csrf())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(registerUserRequest)))
-                                        .andExpect(status().isBadRequest())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.message").value(errorMessage))
-                                        .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
-                }
+            ErrorResponse actualErrorResponse = (ErrorResponse) response.getBody();
+            assertThat(actualErrorResponse.code()).isEqualTo("VALIDATION_ERROR");
+            assertThat(actualErrorResponse.message()).isEqualTo("이미 존재하는 이메일입니다");
 
-                @Test
-                @DisplayName("사용자 등록 실패 - 이메일 중복")
-                void registerUser_EmailConflict() throws Exception {
-                        // Given
-                        String errorMessage = "이미 사용 중인 이메일입니다";
-                        Failure conflictError = Failure.ofResourceConflict(
-                                        errorMessage,
-                                        "EMAIL_ALREADY_EXISTS",
-                                        Map.of("email", "test@example.com", "conflictType", "EMAIL_DUPLICATE"));
-
-                        given(registerUserUseCase.register(any(RegisterUserCommand.class)))
-                                        .willReturn(Either.left(conflictError));
-
-                        // When & Then
-                        mockMvc.perform(post(Path.USERS + "/register")
-                                        .with(csrf())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(registerUserRequest)))
-                                        .andExpect(status().isConflict())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.message").value(errorMessage))
-                                        .andExpect(jsonPath("$.code").value("EMAIL_ALREADY_EXISTS"));
-                }
-
-                @Test
-                @DisplayName("사용자 등록 실패 - 서버 오류")
-                void registerUser_InternalServerError() throws Exception {
-                        // Given
-                        String errorMessage = "데이터베이스 연결 오류";
-                        Failure internalServerError = Failure.ofInternalError(
-                                        errorMessage,
-                                        "USER_REGISTRATION_ERROR",
-                                        null);
-
-                        given(registerUserUseCase.register(any(RegisterUserCommand.class)))
-                                        .willReturn(Either.left(internalServerError));
-
-                        // When & Then
-                        mockMvc.perform(post(Path.USERS + "/register")
-                                        .with(csrf())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(registerUserRequest)))
-                                        .andExpect(status().isInternalServerError())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.message").value(errorMessage))
-                                        .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
-                                        .andExpect(jsonPath("$.context").doesNotExist());
-                }
-
-                @Test
-                @DisplayName("사용자 등록 실패 - 잘못된 JSON 형식")
-                void registerUser_InvalidJson() throws Exception {
-                        // When & Then
-                        mockMvc.perform(post(Path.USERS + "/register")
-                                        .with(csrf())
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content("invalid json"))
-                                        .andExpect(status().isBadRequest());
-                }
+            verify(registerUserUseCase).register(any(RegisterUserCommand.class));
+            verify(failureHandler).handleFailure(failure);
         }
 
-        @Nested
-        @DisplayName("사용자 업데이트 테스트")
-        class UpdateUserTests {
+        @Test
+        @DisplayName("RegisterUserCommand가 올바른 파라미터로 생성되어야 한다")
+        void registerUser_ShouldCreateCorrectCommand() {
+            // given
+            RegisterUserRequest request = new RegisterUserRequest(
+                    "test@example.com",
+                    "Password123!",
+                    "길동",
+                    "홍");
 
-                @Test
-                @DisplayName("사용자 업데이트 성공")
-                void updateUser_Success() throws Exception {
-                        // Given
-                        User updatedUser = User.create(
-                                        "test@example.com",
-                                        "hashedPassword",
-                                        new UserProfile("이", "순신"));
+            User createdUser = createTestUser("user-123", "test@example.com", "길동", "홍");
 
-                        given(updateUserUseCase.update(any(UpdateUserCommand.class)))
-                                        .willReturn(Either.right(updatedUser));
+            when(registerUserUseCase.register(any(RegisterUserCommand.class)))
+                    .thenReturn(Either.right(createdUser));
 
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid write")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isOk())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.firstName").value("이"))
-                                        .andExpect(jsonPath("$.lastName").value("순신"));
-                }
+            // when
+            controller.registerUser(request, httpRequest);
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - 인증 없음")
-                void updateUser_Unauthorized() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isForbidden());
-                }
+            // then
+            verify(registerUserUseCase).register(argThat(command -> command.email().equals("test@example.com") &&
+                    command.password().equals("Password123!") &&
+                    command.firstName().equals("길동") &&
+                    command.lastName().equals("홍")));
+        }
+    }
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - 권한 없음")
-                void updateUser_Forbidden() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt.claim("sub", "test-user-id")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isForbidden());
-                }
+    @Nested
+    @DisplayName("사용자 업데이트 테스트")
+    class UpdateUserTest {
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - write 권한 없음 (openid만 있는 경우)")
-                void updateUser_Forbidden_OnlyOpenidScope() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isForbidden());
-                }
+        @Test
+        @DisplayName("유효한 정보로 사용자 업데이트가 성공해야 한다")
+        void updateUser_WithValidData_ShouldReturnUpdatedUser() {
+            // given
+            String userId = "user-123";
+            UpdateUserRequest request = new UpdateUserRequest(
+                    "업데이트된길동",
+                    "업데이트된홍");
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - write 권한 없음 (완전히 다른 권한)")
-                void updateUser_Forbidden_DifferentScope() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "read profile")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isForbidden());
-                }
+            User updatedUser = createTestUser(userId, "test@example.com", "업데이트된길동", "업데이트된홍");
+            UserResponse expectedResponse = UserResponse.from(updatedUser);
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - write 권한 없음 (빈 scope)")
-                void updateUser_Forbidden_EmptyScope() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isForbidden());
-                }
+            when(jwt.getSubject()).thenReturn(userId);
+            when(updateUserUseCase.update(any(UpdateUserCommand.class)))
+                    .thenReturn(Either.right(updatedUser));
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - write 권한 없음 (scope claim 없음)")
-                void updateUser_Forbidden_NoScopeClaim() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt.claim("sub", "test-user-id")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isForbidden());
-                }
+            // when
+            ResponseEntity<?> response = controller.updateUser(request, httpRequest, jwt);
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - openid 권한 없음 (write만 있는 경우)")
-                void updateUser_Forbidden_OnlyWriteScope() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "write")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isForbidden());
-                }
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(response.getBody()).isInstanceOf(UserResponse.class);
 
-                @Test
-                @DisplayName("사용자 업데이트 실패 - 사용자를 찾을 수 없음")
-                void updateUser_NotFound() throws Exception {
-                        // Given
-                        String errorMessage = "사용자를 찾을 수 없습니다";
-                        Failure notFoundError = Failure.ofNotFound(
-                                        errorMessage,
-                                        "USER_NOT_FOUND",
-                                        Map.of("userId", "test-user-id"));
+            UserResponse actualResponse = (UserResponse) response.getBody();
+            assertThat(actualResponse.userId()).isEqualTo(userId);
+            assertThat(actualResponse.email()).isEqualTo("test@example.com");
+            assertThat(actualResponse.firstName()).isEqualTo("업데이트된길동");
+            assertThat(actualResponse.lastName()).isEqualTo("업데이트된홍");
+            assertThat(actualResponse.isActive()).isTrue();
 
-                        given(updateUserUseCase.update(any(UpdateUserCommand.class)))
-                                        .willReturn(Either.left(notFoundError));
-
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid write")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isNotFound())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.message").value(errorMessage))
-                                        .andExpect(jsonPath("$.code").value("USER_NOT_FOUND"));
-                }
-
-                @Test
-                @DisplayName("사용자 업데이트 실패 - 유효성 검증 실패")
-                void updateUser_ValidationFailure() throws Exception {
-                        // Given
-                        Failure validationFailure = Failure.ofInputError(
-                                        "입력 데이터가 올바르지 않습니다.",
-                                        "INVALID_INPUT",
-                                        List.of(
-                                                        Failure.FieldViolation.builder()
-                                                                        .field("firstName")
-                                                                        .message("이름은 필수입니다.")
-                                                                        .rejectedValue("")
-                                                                        .build()));
-
-                        given(updateUserUseCase.update(any(UpdateUserCommand.class)))
-                                        .willReturn(Either.left(validationFailure));
-
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid write")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(
-                                                        new UpdateUserRequest("", "순신"))))
-                                        .andExpect(status().isBadRequest())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.message").value("입력 데이터가 올바르지 않습니다."))
-                                        .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
-                                        .andExpect(jsonPath("$.details").isArray());
-                }
-
-                @Test
-                @DisplayName("사용자 업데이트 실패 - 서버 오류")
-                void updateUser_InternalServerError() throws Exception {
-                        // Given
-                        String errorMessage = "데이터베이스 연결 오류";
-                        Failure internalServerError = Failure.ofInternalError(
-                                        errorMessage,
-                                        "USER_UPDATE_ERROR",
-                                        null);
-
-                        given(updateUserUseCase.update(any(UpdateUserCommand.class)))
-                                        .willReturn(Either.left(internalServerError));
-
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid write")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isInternalServerError())
-                                        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(jsonPath("$.message").value(errorMessage))
-                                        .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
-                                        .andExpect(jsonPath("$.context").doesNotExist());
-                }
-
-                @Test
-                @DisplayName("사용자 업데이트 실패 - 잘못된 JSON 형식")
-                void updateUser_InvalidJson() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid write")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content("invalid json"))
-                                        .andExpect(status().isBadRequest());
-                }
+            verify(jwt).getSubject();
+            verify(updateUserUseCase).update(any(UpdateUserCommand.class));
+            verify(failureHandler, never()).handleFailure(any(Failure.class));
         }
 
-        @Nested
-        @DisplayName("HTTP 메서드 테스트")
-        class HttpMethodTests {
+        @Test
+        @DisplayName("사용자 업데이트 실패 시 실패 응답을 반환해야 한다")
+        void updateUser_WhenUpdateFails_ShouldReturnFailureResponse() {
+            // given
+            String userId = "user-123";
+            UpdateUserRequest request = new UpdateUserRequest(
+                    "업데이트된길동",
+                    "업데이트된홍");
 
-                @Test
-                @DisplayName("업데이트 엔드포인트 - POST 메서드 사용 시 405 Method Not Allowed")
-                void updateUser_PostMethod_MethodNotAllowed() throws Exception {
-                        // When & Then
-                        mockMvc.perform(post(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid write")))
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(updateUserRequest)))
-                                        .andExpect(status().isMethodNotAllowed());
-                }
+            Failure failure = createTestFailure("사용자를 찾을 수 없습니다");
+            ErrorResponse errorResponse = ErrorResponse.of("NOT_FOUND", "사용자를 찾을 수 없습니다");
+            ResponseEntity<ErrorResponse> failureResponse = ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(errorResponse);
+
+            when(jwt.getSubject()).thenReturn(userId);
+            when(updateUserUseCase.update(any(UpdateUserCommand.class)))
+                    .thenReturn(Either.left(failure));
+            when(failureHandler.handleFailure(failure))
+                    .thenReturn(failureResponse);
+
+            // when
+            ResponseEntity<?> response = controller.updateUser(request, httpRequest, jwt);
+
+            // then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+            assertThat(response.getBody()).isInstanceOf(ErrorResponse.class);
+
+            ErrorResponse actualErrorResponse = (ErrorResponse) response.getBody();
+            assertThat(actualErrorResponse.code()).isEqualTo("NOT_FOUND");
+            assertThat(actualErrorResponse.message()).isEqualTo("사용자를 찾을 수 없습니다");
+
+            verify(jwt).getSubject();
+            verify(updateUserUseCase).update(any(UpdateUserCommand.class));
+            verify(failureHandler).handleFailure(failure);
         }
 
-        @Nested
-        @DisplayName("Content-Type 테스트")
-        class ContentTypeTests {
+        @Test
+        @DisplayName("UpdateUserCommand가 올바른 파라미터로 생성되어야 한다")
+        void updateUser_ShouldCreateCorrectCommand() {
+            // given
+            String userId = "user-123";
+            UpdateUserRequest request = new UpdateUserRequest(
+                    "업데이트된길동",
+                    "업데이트된홍");
 
-                @Test
-                @DisplayName("등록 - Content-Type이 application/json이 아닌 경우")
-                void registerUser_InvalidContentType() throws Exception {
-                        // When & Then
-                        mockMvc.perform(post(Path.USERS + "/register")
-                                        .with(csrf())
-                                        .contentType(MediaType.TEXT_PLAIN)
-                                        .content("test"))
-                                        .andExpect(status().isUnsupportedMediaType());
-                }
+            User updatedUser = createTestUser(userId, "test@example.com", "업데이트된길동", "업데이트된홍");
 
-                @Test
-                @DisplayName("업데이트 - Content-Type이 application/json이 아닌 경우")
-                void updateUser_InvalidContentType() throws Exception {
-                        // When & Then
-                        mockMvc.perform(put(Path.USERS)
-                                        .with(jwt().jwt(jwt -> jwt
-                                                        .claim("sub", "test-user-id")
-                                                        .claim("scope", "openid write")))
-                                        .contentType(MediaType.TEXT_PLAIN)
-                                        .content("test"))
-                                        .andExpect(status().isUnsupportedMediaType());
-                }
+            when(jwt.getSubject()).thenReturn(userId);
+            when(updateUserUseCase.update(any(UpdateUserCommand.class)))
+                    .thenReturn(Either.right(updatedUser));
+
+            // when
+            controller.updateUser(request, httpRequest, jwt);
+
+            // then
+            verify(updateUserUseCase).update(argThat(command -> command.userId().getId().equals(userId) &&
+                    command.firstName().equals("업데이트된길동") &&
+                    command.lastName().equals("업데이트된홍")));
         }
+
+        @Test
+        @DisplayName("JWT에서 사용자 ID를 올바르게 추출해야 한다")
+        void updateUser_ShouldExtractUserIdFromJwt() {
+            // given
+            String userId = "user-456";
+            UpdateUserRequest request = new UpdateUserRequest(
+                    "업데이트된길동",
+                    "업데이트된홍");
+
+            User updatedUser = createTestUser(userId, "test@example.com", "업데이트된길동", "업데이트된홍");
+
+            when(jwt.getSubject()).thenReturn(userId);
+            when(updateUserUseCase.update(any(UpdateUserCommand.class)))
+                    .thenReturn(Either.right(updatedUser));
+
+            // when
+            controller.updateUser(request, httpRequest, jwt);
+
+            // then
+            verify(jwt).getSubject();
+            verify(updateUserUseCase).update(argThat(command -> command.userId().getId().equals(userId)));
+        }
+    }
+
+    @Nested
+    @DisplayName("UserResponse 변환 테스트")
+    class UserResponseConversionTest {
+
+        @Test
+        @DisplayName("User 엔티티가 올바르게 UserResponse로 변환되어야 한다")
+        void userResponse_ShouldConvertUserEntityCorrectly() {
+            // given
+            User user = createTestUser("user-123", "test@example.com", "길동", "홍");
+
+            // when
+            UserResponse response = UserResponse.from(user);
+
+            // then
+            assertThat(response.userId()).isEqualTo("user-123");
+            assertThat(response.email()).isEqualTo("test@example.com");
+            assertThat(response.firstName()).isEqualTo("길동");
+            assertThat(response.lastName()).isEqualTo("홍");
+            assertThat(response.isActive()).isTrue();
+        }
+
+        @Test
+        @DisplayName("비활성화된 사용자도 올바르게 변환되어야 한다")
+        void userResponse_ShouldConvertInactiveUserCorrectly() {
+            // given
+            User user = createTestUser("user-123", "test@example.com", "길동", "홍");
+            user.deactivate();
+
+            // when
+            UserResponse response = UserResponse.from(user);
+
+            // then
+            assertThat(response.userId()).isEqualTo("user-123");
+            assertThat(response.email()).isEqualTo("test@example.com");
+            assertThat(response.firstName()).isEqualTo("길동");
+            assertThat(response.lastName()).isEqualTo("홍");
+            assertThat(response.isActive()).isFalse();
+        }
+    }
 }

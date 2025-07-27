@@ -28,10 +28,10 @@ public class ActivityHelper {
      */
     @Async
     public void logActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
-            BoardId boardId, ListId listId, CardId cardId) {
+            String boardName, BoardId boardId, ListId listId, CardId cardId) {
 
         try {
-            var command = CreateActivityCommand.of(type, actorId, payload, boardId, listId, cardId);
+            var command = CreateActivityCommand.of(type, actorId, payload, boardName, boardId, listId, cardId);
             createActivityUseCase.createActivity(command)
                     .peek(activity -> log.debug("Activity log created: {}", activity.getId()))
                     .peekLeft(failure -> log.error("Failed to create activity log: {}", failure.getMessage()));
@@ -44,9 +44,9 @@ public class ActivityHelper {
      * 활동 로그 동기 생성
      */
     public void logActivitySync(ActivityType type, UserId actorId, Map<String, Object> payload,
-            BoardId boardId, ListId listId, CardId cardId) {
+            String boardName, BoardId boardId, ListId listId, CardId cardId) {
         try {
-            var command = CreateActivityCommand.of(type, actorId, payload, boardId, listId, cardId);
+            var command = CreateActivityCommand.of(type, actorId, payload, boardName, boardId, listId, cardId);
             createActivityUseCase.createActivity(command)
                     .peek(activity -> log.debug("Activity log created: {}", activity.getId()))
                     .peekLeft(failure -> log.error("Failed to create activity log: {}", failure.getMessage()));
@@ -62,14 +62,14 @@ public class ActivityHelper {
      */
     @Async
     public void logCardCreate(UserId actorId, String listName, String cardTitle,
-            BoardId boardId, ListId listId, CardId cardId) {
+            String boardName, BoardId boardId, ListId listId, CardId cardId) {
         var payload = Map.<String, Object>of(
                 "listName", listName,
                 "cardTitle", cardTitle,
                 "listId", listId.getId(),
                 "cardId", cardId.getId());
 
-        logActivity(ActivityType.CARD_CREATE, actorId, payload, boardId, listId, cardId);
+        logActivity(ActivityType.CARD_CREATE, actorId, payload, boardName, boardId, listId, cardId);
     }
 
     /**
@@ -77,7 +77,7 @@ public class ActivityHelper {
      */
     @Async
     public void logCardMove(UserId actorId, String cardTitle, String sourceListName, String destListName,
-            BoardId boardId, ListId sourceListId, ListId destListId, CardId cardId) {
+            String boardName, BoardId boardId, ListId sourceListId, ListId destListId, CardId cardId) {
         var payload = Map.<String, Object>of(
                 "cardTitle", cardTitle,
                 "sourceListName", sourceListName,
@@ -86,7 +86,7 @@ public class ActivityHelper {
                 "sourceListId", sourceListId.getId(),
                 "destListId", destListId.getId());
 
-        logActivity(ActivityType.CARD_MOVE, actorId, payload, boardId, destListId, cardId);
+        logActivity(ActivityType.CARD_MOVE, actorId, payload, boardName, boardId, destListId, cardId);
     }
 
     /**
@@ -100,7 +100,7 @@ public class ActivityHelper {
                 "listId", listId.getId(),
                 "boardName", boardName);
 
-        logActivity(ActivityType.LIST_CREATE, actorId, payload, boardId, listId, null);
+        logActivity(ActivityType.LIST_CREATE, actorId, payload, boardName, boardId, listId, null);
     }
 
     /**
@@ -112,58 +112,42 @@ public class ActivityHelper {
                 "boardName", boardName,
                 "boardId", boardId.getId());
 
-        logActivity(ActivityType.BOARD_CREATE, actorId, payload, boardId, null, null);
+        logActivity(ActivityType.BOARD_CREATE, actorId, payload, boardName, boardId, null, null);
     }
 
     /**
-     * 카드 관련 활동 로그 (카드 ID 기반)
+     * 카드 활동 로그
      */
     @Async
     public void logCardActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
-            BoardId boardId, ListId listId, CardId cardId) {
-        if (!isCardActivityType(type)) {
-            log.warn("Invalid card activity type: {}", type);
-            return;
-        }
-        logActivity(type, actorId, payload, boardId, listId, cardId);
+            String boardName, BoardId boardId, ListId listId, CardId cardId) {
+        logActivity(type, actorId, payload, boardName, boardId, listId, cardId);
     }
 
     /**
-     * 리스트 관련 활동 로그
+     * 리스트 활동 로그
      */
     @Async
     public void logListActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
-            BoardId boardId, ListId listId) {
-        if (!isListActivityType(type)) {
-            log.warn("Invalid list activity type: {}", type);
-            return;
-        }
-        logActivity(type, actorId, payload, boardId, listId, null);
+            String boardName, BoardId boardId, ListId listId) {
+        logActivity(type, actorId, payload, boardName, boardId, listId, null);
     }
 
     /**
-     * 보드 관련 활동 로그
+     * 보드 활동 로그
      */
     @Async
     public void logBoardActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
-            BoardId boardId) {
-        if (!isBoardActivityType(type)) {
-            log.warn("Invalid board activity type: {}", type);
-            return;
-        }
-        logActivity(type, actorId, payload, boardId, null, null);
+            String boardName, BoardId boardId) {
+        logActivity(type, actorId, payload, boardName, boardId, null, null);
     }
 
     /**
-     * 사용자 관련 활동 로그
+     * 사용자 활동 로그
      */
     @Async
-    public void logUserActivity(ActivityType type, UserId actorId, Map<String, Object> payload) {
-        if (!isUserActivityType(type)) {
-            log.warn("Invalid user activity type: {}", type);
-            return;
-        }
-        logActivity(type, actorId, payload, null, null, null);
+    public void logUserActivity(ActivityType type, UserId actorId, Map<String, Object> payload, String boardName) {
+        logActivity(type, actorId, payload, boardName, null, null, null);
     }
 
     // =================================================================

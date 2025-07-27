@@ -221,16 +221,23 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
                     log.info("카드 수정 완료: cardId={}, title={}",
                             card.getCardId().getId(), card.getTitle());
 
+                    // 보드 정보 조회
+                    var boardOpt = boardRepository.findById(getBoardIdFromListId(card.getListId()));
+                    String boardName = boardOpt.map(board -> board.getTitle())
+                            .orElse(validationMessageResolver.getMessage("error.service.board.unknown"));
+
                     // 활동 로그 기록
                     var payload = Map.<String, Object>of(
                             "oldTitle", context.oldTitle() != null ? context.oldTitle() : context.command().title(),
                             "newTitle", context.command().title(),
-                            "cardId", card.getCardId().getId());
+                            "cardId", card.getCardId().getId(),
+                            "boardName", boardName);
 
                     activityHelper.logCardActivity(
                             ActivityType.CARD_RENAME,
                             context.command().userId(),
                             payload,
+                            boardName,
                             getBoardIdFromListId(card.getListId()),
                             card.getListId(),
                             card.getCardId());
@@ -298,6 +305,9 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
         // 3. 이동 정책 검증
         return cardMovePolicy.canMoveToAnotherList(card, targetListId, newPosition)
                 .flatMap(v -> {
+                    // 원본 리스트 ID 저장
+                    ListId sourceListId = card.getListId();
+
                     // 4. 원본 리스트의 다른 카드들 위치 조정
                     adjustCardPositionsForRemoval(card.getListId(), card.getPosition());
 
@@ -312,15 +322,21 @@ public class UpdateCardService implements UpdateCardUseCase, MoveCardUseCase {
                     return cardRepository.save(card)
                             .peek(savedCard -> {
                                 // 활동 로그 기록
-                                var sourceList = boardListRepository.findById(card.getListId()).orElse(null);
+                                var sourceList = boardListRepository.findById(sourceListId).orElse(null);
                                 var targetList = boardListRepository.findById(targetListId).orElse(null);
 
                                 if (sourceList != null && targetList != null) {
+                                    // 보드 정보 조회
+                                    var boardOpt = boardRepository.findById(getBoardIdFromListId(targetListId));
+                                    String boardName = boardOpt.map(board -> board.getTitle()).orElse(
+                                            validationMessageResolver.getMessage("error.service.board.unknown"));
+
                                     activityHelper.logCardMove(
                                             userId,
                                             savedCard.getTitle(),
                                             sourceList.getTitle(),
                                             targetList.getTitle(),
+                                            boardName,
                                             getBoardIdFromListId(targetListId),
                                             sourceList.getListId(),
                                             targetList.getListId(),

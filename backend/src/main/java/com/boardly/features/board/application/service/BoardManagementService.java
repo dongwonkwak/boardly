@@ -311,6 +311,7 @@ public class BoardManagementService implements
                             "oldName", context.originalBoard().getTitle(),
                             "newName", updatedBoard.getTitle(),
                             "boardId", updatedBoard.getBoardId().getId()),
+                    updatedBoard.getTitle(),
                     updatedBoard.getBoardId());
         }
 
@@ -330,6 +331,7 @@ public class BoardManagementService implements
                             "boardId", updatedBoard.getBoardId().getId(),
                             "oldDescription", context.originalBoard().getDescription(),
                             "newDescription", updatedBoard.getDescription()),
+                    updatedBoard.getTitle(),
                     updatedBoard.getBoardId());
         }
     }
@@ -493,6 +495,7 @@ public class BoardManagementService implements
                         "boardId", board.getBoardId().getId(),
                         "listCount", listCount,
                         "cardCount", cardCount),
+                board.getTitle(),
                 board.getBoardId());
     }
 
@@ -661,6 +664,7 @@ public class BoardManagementService implements
                         "boardId", board.getBoardId().getId(),
                         "listCount", listCount,
                         "cardCount", cardCount),
+                board.getTitle(),
                 board.getBoardId());
     }
 
@@ -674,6 +678,7 @@ public class BoardManagementService implements
                 Map.of(
                         "boardName", board.getTitle(),
                         "boardId", board.getBoardId().getId()),
+                board.getTitle(),
                 board.getBoardId());
     }
 

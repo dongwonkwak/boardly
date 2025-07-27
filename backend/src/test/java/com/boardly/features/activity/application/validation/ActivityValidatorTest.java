@@ -83,6 +83,7 @@ class ActivityValidatorTest {
                     ActivityType.CARD_CREATE,
                     actorId,
                     payload,
+                    "프로젝트 A",
                     boardId,
                     listId,
                     cardId);
@@ -107,6 +108,7 @@ class ActivityValidatorTest {
                     ActivityType.LIST_CREATE,
                     actorId,
                     payload,
+                    "프로젝트 A",
                     boardId,
                     listId);
 
@@ -129,6 +131,7 @@ class ActivityValidatorTest {
                     ActivityType.BOARD_CREATE,
                     actorId,
                     payload,
+                    "프로젝트 A",
                     boardId);
 
             // when
@@ -149,6 +152,7 @@ class ActivityValidatorTest {
                     null,
                     actorId,
                     payload,
+                    "프로젝트 A",
                     null,
                     null,
                     null);
@@ -172,6 +176,7 @@ class ActivityValidatorTest {
                     ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
                     null,
                     payload,
+                    "프로젝트 A",
                     null,
                     null,
                     null);
@@ -195,6 +200,7 @@ class ActivityValidatorTest {
                     ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
                     actorId,
                     null,
+                    "프로젝트 A",
                     null,
                     null,
                     null);
@@ -219,6 +225,7 @@ class ActivityValidatorTest {
                     ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
                     actorId,
                     payload,
+                    "프로젝트 A",
                     null,
                     null,
                     null);
@@ -245,6 +252,7 @@ class ActivityValidatorTest {
                     ActivityType.CARD_CREATE,
                     actorId,
                     payload,
+                    "프로젝트 A",
                     boardId,
                     listId,
                     null);
@@ -270,6 +278,7 @@ class ActivityValidatorTest {
                     ActivityType.LIST_CREATE,
                     actorId,
                     payload,
+                    null,
                     boardId,
                     null,
                     null);
@@ -294,6 +303,7 @@ class ActivityValidatorTest {
                     ActivityType.BOARD_CREATE,
                     actorId,
                     payload,
+                    null,
                     null,
                     null,
                     null);

@@ -199,6 +199,7 @@ public class BoardMemberService implements
                                     "memberFirstName", userName.firstName(),
                                     "memberLastName", userName.lastName(),
                                     "boardName", boardName),
+                            boardName,
                             savedMember.getBoardId());
                 });
     }
@@ -308,6 +309,7 @@ public class BoardMemberService implements
                         "memberFirstName", userName.firstName(),
                         "memberLastName", userName.lastName(),
                         "boardName", boardName),
+                boardName,
                 member.getBoardId());
 
         return boardMemberRepository.delete(member.getMemberId())
@@ -430,6 +432,7 @@ public class BoardMemberService implements
                             "newRole", member.getRole().toString(),
                             "boardName", boardName,
                             "noChange", "true"),
+                    boardName,
                     member.getBoardId());
 
             return Either.right(member);
@@ -472,6 +475,7 @@ public class BoardMemberService implements
                                         "oldRole", oldRole.toString(),
                                         "newRole", savedMember.getRole().toString(),
                                         "boardName", boardName),
+                                boardName,
                                 savedMember.getBoardId());
                     });
 

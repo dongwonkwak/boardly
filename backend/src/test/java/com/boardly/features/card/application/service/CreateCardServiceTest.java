@@ -181,6 +181,7 @@ class CreateCardServiceTest {
                                         eq(userId),
                                         eq("테스트 리스트"),
                                         eq("테스트 카드"),
+                                        any(String.class), // boardName
                                         eq(boardId),
                                         eq(listId),
                                         eq(createdCard.getCardId()));
@@ -510,6 +511,7 @@ class CreateCardServiceTest {
                                         eq(ActivityType.CARD_DUPLICATE),
                                         eq(userId),
                                         any(Map.class),
+                                        any(String.class), // boardName
                                         eq(boardId),
                                         eq(targetListId),
                                         eq(clonedCard.getCardId()));

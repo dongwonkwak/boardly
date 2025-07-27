@@ -212,6 +212,7 @@ public class BoardListDeleteService implements DeleteBoardListUseCase {
                 ActivityType.LIST_DELETE,
                 command.userId(),
                 payload,
+                board.getTitle(),
                 listToDelete.getBoardId(),
                 listToDelete.getListId());
     }

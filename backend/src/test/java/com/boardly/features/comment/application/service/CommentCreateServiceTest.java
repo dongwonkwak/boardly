@@ -28,6 +28,7 @@ import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
+import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.repository.CardRepository;
@@ -63,6 +64,9 @@ class CommentCreateServiceTest {
     private BoardListRepository boardListRepository;
 
     @Mock
+    private BoardRepository boardRepository;
+
+    @Mock
     private ActivityHelper activityHelper;
 
     private CommentCreateService commentCreateService;
@@ -75,6 +79,7 @@ class CommentCreateServiceTest {
                 commentRepository,
                 cardRepository,
                 boardListRepository,
+                boardRepository,
                 activityHelper);
 
         // 공통으로 사용되는 메시지 설정
@@ -166,6 +171,7 @@ class CommentCreateServiceTest {
                     eq(ActivityType.CARD_ADD_COMMENT),
                     eq(authorId),
                     any(Map.class),
+                    any(String.class), // boardName
                     eq(boardId),
                     eq(listId),
                     eq(cardId));
@@ -328,6 +334,7 @@ class CommentCreateServiceTest {
                         assertThat(payload.get("cardId")).isEqualTo("card-1");
                         return true;
                     }),
+                    any(String.class), // boardName
                     eq(boardId),
                     eq(listId),
                     eq(cardId));

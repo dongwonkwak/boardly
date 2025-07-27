@@ -162,6 +162,10 @@ public class CommonValidationRules {
         return idRequired(cardIdExtractor, "cardId", messageResolver);
     }
 
+    public <T> Validator<T> commentIdRequired(Function<T, Object> commentIdExtractor) {
+        return idRequired(commentIdExtractor, "commentId", messageResolver);
+    }
+
     public <T> Validator<T> positionRequired(Function<T, Object> positionExtractor) {
         return Validator.fieldWithMessage(
                 positionExtractor,

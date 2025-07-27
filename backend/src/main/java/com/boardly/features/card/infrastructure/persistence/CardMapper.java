@@ -1,10 +1,14 @@
 package com.boardly.features.card.infrastructure.persistence;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.card.domain.valueobject.CardMember;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,55 +17,41 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class CardMapper {
+
+  private final CardMemberMapper cardMemberMapper;
+
   /**
-   * 도메인 모델을 JPA 엔티티로 변환합니다.
+   * 도메인 객체를 엔티티로 변환
    */
   public CardEntity toEntity(Card card) {
-    if (card == null) {
-      return null;
-    }
-
-    return CardEntity.builder()
-        .cardId(card.getCardId().getId())
-        .listId(card.getListId().getId())
-        .title(card.getTitle())
-        .description(card.getDescription())
-        .position(card.getPosition())
-        .createdAt(card.getCreatedAt())
-        .updatedAt(card.getUpdatedAt())
-        .build();
+    return CardEntity.from(card);
   }
 
   /**
    * JPA 엔티티를 도메인 모델로 변환합니다.
    */
-  public Card toDomain(CardEntity entity) {
-    if (entity == null) {
-      return null;
-    }
-
-    return Card.builder()
-        .cardId(new CardId(entity.getCardId()))
-        .listId(new ListId(entity.getListId()))
-        .title(entity.getTitle())
-        .description(entity.getDescription())
-        .position(entity.getPosition())
-        .createdAt(entity.getCreatedAt())
-        .updatedAt(entity.getUpdatedAt())
-        .build();
-  }
-
   /**
-   * 도메인 모델의 변경사항을 기존 JPA 엔티티에 적용합니다.
+   * 엔티티를 도메인 객체로 변환
    */
-  public void updateEntity(Card card, CardEntity entity) {
-    if (card == null || entity == null) {
-      return;
-    }
+  public Card toDomain(CardEntity entity) {
+    // 담당자 정보 변환
+    Set<CardMember> assignedMembers = entity.getAssignedMembers().stream()
+        .map(cardMemberMapper::toDomain)
+        .collect(Collectors.toSet());
 
-    entity.updateTitle(card.getTitle());
-    entity.updateDescription(card.getDescription());
-    entity.updatePosition(card.getPosition());
-    entity.updateListId(card.getListId().getId());
+    return Card.restore(
+        new CardId(entity.getCardId()),
+        entity.getTitle(),
+        entity.getDescription(),
+        entity.getPosition(),
+        entity.getDueDate(),
+        entity.isArchived(),
+        new ListId(entity.getListId()),
+        assignedMembers,
+        entity.getCommentsCount(),
+        entity.getAttachmentsCount(),
+        entity.getLabelsCount(),
+        entity.getCreatedAt(),
+        entity.getUpdatedAt());
   }
 }

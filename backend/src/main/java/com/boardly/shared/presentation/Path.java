@@ -34,4 +34,9 @@ public final class Path {
    * Activity 관련 경로
    */
   public static final String ACTIVITIES = PREFIX + "/activities";
+
+  /**
+   * Label 관련 경로
+   */
+  public static final String LABELS = PREFIX + "/labels";
 }

@@ -27,28 +27,28 @@ public class BoardRepositoryImpl implements BoardRepository {
         try {
             BoardEntity savedEntity;
 
-            // 새로운 객체인지 기존 객체인지 판단
-            if (board.isNew()) {
-                // 새로운 객체 저장
-                log.debug("새로운 보드 저장: boardId={}, title={}, ownerId={}",
-                        board.getBoardId().getId(), board.getTitle(), board.getOwnerId().getId());
-                BoardEntity boardEntity = BoardEntity.fromDomainEntity(board);
-                savedEntity = boardJpaRepository.save(boardEntity);
-                log.debug("새로운 보드 저장 완료: boardId={}, title={}",
-                        savedEntity.getBoardId(), savedEntity.getTitle());
-            } else {
-                // 기존 객체 업데이트
+            // 1. 먼저 기존 객체가 있는지 확인
+            Optional<BoardEntity> existingEntity = boardJpaRepository.findById(board.getBoardId().getId());
+
+            if (existingEntity.isPresent()) {
+                // 2. 기존 객체가 있으면 업데이트
                 log.debug("기존 보드 업데이트: boardId={}, title={}",
                         board.getBoardId().getId(), board.getTitle());
-                Optional<BoardEntity> existingEntity = boardJpaRepository.findById(board.getBoardId().getId());
-
-                if (existingEntity.isEmpty()) {
-                    return Either.left(Failure.ofNotFound("BOARD_NOT_FOUND"));
-                }
 
                 BoardEntity entityToUpdate = existingEntity.get();
                 entityToUpdate.updateFromDomainEntity(board);
                 savedEntity = boardJpaRepository.save(entityToUpdate);
+
+            } else {
+                // 3. 기존 객체가 없으면 새로 저장
+                log.debug("새로운 보드 저장: boardId={}, title={}, ownerId={}",
+                        board.getBoardId().getId(), board.getTitle(), board.getOwnerId().getId());
+
+                BoardEntity boardEntity = BoardEntity.fromDomainEntity(board);
+                savedEntity = boardJpaRepository.save(boardEntity);
+
+                log.debug("새로운 보드 저장 완료: boardId={}, title={}",
+                        savedEntity.getBoardId(), savedEntity.getTitle());
             }
 
             return Either.right(savedEntity.toDomainEntity());

@@ -101,6 +101,7 @@ public class BoardEntity {
         this.description = board.getDescription();
         this.isArchived = board.isArchived();
         this.ownerId = board.getOwnerId().getId();
+        this.isStarred = board.isStarred();
         this.updatedAt = Instant.now();
     }
 

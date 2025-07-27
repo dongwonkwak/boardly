@@ -272,7 +272,35 @@
 
 **예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드의 마감일을 2025-08-15로 설정했습니다."
 
-#### 1.9 카드 댓글 추가 (CARD_ADD_COMMENT)
+#### 1.9 카드 마감일 제거 (CARD_REMOVE_DUE_DATE)
+
+**타입**: `CARD_REMOVE_DUE_DATE`
+
+**설명**: 카드의 마감일이 제거되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "cardTitle": "사용자 인증 기능 구현",
+  "cardId": "card_456",
+  "removedDueDate": "2025-08-15",
+  "boardName": "프로젝트 A",
+  "boardId": "board_123"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `cardTitle` | string | 카드 제목 |
+| `cardId` | string | 카드 ID |
+| `removedDueDate` | string | 제거된 마감일 |
+| `boardName` | string | 보드 이름 |
+| `boardId` | string | 보드 ID |
+
+**예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드의 마감일을 삭제했습니다."
+
+#### 1.10 카드 댓글 추가 (CARD_ADD_COMMENT)
 
 **타입**: `CARD_ADD_COMMENT`
 
@@ -296,7 +324,7 @@
 
 **예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드에 댓글을 남겼습니다."
 
-#### 1.10 카드 첨부파일 추가 (CARD_ADD_ATTACHMENT)
+#### 1.11 카드 첨부파일 추가 (CARD_ADD_ATTACHMENT)
 
 **타입**: `CARD_ADD_ATTACHMENT`
 
@@ -322,7 +350,37 @@
 
 **예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드에 'auth_design.pdf' 파일을 첨부했습니다."
 
-#### 1.11 카드 체크리스트 추가 (CARD_ADD_CHECKLIST)
+#### 1.12 카드 첨부파일 제거 (CARD_REMOVE_ATTACHMENT)
+
+**타입**: `CARD_REMOVE_ATTACHMENT`
+
+**설명**: 카드에서 첨부파일이 제거되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "cardTitle": "사용자 인증 기능 구현",
+  "cardId": "card_456",
+  "fileName": "auth_design.pdf",
+  "fileId": "file_123",
+  "boardName": "프로젝트 A",
+  "boardId": "board_123"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `cardTitle` | string | 카드 제목 |
+| `cardId` | string | 카드 ID |
+| `fileName` | string | 제거된 파일명 |
+| `fileId` | string | 파일 ID |
+| `boardName` | string | 보드 이름 |
+| `boardId` | string | 보드 ID |
+
+**예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드에서 'auth_design.pdf' 파일을 삭제했습니다."
+
+#### 1.13 카드 체크리스트 추가 (CARD_ADD_CHECKLIST)
 
 **타입**: `CARD_ADD_CHECKLIST`
 
@@ -348,7 +406,69 @@
 
 **예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드에 '구현 단계' 체크리스트를 추가했습니다."
 
-#### 1.12 카드 복제 (CARD_DUPLICATE)
+#### 1.14 카드 라벨 추가 (CARD_ADD_LABEL)
+
+**타입**: `CARD_ADD_LABEL`
+
+**설명**: 카드에 라벨이 추가되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "cardTitle": "사용자 인증 기능 구현",
+  "cardId": "card_456",
+  "labelName": "긴급",
+  "labelId": "label_123",
+  "labelColor": "#FF6B6B",
+  "boardName": "프로젝트 A",
+  "boardId": "board_123"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `cardTitle` | string | 카드 제목 |
+| `cardId` | string | 카드 ID |
+| `labelName` | string | 추가된 라벨 이름 |
+| `labelId` | string | 라벨 ID |
+| `labelColor` | string | 라벨 색상 |
+| `boardName` | string | 보드 이름 |
+| `boardId` | string | 보드 ID |
+
+**예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드에 '긴급' 라벨을 추가했습니다."
+
+#### 1.15 카드 라벨 제거 (CARD_REMOVE_LABEL)
+
+**타입**: `CARD_REMOVE_LABEL`
+
+**설명**: 카드에서 라벨이 제거되었을 때 발생하는 활동
+
+**Payload 구조**:
+```json
+{
+  "cardTitle": "사용자 인증 기능 구현",
+  "cardId": "card_456",
+  "labelName": "긴급",
+  "labelId": "label_123",
+  "boardName": "프로젝트 A",
+  "boardId": "board_123"
+}
+```
+
+**Payload 필드**:
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `cardTitle` | string | 카드 제목 |
+| `cardId` | string | 카드 ID |
+| `labelName` | string | 제거된 라벨 이름 |
+| `labelId` | string | 라벨 ID |
+| `boardName` | string | 보드 이름 |
+| `boardId` | string | 보드 ID |
+
+**예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드에서 '긴급' 라벨을 제거했습니다."
+
+#### 1.16 카드 복제 (CARD_DUPLICATE)
 
 **타입**: `CARD_DUPLICATE`
 
@@ -376,7 +496,7 @@
 
 **예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드를 복제하여 '사용자 인증 기능 구현 복사본' 카드를 생성했습니다."
 
-#### 1.13 카드 설명 수정 (CARD_UPDATE_DESCRIPTION)
+#### 1.17 카드 설명 수정 (CARD_UPDATE_DESCRIPTION)
 
 **타입**: `CARD_UPDATE_DESCRIPTION`
 
@@ -402,7 +522,7 @@
 
 **예시 메시지**: "홍길동님이 '사용자 인증 기능 구현' 카드의 설명을 수정했습니다."
 
-#### 1.14 카드 제목 수정 (CARD_RENAME)
+#### 1.18 카드 제목 수정 (CARD_RENAME)
 
 **타입**: `CARD_RENAME`
 
@@ -426,7 +546,7 @@
 
 **예시 메시지**: "홍길동님이 카드의 이름을 '사용자 인증 기능 구현'에서 'JWT 인증 시스템 구현'으로 변경했습니다."
 
-#### 1.15 카드 마감일 제거 (CARD_REMOVE_DUE_DATE)
+#### 1.19 카드 마감일 제거 (CARD_REMOVE_DUE_DATE)
 
 **타입**: `CARD_REMOVE_DUE_DATE`
 
@@ -450,7 +570,7 @@
 
 **예시 메시지**: "홍길동님이 'JWT 인증 시스템 구현' 카드의 마감일을 제거했습니다."
 
-#### 1.16 카드 보관 해제 (CARD_UNARCHIVE)
+#### 1.20 카드 보관 해제 (CARD_UNARCHIVE)
 
 **타입**: `CARD_UNARCHIVE`
 
@@ -1000,9 +1120,13 @@
 | `CARD_ASSIGN_MEMBER` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에 {{memberLastName}}{{memberFirstName}}님을 멤버로 추가했습니다.` | `{{actorFirstName}} {{actorLastName}} assigned {{memberFirstName}} {{memberLastName}} to the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `memberLastName`, `memberFirstName` |
 | `CARD_UNASSIGN_MEMBER` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에서 {{memberLastName}}{{memberFirstName}}님을 제외했습니다.` | `{{actorFirstName}} {{actorLastName}} unassigned {{memberFirstName}} {{memberLastName}} from the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `memberLastName`, `memberFirstName` |
 | `CARD_SET_DUE_DATE` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드의 마감일을 {{dueDate}}(으)로 설정했습니다.` | `{{actorFirstName}} {{actorLastName}} set the due date for the card {{cardTitle}} to {{dueDate}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `dueDate` |
+| `CARD_REMOVE_DUE_DATE` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드의 마감일을 삭제했습니다.` | `{{actorFirstName}} {{actorLastName}} removed the due date from the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle` |
 | `CARD_ADD_COMMENT` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에 댓글을 남겼습니다.` | `{{actorFirstName}} {{actorLastName}} commented on the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle` |
 | `CARD_ADD_ATTACHMENT` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에 {{fileName}} 파일을 첨부했습니다.` | `{{actorFirstName}} {{actorLastName}} attached the file {{fileName}} to the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `fileName` |
+| `CARD_REMOVE_ATTACHMENT` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에서 {{fileName}} 파일을 삭제했습니다.` | `{{actorFirstName}} {{actorLastName}} removed the file {{fileName}} from the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `fileName` |
 | `CARD_ADD_CHECKLIST` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에 {{checklistName}} 체크리스트를 추가했습니다.` | `{{actorFirstName}} {{actorLastName}} added the checklist {{checklistName}} to the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `checklistName` |
+| `CARD_ADD_LABEL` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에 {{labelName}} 라벨을 추가했습니다.` | `{{actorFirstName}} {{actorLastName}} added the label {{labelName}} to the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `labelName` |
+| `CARD_REMOVE_LABEL` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드에서 {{labelName}} 라벨을 제거했습니다.` | `{{actorFirstName}} {{actorLastName}} removed the label {{labelName}} from the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle`, `labelName` |
 | `CARD_DUPLICATE` | `{{actorLastName}}{{actorFirstName}}님이 {{originalCardTitle}} 카드를 복제하여 {{newCardTitle}} 카드를 생성했습니다.` | `{{actorFirstName}} {{actorLastName}} duplicated the card {{originalCardTitle}} to create the card {{newCardTitle}}.` | `actorLastName`, `actorFirstName`, `originalCardTitle`, `newCardTitle` |
 | `CARD_UPDATE_DESCRIPTION` | `{{actorLastName}}{{actorFirstName}}님이 {{cardTitle}} 카드의 설명을 수정했습니다.` | `{{actorFirstName}} {{actorLastName}} updated the description of the card {{cardTitle}}.` | `actorLastName`, `actorFirstName`, `cardTitle` |
 | `CARD_RENAME` | `{{actorLastName}}{{actorFirstName}}님이 카드의 이름을 {{oldTitle}}에서 {{newTitle}}(으)로 변경했습니다.` | `{{actorFirstName}} {{actorLastName}} renamed the card from {{oldTitle}} to {{newTitle}}.` | `actorLastName`, `actorFirstName`, `oldTitle`, `newTitle` |

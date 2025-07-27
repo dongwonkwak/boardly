@@ -24,3 +24,8 @@ boardly:
       recommended-lists-per-board: 10
       warning-threshold: 15
       max-title-length: 100
+  attachment:
+    policy:
+      max-file-size-mb: 10
+      max-attachments-per-card: 10
+      max-file-name-length: 255

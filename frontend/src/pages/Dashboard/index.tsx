@@ -9,7 +9,7 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ProfileCard } from "@/components/dashboard/ProfileCard";
 import { CreateBoardModal } from "@/components/dashboard/CreateBoardModal";
 import { StatsCards } from "@/components/dashboard/StatsCards";
-import { PageHeader } from "@/components/dashboard/PageHeader";
+import { PageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { 
   Plus,
@@ -48,15 +48,34 @@ export default function Dashboard() {
   }, [authenticated, loadDashboardData]);
 
 
-
-
-
   const openCreateModal = () => {
     setIsCreateModalOpen(true);
   };
 
   const closeCreateModal = () => {
     setIsCreateModalOpen(false);
+  };
+
+  const handleToggleStar = async (boardId: string) => {
+    if (!authenticated) return;
+    
+    try {
+      // 현재 보드의 즐겨찾기 상태 확인
+      const currentBoard = boards.find(board => board.id === boardId);
+      if (!currentBoard) return;
+      
+      // 즐겨찾기 상태에 따라 API 호출
+      if (currentBoard.isStarred) {
+        await (authenticated.unstarBoard as any)(boardId);
+      } else {
+        await (authenticated.starBoard as any)(boardId);
+      }
+      
+      // 대시보드 데이터 새로고침
+      loadDashboardData();
+    } catch (error) {
+      console.error('Failed to toggle star:', error);
+    }
   };
 
 
@@ -102,6 +121,7 @@ export default function Dashboard() {
                 isLoadingBoards={isLoadingBoards}
                 onOpenCreateModal={openCreateModal}
                 authenticated={!!authenticated}
+                onToggleStar={handleToggleStar}
               />
             </div>
 

@@ -419,7 +419,6 @@
   "cardId": "card_456",
   "labelName": "긴급",
   "labelId": "label_123",
-  "labelColor": "#FF6B6B",
   "boardName": "프로젝트 A",
   "boardId": "board_123"
 }
@@ -432,7 +431,6 @@
 | `cardId` | string | 카드 ID |
 | `labelName` | string | 추가된 라벨 이름 |
 | `labelId` | string | 라벨 ID |
-| `labelColor` | string | 라벨 색상 |
 | `boardName` | string | 보드 이름 |
 | `boardId` | string | 보드 ID |
 

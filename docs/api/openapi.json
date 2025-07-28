@@ -61,6 +61,10 @@
       "description": "보드 관리 API"
     },
     {
+      "name": "Label",
+      "description": "라벨 관리 API"
+    },
+    {
       "name": "Boards",
       "description": "보드 관리 API"
     }
@@ -107,6 +111,265 @@
           },
           "404": {
             "description": "사용자를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/labels/{labelId}": {
+      "get": {
+        "tags": [
+          "Label"
+        ],
+        "summary": "라벨 조회",
+        "description": "특정 라벨의 정보를 조회합니다.",
+        "operationId": "getLabel",
+        "parameters": [
+          {
+            "name": "labelId",
+            "in": "path",
+            "description": "조회할 라벨 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "라벨 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "라벨 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "라벨을 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Label"
+        ],
+        "summary": "라벨 수정",
+        "description": "기존 라벨의 이름과 색상을 수정합니다.",
+        "operationId": "updateLabel",
+        "parameters": [
+          {
+            "name": "labelId",
+            "in": "path",
+            "description": "수정할 라벨 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLabelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "라벨 수정 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "라벨 수정 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "라벨을 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Label"
+        ],
+        "summary": "라벨 삭제",
+        "description": "라벨을 삭제합니다.",
+        "operationId": "deleteLabel",
+        "parameters": [
+          {
+            "name": "labelId",
+            "in": "path",
+            "description": "삭제할 라벨 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "라벨 삭제 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "라벨 삭제 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "라벨을 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
             "content": {
               "application/json": {
                 "schema": {
@@ -1060,6 +1323,96 @@
         }
       }
     },
+    "/api/labels": {
+      "post": {
+        "tags": [
+          "Label"
+        ],
+        "summary": "라벨 생성",
+        "description": "새로운 라벨을 생성합니다.",
+        "operationId": "createLabel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateLabelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "라벨 생성 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "라벨 생성 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
     "/api/cards": {
       "post": {
         "tags": [
@@ -1111,6 +1464,590 @@
           },
           "404": {
             "description": "리스트를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/cards/{cardId}/members": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 멤버 목록 조회",
+        "description": "카드에 할당된 멤버 목록을 조회합니다.",
+        "operationId": "getCardMembers",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "멤버를 조회할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "카드 멤버 목록 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CardMember"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 멤버 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 멤버 할당",
+        "description": "카드에 멤버를 할당합니다.",
+        "operationId": "assignCardMember",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "멤버를 할당할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCardMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 멤버 할당 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 멤버 할당 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드 또는 멤버를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "멤버가 이미 할당되어 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 멤버 해제",
+        "description": "카드에서 멤버를 해제합니다.",
+        "operationId": "unassignCardMember",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "멤버를 해제할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignCardMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 멤버 해제 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 멤버 해제 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드 또는 멤버를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/cards/{cardId}/labels": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 라벨 목록 조회",
+        "description": "카드에 추가된 라벨 목록을 조회합니다.",
+        "operationId": "getCardLabels",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "라벨을 조회할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "카드 라벨 목록 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabelId"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 라벨 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 라벨 추가",
+        "description": "카드에 라벨을 추가합니다.",
+        "operationId": "addCardLabel",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "라벨을 추가할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCardLabelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 라벨 추가 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 라벨 추가 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드 또는 라벨을 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "라벨이 이미 추가되어 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 라벨 제거",
+        "description": "카드에서 라벨을 제거합니다.",
+        "operationId": "removeCardLabel",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "라벨을 제거할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveCardLabelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 라벨 제거 성공",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 라벨 제거 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드 또는 라벨을 찾을 수 없음",
             "content": {
               "application/json": {
                 "schema": {
@@ -1882,6 +2819,80 @@
         ]
       }
     },
+    "/api/labels/board/{boardId}": {
+      "get": {
+        "tags": [
+          "Label"
+        ],
+        "summary": "보드 라벨 목록 조회",
+        "description": "특정 보드의 모든 라벨 목록을 조회합니다.",
+        "operationId": "getBoardLabels",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "조회할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "라벨 목록 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LabelResponse"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "라벨 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
     "/api/dashboard": {
       "get": {
         "tags": [
@@ -2548,6 +3559,66 @@
           "rejectedValue": {}
         }
       },
+      "UpdateLabelRequest": {
+        "type": "object",
+        "description": "라벨 수정 요청 정보",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "라벨 이름",
+            "example": "긴급",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "color": {
+            "type": "string",
+            "description": "라벨 색상 (HEX 코드)",
+            "example": "#FF0000",
+            "maxLength": 7,
+            "minLength": 4
+          }
+        },
+        "required": [
+          "color",
+          "name"
+        ]
+      },
+      "LabelResponse": {
+        "type": "object",
+        "description": "라벨 응답",
+        "properties": {
+          "labelId": {
+            "type": "string",
+            "description": "라벨 ID",
+            "example": "label-123"
+          },
+          "boardId": {
+            "type": "string",
+            "description": "보드 ID",
+            "example": "board-123"
+          },
+          "name": {
+            "type": "string",
+            "description": "라벨 이름",
+            "example": "긴급"
+          },
+          "color": {
+            "type": "string",
+            "description": "라벨 색상",
+            "example": "#FF0000"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "생성 시간"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "수정 시간"
+          }
+        }
+      },
       "UpdateCardRequest": {
         "type": "object",
         "description": "카드 수정 요청 정보",
@@ -2753,6 +3824,37 @@
           }
         }
       },
+      "CreateLabelRequest": {
+        "type": "object",
+        "description": "라벨 생성 요청 정보",
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "description": "라벨을 생성할 보드 ID",
+            "example": "board-123",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "라벨 이름",
+            "example": "긴급",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "color": {
+            "type": "string",
+            "description": "라벨 색상 (HEX 코드)",
+            "example": "#FF0000",
+            "maxLength": 7,
+            "minLength": 4
+          }
+        },
+        "required": [
+          "boardId",
+          "color",
+          "name"
+        ]
+      },
       "CreateCardRequest": {
         "type": "object",
         "description": "카드 생성 요청 정보",
@@ -2767,6 +3869,32 @@
             "type": "string"
           }
         }
+      },
+      "AssignCardMemberRequest": {
+        "type": "object",
+        "description": "카드 멤버 할당 요청 정보",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "memberId"
+        ]
+      },
+      "AddCardLabelRequest": {
+        "type": "object",
+        "description": "카드 라벨 추가 요청 정보",
+        "properties": {
+          "labelId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "labelId"
+        ]
       },
       "CloneCardRequest": {
         "type": "object",
@@ -2836,18 +3964,24 @@
               "CARD_MOVE",
               "CARD_RENAME",
               "CARD_ARCHIVE",
+              "CARD_UNARCHIVE",
               "CARD_DELETE",
               "CARD_ASSIGN_MEMBER",
               "CARD_UNASSIGN_MEMBER",
               "CARD_SET_DUE_DATE",
+              "CARD_REMOVE_DUE_DATE",
               "CARD_ADD_COMMENT",
               "CARD_ADD_ATTACHMENT",
+              "CARD_REMOVE_ATTACHMENT",
               "CARD_ADD_CHECKLIST",
+              "CARD_ADD_LABEL",
+              "CARD_REMOVE_LABEL",
               "CARD_DUPLICATE",
               "CARD_UPDATE_DESCRIPTION",
               "LIST_CREATE",
               "LIST_RENAME",
               "LIST_ARCHIVE",
+              "LIST_UNARCHIVE",
               "LIST_MOVE",
               "LIST_CHANGE_COLOR",
               "LIST_DELETE",
@@ -2980,6 +4114,34 @@
           }
         }
       },
+      "CardMember": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "$ref": "#/components/schemas/UserId"
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UserId": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "LabelId": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
       "ActivityListResponse": {
         "type": "object",
         "properties": {
@@ -3008,6 +4170,32 @@
             "type": "boolean"
           }
         }
+      },
+      "UnassignCardMemberRequest": {
+        "type": "object",
+        "description": "카드 멤버 해제 요청 정보",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "memberId"
+        ]
+      },
+      "RemoveCardLabelRequest": {
+        "type": "object",
+        "description": "카드 라벨 제거 요청 정보",
+        "properties": {
+          "labelId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "labelId"
+        ]
       }
     },
     "securitySchemes": {

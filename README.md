@@ -1,5 +1,3 @@
-# Boardly
-
 <div align="center">
   <h1>🌟 Boardly</h1>
   <p>개인 및 소규모 팀을 위한 직관적인 칸반 보드 애플리케이션</p>

@@ -1,16 +1,25 @@
 spring:
   datasource:
     name: boardly-app
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/boardly}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME:boardly}
+    password: ${SPRING_DATASOURCE_PASSWORD:boardly123}
   jpa:
     hibernate:
-      ddl-auto: none
-    show-sql: true
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:false}
+        jdbc:
+          time_zone: UTC
   sql:
     init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
       encoding: utf-8
   security:
     oauth2:
@@ -36,6 +45,9 @@ spring:
             require-authorization-consent: false
             require-proof-key: true
 
+server:
+  port: 8080
+
 springdoc:
   api-docs:
     path: /api-docs
@@ -57,16 +69,34 @@ app:
     allowed-origins:
       - "${app.frontend.url}"
   frontend:
-    url: http://localhost:5173
+    url: ${APP_FRONTEND_URL:http://localhost:5173}
     
 boardly:
   card:
     policy:
-      max-cards-per-list: 10
+      max-cards-per-list: 100
+      max-title-length: 200
+      max-description-length: 2000
+      max-search-results: 50
+  boardlist:
+    policy:
+      max-lists-per-board: 20
+      recommended-lists-per-board: 10
+      warning-threshold: 15
+      max-title-length: 100
+  attachment:
+    policy:
+      max-file-size-mb: 10
+      max-attachments-per-card: 10
+      max-file-name-length: 255
 
+# 로깅 설정
 logging:
   level:
-    org.springframework.security: TRACE
+    org.springframework.security: info
+    com.boardly: info
+    org.hibernate.SQL: ${SPRING_JPA_SHOW_SQL:false}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${SPRING_JPA_SHOW_SQL:false}
 
 management:
   endpoints:

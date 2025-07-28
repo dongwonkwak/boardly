@@ -2,12 +2,15 @@ package com.boardly.features.card.domain.repository;
 
 import java.util.List;
 
+import org.springframework.stereotype.Repository;
+
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 
+@Repository
 public interface CardMemberRepository {
     /**
      * 카드에 담당자를 추가합니다.

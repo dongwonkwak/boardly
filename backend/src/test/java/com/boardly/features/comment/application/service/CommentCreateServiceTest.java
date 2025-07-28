@@ -5,12 +5,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,7 +33,6 @@ import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.comment.application.port.input.CreateCommentCommand;
 import com.boardly.features.comment.application.validation.CommentValidator;
 import com.boardly.features.comment.domain.model.Comment;
-import com.boardly.features.comment.domain.model.CommentId;
 import com.boardly.features.comment.domain.repository.CommentRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;

@@ -1,15 +1,10 @@
 spring:
   datasource:
     name: boardly-app
-    url: jdbc:h2:mem:boardly-app;DB_CLOSE_DELAY=-1;IGNORECASE=TRUE;DATABASE_TO_UPPER=false;MODE=PostgreSQL
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      settings:
-        web-allow-others: true
+    url: jdbc:postgresql://localhost:5432/boardly
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
   jpa:
     hibernate:
       ddl-auto: none
@@ -17,11 +12,12 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   sql:
     init:
       mode: always
       schema-locations: classpath:schema.sql
-      data-locations: classpath:data-h2.sql
+      data-locations: classpath:data-postgresql.sql
       encoding: utf-8
   security:
     oauth2:
@@ -44,7 +40,6 @@ spring:
                 - "openid"
                 - "read"
                 - "write"
-
             require-authorization-consent: false
             require-proof-key: true
 
@@ -63,6 +58,7 @@ springdoc:
         - write
         - openid
       use-pkce-with-authorization-code-grant: true
+
 app:
   cors:
     allowed-origins:
@@ -77,4 +73,4 @@ boardly:
 
 logging:
   level:
-    org.springframework.security: trace
+    org.springframework.security: trace 

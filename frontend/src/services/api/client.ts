@@ -38,6 +38,26 @@ export type ErrorResponse = {
     details?: FieldViolation[];
     context?: unknown;
 };
+export type LabelResponse = {
+    /** 라벨 ID */
+    labelId?: string;
+    /** 보드 ID */
+    boardId?: string;
+    /** 라벨 이름 */
+    name?: string;
+    /** 라벨 색상 */
+    color?: string;
+    /** 생성 시간 */
+    createdAt?: string;
+    /** 수정 시간 */
+    updatedAt?: string;
+};
+export type UpdateLabelRequest = {
+    /** 라벨 이름 */
+    name: string;
+    /** 라벨 색상 (HEX 코드) */
+    color: string;
+};
 export type CardResponse = {
     cardId?: string;
     title?: string;
@@ -101,10 +121,40 @@ export type RegisterUserRequest = {
     firstName?: string;
     lastName?: string;
 };
+export type CreateLabelRequest = {
+    /** 라벨을 생성할 보드 ID */
+    boardId: string;
+    /** 라벨 이름 */
+    name: string;
+    /** 라벨 색상 (HEX 코드) */
+    color: string;
+};
 export type CreateCardRequest = {
     title?: string;
     description?: string;
     listId?: string;
+};
+export type UserId = {
+    id?: string;
+};
+export type CardMember = {
+    userId?: UserId;
+    assignedAt?: string;
+};
+export type AssignCardMemberRequest = {
+    memberId: string;
+};
+export type UnassignCardMemberRequest = {
+    memberId: string;
+};
+export type LabelId = {
+    id?: string;
+};
+export type AddCardLabelRequest = {
+    labelId: string;
+};
+export type RemoveCardLabelRequest = {
+    labelId: string;
 };
 export type CloneCardRequest = {
     newTitle?: string;
@@ -142,7 +192,7 @@ export type ActorResponse = {
 };
 export type ActivityResponse = {
     id?: string;
-    "type"?: "CARD_CREATE" | "CARD_MOVE" | "CARD_RENAME" | "CARD_ARCHIVE" | "CARD_DELETE" | "CARD_ASSIGN_MEMBER" | "CARD_UNASSIGN_MEMBER" | "CARD_SET_DUE_DATE" | "CARD_ADD_COMMENT" | "CARD_ADD_ATTACHMENT" | "CARD_ADD_CHECKLIST" | "CARD_DUPLICATE" | "CARD_UPDATE_DESCRIPTION" | "LIST_CREATE" | "LIST_RENAME" | "LIST_ARCHIVE" | "LIST_MOVE" | "LIST_CHANGE_COLOR" | "LIST_DELETE" | "BOARD_CREATE" | "BOARD_RENAME" | "BOARD_ARCHIVE" | "BOARD_UNARCHIVE" | "BOARD_MOVE" | "BOARD_DELETE" | "BOARD_UPDATE_DESCRIPTION" | "BOARD_ADD_MEMBER" | "BOARD_REMOVE_MEMBER" | "BOARD_UPDATE_MEMBER_ROLE" | "BOARD_DUPLICATE" | "USER_UPDATE_PROFILE" | "USER_CHANGE_LANGUAGE" | "USER_CHANGE_PASSWORD" | "USER_DELETE_ACCOUNT";
+    "type"?: "CARD_CREATE" | "CARD_MOVE" | "CARD_RENAME" | "CARD_ARCHIVE" | "CARD_UNARCHIVE" | "CARD_DELETE" | "CARD_ASSIGN_MEMBER" | "CARD_UNASSIGN_MEMBER" | "CARD_SET_DUE_DATE" | "CARD_REMOVE_DUE_DATE" | "CARD_ADD_COMMENT" | "CARD_ADD_ATTACHMENT" | "CARD_REMOVE_ATTACHMENT" | "CARD_ADD_CHECKLIST" | "CARD_ADD_LABEL" | "CARD_REMOVE_LABEL" | "CARD_DUPLICATE" | "CARD_UPDATE_DESCRIPTION" | "LIST_CREATE" | "LIST_RENAME" | "LIST_ARCHIVE" | "LIST_UNARCHIVE" | "LIST_MOVE" | "LIST_CHANGE_COLOR" | "LIST_DELETE" | "BOARD_CREATE" | "BOARD_RENAME" | "BOARD_ARCHIVE" | "BOARD_UNARCHIVE" | "BOARD_MOVE" | "BOARD_DELETE" | "BOARD_UPDATE_DESCRIPTION" | "BOARD_ADD_MEMBER" | "BOARD_REMOVE_MEMBER" | "BOARD_UPDATE_MEMBER_ROLE" | "BOARD_DUPLICATE" | "USER_UPDATE_PROFILE" | "USER_CHANGE_LANGUAGE" | "USER_CHANGE_PASSWORD" | "USER_DELETE_ACCOUNT";
     actor?: ActorResponse;
     timestamp?: string;
     payload?: {
@@ -191,6 +241,81 @@ export function updateUser(updateUserRequest: UpdateUserRequest, opts?: Oazapfts
         method: "PUT",
         body: updateUserRequest
     }));
+}
+/**
+ * 라벨 조회
+ */
+export function getLabel(labelId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: LabelResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/labels/${encodeURIComponent(labelId)}`, {
+        ...opts
+    });
+}
+/**
+ * 라벨 수정
+ */
+export function updateLabel(labelId: string, updateLabelRequest: UpdateLabelRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: LabelResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/labels/${encodeURIComponent(labelId)}`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: updateLabelRequest
+    }));
+}
+/**
+ * 라벨 삭제
+ */
+export function deleteLabel(labelId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 204;
+        data: object;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/labels/${encodeURIComponent(labelId)}`, {
+        ...opts,
+        method: "DELETE"
+    });
 }
 /**
  * 카드 조회
@@ -462,6 +587,34 @@ export function registerUser(registerUserRequest: RegisterUserRequest, opts?: Oa
     }));
 }
 /**
+ * 라벨 생성
+ */
+export function createLabel(createLabelRequest: CreateLabelRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 201;
+        data: LabelResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>("/api/labels", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: createLabelRequest
+    }));
+}
+/**
  * 카드 생성
  */
 export function createCard(createCardRequest: CreateCardRequest, opts?: Oazapfts.RequestOpts) {
@@ -487,6 +640,170 @@ export function createCard(createCardRequest: CreateCardRequest, opts?: Oazapfts
         ...opts,
         method: "POST",
         body: createCardRequest
+    }));
+}
+/**
+ * 카드 멤버 목록 조회
+ */
+export function getCardMembers(cardId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: CardMember[];
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/members`, {
+        ...opts
+    });
+}
+/**
+ * 카드 멤버 할당
+ */
+export function assignCardMember(cardId: string, assignCardMemberRequest: AssignCardMemberRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: object;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 409;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/members`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: assignCardMemberRequest
+    }));
+}
+/**
+ * 카드 멤버 해제
+ */
+export function unassignCardMember(cardId: string, unassignCardMemberRequest: UnassignCardMemberRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: object;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/members`, oazapfts.json({
+        ...opts,
+        method: "DELETE",
+        body: unassignCardMemberRequest
+    }));
+}
+/**
+ * 카드 라벨 목록 조회
+ */
+export function getCardLabels(cardId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: LabelId[];
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/labels`, {
+        ...opts
+    });
+}
+/**
+ * 카드 라벨 추가
+ */
+export function addCardLabel(cardId: string, addCardLabelRequest: AddCardLabelRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: object;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 409;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/labels`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: addCardLabelRequest
+    }));
+}
+/**
+ * 카드 라벨 제거
+ */
+export function removeCardLabel(cardId: string, removeCardLabelRequest: RemoveCardLabelRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: object;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/labels`, oazapfts.json({
+        ...opts,
+        method: "DELETE",
+        body: removeCardLabelRequest
     }));
 }
 /**
@@ -703,6 +1020,26 @@ export function createBoardList(boardId: string, createBoardListRequest: CreateB
         method: "POST",
         body: createBoardListRequest
     }));
+}
+/**
+ * 보드 라벨 목록 조회
+ */
+export function getBoardLabels(boardId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: LabelResponse[];
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/labels/board/${encodeURIComponent(boardId)}`, {
+        ...opts
+    });
 }
 /**
  * 대시보드 조회

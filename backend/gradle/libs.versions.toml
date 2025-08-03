@@ -1,6 +1,6 @@
 [versions]
 # Spring Boot 관련 버전
-spring-boot = "3.5.3"
+spring-boot = "3.5.4"
 spring-dependency-management = "1.1.7"
 
 # Java 버전
@@ -18,6 +18,7 @@ springdoc-openapi-starter-webmvc-ui = "2.8.9"
 openapi-gradle-plugin = "1.9.0"
 ulid-creator = "5.2.3"
 caffeine = "3.2.2"
+version-catalog-update = "0.52.0"
 
 [libraries]
 # Spring Boot Starters
@@ -44,6 +45,7 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "c
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 openapi-gradle-plugin = { id = "org.springdoc.openapi-gradle-plugin", version.ref = "openapi-gradle-plugin" }
+version-catalog-update = { id = "com.github.ben-manes.versions", version.ref = "version-catalog-update" }
 
 [bundles]
 spring-boot-dependencies = [

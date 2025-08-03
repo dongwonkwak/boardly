@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.openapi.gradle.plugin)
+    alias(libs.plugins.version.catalog.update)
 }
 
 group = 'com.boardly'

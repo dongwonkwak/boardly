@@ -12,9 +12,9 @@ spring:
     properties:
       hibernate:
         dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
-        format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:false}
+        '[format_sql]': ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:false}
         jdbc:
-          time_zone: UTC
+          '[time_zone]': UTC
   sql:
     init:
       mode: always
@@ -93,10 +93,10 @@ boardly:
 # 로깅 설정
 logging:
   level:
-    org.springframework.security: info
-    com.boardly: info
-    org.hibernate.SQL: ${SPRING_JPA_SHOW_SQL:false}
-    org.hibernate.type.descriptor.sql.BasicBinder: ${SPRING_JPA_SHOW_SQL:false}
+    '[org.springframework.security]': info
+    '[com.boardly]': info
+    '[org.hibernate.SQL]': ${SPRING_JPA_SHOW_SQL:false}
+    '[org.hibernate.type.descriptor.sql.BasicBinder]': ${SPRING_JPA_SHOW_SQL:false}
 
 management:
   endpoints:

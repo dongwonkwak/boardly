@@ -1,7 +1,6 @@
 package com.boardly.features.boardlist.infrastructure.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import com.boardly.features.boardlist.domain.policy.BoardListPolicyConfig;
 
@@ -15,7 +14,6 @@ import lombok.Data;
  * 설정되지 않은 값은 기본값을 사용합니다.
  */
 @Data
-@Component
 @ConfigurationProperties(prefix = "boardly.boardlist.policy")
 public class BoardListPolicyConfigImpl implements BoardListPolicyConfig {
 

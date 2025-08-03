@@ -1,0 +1,69 @@
+{
+    "properties": [
+        {
+            "name": "app.frontend.url",
+            "type": "java.lang.String",
+            "description": "Frontend application URL"
+        },
+        {
+            "name": "app.cors.allowed-origins",
+            "type": "java.util.List<java.lang.String>",
+            "description": "Allowed CORS origins"
+        },
+        {
+            "name": "boardly.card.policy.max-cards-per-list",
+            "type": "java.lang.Integer",
+            "description": "Maximum number of cards per list"
+        },
+        {
+            "name": "boardly.card.policy.max-title-length",
+            "type": "java.lang.Integer",
+            "description": "Maximum length of card title"
+        },
+        {
+            "name": "boardly.card.policy.max-description-length",
+            "type": "java.lang.Integer",
+            "description": "Maximum length of card description"
+        },
+        {
+            "name": "boardly.card.policy.max-search-results",
+            "type": "java.lang.Integer",
+            "description": "Maximum number of search results"
+        },
+        {
+            "name": "boardly.boardlist.policy.max-lists-per-board",
+            "type": "java.lang.Integer",
+            "description": "Maximum number of lists per board"
+        },
+        {
+            "name": "boardly.boardlist.policy.recommended-lists-per-board",
+            "type": "java.lang.Integer",
+            "description": "Recommended number of lists per board"
+        },
+        {
+            "name": "boardly.boardlist.policy.warning-threshold",
+            "type": "java.lang.Integer",
+            "description": "Warning threshold for lists per board"
+        },
+        {
+            "name": "boardly.boardlist.policy.max-title-length",
+            "type": "java.lang.Integer",
+            "description": "Maximum length of board list title"
+        },
+        {
+            "name": "boardly.attachment.policy.max-file-size-mb",
+            "type": "java.lang.Integer",
+            "description": "Maximum file size in MB"
+        },
+        {
+            "name": "boardly.attachment.policy.max-attachments-per-card",
+            "type": "java.lang.Integer",
+            "description": "Maximum number of attachments per card"
+        },
+        {
+            "name": "boardly.attachment.policy.max-file-name-length",
+            "type": "java.lang.Integer",
+            "description": "Maximum length of file name"
+        }
+    ]
+}

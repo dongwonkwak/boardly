@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Getter
-@Component
 @ConfigurationProperties(prefix = "boardly.attachment.policy")
 public class AttachmentPolicyProperties {
 
@@ -41,10 +40,11 @@ public class AttachmentPolicyProperties {
      */
     @PostConstruct
     public void logLoadedConfiguration() {
-        log.info("첨부파일 정책 프로퍼티 로드 완료:");
-        log.info("  - 최대 파일 크기: {}MB", maxFileSizeMB > 0 ? maxFileSizeMB : "미설정 (기본값 사용)");
-        log.info("  - 카드당 최대 첨부파일 개수: {}", maxAttachmentsPerCard > 0 ? maxAttachmentsPerCard : "미설정 (기본값 사용)");
-        log.info("  - 파일명 최대 길이: {}", maxFileNameLength > 0 ? maxFileNameLength : "미설정 (기본값 사용)");
+        log.info("Attachment policy properties loaded:");
+        log.info("  - Max file size: {}MB", maxFileSizeMB > 0 ? maxFileSizeMB : "Not set (using default)");
+        log.info("  - Max attachments per card: {}",
+                maxAttachmentsPerCard > 0 ? maxAttachmentsPerCard : "Not set (using default)");
+        log.info("  - Max file name length: {}", maxFileNameLength > 0 ? maxFileNameLength : "Not set (using default)");
     }
 
     // Setter 메서드들 (Spring Boot가 사용)

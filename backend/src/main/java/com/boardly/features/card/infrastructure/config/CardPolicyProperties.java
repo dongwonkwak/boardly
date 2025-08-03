@@ -3,7 +3,6 @@ package com.boardly.features.card.infrastructure.config;
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Getter
-@Component
 @ConfigurationProperties(prefix = "boardly.card.policy")
 public class CardPolicyProperties {
 
@@ -46,11 +44,12 @@ public class CardPolicyProperties {
    */
   @PostConstruct
   public void logLoadedConfiguration() {
-    log.info("카드 정책 프로퍼티 로드 완료:");
-    log.info("  - 리스트당 최대 카드 개수: {}", maxCardsPerList > 0 ? maxCardsPerList : "미설정 (기본값 사용)");
-    log.info("  - 카드 제목 최대 길이: {}", maxTitleLength > 0 ? maxTitleLength : "미설정 (기본값 사용)");
-    log.info("  - 카드 설명 최대 길이: {}", maxDescriptionLength > 0 ? maxDescriptionLength : "미설정 (기본값 사용)");
-    log.info("  - 검색 결과 최대 개수: {}", maxSearchResults > 0 ? maxSearchResults : "미설정 (기본값 사용)");
+    log.info("Card policy properties loaded:");
+    log.info("  - Max cards per list: {}", maxCardsPerList > 0 ? maxCardsPerList : "Not set (using default)");
+    log.info("  - Max title length: {}", maxTitleLength > 0 ? maxTitleLength : "Not set (using default)");
+    log.info("  - Max description length: {}",
+        maxDescriptionLength > 0 ? maxDescriptionLength : "Not set (using default)");
+    log.info("  - Max search results: {}", maxSearchResults > 0 ? maxSearchResults : "Not set (using default)");
   }
 
   // Setter 메서드들 (Spring Boot가 사용)

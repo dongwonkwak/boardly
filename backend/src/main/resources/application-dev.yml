@@ -16,7 +16,7 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        format_sql: true
+        '[format_sql]': true
   sql:
     init:
       mode: always
@@ -77,4 +77,4 @@ boardly:
 
 logging:
   level:
-    org.springframework.security: trace
+    '[org.springframework.security]': TRACE

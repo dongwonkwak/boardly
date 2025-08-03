@@ -65,7 +65,10 @@ CREATE TABLE IF NOT EXISTS cards (
     description TEXT,
     position INTEGER NOT NULL,
     due_date TIMESTAMP,
+    start_date TIMESTAMP,
     archived BOOLEAN NOT NULL DEFAULT FALSE,
+    priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+    is_completed BOOLEAN NOT NULL DEFAULT FALSE,
     list_id VARCHAR(50) NOT NULL,
     comments_count INT NOT NULL DEFAULT 0,
     attachments_count INT NOT NULL DEFAULT 0,
@@ -183,7 +186,10 @@ CREATE INDEX IF NOT EXISTS idx_board_lists_position ON board_lists(board_id, pos
 CREATE INDEX IF NOT EXISTS idx_cards_list_id ON cards(list_id);
 CREATE INDEX IF NOT EXISTS idx_cards_position ON cards(list_id, position);
 CREATE INDEX IF NOT EXISTS idx_cards_due_date ON cards(due_date);
+CREATE INDEX IF NOT EXISTS idx_cards_start_date ON cards(start_date);
 CREATE INDEX IF NOT EXISTS idx_cards_archived ON cards(archived);
+CREATE INDEX IF NOT EXISTS idx_cards_priority ON cards(priority);
+CREATE INDEX IF NOT EXISTS idx_cards_completed ON cards(is_completed);
 
 -- 카드 멤버 관련 인덱스
 CREATE INDEX IF NOT EXISTS idx_card_members_card_id ON card_members(card_id);

@@ -1,14 +1,15 @@
 package com.boardly.features.card.infrastructure.persistence;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.time.Instant;
 
+import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.model.CardPriority;
 import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.user.domain.model.UserId;
 
 import jakarta.persistence.CascadeType;
@@ -51,8 +52,17 @@ public class CardEntity {
     @Column(name = "due_date")
     private Instant dueDate;
 
+    @Column(name = "start_date")
+    private Instant startDate;
+
     @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
     private boolean archived = false;
+
+    @Column(name = "priority", nullable = false, length = 20, columnDefinition = "varchar(20) default 'medium'")
+    private String priority = "medium";
+
+    @Column(name = "is_completed", nullable = false, columnDefinition = "boolean default false")
+    private boolean isCompleted = false;
 
     @Column(name = "list_id", nullable = false)
     private String listId;
@@ -84,7 +94,7 @@ public class CardEntity {
     @Builder
     private CardEntity(String cardId, String title, String description,
             int position, String listId,
-            Instant dueDate, boolean archived,
+            Instant dueDate, Instant startDate, boolean archived, String priority, boolean isCompleted,
             Instant createdAt, Instant updatedAt,
             Set<CardMemberEntity> assignedMembers,
             int commentsCount, int attachmentsCount, int labelsCount) {
@@ -94,7 +104,10 @@ public class CardEntity {
         this.position = position;
         this.listId = listId;
         this.dueDate = dueDate;
+        this.startDate = startDate;
         this.archived = archived;
+        this.priority = priority != null ? priority : "medium";
+        this.isCompleted = isCompleted;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.assignedMembers = assignedMembers;
@@ -111,21 +124,23 @@ public class CardEntity {
                 .map(CardMemberEntity::toDomainVO)
                 .collect(Collectors.toSet());
 
-        return Card.builder()
-                .cardId(new CardId(this.cardId))
-                .title(this.title)
-                .description(this.description)
-                .position(this.position)
-                .listId(new ListId(this.listId))
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
-                .dueDate(this.dueDate)
-                .isArchived(this.archived)
-                .assignedMembers(members)
-                .commentsCount(this.commentsCount)
-                .attachmentsCount(this.attachmentsCount)
-                .labelsCount(this.labelsCount)
-                .build();
+        return Card.restore(
+                new CardId(this.cardId),
+                this.title,
+                this.description,
+                this.position,
+                this.dueDate,
+                this.startDate,
+                this.archived,
+                new ListId(this.listId),
+                CardPriority.fromValue(this.priority),
+                this.isCompleted,
+                members,
+                this.commentsCount,
+                this.attachmentsCount,
+                this.labelsCount,
+                this.createdAt,
+                this.updatedAt);
     }
 
     /**
@@ -139,7 +154,10 @@ public class CardEntity {
                 .position(card.getPosition())
                 .listId(card.getListId().getId())
                 .dueDate(card.getDueDate())
+                .startDate(card.getStartDate())
                 .archived(card.isArchived())
+                .priority(card.getPriority().getValue())
+                .isCompleted(card.isCompleted())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
                 .commentsCount(card.getCommentsCount())
@@ -162,6 +180,10 @@ public class CardEntity {
         this.description = card.getDescription();
         this.position = card.getPosition();
         this.listId = card.getListId().getId();
+        this.dueDate = card.getDueDate();
+        this.startDate = card.getStartDate();
+        this.priority = card.getPriority().getValue();
+        this.isCompleted = card.isCompleted();
         this.updatedAt = Instant.now();
         updateAssignedMembers(card.getAssignedMembers());
         this.commentsCount = card.getCommentsCount();
@@ -285,6 +307,30 @@ public class CardEntity {
             this.labelsCount--;
             this.updatedAt = Instant.now();
         }
+    }
+
+    /**
+     * 우선순위 업데이트
+     */
+    public void updatePriority(String priority) {
+        this.priority = priority != null ? priority : "medium";
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+     * 완료 상태 업데이트
+     */
+    public void updateCompleted(boolean isCompleted) {
+        this.isCompleted = isCompleted;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
+     * 시작일 업데이트
+     */
+    public void updateStartDate(Instant startDate) {
+        this.startDate = startDate;
+        this.updatedAt = Instant.now();
     }
 
     @Override

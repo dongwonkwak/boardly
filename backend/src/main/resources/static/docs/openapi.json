@@ -688,6 +688,208 @@
         ]
       }
     },
+    "/api/cards/{cardId}/start-date": {
+      "put": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 시작일 업데이트",
+        "description": "카드의 시작일을 수정합니다.",
+        "operationId": "updateCardStartDate",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "수정할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCardStartDateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 시작일 업데이트 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 수정 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/cards/{cardId}/priority": {
+      "put": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 우선순위 업데이트",
+        "description": "카드의 우선순위를 수정합니다.",
+        "operationId": "updateCardPriority",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "수정할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCardPriorityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 우선순위 업데이트 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 수정 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
     "/api/cards/{cardId}/move": {
       "put": {
         "tags": [
@@ -760,6 +962,107 @@
           },
           "409": {
             "description": "아카이브된 보드의 카드는 이동 불가",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "write",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/cards/{cardId}/completed": {
+      "put": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 완료 상태 업데이트",
+        "description": "카드의 완료 상태를 수정합니다.",
+        "operationId": "updateCardCompleted",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "수정할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCardCompletedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "카드 완료 상태 업데이트 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "잘못된 요청 데이터",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 수정 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드를 찾을 수 없음",
             "content": {
               "application/json": {
                 "schema": {
@@ -3729,6 +4032,40 @@
           }
         }
       },
+      "UpdateCardStartDateRequest": {
+        "type": "object",
+        "description": "카드 시작일 업데이트 요청 정보",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "시작일",
+            "example": "2024-01-01T00:00:00Z"
+          }
+        }
+      },
+      "UpdateCardPriorityRequest": {
+        "type": "object",
+        "description": "카드 우선순위 업데이트 요청 정보",
+        "properties": {
+          "priority": {
+            "type": "string",
+            "description": "우선순위",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "urgent"
+            ],
+            "example": "medium",
+            "minLength": 1,
+            "pattern": "^(low|medium|high|urgent)$"
+          }
+        },
+        "required": [
+          "priority"
+        ]
+      },
       "MoveCardRequest": {
         "type": "object",
         "description": "카드 이동 요청 정보",
@@ -3741,6 +4078,20 @@
             "format": "int32"
           }
         }
+      },
+      "UpdateCardCompletedRequest": {
+        "type": "object",
+        "description": "카드 완료 상태 업데이트 요청 정보",
+        "properties": {
+          "isCompleted": {
+            "type": "boolean",
+            "description": "완료 상태",
+            "example": false
+          }
+        },
+        "required": [
+          "isCompleted"
+        ]
       },
       "UpdateBoardRequest": {
         "type": "object",

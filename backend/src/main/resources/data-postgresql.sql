@@ -90,24 +90,33 @@ INSERT INTO labels (label_id, board_id, name, color, created_at, updated_at, ver
 -- =====================================================
 -- 6. 카드 테스트 데이터 (PostgreSQL INTERVAL 사용)
 -- =====================================================
-INSERT INTO cards (card_id, title, description, position, due_date, archived, list_id, comments_count, attachments_count, labels_count, created_at, updated_at, version) VALUES
+INSERT INTO cards (card_id, title, description, position, due_date, start_date, archived, priority, is_completed, list_id, comments_count, attachments_count, labels_count, created_at, updated_at, version) VALUES
 -- 웹 개발 프로젝트 카드들
-('card-1', '메인 페이지 디자인', '새로운 메인 페이지 디자인 작업', 1, NOW() + INTERVAL '7 days', FALSE, 'list-1', 2, 0, 2, NOW(), NOW(), 0),
-('card-2', '로그인 기능 구현', '사용자 로그인/로그아웃 기능 개발', 2, NOW() + INTERVAL '3 days', FALSE, 'list-1', 1, 0, 1, NOW(), NOW(), 0),
-('card-3', '데이터베이스 설계', '프로젝트 데이터베이스 스키마 설계', 1, NULL, FALSE, 'list-2', 0, 0, 1, NOW(), NOW(), 0),
-('card-4', 'API 문서 작성', 'REST API 문서화 작업', 2, NOW() + INTERVAL '5 days', FALSE, 'list-2', 3, 0, 0, NOW(), NOW(), 0),
-('card-5', '보안 테스트', '웹사이트 보안 취약점 테스트', 1, NULL, FALSE, 'list-3', 1, 0, 2, NOW(), NOW(), 0),
-('card-6', '배포 환경 구축', '프로덕션 서버 환경 구축', 1, NULL, FALSE, 'list-4', 0, 0, 0, NOW(), NOW(), 0),
+('card-1', '메인 페이지 디자인', '새로운 메인 페이지 디자인 작업', 1, NOW() + INTERVAL '7 days', NOW() - INTERVAL '2 days', FALSE, 'high', FALSE, 'list-1', 2, 0, 2, NOW(), NOW(), 0),
+('card-2', '로그인 기능 구현', '사용자 로그인/로그아웃 기능 개발', 2, NOW() + INTERVAL '3 days', NOW() - INTERVAL '1 day', FALSE, 'urgent', FALSE, 'list-1', 1, 0, 1, NOW(), NOW(), 0),
+('card-3', '데이터베이스 설계', '프로젝트 데이터베이스 스키마 설계', 1, NULL, NOW() - INTERVAL '3 days', FALSE, 'medium', TRUE, 'list-2', 0, 0, 1, NOW(), NOW(), 0),
+('card-4', 'API 문서 작성', 'REST API 문서화 작업', 2, NOW() + INTERVAL '5 days', NOW() - INTERVAL '1 day', FALSE, 'medium', FALSE, 'list-2', 3, 0, 0, NOW(), NOW(), 0),
+('card-5', '보안 테스트', '웹사이트 보안 취약점 테스트', 1, NULL, NOW() - INTERVAL '5 days', FALSE, 'high', FALSE, 'list-3', 1, 0, 2, NOW(), NOW(), 0),
+('card-6', '배포 환경 구축', '프로덕션 서버 환경 구축', 1, NULL, NOW() - INTERVAL '7 days', FALSE, 'low', TRUE, 'list-4', 0, 0, 0, NOW(), NOW(), 0),
 
 -- 모바일 앱 개발 카드들
-('card-7', '앱 와이어프레임', '모바일 앱 화면 구성 설계', 1, NOW() + INTERVAL '10 days', FALSE, 'list-5', 2, 0, 1, NOW(), NOW(), 0),
-('card-8', '사용자 스토리 작성', '앱 기능별 사용자 스토리 정리', 2, NULL, FALSE, 'list-5', 0, 0, 0, NOW(), NOW(), 0),
-('card-9', 'iOS 네이티브 개발', 'iOS 앱 네이티브 개발', 1, NOW() + INTERVAL '14 days', FALSE, 'list-7', 1, 0, 1, NOW(), NOW(), 0),
-('card-10', 'Android 개발', 'Android 앱 개발', 2, NOW() + INTERVAL '14 days', FALSE, 'list-7', 0, 0, 1, NOW(), NOW(), 0),
+('card-7', '앱 와이어프레임', '모바일 앱 화면 구성 설계', 1, NOW() + INTERVAL '10 days', NOW() - INTERVAL '4 days', FALSE, 'medium', FALSE, 'list-5', 2, 0, 1, NOW(), NOW(), 0),
+('card-8', '사용자 스토리 작성', '앱 기능별 사용자 스토리 정리', 2, NULL, NOW() - INTERVAL '2 days', FALSE, 'low', TRUE, 'list-5', 0, 0, 0, NOW(), NOW(), 0),
+('card-9', 'iOS 네이티브 개발', 'iOS 앱 네이티브 개발', 1, NOW() + INTERVAL '14 days', NOW() - INTERVAL '6 days', FALSE, 'high', FALSE, 'list-7', 1, 0, 1, NOW(), NOW(), 0),
+('card-10', 'Android 개발', 'Android 앱 개발', 2, NOW() + INTERVAL '14 days', NOW() - INTERVAL '6 days', FALSE, 'high', FALSE, 'list-7', 0, 0, 1, NOW(), NOW(), 0),
 
 -- 마케팅 캠페인 카드들
-('card-11', 'SNS 콘텐츠 기획', '인스타그램, 페이스북 콘텐츠 기획', 1, NOW() + INTERVAL '2 days', FALSE, 'list-9', 1, 0, 1, NOW(), NOW(), 0),
-('card-12', '이메일 템플릿 제작', '뉴스레터 이메일 템플릿 디자인', 1, NULL, FALSE, 'list-10', 0, 0, 1, NOW(), NOW(), 0);
+('card-11', 'SNS 콘텐츠 기획', '인스타그램, 페이스북 콘텐츠 기획', 1, NOW() + INTERVAL '2 days', NOW() - INTERVAL '1 day', FALSE, 'urgent', FALSE, 'list-9', 1, 0, 1, NOW(), NOW(), 0),
+('card-12', '이메일 템플릿 제작', '뉴스레터 이메일 템플릿 디자인', 1, NULL, NOW() - INTERVAL '3 days', FALSE, 'medium', FALSE, 'list-10', 0, 0, 1, NOW(), NOW(), 0),
+
+-- 시작일/마감일이 null인 카드들 (테스트용)
+('card-14', '아이디어 브레인스토밍', '새로운 기능 아이디어 수집', 3, NULL, NULL, FALSE, 'low', FALSE, 'list-1', 0, 0, 0, NOW(), NOW(), 0),
+('card-15', '문서 정리', '프로젝트 문서 정리 작업', 4, NULL, NULL, FALSE, 'medium', FALSE, 'list-1', 0, 0, 0, NOW(), NOW(), 0),
+('card-16', '회의 준비', '다음 회의 자료 준비', 5, NOW() + INTERVAL '1 day', NULL, FALSE, 'high', FALSE, 'list-2', 0, 0, 0, NOW(), NOW(), 0),
+('card-17', '코드 리뷰', '팀원 코드 리뷰', 3, NULL, NOW() - INTERVAL '1 day', FALSE, 'medium', FALSE, 'list-2', 0, 0, 0, NOW(), NOW(), 0),
+('card-18', '테스트 케이스 작성', '단위 테스트 케이스 작성', 2, NULL, NULL, FALSE, 'low', FALSE, 'list-5', 0, 0, 0, NOW(), NOW(), 0),
+('card-19', '성능 최적화', '앱 성능 최적화 작업', 3, NOW() + INTERVAL '5 days', NULL, FALSE, 'high', FALSE, 'list-7', 0, 0, 0, NOW(), NOW(), 0),
+('card-20', '사용자 피드백 수집', '사용자 피드백 수집 및 분석', 2, NULL, NULL, FALSE, 'medium', FALSE, 'list-9', 0, 0, 0, NOW(), NOW(), 0);
 
 -- =====================================================
 -- 7. 카드 멤버 테스트 데이터 (카드 담당자)
@@ -207,8 +216,8 @@ INSERT INTO board_lists (list_id, title, description, position, color, board_id,
 ('list-12', '아카이브', '완료된 오래된 작업들', 5, '#95A5A6', 'board-1', NOW(), NOW(), 0);
 
 -- 아카이브된 카드 예시
-INSERT INTO cards (card_id, title, description, position, due_date, archived, list_id, comments_count, attachments_count, labels_count, created_at, updated_at, version) VALUES
-('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, TRUE, 'list-12', 0, 0, 0, NOW() - INTERVAL '10 days', NOW(), 0);
+INSERT INTO cards (card_id, title, description, position, due_date, start_date, archived, priority, is_completed, list_id, comments_count, attachments_count, labels_count, created_at, updated_at, version) VALUES
+('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, NOW() - INTERVAL '15 days', TRUE, 'low', TRUE, 'list-12', 0, 0, 0, NOW() - INTERVAL '10 days', NOW(), 0);
 
 -- 추가 보드 멤버 권한 예시
 INSERT INTO board_members (member_id, board_id, user_id, role, is_active, created_at, updated_at, version) VALUES

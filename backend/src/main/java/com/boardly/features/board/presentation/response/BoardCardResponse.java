@@ -1,10 +1,10 @@
 package com.boardly.features.board.presentation.response;
 
-import com.boardly.features.card.domain.model.Card;
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import java.time.Instant;
 import java.util.List;
+
+import com.boardly.features.card.domain.model.Card;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
  * 보드 카드 응답 DTO
@@ -72,11 +72,11 @@ public record BoardCardResponse(
                 card.getTitle(),
                 card.getDescription(),
                 card.getPosition(),
-                "medium", // 기본값, 실제로는 Card 도메인에 priority 필드가 필요
-                false, // 기본값, 실제로는 Card 도메인에 isCompleted 필드가 필요
+                card.getPriority().getValue(),
+                card.isCompleted(),
                 card.isArchived(),
                 card.getDueDate(),
-                null, // Card 도메인에 startDate 필드가 없음
+                card.getStartDate(),
                 labels,
                 assignees,
                 card.getAttachmentsCount(),

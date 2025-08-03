@@ -5,9 +5,9 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.valueobject.CardMember;
 
 import lombok.RequiredArgsConstructor;
@@ -45,8 +45,13 @@ public class CardMapper {
         entity.getDescription(),
         entity.getPosition(),
         entity.getDueDate(),
+        entity.getStartDate(),
         entity.isArchived(),
         new ListId(entity.getListId()),
+        entity.getPriority() != null
+            ? com.boardly.features.card.domain.model.CardPriority.fromValue(entity.getPriority())
+            : com.boardly.features.card.domain.model.CardPriority.MEDIUM,
+        entity.isCompleted(),
         assignedMembers,
         entity.getCommentsCount(),
         entity.getAttachmentsCount(),

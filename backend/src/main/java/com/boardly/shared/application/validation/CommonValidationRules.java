@@ -1,5 +1,6 @@
 package com.boardly.shared.application.validation;
 
+import java.time.Instant;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -238,5 +239,40 @@ public class CommonValidationRules {
                 "role",
                 "validation.board.member.role.required",
                 messageResolver);
+    }
+
+    /**
+     * 카드 날짜 범위 검증 (시작일과 종료일의 유효성 검증)
+     * - 시작일이 null이면 검증 통과
+     * - 종료일이 null이면 검증 통과
+     * - 둘 다 설정된 경우, 종료일이 시작일보다 이후여야 함
+     */
+    public <T> Validator<T> cardDateRangeValid(Function<T, Instant> startDateExtractor,
+            Function<T, Instant> dueDateExtractor) {
+        return Validator.of(
+                request -> {
+                    Instant startDate = startDateExtractor.apply(request);
+                    Instant dueDate = dueDateExtractor.apply(request);
+
+                    // 둘 다 null이면 유효
+                    if (startDate == null && dueDate == null) {
+                        return true;
+                    }
+
+                    // 시작일만 null이면 유효
+                    if (startDate == null) {
+                        return true;
+                    }
+
+                    // 종료일만 null이면 유효
+                    if (dueDate == null) {
+                        return true;
+                    }
+
+                    // 둘 다 설정된 경우, 종료일이 시작일보다 이후여야 함
+                    return !dueDate.isBefore(startDate);
+                },
+                "cardDateRange",
+                messageResolver.getMessage("validation.card.date.range.invalid"));
     }
 }

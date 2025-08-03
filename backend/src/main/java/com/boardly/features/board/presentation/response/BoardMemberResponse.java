@@ -1,11 +1,11 @@
 package com.boardly.features.board.presentation.response;
 
+import java.time.Instant;
+import java.util.List;
+
 import com.boardly.features.board.domain.model.BoardMember;
 import com.boardly.features.user.domain.model.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.Instant;
-import java.util.List;
 
 /**
  * 보드 멤버 응답 DTO
@@ -60,7 +60,7 @@ public record BoardMemberResponse(
         return switch (role) {
             case OWNER -> List.of("all");
             case ADMIN -> List.of("edit", "delete", "invite");
-            case EDITOR -> List.of("edit");
+            case EDITOR, MEMBER -> List.of("edit");
             case VIEWER -> List.of("read");
         };
     }

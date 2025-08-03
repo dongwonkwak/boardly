@@ -1,52 +1,59 @@
 package com.boardly.features.card.presentation;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.http.ResponseEntity;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.boardly.features.card.application.port.input.CreateCardCommand;
-import com.boardly.features.card.application.port.input.UpdateCardCommand;
-import com.boardly.features.card.application.port.input.MoveCardCommand;
-import com.boardly.features.card.application.port.input.CloneCardCommand;
-import com.boardly.features.card.application.port.input.DeleteCardCommand;
-import com.boardly.features.card.application.port.input.AssignCardMemberCommand;
-import com.boardly.features.card.application.port.input.UnassignCardMemberCommand;
-import com.boardly.features.card.application.port.input.AddCardLabelCommand;
-import com.boardly.features.card.application.port.input.RemoveCardLabelCommand;
-import com.boardly.features.card.application.usecase.CreateCardUseCase;
-import com.boardly.features.card.application.usecase.CardQueryUseCase;
-import com.boardly.features.card.application.usecase.UpdateCardUseCase;
-import com.boardly.features.card.application.usecase.MoveCardUseCase;
-import com.boardly.features.card.application.usecase.CloneCardUseCase;
-import com.boardly.features.card.application.usecase.DeleteCardUseCase;
-import com.boardly.features.card.application.usecase.ManageCardMemberUseCase;
-import com.boardly.features.card.application.usecase.ManageCardLabelUseCase;
-import com.boardly.features.card.domain.model.Card;
-import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.card.presentation.request.CreateCardRequest;
-import com.boardly.features.card.presentation.request.UpdateCardRequest;
-import com.boardly.features.card.presentation.request.MoveCardRequest;
-import com.boardly.features.card.presentation.request.CloneCardRequest;
-import com.boardly.features.card.presentation.request.AssignCardMemberRequest;
-import com.boardly.features.card.presentation.request.UnassignCardMemberRequest;
-import com.boardly.features.card.presentation.request.AddCardLabelRequest;
-import com.boardly.features.card.presentation.request.RemoveCardLabelRequest;
-import com.boardly.features.card.presentation.response.CardResponse;
 import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.card.application.port.input.AddCardLabelCommand;
+import com.boardly.features.card.application.port.input.AssignCardMemberCommand;
+import com.boardly.features.card.application.port.input.CloneCardCommand;
+import com.boardly.features.card.application.port.input.CreateCardCommand;
+import com.boardly.features.card.application.port.input.DeleteCardCommand;
+import com.boardly.features.card.application.port.input.MoveCardCommand;
+import com.boardly.features.card.application.port.input.RemoveCardLabelCommand;
+import com.boardly.features.card.application.port.input.UnassignCardMemberCommand;
+import com.boardly.features.card.application.port.input.UpdateCardCommand;
+import com.boardly.features.card.application.usecase.CardQueryUseCase;
+import com.boardly.features.card.application.usecase.CloneCardUseCase;
+import com.boardly.features.card.application.usecase.CreateCardUseCase;
+import com.boardly.features.card.application.usecase.DeleteCardUseCase;
+import com.boardly.features.card.application.usecase.ManageCardLabelUseCase;
+import com.boardly.features.card.application.usecase.ManageCardMemberUseCase;
+import com.boardly.features.card.application.usecase.MoveCardUseCase;
+import com.boardly.features.card.application.usecase.UpdateCardUseCase;
+import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.valueobject.CardMember;
+import com.boardly.features.card.presentation.request.AddCardLabelRequest;
+import com.boardly.features.card.presentation.request.AssignCardMemberRequest;
+import com.boardly.features.card.presentation.request.CloneCardRequest;
+import com.boardly.features.card.presentation.request.CreateCardRequest;
+import com.boardly.features.card.presentation.request.MoveCardRequest;
+import com.boardly.features.card.presentation.request.RemoveCardLabelRequest;
+import com.boardly.features.card.presentation.request.UnassignCardMemberRequest;
+import com.boardly.features.card.presentation.request.UpdateCardCompletedRequest;
+import com.boardly.features.card.presentation.request.UpdateCardPriorityRequest;
+import com.boardly.features.card.presentation.request.UpdateCardRequest;
+import com.boardly.features.card.presentation.request.UpdateCardStartDateRequest;
+import com.boardly.features.card.presentation.response.CardResponse;
 import com.boardly.features.label.domain.model.LabelId;
+import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.Path;
@@ -54,20 +61,17 @@ import com.boardly.shared.presentation.response.ErrorResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.vavr.control.Either;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Tag(name = "Cards", description = "카드 관련 API")
 @Slf4j
@@ -589,6 +593,104 @@ public class CardController {
 
         log.info("카드 라벨 목록 조회 성공: cardId={}, 라벨 개수={}", cardId, labels.size());
         return ResponseEntity.ok(labels);
+    }
+
+    @Operation(summary = "카드 우선순위 업데이트", description = "카드의 우선순위를 수정합니다.", tags = {
+            "Cards" }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "카드 우선순위 업데이트 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = CardResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "카드 수정 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "카드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
+    @PutMapping("/{cardId}/priority")
+    public ResponseEntity<?> updateCardPriority(
+            @Parameter(description = "수정할 카드 ID", required = true) @PathVariable String cardId,
+            @Parameter(description = "카드 우선순위 업데이트 요청 정보", required = true) @RequestBody UpdateCardPriorityRequest request,
+            HttpServletRequest httpRequest,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
+        String userId = jwt.getSubject();
+        log.info("카드 우선순위 업데이트 요청: userId={}, cardId={}, priority={}", userId, cardId, request.priority());
+
+        Either<Failure, Card> result = updateCardUseCase.updateCardPriority(cardId, request.priority());
+
+        return result.fold(
+                failureHandler::handleFailure,
+                card -> {
+                    log.info("카드 우선순위 업데이트 성공: cardId={}, priority={}", cardId, request.priority());
+                    return ResponseEntity.ok(CardResponse.from(card));
+                });
+    }
+
+    @Operation(summary = "카드 완료 상태 업데이트", description = "카드의 완료 상태를 수정합니다.", tags = {
+            "Cards" }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "카드 완료 상태 업데이트 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = CardResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "카드 수정 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "카드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
+    @PutMapping("/{cardId}/completed")
+    public ResponseEntity<?> updateCardCompleted(
+            @Parameter(description = "수정할 카드 ID", required = true) @PathVariable String cardId,
+            @Parameter(description = "카드 완료 상태 업데이트 요청 정보", required = true) @RequestBody UpdateCardCompletedRequest request,
+            HttpServletRequest httpRequest,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
+        String userId = jwt.getSubject();
+        log.info("카드 완료 상태 업데이트 요청: userId={}, cardId={}, isCompleted={}", userId, cardId,
+                request.isCompleted());
+
+        Either<Failure, Card> result = updateCardUseCase.updateCardCompleted(cardId,
+                request.isCompleted());
+
+        return result.fold(
+                failureHandler::handleFailure,
+                card -> {
+                    log.info("카드 완료 상태 업데이트 성공: cardId={}, isCompleted={}", cardId,
+                            request.isCompleted());
+                    return ResponseEntity.ok(CardResponse.from(card));
+                });
+    }
+
+    @Operation(summary = "카드 시작일 업데이트", description = "카드의 시작일을 수정합니다.", tags = {
+            "Cards" }, security = @SecurityRequirement(name = "oauth2", scopes = { "write", "openid" }))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "카드 시작일 업데이트 성공", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = CardResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "카드 수정 권한 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "카드를 찾을 수 없음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "입력 값이 유효하지 않음", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PreAuthorize("hasAuthority('SCOPE_write') and hasAuthority('SCOPE_openid')")
+    @PutMapping("/{cardId}/start-date")
+    public ResponseEntity<?> updateCardStartDate(
+            @Parameter(description = "수정할 카드 ID", required = true) @PathVariable String cardId,
+            @Parameter(description = "카드 시작일 업데이트 요청 정보", required = true) @RequestBody UpdateCardStartDateRequest request,
+            HttpServletRequest httpRequest,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+
+        String userId = jwt.getSubject();
+        log.info("카드 시작일 업데이트 요청: userId={}, cardId={}, startDate={}", userId, cardId, request.startDate());
+
+        Either<Failure, Card> result = updateCardUseCase.updateCardStartDate(cardId,
+                request.startDate());
+
+        return result.fold(
+                failureHandler::handleFailure,
+                card -> {
+                    log.info("카드 시작일 업데이트 성공: cardId={}, startDate={}", cardId,
+                            request.startDate());
+                    return ResponseEntity.ok(CardResponse.from(card));
+                });
     }
 
 }

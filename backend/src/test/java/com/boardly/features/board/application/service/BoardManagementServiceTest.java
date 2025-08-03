@@ -203,6 +203,7 @@ class BoardManagementServiceTest {
 
     @Nested
     @DisplayName("updateBoard 메서드 테스트")
+    @SuppressWarnings("unchecked")
     class UpdateBoardTests {
 
         @Test
@@ -405,6 +406,7 @@ class BoardManagementServiceTest {
 
         @Test
         @DisplayName("유효한 요청으로 보드 삭제 시 성공해야 한다")
+        @SuppressWarnings("unchecked")
         void deleteBoard_withValidRequest_shouldSucceed() {
             // given
             ValidationResult<DeleteBoardCommand> validResult = ValidationResult.valid(deleteBoardCommand);
@@ -551,6 +553,7 @@ class BoardManagementServiceTest {
 
         @Test
         @DisplayName("유효한 요청으로 보드 아카이브 시 성공해야 한다")
+        @SuppressWarnings("unchecked")
         void archiveBoard_withValidRequest_shouldSucceed() {
             // given
             ValidationResult<ArchiveBoardCommand> validResult = ValidationResult.valid(archiveBoardCommand);
@@ -722,6 +725,7 @@ class BoardManagementServiceTest {
 
         @Test
         @DisplayName("유효한 요청으로 보드 언아카이브 시 성공해야 한다")
+        @SuppressWarnings("unchecked")
         void unarchiveBoard_withValidRequest_shouldSucceed() {
             // given
             ValidationResult<ArchiveBoardCommand> validResult = ValidationResult.valid(archiveBoardCommand);

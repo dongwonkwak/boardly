@@ -141,9 +141,12 @@ class BoardControllerTest {
 
         @SuppressWarnings("unchecked")
         List<BoardResponse> boardResponses = (List<BoardResponse>) response.getBody();
+        assertThat(boardResponses).isNotNull();
         assertThat(boardResponses).hasSize(1);
-        assertThat(boardResponses.get(0).boardId()).isEqualTo(TEST_BOARD_ID);
-        assertThat(boardResponses.get(0).title()).isEqualTo(TEST_TITLE);
+        if (boardResponses != null) {
+            assertThat(boardResponses.get(0).boardId()).isEqualTo(TEST_BOARD_ID);
+            assertThat(boardResponses.get(0).title()).isEqualTo(TEST_TITLE);
+        }
 
         verify(boardQueryService).getUserBoards(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -194,8 +197,11 @@ class BoardControllerTest {
         assertThat(response.getBody()).isInstanceOf(BoardDetailResponse.class);
 
         BoardDetailResponse boardDetailResponse = (BoardDetailResponse) response.getBody();
-        assertThat(boardDetailResponse.boardId()).isEqualTo(TEST_BOARD_ID);
-        assertThat(boardDetailResponse.boardName()).isEqualTo(TEST_TITLE);
+        assertThat(boardDetailResponse).isNotNull();
+        if (boardDetailResponse != null) {
+            assertThat(boardDetailResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+            assertThat(boardDetailResponse.boardName()).isEqualTo(TEST_TITLE);
+        }
 
         verify(getBoardDetailService).getBoardDetail(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -247,8 +253,11 @@ class BoardControllerTest {
         assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
 
         BoardResponse boardResponse = (BoardResponse) response.getBody();
-        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
-        assertThat(boardResponse.title()).isEqualTo(TEST_TITLE);
+        assertThat(boardResponse).isNotNull();
+        if (boardResponse != null) {
+            assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+            assertThat(boardResponse.title()).isEqualTo(TEST_TITLE);
+        }
 
         verify(boardManagementService).createBoard(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -303,8 +312,11 @@ class BoardControllerTest {
         assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
 
         BoardResponse boardResponse = (BoardResponse) response.getBody();
-        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
-        assertThat(boardResponse.title()).isEqualTo(TEST_TITLE);
+        assertThat(boardResponse).isNotNull();
+        if (boardResponse != null) {
+            assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+            assertThat(boardResponse.title()).isEqualTo(TEST_TITLE);
+        }
 
         verify(boardManagementService).updateBoard(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -357,7 +369,10 @@ class BoardControllerTest {
         assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
 
         BoardResponse boardResponse = (BoardResponse) response.getBody();
-        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardResponse).isNotNull();
+        if (boardResponse != null) {
+            assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        }
 
         verify(boardManagementService).archiveBoard(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -383,7 +398,10 @@ class BoardControllerTest {
         assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
 
         BoardResponse boardResponse = (BoardResponse) response.getBody();
-        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardResponse).isNotNull();
+        if (boardResponse != null) {
+            assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        }
 
         verify(boardManagementService).unarchiveBoard(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -409,7 +427,10 @@ class BoardControllerTest {
         assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
 
         BoardResponse boardResponse = (BoardResponse) response.getBody();
-        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardResponse).isNotNull();
+        if (boardResponse != null) {
+            assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        }
 
         verify(boardInteractionService).starringBoard(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -435,7 +456,10 @@ class BoardControllerTest {
         assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
 
         BoardResponse boardResponse = (BoardResponse) response.getBody();
-        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardResponse).isNotNull();
+        if (boardResponse != null) {
+            assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        }
 
         verify(boardInteractionService).unstarringBoard(command);
         verify(failureHandler, never()).handleFailure(any());
@@ -455,7 +479,8 @@ class BoardControllerTest {
                 .thenReturn(Either.right(null));
 
         // when
-        ResponseEntity<?> response = boardController.removeBoardMember(TEST_BOARD_ID, targetUserId, httpRequest, jwt);
+        ResponseEntity<?> response = boardController.removeBoardMember(TEST_BOARD_ID, targetUserId, httpRequest,
+                jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -483,7 +508,8 @@ class BoardControllerTest {
                 .thenReturn(expectedResponse);
 
         // when
-        ResponseEntity<?> response = boardController.removeBoardMember(TEST_BOARD_ID, targetUserId, httpRequest, jwt);
+        ResponseEntity<?> response = boardController.removeBoardMember(TEST_BOARD_ID, targetUserId, httpRequest,
+                jwt);
 
         // then
         assertThat(response).isEqualTo(expectedResponse);

@@ -1,23 +1,12 @@
 package com.boardly.features.label.presentation;
 
-import com.boardly.features.label.application.port.input.CreateLabelCommand;
-import com.boardly.features.label.application.port.input.UpdateLabelCommand;
-import com.boardly.features.label.application.port.input.DeleteLabelCommand;
-import com.boardly.features.label.application.usecase.CreateLabelUseCase;
-import com.boardly.features.label.application.usecase.GetLabelUseCase;
-import com.boardly.features.label.application.usecase.UpdateLabelUseCase;
-import com.boardly.features.label.application.usecase.DeleteLabelUseCase;
-import com.boardly.features.label.domain.model.Label;
-import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.features.label.presentation.request.CreateLabelRequest;
-import com.boardly.features.label.presentation.request.UpdateLabelRequest;
-import com.boardly.features.label.presentation.response.LabelResponse;
-import com.boardly.shared.domain.common.Failure;
-import com.boardly.shared.presentation.ApiFailureHandler;
-import com.boardly.shared.presentation.response.ErrorResponse;
-import io.vavr.control.Either;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,12 +17,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
-import java.util.List;
+import com.boardly.features.board.domain.model.BoardId;
+import com.boardly.features.label.application.port.input.CreateLabelCommand;
+import com.boardly.features.label.application.port.input.DeleteLabelCommand;
+import com.boardly.features.label.application.port.input.UpdateLabelCommand;
+import com.boardly.features.label.application.usecase.CreateLabelUseCase;
+import com.boardly.features.label.application.usecase.DeleteLabelUseCase;
+import com.boardly.features.label.application.usecase.GetLabelUseCase;
+import com.boardly.features.label.application.usecase.UpdateLabelUseCase;
+import com.boardly.features.label.domain.model.Label;
+import com.boardly.features.label.domain.model.LabelId;
+import com.boardly.features.label.presentation.request.CreateLabelRequest;
+import com.boardly.features.label.presentation.request.UpdateLabelRequest;
+import com.boardly.features.label.presentation.response.LabelResponse;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.presentation.ApiFailureHandler;
+import com.boardly.shared.presentation.response.ErrorResponse;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import io.vavr.control.Either;
 
 @ExtendWith(MockitoExtension.class)
 class LabelControllerTest {
@@ -222,10 +224,13 @@ class LabelControllerTest {
 
         @SuppressWarnings("unchecked")
         List<LabelResponse> labelResponses = (List<LabelResponse>) response.getBody();
+        assertThat(labelResponses).isNotNull();
         assertThat(labelResponses).hasSize(3);
-        assertThat(labelResponses.get(0).name()).isEqualTo("긴급");
-        assertThat(labelResponses.get(1).name()).isEqualTo("버그");
-        assertThat(labelResponses.get(2).name()).isEqualTo("개선");
+        if (labelResponses != null) {
+            assertThat(labelResponses.get(0).name()).isEqualTo("긴급");
+            assertThat(labelResponses.get(1).name()).isEqualTo("버그");
+            assertThat(labelResponses.get(2).name()).isEqualTo("개선");
+        }
     }
 
     @Test

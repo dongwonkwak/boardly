@@ -84,8 +84,10 @@ class UserValidatorTest {
         // then
         assertThat(result.isValid()).isFalse();
         assertThat(result.getErrors()).hasSize(1);
-        assertThat(result.getErrors().get(0).field()).isEqualTo("email");
-        assertThat(result.getErrors().get(0).message()).isEqualTo("validation.email.required");
+        if (result.getErrors() != null && !result.getErrors().isEmpty()) {
+            assertThat(result.getErrors().get(0).field()).isEqualTo("email");
+            assertThat(result.getErrors().get(0).message()).isEqualTo("validation.email.required");
+        }
     }
 
     @Test

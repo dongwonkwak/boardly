@@ -132,7 +132,9 @@ class RegisterUserServiceTest {
         assertThat(inputError.getMessage()).isEqualTo(errorMessage);
         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
         assertThat(inputError.getViolations()).hasSize(1);
-        assertThat(inputError.getViolations().get(0).field()).isEqualTo("email");
+        if (inputError.getViolations() != null && !inputError.getViolations().isEmpty()) {
+            assertThat(inputError.getViolations().get(0).field()).isEqualTo("email");
+        }
 
         verify(userValidator).validateUserRegistration(command);
         verify(validationMessageResolver).getMessage("validation.input.invalid");
@@ -392,8 +394,10 @@ class RegisterUserServiceTest {
         assertThat(inputError.getMessage()).isEqualTo(errorMessage);
         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
         assertThat(inputError.getViolations()).hasSize(2);
-        assertThat(inputError.getViolations().get(0).field()).isEqualTo("email");
-        assertThat(inputError.getViolations().get(1).field()).isEqualTo("password");
+        if (inputError.getViolations() != null && inputError.getViolations().size() >= 2) {
+            assertThat(inputError.getViolations().get(0).field()).isEqualTo("email");
+            assertThat(inputError.getViolations().get(1).field()).isEqualTo("password");
+        }
 
         verify(userValidator).validateUserRegistration(command);
         verify(validationMessageResolver).getMessage("validation.input.invalid");

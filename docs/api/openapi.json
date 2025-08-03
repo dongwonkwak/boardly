@@ -800,6 +800,75 @@
       }
     },
     "/api/boards/{boardId}": {
+      "get": {
+        "tags": [
+          "Board"
+        ],
+        "summary": "보드 상세 조회",
+        "description": "보드의 상세 정보를 조회합니다. 보드의 컬럼, 카드, 멤버, 라벨 등의 모든 정보를 포함합니다.",
+        "operationId": "getBoardDetail",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "description": "조회할 보드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "보드 상세 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardDetailResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "보드 접근 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "보드를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      },
       "put": {
         "tags": [
           "Board"
@@ -4138,6 +4207,256 @@
         "type": "object",
         "properties": {
           "id": {
+            "type": "string"
+          }
+        }
+      },
+      "BoardCardResponse": {
+        "type": "object",
+        "properties": {
+          "cardId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "isArchived": {
+            "type": "boolean"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardLabelResponse"
+            }
+          },
+          "assignees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CardAssigneeResponse"
+            }
+          },
+          "attachmentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "commentCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastCommentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/CardUserResponse"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedBy": {
+            "$ref": "#/components/schemas/CardUserResponse"
+          }
+        }
+      },
+      "BoardColumnResponse": {
+        "type": "object",
+        "properties": {
+          "columnId": {
+            "type": "string"
+          },
+          "columnName": {
+            "type": "string"
+          },
+          "columnColor": {
+            "type": "string"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cardCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardCardResponse"
+            }
+          }
+        }
+      },
+      "BoardDetailResponse": {
+        "type": "object",
+        "properties": {
+          "boardId": {
+            "type": "string"
+          },
+          "boardName": {
+            "type": "string"
+          },
+          "boardDescription": {
+            "type": "string"
+          },
+          "isStarred": {
+            "type": "boolean"
+          },
+          "boardColor": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardColumnResponse"
+            }
+          },
+          "boardMembers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardMemberResponse"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardLabelResponse"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BoardLabelResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "BoardMemberResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CardAssigneeResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "CardLabelResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      },
+      "CardUserResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
             "type": "string"
           }
         }

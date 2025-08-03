@@ -38,6 +38,128 @@
 ]
 ```
 
+### GET /api/boards/{boardId}
+
+보드의 상세 정보를 조회합니다. 보드의 컬럼, 카드, 멤버, 라벨 등의 모든 정보를 포함합니다.
+
+#### 경로 파라미터
+
+| 파라미터 | 타입 | 필수 | 설명 |
+|----------|------|------|------|
+| `boardId` | string | Y | 조회할 보드 ID |
+
+#### 응답
+
+**HTTP Status**: 200 OK  
+**Content-Type**: application/json
+
+#### 응답 데이터 구조
+
+```json
+{
+  "boardId": "board_123",
+  "boardName": "웹 개발 프로젝트",
+  "boardDescription": "React와 Spring Boot를 사용한 칸반 보드 애플리케이션",
+  "isStarred": true,
+  "boardColor": "#3B82F6",
+  "columns": [
+    {
+      "columnId": "col_1",
+      "columnName": "할 일",
+      "columnColor": "#EF4444",
+      "position": 1,
+      "cardCount": 3,
+      "cards": [
+        {
+          "cardId": "card_1",
+          "title": "로그인 기능 구현",
+          "description": "JWT 기반 인증 시스템 구축",
+          "position": 1,
+          "priority": "HIGH",
+          "isCompleted": false,
+          "isArchived": false,
+          "dueDate": "2025-02-01T18:00:00Z",
+          "startDate": "2025-01-20T09:00:00Z",
+          "labels": [
+            {
+              "id": "label_1",
+              "name": "Frontend",
+              "color": "#10B981"
+            }
+          ],
+          "assignees": [
+            {
+              "userId": "user_101",
+              "firstName": "김",
+              "lastName": "개발자",
+              "email": "dev@example.com"
+            }
+          ],
+          "attachmentCount": 2,
+          "commentCount": 5,
+          "lastCommentAt": "2025-01-25T14:30:00Z",
+          "createdBy": {
+            "userId": "user_101",
+            "firstName": "김",
+            "lastName": "개발자",
+            "email": "dev@example.com"
+          },
+          "createdAt": "2025-01-20T09:00:00Z",
+          "updatedAt": "2025-01-25T14:30:00Z",
+          "completedAt": null,
+          "completedBy": null
+        }
+      ]
+    }
+  ],
+  "boardMembers": [
+    {
+      "userId": "user_101",
+      "firstName": "김",
+      "lastName": "개발자",
+      "email": "dev@example.com",
+      "role": "OWNER",
+      "permissions": ["READ", "WRITE", "DELETE"],
+      "joinedAt": "2025-01-15T09:30:00Z",
+      "lastActiveAt": "2025-01-25T14:30:00Z",
+      "isActive": true
+    }
+  ],
+  "labels": [
+    {
+      "id": "label_1",
+      "name": "Frontend",
+      "color": "#10B981",
+      "description": "프론트엔드 관련 작업"
+    }
+  ],
+  "createdAt": "2025-01-15T09:30:00Z",
+  "updatedAt": "2025-01-25T14:30:00Z"
+}
+```
+
+#### 에러 응답
+
+**HTTP Status**: 403 Forbidden
+```json
+{
+  "code": "FORBIDDEN",
+  "message": "보드 접근 권한이 없습니다.",
+  "timestamp": "2025-01-20T15:30:00Z",
+  "path": "/api/boards/board_123"
+}
+```
+
+**HTTP Status**: 404 Not Found
+```json
+{
+  "code": "NOT_FOUND",
+  "message": "보드를 찾을 수 없습니다.",
+  "timestamp": "2025-01-20T15:30:00Z",
+  "path": "/api/boards/board_123"
+}
+```
+
 ### POST /api/boards
 
 새로운 보드를 생성합니다.
@@ -199,6 +321,105 @@
 | `createdAt` | string | Y | 생성 시간 (ISO 8601 형식) |
 | `updatedAt` | string | Y | 수정 시간 (ISO 8601 형식) |
 
+### BoardDetailResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `boardId` | string | Y | 보드 고유 식별자 |
+| `boardName` | string | Y | 보드 제목 |
+| `boardDescription` | string | N | 보드 설명 |
+| `isStarred` | boolean | Y | 즐겨찾기 상태 |
+| `boardColor` | string | N | 보드 색상 |
+| `columns` | array | Y | 보드 컬럼 목록 |
+| `boardMembers` | array | Y | 보드 멤버 목록 |
+| `labels` | array | Y | 보드 라벨 목록 |
+| `createdAt` | string | Y | 생성 시간 (ISO 8601 형식) |
+| `updatedAt` | string | Y | 수정 시간 (ISO 8601 형식) |
+
+### BoardColumnResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `columnId` | string | Y | 컬럼 고유 식별자 |
+| `columnName` | string | Y | 컬럼 이름 |
+| `columnColor` | string | N | 컬럼 색상 |
+| `position` | integer | Y | 컬럼 위치 |
+| `cardCount` | integer | Y | 카드 개수 |
+| `cards` | array | Y | 카드 목록 |
+
+### BoardCardResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `cardId` | string | Y | 카드 고유 식별자 |
+| `title` | string | Y | 카드 제목 |
+| `description` | string | N | 카드 설명 |
+| `position` | integer | Y | 카드 위치 |
+| `priority` | string | N | 우선순위 (LOW, MEDIUM, HIGH) |
+| `isCompleted` | boolean | Y | 완료 상태 |
+| `isArchived` | boolean | Y | 아카이브 상태 |
+| `dueDate` | string | N | 마감일 (ISO 8601 형식) |
+| `startDate` | string | N | 시작일 (ISO 8601 형식) |
+| `labels` | array | Y | 라벨 목록 |
+| `assignees` | array | Y | 담당자 목록 |
+| `attachmentCount` | integer | Y | 첨부파일 개수 |
+| `commentCount` | integer | Y | 댓글 개수 |
+| `lastCommentAt` | string | N | 마지막 댓글 시간 (ISO 8601 형식) |
+| `createdBy` | object | Y | 생성자 정보 |
+| `createdAt` | string | Y | 생성 시간 (ISO 8601 형식) |
+| `updatedAt` | string | Y | 수정 시간 (ISO 8601 형식) |
+| `completedAt` | string | N | 완료 시간 (ISO 8601 형식) |
+| `completedBy` | object | N | 완료자 정보 |
+
+### BoardMemberResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `userId` | string | Y | 사용자 고유 식별자 |
+| `firstName` | string | Y | 이름 |
+| `lastName` | string | Y | 성 |
+| `email` | string | Y | 이메일 |
+| `role` | string | Y | 역할 (OWNER, ADMIN, MEMBER) |
+| `permissions` | array | Y | 권한 목록 |
+| `joinedAt` | string | Y | 참여 시간 (ISO 8601 형식) |
+| `lastActiveAt` | string | N | 마지막 활동 시간 (ISO 8601 형식) |
+| `isActive` | boolean | Y | 활성 상태 |
+
+### BoardLabelResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `id` | string | Y | 라벨 고유 식별자 |
+| `name` | string | Y | 라벨 이름 |
+| `color` | string | Y | 라벨 색상 |
+| `description` | string | N | 라벨 설명 |
+
+### CardLabelResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `id` | string | Y | 라벨 고유 식별자 |
+| `name` | string | Y | 라벨 이름 |
+| `color` | string | Y | 라벨 색상 |
+
+### CardAssigneeResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `userId` | string | Y | 사용자 고유 식별자 |
+| `firstName` | string | Y | 이름 |
+| `lastName` | string | Y | 성 |
+| `email` | string | Y | 이메일 |
+
+### CardUserResponse 객체
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `userId` | string | Y | 사용자 고유 식별자 |
+| `firstName` | string | Y | 이름 |
+| `lastName` | string | Y | 성 |
+| `email` | string | Y | 이메일 |
+
 ### CreateBoardRequest 객체
 
 | 필드 | 타입 | 필수 | 설명 |
@@ -304,6 +525,13 @@
 ### 보드 목록 조회
 ```bash
 curl -X GET "https://api.boardly.com/api/boards?includeArchived=false" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Content-Type: application/json"
+```
+
+### 보드 상세 조회
+```bash
+curl -X GET "https://api.boardly.com/api/boards/board_123" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json"
 ```

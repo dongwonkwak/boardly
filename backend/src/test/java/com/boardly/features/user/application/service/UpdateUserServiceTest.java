@@ -138,7 +138,9 @@ class UpdateUserServiceTest {
         assertThat(inputError.getMessage()).isEqualTo(errorMessage);
         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
         assertThat(inputError.getViolations()).hasSize(1);
-        assertThat(inputError.getViolations().get(0).field()).isEqualTo("firstName");
+        if (inputError.getViolations() != null && !inputError.getViolations().isEmpty()) {
+            assertThat(inputError.getViolations().get(0).field()).isEqualTo("firstName");
+        }
 
         verify(userValidator).validateUserUpdate(command);
         verify(validationMessageResolver).getMessage("validation.input.invalid");

@@ -1,20 +1,14 @@
 package com.boardly.features.card.presentation;
 
-import com.boardly.features.card.application.port.input.*;
-import com.boardly.features.card.application.usecase.*;
-import com.boardly.features.card.domain.model.Card;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.card.presentation.request.*;
-import com.boardly.features.card.presentation.response.CardResponse;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.shared.domain.common.Failure;
-import com.boardly.shared.presentation.ApiFailureHandler;
-import com.boardly.shared.presentation.response.ErrorResponse;
-import io.vavr.control.Either;
-import jakarta.servlet.http.HttpServletRequest;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,13 +20,44 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
-import java.util.List;
+import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.card.application.port.input.AddCardLabelCommand;
+import com.boardly.features.card.application.port.input.AssignCardMemberCommand;
+import com.boardly.features.card.application.port.input.CloneCardCommand;
+import com.boardly.features.card.application.port.input.CreateCardCommand;
+import com.boardly.features.card.application.port.input.DeleteCardCommand;
+import com.boardly.features.card.application.port.input.MoveCardCommand;
+import com.boardly.features.card.application.port.input.RemoveCardLabelCommand;
+import com.boardly.features.card.application.port.input.UnassignCardMemberCommand;
+import com.boardly.features.card.application.port.input.UpdateCardCommand;
+import com.boardly.features.card.application.usecase.CardQueryUseCase;
+import com.boardly.features.card.application.usecase.CloneCardUseCase;
+import com.boardly.features.card.application.usecase.CreateCardUseCase;
+import com.boardly.features.card.application.usecase.DeleteCardUseCase;
+import com.boardly.features.card.application.usecase.ManageCardLabelUseCase;
+import com.boardly.features.card.application.usecase.ManageCardMemberUseCase;
+import com.boardly.features.card.application.usecase.MoveCardUseCase;
+import com.boardly.features.card.application.usecase.UpdateCardUseCase;
+import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.valueobject.CardMember;
+import com.boardly.features.card.presentation.request.AddCardLabelRequest;
+import com.boardly.features.card.presentation.request.AssignCardMemberRequest;
+import com.boardly.features.card.presentation.request.CloneCardRequest;
+import com.boardly.features.card.presentation.request.CreateCardRequest;
+import com.boardly.features.card.presentation.request.MoveCardRequest;
+import com.boardly.features.card.presentation.request.RemoveCardLabelRequest;
+import com.boardly.features.card.presentation.request.UnassignCardMemberRequest;
+import com.boardly.features.card.presentation.request.UpdateCardRequest;
+import com.boardly.features.card.presentation.response.CardResponse;
+import com.boardly.features.label.domain.model.LabelId;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.presentation.ApiFailureHandler;
+import com.boardly.shared.presentation.response.ErrorResponse;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import io.vavr.control.Either;
+import jakarta.servlet.http.HttpServletRequest;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CardController 테스트")
@@ -131,10 +156,13 @@ class CardControllerTest {
                         assertThat(response.getBody()).isInstanceOf(CardResponse.class);
 
                         CardResponse cardResponse = (CardResponse) response.getBody();
-                        assertThat(cardResponse.cardId()).isEqualTo("card-123");
-                        assertThat(cardResponse.title()).isEqualTo("테스트 카드");
-                        assertThat(cardResponse.description()).isEqualTo("테스트 설명");
-                        assertThat(cardResponse.listId()).isEqualTo("list-123");
+                        assertThat(cardResponse).isNotNull();
+                        if (cardResponse != null) {
+                                assertThat(cardResponse.cardId()).isEqualTo("card-123");
+                                assertThat(cardResponse.title()).isEqualTo("테스트 카드");
+                                assertThat(cardResponse.description()).isEqualTo("테스트 설명");
+                                assertThat(cardResponse.listId()).isEqualTo("list-123");
+                        }
 
                         verify(createCardUseCase).createCard(any(CreateCardCommand.class));
                 }
@@ -210,8 +238,11 @@ class CardControllerTest {
                         assertThat(response.getBody()).isInstanceOf(CardResponse.class);
 
                         CardResponse cardResponse = (CardResponse) response.getBody();
-                        assertThat(cardResponse.cardId()).isEqualTo(cardId);
-                        assertThat(cardResponse.title()).isEqualTo("테스트 카드");
+                        assertThat(cardResponse).isNotNull();
+                        if (cardResponse != null) {
+                                assertThat(cardResponse.cardId()).isEqualTo(cardId);
+                                assertThat(cardResponse.title()).isEqualTo("테스트 카드");
+                        }
 
                         verify(cardQueryUseCase).getCard(any(CardId.class), any(UserId.class));
                 }
@@ -266,9 +297,12 @@ class CardControllerTest {
 
                         @SuppressWarnings("unchecked")
                         List<CardResponse> cardResponses = (List<CardResponse>) response.getBody();
+                        assertThat(cardResponses).isNotNull();
                         assertThat(cardResponses).hasSize(2);
-                        assertThat(cardResponses.get(0).title()).isEqualTo("카드 1");
-                        assertThat(cardResponses.get(1).title()).isEqualTo("카드 2");
+                        if (cardResponses != null) {
+                                assertThat(cardResponses.get(0).title()).isEqualTo("카드 1");
+                                assertThat(cardResponses.get(1).title()).isEqualTo("카드 2");
+                        }
 
                         verify(cardQueryUseCase).getCardsByListId(any(ListId.class), any(UserId.class));
                 }
@@ -347,9 +381,12 @@ class CardControllerTest {
                         assertThat(response.getBody()).isInstanceOf(CardResponse.class);
 
                         CardResponse cardResponse = (CardResponse) response.getBody();
-                        assertThat(cardResponse.cardId()).isEqualTo(cardId);
-                        assertThat(cardResponse.title()).isEqualTo("수정된 카드");
-                        assertThat(cardResponse.description()).isEqualTo("수정된 설명");
+                        assertThat(cardResponse).isNotNull();
+                        if (cardResponse != null) {
+                                assertThat(cardResponse.cardId()).isEqualTo(cardId);
+                                assertThat(cardResponse.title()).isEqualTo("수정된 카드");
+                                assertThat(cardResponse.description()).isEqualTo("수정된 설명");
+                        }
 
                         verify(updateCardUseCase).updateCard(any(UpdateCardCommand.class));
                 }
@@ -670,9 +707,12 @@ class CardControllerTest {
 
                         @SuppressWarnings("unchecked")
                         List<CardResponse> cardResponses = (List<CardResponse>) response.getBody();
+                        assertThat(cardResponses).isNotNull();
                         assertThat(cardResponses).hasSize(2);
-                        assertThat(cardResponses.get(0).title()).isEqualTo("테스트 카드 1");
-                        assertThat(cardResponses.get(1).title()).isEqualTo("테스트 카드 2");
+                        if (cardResponses != null) {
+                                assertThat(cardResponses.get(0).title()).isEqualTo("테스트 카드 1");
+                                assertThat(cardResponses.get(1).title()).isEqualTo("테스트 카드 2");
+                        }
 
                         verify(cardQueryUseCase).searchCards(any(ListId.class), eq(searchTerm), any(UserId.class));
                 }
@@ -847,9 +887,12 @@ class CardControllerTest {
 
                         @SuppressWarnings("unchecked")
                         List<CardMember> memberList = (List<CardMember>) response.getBody();
+                        assertThat(memberList).isNotNull();
                         assertThat(memberList).hasSize(2);
-                        assertThat(memberList.get(0).getUserId().getId()).isEqualTo("member-1");
-                        assertThat(memberList.get(1).getUserId().getId()).isEqualTo("member-2");
+                        if (memberList != null) {
+                                assertThat(memberList.get(0).getUserId().getId()).isEqualTo("member-1");
+                                assertThat(memberList.get(1).getUserId().getId()).isEqualTo("member-2");
+                        }
 
                         verify(manageCardMemberUseCase).getCardMembers(any(CardId.class), any(UserId.class));
                 }
@@ -1000,9 +1043,12 @@ class CardControllerTest {
 
                         @SuppressWarnings("unchecked")
                         List<LabelId> labelList = (List<LabelId>) response.getBody();
+                        assertThat(labelList).isNotNull();
                         assertThat(labelList).hasSize(2);
-                        assertThat(labelList.get(0).getId()).isEqualTo("label-1");
-                        assertThat(labelList.get(1).getId()).isEqualTo("label-2");
+                        if (labelList != null) {
+                                assertThat(labelList.get(0).getId()).isEqualTo("label-1");
+                                assertThat(labelList.get(1).getId()).isEqualTo("label-2");
+                        }
 
                         verify(manageCardLabelUseCase).getCardLabels(any(CardId.class), any(UserId.class));
                 }

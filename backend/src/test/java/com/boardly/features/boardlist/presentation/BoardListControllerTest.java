@@ -105,16 +105,19 @@ class BoardListControllerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<BoardListResponse> responses = (List<BoardListResponse>) response.getBody();
+        assertThat(responses).isNotNull();
         assertThat(responses).hasSize(3);
-        assertThat(responses.get(0).listId()).isEqualTo("list-1");
-        assertThat(responses.get(0).title()).isEqualTo("할 일");
-        assertThat(responses.get(0).position()).isEqualTo(0);
-        assertThat(responses.get(1).listId()).isEqualTo("list-2");
-        assertThat(responses.get(1).title()).isEqualTo("진행 중");
-        assertThat(responses.get(1).position()).isEqualTo(1);
-        assertThat(responses.get(2).listId()).isEqualTo("list-3");
-        assertThat(responses.get(2).title()).isEqualTo("완료");
-        assertThat(responses.get(2).position()).isEqualTo(2);
+        if (responses != null) {
+            assertThat(responses.get(0).listId()).isEqualTo("list-1");
+            assertThat(responses.get(0).title()).isEqualTo("할 일");
+            assertThat(responses.get(0).position()).isEqualTo(0);
+            assertThat(responses.get(1).listId()).isEqualTo("list-2");
+            assertThat(responses.get(1).title()).isEqualTo("진행 중");
+            assertThat(responses.get(1).position()).isEqualTo(1);
+            assertThat(responses.get(2).listId()).isEqualTo("list-3");
+            assertThat(responses.get(2).title()).isEqualTo("완료");
+            assertThat(responses.get(2).position()).isEqualTo(2);
+        }
     }
 
     @Test

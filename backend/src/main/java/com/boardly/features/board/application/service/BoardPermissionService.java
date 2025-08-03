@@ -1,5 +1,9 @@
 package com.boardly.features.board.application.service;
 
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.model.BoardMember;
@@ -7,14 +11,12 @@ import com.boardly.features.board.domain.model.BoardRole;
 import com.boardly.features.board.domain.repository.BoardMemberRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.user.domain.model.UserId;
-import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.domain.common.Failure;
+
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 /**
  * 보드 권한을 관리하는 서비스
@@ -74,12 +76,13 @@ public class BoardPermissionService {
      */
     public Either<Failure, Boolean> canReadBoard(BoardId boardId, UserId userId) {
         return getUserBoardRole(boardId, userId)
-                .map(role -> {
+                .flatMap(role -> {
                     Board board = boardRepository.findById(boardId).orElse(null);
                     if (board == null) {
-                        return false;
+                        return Either.left(Failure.ofNotFound(
+                                messageResolver.getMessage("validation.board.not.found")));
                     }
-                    return board.canAccessWithRole(userId, role);
+                    return Either.right(board.canAccessWithRole(userId, role));
                 });
     }
 
@@ -88,12 +91,13 @@ public class BoardPermissionService {
      */
     public Either<Failure, Boolean> canWriteBoard(BoardId boardId, UserId userId) {
         return getUserBoardRole(boardId, userId)
-                .map(role -> {
+                .flatMap(role -> {
                     Board board = boardRepository.findById(boardId).orElse(null);
                     if (board == null) {
-                        return false;
+                        return Either.left(Failure.ofNotFound(
+                                messageResolver.getMessage("validation.board.not.found")));
                     }
-                    return board.canModifyWithRole(userId, role);
+                    return Either.right(board.canModifyWithRole(userId, role));
                 });
     }
 
@@ -102,12 +106,13 @@ public class BoardPermissionService {
      */
     public Either<Failure, Boolean> canAdminBoard(BoardId boardId, UserId userId) {
         return getUserBoardRole(boardId, userId)
-                .map(role -> {
+                .flatMap(role -> {
                     Board board = boardRepository.findById(boardId).orElse(null);
                     if (board == null) {
-                        return false;
+                        return Either.left(Failure.ofNotFound(
+                                messageResolver.getMessage("validation.board.not.found")));
                     }
-                    return board.canManageBoardSettingsWithRole(userId, role);
+                    return Either.right(board.canManageBoardSettingsWithRole(userId, role));
                 });
     }
 
@@ -116,12 +121,13 @@ public class BoardPermissionService {
      */
     public Either<Failure, Boolean> canManageBoardMembers(BoardId boardId, UserId userId) {
         return getUserBoardRole(boardId, userId)
-                .map(role -> {
+                .flatMap(role -> {
                     Board board = boardRepository.findById(boardId).orElse(null);
                     if (board == null) {
-                        return false;
+                        return Either.left(Failure.ofNotFound(
+                                messageResolver.getMessage("validation.board.not.found")));
                     }
-                    return board.canManageMembersWithRole(userId, role);
+                    return Either.right(board.canManageMembersWithRole(userId, role));
                 });
     }
 
@@ -130,12 +136,13 @@ public class BoardPermissionService {
      */
     public Either<Failure, Boolean> canArchiveBoard(BoardId boardId, UserId userId) {
         return getUserBoardRole(boardId, userId)
-                .map(role -> {
+                .flatMap(role -> {
                     Board board = boardRepository.findById(boardId).orElse(null);
                     if (board == null) {
-                        return false;
+                        return Either.left(Failure.ofNotFound(
+                                messageResolver.getMessage("validation.board.not.found")));
                     }
-                    return board.canArchiveWithRole(userId, role);
+                    return Either.right(board.canArchiveWithRole(userId, role));
                 });
     }
 
@@ -144,12 +151,13 @@ public class BoardPermissionService {
      */
     public Either<Failure, Boolean> canToggleStarBoard(BoardId boardId, UserId userId) {
         return getUserBoardRole(boardId, userId)
-                .map(role -> {
+                .flatMap(role -> {
                     Board board = boardRepository.findById(boardId).orElse(null);
                     if (board == null) {
-                        return false;
+                        return Either.left(Failure.ofNotFound(
+                                messageResolver.getMessage("validation.board.not.found")));
                     }
-                    return board.canToggleStarWithRole(userId, role);
+                    return Either.right(board.canToggleStarWithRole(userId, role));
                 });
     }
 
@@ -158,12 +166,13 @@ public class BoardPermissionService {
      */
     public Either<Failure, Boolean> canDeleteBoard(BoardId boardId, UserId userId) {
         return getUserBoardRole(boardId, userId)
-                .map(role -> {
+                .flatMap(role -> {
                     Board board = boardRepository.findById(boardId).orElse(null);
                     if (board == null) {
-                        return false;
+                        return Either.left(Failure.ofNotFound(
+                                messageResolver.getMessage("validation.board.not.found")));
                     }
-                    return board.canDeleteWithRole(userId, role);
+                    return Either.right(board.canDeleteWithRole(userId, role));
                 });
     }
 }

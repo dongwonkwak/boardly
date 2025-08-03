@@ -29,6 +29,6 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("userNames", "boardNames", "users");
+        return new ConcurrentMapCacheManager("userNames", "boardNames", "users", "userExists");
     }
 }

@@ -34,7 +34,6 @@ import com.boardly.features.board.application.service.BoardInteractionService;
 import com.boardly.features.board.application.service.BoardManagementService;
 import com.boardly.features.board.application.service.BoardMemberService;
 import com.boardly.features.board.application.service.BoardQueryService;
-import com.boardly.features.board.application.service.GetBoardDetailService;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
@@ -66,9 +65,6 @@ class BoardControllerTest {
     private BoardInteractionService boardInteractionService;
 
     @Mock
-    private GetBoardDetailService getBoardDetailService;
-
-    @Mock
     private ApiFailureHandler failureHandler;
 
     @Mock
@@ -89,7 +85,6 @@ class BoardControllerTest {
                 boardMemberService,
                 boardQueryService,
                 boardInteractionService,
-                getBoardDetailService,
                 failureHandler);
 
         when(jwt.getSubject()).thenReturn(TEST_USER_ID);
@@ -186,7 +181,7 @@ class BoardControllerTest {
                 new BoardId(TEST_BOARD_ID),
                 new UserId(TEST_USER_ID));
 
-        when(getBoardDetailService.getBoardDetail(command))
+        when(boardQueryService.getBoardDetail(command))
                 .thenReturn(Either.right(boardDetailDto));
 
         // when
@@ -203,7 +198,7 @@ class BoardControllerTest {
             assertThat(boardDetailResponse.boardName()).isEqualTo(TEST_TITLE);
         }
 
-        verify(getBoardDetailService).getBoardDetail(command);
+        verify(boardQueryService).getBoardDetail(command);
         verify(failureHandler, never()).handleFailure(any());
     }
 
@@ -217,7 +212,7 @@ class BoardControllerTest {
                 new UserId(TEST_USER_ID));
         ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.notFound().build();
 
-        when(getBoardDetailService.getBoardDetail(command))
+        when(boardQueryService.getBoardDetail(command))
                 .thenReturn(Either.left(failure));
         when(failureHandler.handleFailure(failure))
                 .thenReturn(expectedResponse);
@@ -227,7 +222,7 @@ class BoardControllerTest {
 
         // then
         assertThat(response).isEqualTo(expectedResponse);
-        verify(getBoardDetailService).getBoardDetail(command);
+        verify(boardQueryService).getBoardDetail(command);
         verify(failureHandler).handleFailure(failure);
     }
 

@@ -1,33 +1,40 @@
 package com.boardly.features.board.application.service;
 
-import com.boardly.features.board.application.port.input.*;
-import com.boardly.features.board.application.usecase.*;
-import com.boardly.features.board.application.validation.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.stereotype.Service;
+
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.activity.domain.model.ActivityType;
+import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
+import com.boardly.features.board.application.port.input.CreateBoardCommand;
+import com.boardly.features.board.application.port.input.DeleteBoardCommand;
+import com.boardly.features.board.application.port.input.UpdateBoardCommand;
+import com.boardly.features.board.application.usecase.ArchiveBoardUseCase;
+import com.boardly.features.board.application.usecase.CreateBoardUseCase;
+import com.boardly.features.board.application.usecase.DeleteBoardUseCase;
+import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
+import com.boardly.features.board.application.validation.BoardValidator;
 import com.boardly.features.board.domain.model.Board;
+import com.boardly.features.board.domain.model.BoardId;
+import com.boardly.features.board.domain.repository.BoardMemberRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.card.domain.repository.CardRepository;
-import com.boardly.features.board.domain.repository.BoardMemberRepository;
-import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
-import com.boardly.features.activity.application.helper.ActivityHelper;
-import com.boardly.features.activity.domain.model.ActivityType;
 
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * 보드 관리 서비스
@@ -54,6 +61,7 @@ public class BoardManagementService implements
     private final BoardListRepository boardListRepository;
     private final CardRepository cardRepository;
     private final BoardMemberRepository boardMemberRepository;
+    private final com.boardly.features.label.domain.repository.LabelRepository labelRepository;
 
     // Services
     private final BoardPermissionService boardPermissionService;
@@ -426,6 +434,12 @@ public class BoardManagementService implements
                 return Either.left(memberDeleteResult.getLeft());
             }
 
+            // 라벨 삭제
+            var labelDeleteResult = deleteAllLabels(board.getBoardId());
+            if (labelDeleteResult.isLeft()) {
+                return Either.left(labelDeleteResult.getLeft());
+            }
+
             // 보드 삭제
             var boardDeleteResult = deleteBoardEntity(board.getBoardId());
             if (boardDeleteResult.isLeft()) {
@@ -483,6 +497,18 @@ public class BoardManagementService implements
             return Either.left(result.getLeft());
         }
         log.debug("보드의 모든 멤버 삭제 완료: boardId={}", boardId.getId());
+        return Either.right(null);
+    }
+
+    private Either<Failure, Void> deleteAllLabels(BoardId boardId) {
+        log.debug("보드의 모든 라벨 삭제 시작: boardId={}", boardId.getId());
+        var result = labelRepository.deleteByBoardId(boardId);
+        if (result.isLeft()) {
+            log.error("보드의 라벨 삭제 실패: boardId={}, error={}",
+                    boardId.getId(), result.getLeft().getMessage());
+            return Either.left(result.getLeft());
+        }
+        log.debug("보드의 모든 라벨 삭제 완료: boardId={}", boardId.getId());
         return Either.right(null);
     }
 

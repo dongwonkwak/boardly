@@ -1,40 +1,43 @@
 package com.boardly.features.board.presentation;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.http.ResponseEntity;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import com.boardly.features.board.application.port.input.CreateBoardCommand;
-import com.boardly.features.board.application.port.input.UpdateBoardCommand;
 import com.boardly.features.board.application.dto.BoardDetailDto;
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
-import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
-import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
-import com.boardly.features.board.application.port.input.RemoveBoardMemberCommand;
+import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.board.application.port.input.DeleteBoardCommand;
 import com.boardly.features.board.application.port.input.GetBoardDetailCommand;
+import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
+import com.boardly.features.board.application.port.input.RemoveBoardMemberCommand;
+import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
+import com.boardly.features.board.application.port.input.UpdateBoardCommand;
+import com.boardly.features.board.application.service.BoardInteractionService;
 import com.boardly.features.board.application.service.BoardManagementService;
 import com.boardly.features.board.application.service.BoardMemberService;
 import com.boardly.features.board.application.service.BoardQueryService;
-import com.boardly.features.board.application.service.BoardInteractionService;
-import com.boardly.features.board.application.service.GetBoardDetailService;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.presentation.request.CreateBoardRequest;
 import com.boardly.features.board.presentation.request.UpdateBoardRequest;
-import com.boardly.features.board.presentation.response.BoardResponse;
 import com.boardly.features.board.presentation.response.BoardDetailResponse;
+import com.boardly.features.board.presentation.response.BoardResponse;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
@@ -55,10 +58,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-
 @Slf4j
 @RestController
 @RequestMapping(Path.BOARDS)
@@ -72,7 +71,6 @@ public class BoardController {
         private final BoardMemberService boardMemberService;
         private final BoardQueryService boardQueryService;
         private final BoardInteractionService boardInteractionService;
-        private final GetBoardDetailService getBoardDetailService;
         private final ApiFailureHandler failureHandler;
 
         @Operation(summary = "내 보드 목록 조회", description = "현재 사용자가 소유한 보드 목록을 조회합니다. 쿼리 파라미터로 아카이브된 보드 포함 여부를 설정할 수 있습니다.", tags = {
@@ -132,7 +130,7 @@ public class BoardController {
                                 new BoardId(boardId),
                                 new UserId(userId));
 
-                Either<Failure, BoardDetailDto> result = getBoardDetailService.getBoardDetail(command);
+                Either<Failure, BoardDetailDto> result = boardQueryService.getBoardDetail(command);
 
                 return result.fold(
                                 failureHandler::handleFailure,

@@ -40,4 +40,4 @@ npx swagger-codegen-cli generate \
 이 문서는 백엔드 빌드 시마다 자동으로 업데이트됩니다.
 최신 버전을 사용하고 있는지 확인하세요.
 
-마지막 업데이트: Sun Aug 03 21:54:16 KST 2025
+마지막 업데이트: Mon Aug 04 05:16:30 KST 2025

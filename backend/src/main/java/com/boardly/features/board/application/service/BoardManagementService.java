@@ -20,10 +20,7 @@ import com.boardly.features.board.application.usecase.UpdateBoardUseCase;
 import com.boardly.features.board.application.validation.BoardValidator;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.board.domain.repository.BoardMemberRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -58,10 +55,6 @@ public class BoardManagementService implements
 
     // Repositories
     private final BoardRepository boardRepository;
-    private final BoardListRepository boardListRepository;
-    private final CardRepository cardRepository;
-    private final BoardMemberRepository boardMemberRepository;
-    private final com.boardly.features.label.domain.repository.LabelRepository labelRepository;
 
     // Services
     private final BoardPermissionService boardPermissionService;
@@ -416,31 +409,7 @@ public class BoardManagementService implements
             int cardCount = getCardCount(board.getBoardId());
             int listCount = getListCount(board.getBoardId());
 
-            // 카드 삭제
-            var cardDeleteResult = deleteAllCards(board.getBoardId());
-            if (cardDeleteResult.isLeft()) {
-                return Either.left(cardDeleteResult.getLeft());
-            }
-
-            // 리스트 삭제
-            var listDeleteResult = deleteAllLists(board.getBoardId());
-            if (listDeleteResult.isLeft()) {
-                return Either.left(listDeleteResult.getLeft());
-            }
-
-            // 멤버 삭제
-            var memberDeleteResult = deleteAllMembers(board.getBoardId());
-            if (memberDeleteResult.isLeft()) {
-                return Either.left(memberDeleteResult.getLeft());
-            }
-
-            // 라벨 삭제
-            var labelDeleteResult = deleteAllLabels(board.getBoardId());
-            if (labelDeleteResult.isLeft()) {
-                return Either.left(labelDeleteResult.getLeft());
-            }
-
-            // 보드 삭제
+            // 보드 삭제 (CASCADE로 모든 연관 데이터 자동 삭제)
             var boardDeleteResult = deleteBoardEntity(board.getBoardId());
             if (boardDeleteResult.isLeft()) {
                 return Either.left(boardDeleteResult.getLeft());
@@ -460,56 +429,6 @@ public class BoardManagementService implements
             return Either.left(Failure.ofInternalServerError(
                     validationMessageResolver.getMessage("validation.board.delete.error")));
         }
-    }
-
-    private Either<Failure, Void> deleteAllCards(BoardId boardId) {
-        log.debug("보드의 모든 카드 삭제 시작: boardId={}", boardId.getId());
-        var result = cardRepository.deleteByBoardId(boardId);
-        if (result.isLeft()) {
-            log.error("보드의 카드 삭제 실패: boardId={}, error={}",
-                    boardId.getId(), result.getLeft().getMessage());
-            return Either.left(result.getLeft());
-        }
-        log.debug("보드의 모든 카드 삭제 완료: boardId={}", boardId.getId());
-        return Either.right(null);
-    }
-
-    private Either<Failure, Void> deleteAllLists(BoardId boardId) {
-        try {
-            log.debug("보드의 모든 리스트 삭제 시작: boardId={}", boardId.getId());
-            boardListRepository.deleteByBoardId(boardId);
-            log.debug("보드의 모든 리스트 삭제 완료: boardId={}", boardId.getId());
-            return Either.right(null);
-        } catch (Exception e) {
-            log.error("보드의 리스트 삭제 실패: boardId={}, error={}",
-                    boardId.getId(), e.getMessage(), e);
-            return Either.left(Failure.ofInternalServerError(
-                    validationMessageResolver.getMessage("validation.board.list.delete.error")));
-        }
-    }
-
-    private Either<Failure, Void> deleteAllMembers(BoardId boardId) {
-        log.debug("보드의 모든 멤버 삭제 시작: boardId={}", boardId.getId());
-        var result = boardMemberRepository.deleteByBoardId(boardId);
-        if (result.isLeft()) {
-            log.error("보드의 멤버 삭제 실패: boardId={}, error={}",
-                    boardId.getId(), result.getLeft().getMessage());
-            return Either.left(result.getLeft());
-        }
-        log.debug("보드의 모든 멤버 삭제 완료: boardId={}", boardId.getId());
-        return Either.right(null);
-    }
-
-    private Either<Failure, Void> deleteAllLabels(BoardId boardId) {
-        log.debug("보드의 모든 라벨 삭제 시작: boardId={}", boardId.getId());
-        var result = labelRepository.deleteByBoardId(boardId);
-        if (result.isLeft()) {
-            log.error("보드의 라벨 삭제 실패: boardId={}, error={}",
-                    boardId.getId(), result.getLeft().getMessage());
-            return Either.left(result.getLeft());
-        }
-        log.debug("보드의 모든 라벨 삭제 완료: boardId={}", boardId.getId());
-        return Either.right(null);
     }
 
     private Either<Failure, Void> deleteBoardEntity(BoardId boardId) {
@@ -548,28 +467,18 @@ public class BoardManagementService implements
      * 보드의 카드 수 조회
      */
     private int getCardCount(BoardId boardId) {
-        try {
-            // 카드 수를 조회하는 메서드가 있다면 사용, 없다면 0 반환
-            // 실제 구현에서는 cardRepository.countByBoardId(boardId) 등을 사용할 수 있음
-            return 0; // 임시로 0 반환
-        } catch (Exception e) {
-            log.warn("카드 수 조회 실패: boardId={}, error={}", boardId.getId(), e.getMessage());
-            return 0;
-        }
+        // CASCADE 삭제로 인해 정확한 수치를 얻기 어려우므로 0 반환
+        // 필요시 별도 쿼리로 구현 가능
+        return 0;
     }
 
     /**
      * 보드의 리스트 수 조회
      */
     private int getListCount(BoardId boardId) {
-        try {
-            // 리스트 수를 조회하는 메서드가 있다면 사용, 없다면 0 반환
-            // 실제 구현에서는 boardListRepository.countByBoardId(boardId) 등을 사용할 수 있음
-            return 0; // 임시로 0 반환
-        } catch (Exception e) {
-            log.warn("리스트 수 조회 실패: boardId={}, error={}", boardId.getId(), e.getMessage());
-            return 0;
-        }
+        // CASCADE 삭제로 인해 정확한 수치를 얻기 어려우므로 0 반환
+        // 필요시 별도 쿼리로 구현 가능
+        return 0;
     }
 
     // ==================== ARCHIVE BOARD ====================

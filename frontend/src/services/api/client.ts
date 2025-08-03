@@ -75,6 +75,80 @@ export type MoveCardRequest = {
     targetListId?: string;
     newPosition?: number;
 };
+export type CardLabelResponse = {
+    id?: string;
+    name?: string;
+    color?: string;
+};
+export type CardAssigneeResponse = {
+    userId?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+};
+export type CardUserResponse = {
+    userId?: string;
+    firstName?: string;
+    lastName?: string;
+};
+export type BoardCardResponse = {
+    cardId?: string;
+    title?: string;
+    description?: string;
+    position?: number;
+    priority?: string;
+    isCompleted?: boolean;
+    isArchived?: boolean;
+    dueDate?: string;
+    startDate?: string;
+    labels?: CardLabelResponse[];
+    assignees?: CardAssigneeResponse[];
+    attachmentCount?: number;
+    commentCount?: number;
+    lastCommentAt?: string;
+    createdBy?: CardUserResponse;
+    createdAt?: string;
+    updatedAt?: string;
+    completedAt?: string;
+    completedBy?: CardUserResponse;
+};
+export type BoardColumnResponse = {
+    columnId?: string;
+    columnName?: string;
+    columnColor?: string;
+    position?: number;
+    cardCount?: number;
+    cards?: BoardCardResponse[];
+};
+export type BoardMemberResponse = {
+    userId?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    role?: string;
+    permissions?: string[];
+    joinedAt?: string;
+    lastActiveAt?: string;
+    isActive?: boolean;
+};
+export type BoardLabelResponse = {
+    id?: string;
+    name?: string;
+    color?: string;
+    description?: string;
+};
+export type BoardDetailResponse = {
+    boardId?: string;
+    boardName?: string;
+    boardDescription?: string;
+    isStarred?: boolean;
+    boardColor?: string;
+    columns?: BoardColumnResponse[];
+    boardMembers?: BoardMemberResponse[];
+    labels?: BoardLabelResponse[];
+    createdAt?: string;
+    updatedAt?: string;
+};
 export type UpdateBoardRequest = {
     title?: string;
     description?: string;
@@ -431,6 +505,26 @@ export function moveCard(cardId: string, moveCardRequest: MoveCardRequest, opts?
         method: "PUT",
         body: moveCardRequest
     }));
+}
+/**
+ * 보드 상세 조회
+ */
+export function getBoardDetail(boardId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: BoardDetailResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/boards/${encodeURIComponent(boardId)}`, {
+        ...opts
+    });
 }
 /**
  * 보드 업데이트

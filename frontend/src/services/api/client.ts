@@ -71,9 +71,21 @@ export type UpdateCardRequest = {
     title?: string;
     description?: string;
 };
+export type UpdateCardStartDateRequest = {
+    /** 시작일 */
+    startDate?: string;
+};
+export type UpdateCardPriorityRequest = {
+    /** 우선순위 */
+    priority: "low" | "medium" | "high" | "urgent";
+};
 export type MoveCardRequest = {
     targetListId?: string;
     newPosition?: number;
+};
+export type UpdateCardCompletedRequest = {
+    /** 완료 상태 */
+    isCompleted: boolean;
 };
 export type CardLabelResponse = {
     id?: string;
@@ -476,6 +488,62 @@ export function deleteCard(cardId: string, opts?: Oazapfts.RequestOpts) {
     });
 }
 /**
+ * 카드 시작일 업데이트
+ */
+export function updateCardStartDate(cardId: string, updateCardStartDateRequest: UpdateCardStartDateRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: CardResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/start-date`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: updateCardStartDateRequest
+    }));
+}
+/**
+ * 카드 우선순위 업데이트
+ */
+export function updateCardPriority(cardId: string, updateCardPriorityRequest: UpdateCardPriorityRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: CardResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/priority`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: updateCardPriorityRequest
+    }));
+}
+/**
  * 카드 이동
  */
 export function moveCard(cardId: string, moveCardRequest: MoveCardRequest, opts?: Oazapfts.RequestOpts) {
@@ -504,6 +572,34 @@ export function moveCard(cardId: string, moveCardRequest: MoveCardRequest, opts?
         ...opts,
         method: "PUT",
         body: moveCardRequest
+    }));
+}
+/**
+ * 카드 완료 상태 업데이트
+ */
+export function updateCardCompleted(cardId: string, updateCardCompletedRequest: UpdateCardCompletedRequest, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: CardResponse;
+    } | {
+        status: 400;
+        data: ErrorResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/completed`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: updateCardCompletedRequest
     }));
 }
 /**

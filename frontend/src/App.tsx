@@ -1,15 +1,12 @@
 import { useEffect } from "react";
-import {
-	BrowserRouter as Router,
-	Routes,
-	Route,
-} from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./config/i18n";
-import LandingPage from "@/pages/LandingPage";
 import Register from "@/pages/Auth/Register";
+import BoardDetailPage from "@/pages/BoardDetail";
 import Dashboard from "@/pages/Dashboard";
-import Callback from "./pages/Auth/Callback";
+import LandingPage from "@/pages/LandingPage";
 import { useLanguageStore } from "@/store/languageStore";
+import Callback from "./pages/Auth/Callback";
 
 function App() {
 	const { initializeLanguage } = useLanguageStore();
@@ -25,6 +22,7 @@ function App() {
 				<Route path="/" element={<LandingPage />} />
 				<Route path="/register" element={<Register />} />
 				<Route path="/dashboard" element={<Dashboard />} />
+				<Route path="/boards/:boardId" element={<BoardDetailPage />} />
 				<Route path="/callback" element={<Callback />} />
 			</Routes>
 		</Router>

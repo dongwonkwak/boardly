@@ -1,0 +1,31 @@
+{
+	"boardDetail": {
+		"addList": "Add List",
+		"viewOptions": "View Options",
+		"searchCards": "Search cards...",
+		"addCard": "Add Card",
+		"addAnotherList": "Add Another List",
+		"back": "Back",
+		"star": "Star",
+		"unstar": "Unstar",
+		"share": "Share",
+		"more": "More",
+		"members": "Members",
+		"invite": "Invite",
+		"dueDate": "Due Date",
+		"priority": "Priority",
+		"labels": "Labels",
+		"attachments": "Attachments",
+		"comments": "Comments",
+		"createdBy": "Created by",
+		"createdAt": "Created at",
+		"updatedAt": "Updated at",
+		"completedAt": "Completed at",
+		"completedBy": "Completed by",
+		"noCards": "No cards",
+		"noLists": "No lists",
+		"loading": "Loading...",
+		"error": "An error occurred",
+		"retry": "Retry"
+	}
+}

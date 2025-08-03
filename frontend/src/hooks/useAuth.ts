@@ -1,37 +1,37 @@
-import log from "@/utils/logger";
 import { useAuth } from "react-oidc-context";
+import log from "@/utils/logger";
 
 export function useOAuth() {
-  const auth = useAuth();
+	const auth = useAuth();
 
-  const login = async () => {
-    try {
-      await auth.signinRedirect();
-    } catch (error) {
-      log.error("Login failed", error);
-    }
-  };
+	const login = async () => {
+		try {
+			await auth.signinRedirect();
+		} catch (error) {
+			log.error("Login failed", error);
+		}
+	};
 
-  const logout = async () => {
-    try {
-      await auth.removeUser();
-    } catch (error) {
-      log.error("Logout failed", error);
-    }
-  };
+	const logout = async () => {
+		try {
+			await auth.removeUser();
+		} catch (error) {
+			log.error("Logout failed", error);
+		}
+	};
 
-  const isAuthenticated = auth.isAuthenticated;
-  const user = auth.user;
-  const isLoading = auth.isLoading;
-  const events = auth.events;
+	const isAuthenticated = auth.isAuthenticated;
+	const user = auth.user;
+	const isLoading = auth.isLoading;
+	const events = auth.events;
 
-  return {
-    login,
-    logout,
-    isAuthenticated,
-    user,
-    isLoading,
-    auth,
-    events,
-  };
-} 
+	return {
+		login,
+		logout,
+		isAuthenticated,
+		user,
+		isLoading,
+		auth,
+		events,
+	};
+}

@@ -1,0 +1,31 @@
+{
+	"boardDetail": {
+		"addList": "리스트 추가",
+		"viewOptions": "보기 옵션",
+		"searchCards": "카드 검색...",
+		"addCard": "카드 추가",
+		"addAnotherList": "다른 리스트 추가",
+		"back": "뒤로",
+		"star": "즐겨찾기",
+		"unstar": "즐겨찾기 해제",
+		"share": "공유",
+		"more": "더보기",
+		"members": "멤버",
+		"invite": "초대",
+		"dueDate": "마감일",
+		"priority": "우선순위",
+		"labels": "라벨",
+		"attachments": "첨부파일",
+		"comments": "댓글",
+		"createdBy": "작성자",
+		"createdAt": "생성일",
+		"updatedAt": "수정일",
+		"completedAt": "완료일",
+		"completedBy": "완료자",
+		"noCards": "카드가 없습니다",
+		"noLists": "리스트가 없습니다",
+		"loading": "로딩 중...",
+		"error": "오류가 발생했습니다",
+		"retry": "다시 시도"
+	}
+}

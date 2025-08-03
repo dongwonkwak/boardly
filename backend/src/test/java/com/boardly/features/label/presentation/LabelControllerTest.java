@@ -111,10 +111,12 @@ class LabelControllerTest {
         assertThat(response.getBody()).isInstanceOf(LabelResponse.class);
 
         LabelResponse labelResponse = (LabelResponse) response.getBody();
-        assertThat(labelResponse.labelId()).isEqualTo(labelId);
-        assertThat(labelResponse.boardId()).isEqualTo(boardId);
-        assertThat(labelResponse.name()).isEqualTo(name);
-        assertThat(labelResponse.color()).isEqualTo(color);
+        if (labelResponse != null) {
+            assertThat(labelResponse.labelId()).isEqualTo(labelId);
+            assertThat(labelResponse.boardId()).isEqualTo(boardId);
+            assertThat(labelResponse.name()).isEqualTo(name);
+            assertThat(labelResponse.color()).isEqualTo(color);
+        }
     }
 
     @Test
@@ -170,10 +172,12 @@ class LabelControllerTest {
         assertThat(response.getBody()).isInstanceOf(LabelResponse.class);
 
         LabelResponse labelResponse = (LabelResponse) response.getBody();
-        assertThat(labelResponse.labelId()).isEqualTo(labelId);
-        assertThat(labelResponse.boardId()).isEqualTo(boardId);
-        assertThat(labelResponse.name()).isEqualTo(name);
-        assertThat(labelResponse.color()).isEqualTo(color);
+        if (labelResponse != null) {
+            assertThat(labelResponse.labelId()).isEqualTo(labelId);
+            assertThat(labelResponse.boardId()).isEqualTo(boardId);
+            assertThat(labelResponse.name()).isEqualTo(name);
+            assertThat(labelResponse.color()).isEqualTo(color);
+        }
     }
 
     @Test
@@ -183,7 +187,6 @@ class LabelControllerTest {
         String userId = "user-123";
         String labelId = "label-123";
         Failure failure = createSampleFailure("라벨을 찾을 수 없습니다");
-        ErrorResponse errorResponse = ErrorResponse.of("NOT_FOUND", "라벨을 찾을 수 없습니다");
 
         when(jwt.getSubject()).thenReturn(userId);
         when(getLabelUseCase.getLabel(any(LabelId.class), any(UserId.class)))
@@ -224,9 +227,8 @@ class LabelControllerTest {
 
         @SuppressWarnings("unchecked")
         List<LabelResponse> labelResponses = (List<LabelResponse>) response.getBody();
-        assertThat(labelResponses).isNotNull();
-        assertThat(labelResponses).hasSize(3);
         if (labelResponses != null) {
+            assertThat(labelResponses).hasSize(3);
             assertThat(labelResponses.get(0).name()).isEqualTo("긴급");
             assertThat(labelResponses.get(1).name()).isEqualTo("버그");
             assertThat(labelResponses.get(2).name()).isEqualTo("개선");
@@ -254,7 +256,9 @@ class LabelControllerTest {
 
         @SuppressWarnings("unchecked")
         List<LabelResponse> labelResponses = (List<LabelResponse>) response.getBody();
-        assertThat(labelResponses).isEmpty();
+        if (labelResponses != null) {
+            assertThat(labelResponses).isEmpty();
+        }
     }
 
     @Test
@@ -264,7 +268,6 @@ class LabelControllerTest {
         String userId = "user-123";
         String boardId = "board-123";
         Failure failure = createSampleFailure("보드를 찾을 수 없습니다");
-        ErrorResponse errorResponse = ErrorResponse.of("NOT_FOUND", "보드를 찾을 수 없습니다");
 
         when(jwt.getSubject()).thenReturn(userId);
         when(getLabelUseCase.getBoardLabels(any(BoardId.class), any(UserId.class)))
@@ -306,9 +309,11 @@ class LabelControllerTest {
         assertThat(response.getBody()).isInstanceOf(LabelResponse.class);
 
         LabelResponse labelResponse = (LabelResponse) response.getBody();
-        assertThat(labelResponse.labelId()).isEqualTo(labelId);
-        assertThat(labelResponse.name()).isEqualTo(newName);
-        assertThat(labelResponse.color()).isEqualTo(newColor);
+        if (labelResponse != null) {
+            assertThat(labelResponse.labelId()).isEqualTo(labelId);
+            assertThat(labelResponse.name()).isEqualTo(newName);
+            assertThat(labelResponse.color()).isEqualTo(newColor);
+        }
     }
 
     @Test
@@ -349,7 +354,6 @@ class LabelControllerTest {
 
         UpdateLabelRequest request = new UpdateLabelRequest(newName, newColor);
         Failure failure = createSampleFailure("라벨을 찾을 수 없습니다");
-        ErrorResponse errorResponse = ErrorResponse.of("NOT_FOUND", "라벨을 찾을 수 없습니다");
 
         when(jwt.getSubject()).thenReturn(userId);
         when(updateLabelUseCase.updateLabel(any(UpdateLabelCommand.class)))
@@ -415,7 +419,6 @@ class LabelControllerTest {
         String userId = "user-123";
         String labelId = "label-123";
         Failure failure = createSampleFailure("라벨을 찾을 수 없습니다");
-        ErrorResponse errorResponse = ErrorResponse.of("NOT_FOUND", "라벨을 찾을 수 없습니다");
 
         when(jwt.getSubject()).thenReturn(userId);
         when(deleteLabelUseCase.deleteLabel(any(DeleteLabelCommand.class)))

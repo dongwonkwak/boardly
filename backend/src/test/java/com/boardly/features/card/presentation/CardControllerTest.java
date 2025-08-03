@@ -1,6 +1,7 @@
 package com.boardly.features.card.presentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -465,6 +466,7 @@ class CardControllerTest {
                         assertThat(response.getBody()).isInstanceOf(CardResponse.class);
 
                         CardResponse cardResponse = (CardResponse) response.getBody();
+                        assertNotNull(cardResponse);
                         assertThat(cardResponse.cardId()).isEqualTo(cardId);
                         assertThat(cardResponse.position()).isEqualTo(3);
 
@@ -492,6 +494,7 @@ class CardControllerTest {
                         assertThat(response.getBody()).isInstanceOf(CardResponse.class);
 
                         CardResponse cardResponse = (CardResponse) response.getBody();
+                        assertNotNull(cardResponse);
                         assertThat(cardResponse.cardId()).isEqualTo(cardId);
                         assertThat(cardResponse.listId()).isEqualTo("list-456");
                         assertThat(cardResponse.position()).isEqualTo(1);
@@ -548,6 +551,7 @@ class CardControllerTest {
                         assertThat(response.getBody()).isInstanceOf(CardResponse.class);
 
                         CardResponse cardResponse = (CardResponse) response.getBody();
+                        assertNotNull(cardResponse);
                         assertThat(cardResponse.cardId()).isEqualTo("card-456");
                         assertThat(cardResponse.title()).isEqualTo("복제된 카드");
                         assertThat(cardResponse.listId()).isEqualTo("list-123");
@@ -576,6 +580,7 @@ class CardControllerTest {
                         assertThat(response.getBody()).isInstanceOf(CardResponse.class);
 
                         CardResponse cardResponse = (CardResponse) response.getBody();
+                        assertNotNull(cardResponse);
                         assertThat(cardResponse.cardId()).isEqualTo("card-456");
                         assertThat(cardResponse.title()).isEqualTo("복제된 카드");
                         assertThat(cardResponse.listId()).isEqualTo("list-456");

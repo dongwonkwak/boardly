@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.boardly.features.activity.application.helper.ActivityHelper;
 import com.boardly.features.activity.domain.model.ActivityType;
@@ -36,9 +37,9 @@ import com.boardly.features.card.application.port.input.UnassignCardMemberComman
 import com.boardly.features.card.application.validation.CardMemberValidator;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.repository.CardMemberRepository;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.card.domain.repository.CardMemberRepository;
 import com.boardly.features.user.application.dto.UserNameDto;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.model.User;
@@ -49,7 +50,6 @@ import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
 
 import io.vavr.control.Either;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CardMemberService 테스트")
@@ -450,6 +450,7 @@ class CardMemberServiceTest {
 
         @Test
         @DisplayName("유효한 커맨드로 멤버 해제 시 성공한다")
+        @SuppressWarnings("unchecked")
         void shouldUnassignMemberSuccessfully() {
             // given
             when(validator.validateUnassign(validCommand))
@@ -714,7 +715,6 @@ class CardMemberServiceTest {
         private Card card;
         private UserNameDto memberName;
         private BoardList boardList;
-        private Board board;
         private CardId cardId;
         private UserId memberId;
         private UserId requesterId;
@@ -754,16 +754,11 @@ class CardMemberServiceTest {
                     .boardId(boardId)
                     .position(0)
                     .build();
-
-            board = Board.builder()
-                    .boardId(boardId)
-                    .title("테스트 보드")
-                    .description("테스트 보드 설명")
-                    .build();
         }
 
         @Test
         @DisplayName("보드 리스트가 존재하지 않을 때 활동 로그는 성공한다")
+        @SuppressWarnings("unchecked")
         void shouldLogActivitySuccessfullyWhenBoardListNotFound() {
             // given
             when(validator.validateAssign(assignCommand))
@@ -780,8 +775,6 @@ class CardMemberServiceTest {
                     .thenReturn(Either.right(card));
             when(userFinder.findUserNameById(memberId))
                     .thenReturn(Optional.of(memberName));
-            when(boardListRepository.findById(listId))
-                    .thenReturn(Optional.empty());
             lenient().doNothing().when(activityHelper).logCardActivity(any(), any(), any(), any(), any(),
                     any(), any());
 
@@ -802,6 +795,7 @@ class CardMemberServiceTest {
 
         @Test
         @DisplayName("보드가 존재하지 않을 때 활동 로그는 성공한다")
+        @SuppressWarnings("unchecked")
         void shouldLogActivitySuccessfullyWhenBoardNotFound() {
             // given
             when(validator.validateAssign(assignCommand))

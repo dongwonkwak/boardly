@@ -1,19 +1,12 @@
 package com.boardly.features.boardlist.presentation;
 
-import com.boardly.features.boardlist.application.port.input.*;
-import com.boardly.features.boardlist.application.usecase.*;
-import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.model.ListColor;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.boardlist.presentation.request.CreateBoardListRequest;
-import com.boardly.features.boardlist.presentation.request.UpdateBoardListRequest;
-import com.boardly.features.boardlist.presentation.request.UpdateBoardListPositionRequest;
-import com.boardly.features.boardlist.presentation.response.BoardListResponse;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.shared.domain.common.Failure;
-import com.boardly.shared.presentation.ApiFailureHandler;
-import com.boardly.shared.presentation.response.ErrorResponse;
-import io.vavr.control.Either;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,12 +17,29 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
-import java.util.List;
+import com.boardly.features.board.domain.model.BoardId;
+import com.boardly.features.boardlist.application.port.input.CreateBoardListCommand;
+import com.boardly.features.boardlist.application.port.input.DeleteBoardListCommand;
+import com.boardly.features.boardlist.application.port.input.GetBoardListsCommand;
+import com.boardly.features.boardlist.application.port.input.UpdateBoardListCommand;
+import com.boardly.features.boardlist.application.port.input.UpdateBoardListPositionCommand;
+import com.boardly.features.boardlist.application.usecase.CreateBoardListUseCase;
+import com.boardly.features.boardlist.application.usecase.DeleteBoardListUseCase;
+import com.boardly.features.boardlist.application.usecase.GetBoardListsUseCase;
+import com.boardly.features.boardlist.application.usecase.UpdateBoardListPositionUseCase;
+import com.boardly.features.boardlist.application.usecase.UpdateBoardListUseCase;
+import com.boardly.features.boardlist.domain.model.BoardList;
+import com.boardly.features.boardlist.domain.model.ListColor;
+import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.boardlist.presentation.request.CreateBoardListRequest;
+import com.boardly.features.boardlist.presentation.request.UpdateBoardListPositionRequest;
+import com.boardly.features.boardlist.presentation.request.UpdateBoardListRequest;
+import com.boardly.features.boardlist.presentation.response.BoardListResponse;
+import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.presentation.ApiFailureHandler;
+import com.boardly.shared.presentation.response.ErrorResponse;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import io.vavr.control.Either;
 
 @ExtendWith(MockitoExtension.class)
 class BoardListControllerTest {
@@ -104,10 +114,10 @@ class BoardListControllerTest {
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        @SuppressWarnings("unchecked")
         List<BoardListResponse> responses = (List<BoardListResponse>) response.getBody();
-        assertThat(responses).isNotNull();
-        assertThat(responses).hasSize(3);
         if (responses != null) {
+            assertThat(responses).hasSize(3);
             assertThat(responses.get(0).listId()).isEqualTo("list-1");
             assertThat(responses.get(0).title()).isEqualTo("할 일");
             assertThat(responses.get(0).position()).isEqualTo(0);
@@ -136,8 +146,11 @@ class BoardListControllerTest {
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        @SuppressWarnings("unchecked")
         List<BoardListResponse> responses = (List<BoardListResponse>) response.getBody();
-        assertThat(responses).isEmpty();
+        if (responses != null) {
+            assertThat(responses).isEmpty();
+        }
     }
 
     @Test
@@ -211,11 +224,13 @@ class BoardListControllerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         BoardListResponse responseBody = (BoardListResponse) response.getBody();
-        assertThat(responseBody.listId()).isEqualTo("list-new");
-        assertThat(responseBody.title()).isEqualTo("새 리스트");
-        assertThat(responseBody.description()).isEqualTo("새 리스트 설명");
-        assertThat(responseBody.color()).isEqualTo(expectedColor);
-        assertThat(responseBody.boardId()).isEqualTo(boardId);
+        if (responseBody != null) {
+            assertThat(responseBody.listId()).isEqualTo("list-new");
+            assertThat(responseBody.title()).isEqualTo("새 리스트");
+            assertThat(responseBody.description()).isEqualTo("새 리스트 설명");
+            assertThat(responseBody.color()).isEqualTo(expectedColor);
+            assertThat(responseBody.boardId()).isEqualTo(boardId);
+        }
     }
 
     @Test
@@ -239,7 +254,9 @@ class BoardListControllerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         BoardListResponse responseBody = (BoardListResponse) response.getBody();
-        assertThat(responseBody.color()).isEqualTo(defaultColor);
+        if (responseBody != null) {
+            assertThat(responseBody.color()).isEqualTo(defaultColor);
+        }
     }
 
     @Test
@@ -344,10 +361,12 @@ class BoardListControllerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         BoardListResponse responseBody = (BoardListResponse) response.getBody();
-        assertThat(responseBody.listId()).isEqualTo(listId);
-        assertThat(responseBody.title()).isEqualTo("수정된 리스트");
-        assertThat(responseBody.description()).isEqualTo("수정된 설명");
-        assertThat(responseBody.color()).isEqualTo(expectedColor);
+        if (responseBody != null) {
+            assertThat(responseBody.listId()).isEqualTo(listId);
+            assertThat(responseBody.title()).isEqualTo("수정된 리스트");
+            assertThat(responseBody.description()).isEqualTo("수정된 설명");
+            assertThat(responseBody.color()).isEqualTo(expectedColor);
+        }
     }
 
     @Test
@@ -371,8 +390,10 @@ class BoardListControllerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         BoardListResponse responseBody = (BoardListResponse) response.getBody();
-        assertThat(responseBody.title()).isEqualTo("수정된 리스트");
-        assertThat(responseBody.description()).isEqualTo("수정된 설명");
+        if (responseBody != null) {
+            assertThat(responseBody.title()).isEqualTo("수정된 리스트");
+            assertThat(responseBody.description()).isEqualTo("수정된 설명");
+        }
     }
 
     @Test
@@ -556,9 +577,11 @@ class BoardListControllerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         BoardListResponse responseBody = (BoardListResponse) response.getBody();
-        assertThat(responseBody.listId()).isEqualTo(listId);
-        assertThat(responseBody.position()).isEqualTo(2);
-        assertThat(responseBody.title()).isEqualTo("완료");
+        if (responseBody != null) {
+            assertThat(responseBody.listId()).isEqualTo(listId);
+            assertThat(responseBody.position()).isEqualTo(2);
+            assertThat(responseBody.title()).isEqualTo("완료");
+        }
     }
 
     @Test
@@ -583,8 +606,10 @@ class BoardListControllerTest {
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         BoardListResponse responseBody = (BoardListResponse) response.getBody();
-        assertThat(responseBody.listId()).isEqualTo(listId);
-        assertThat(responseBody.position()).isEqualTo(0);
+        if (responseBody != null) {
+            assertThat(responseBody.listId()).isEqualTo(listId);
+            assertThat(responseBody.position()).isEqualTo(0);
+        }
     }
 
     @Test

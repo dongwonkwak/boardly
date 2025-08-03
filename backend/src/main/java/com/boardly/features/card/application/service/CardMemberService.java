@@ -23,9 +23,9 @@ import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.card.domain.repository.CardMemberRepository;
 import com.boardly.features.user.application.dto.UserNameDto;
+import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
-import com.boardly.features.user.domain.repository.UserRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 
@@ -43,7 +43,7 @@ public class CardMemberService implements ManageCardMemberUseCase {
     private final ValidationMessageResolver messageResolver;
     private final CardRepository cardRepository;
     private final CardMemberRepository cardMemberRepository;
-    private final UserRepository userRepository;
+    private final UserFinder userFinder;
     private final ActivityHelper activityHelper;
     private final BoardListRepository boardListRepository;
     private final BoardRepository boardRepository;
@@ -173,13 +173,14 @@ public class CardMemberService implements ManageCardMemberUseCase {
     }
 
     private Either<Failure, User> findUser(UserId userId, String userType) {
-        var userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty()) {
+        try {
+            User user = userFinder.findUserOrThrow(userId);
+            return Either.right(user);
+        } catch (Exception e) {
             log.warn("{} 사용자를 찾을 수 없음: userId={}", userType, userId.getId());
             return Either.left(Failure.ofNotFound(
                     messageResolver.getMessage("validation.user.not.found")));
         }
-        return Either.right(userOpt.get());
     }
 
     /**
@@ -295,7 +296,7 @@ public class CardMemberService implements ManageCardMemberUseCase {
      */
     private Either<Failure, Void> logAssignActivity(AssignCardMemberCommand command) {
         try {
-            var memberNameOpt = userRepository.findUserNameById(command.memberId());
+            var memberNameOpt = userFinder.findUserNameById(command.memberId());
             if (memberNameOpt.isPresent()) {
                 UserNameDto memberName = memberNameOpt.get();
                 var cardOpt = cardRepository.findById(command.cardId());
@@ -337,7 +338,7 @@ public class CardMemberService implements ManageCardMemberUseCase {
      */
     private Either<Failure, Void> logUnassignActivity(UnassignCardMemberCommand command) {
         try {
-            var memberNameOpt = userRepository.findUserNameById(command.memberId());
+            var memberNameOpt = userFinder.findUserNameById(command.memberId());
             if (memberNameOpt.isPresent()) {
                 UserNameDto memberName = memberNameOpt.get();
                 var cardOpt = cardRepository.findById(command.cardId());

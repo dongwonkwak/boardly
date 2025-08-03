@@ -22,6 +22,7 @@ import io.vavr.control.Try;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -246,6 +247,12 @@ public class BoardManagementService implements
                                 log.info("보드 업데이트 완료: boardId={}, title={}",
                                         updatedBoard.getBoardId().getId(), updatedBoard.getTitle());
 
+                                // 보드 이름이 변경된 경우 캐시 무효화
+                                if (context.command().title() != null &&
+                                        !context.command().title().equals(context.originalBoard().getTitle())) {
+                                    evictBoardNameCache(updatedBoard.getBoardId());
+                                }
+
                                 // 활동 로그 기록
                                 logBoardUpdateActivities(context, updatedBoard);
                             } else {
@@ -254,6 +261,14 @@ public class BoardManagementService implements
                             }
                             return saveResult;
                         });
+    }
+
+    /**
+     * 보드 이름 캐시 무효화
+     */
+    @CacheEvict(value = "boardNames", key = "#boardId.id")
+    private void evictBoardNameCache(BoardId boardId) {
+        log.debug("보드 이름 캐시 무효화: boardId={}", boardId.getId());
     }
 
     private void applyChanges(Board board, UpdateBoardCommand command) {
@@ -473,6 +488,10 @@ public class BoardManagementService implements
 
     private Either<Failure, Void> deleteBoardEntity(BoardId boardId) {
         log.debug("보드 엔티티 삭제 시작: boardId={}", boardId.getId());
+
+        // 보드 삭제 전에 캐시 무효화
+        evictBoardNameCache(boardId);
+
         var result = boardRepository.delete(boardId);
         if (result.isLeft()) {
             log.error("보드 삭제 실패: boardId={}, error={}",

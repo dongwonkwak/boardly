@@ -8,6 +8,7 @@ import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ public class UserRepositoryImpl implements UserRepository {
     private final UserJpaRepository userJpaRepository;
 
     @Override
+    @CacheEvict(value = { "users", "userNames" }, key = "#user.userId.id")
     public Either<Failure, User> save(User user) {
         try {
             UserEntity savedEntity;
@@ -71,6 +73,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    @CacheEvict(value = { "users", "userNames" }, key = "#userId.id")
     public Either<Failure, Void> delete(UserId userId) {
         try {
             if (userJpaRepository.existsById(userId.getId())) {

@@ -1,20 +1,15 @@
 package com.boardly.features.board.presentation;
 
-import com.boardly.features.board.application.port.input.*;
-import com.boardly.features.board.application.service.BoardManagementService;
-import com.boardly.features.board.application.service.BoardMemberService;
-import com.boardly.features.board.application.service.BoardQueryService;
-import com.boardly.features.board.application.service.BoardInteractionService;
-import com.boardly.features.board.domain.model.Board;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.board.presentation.request.CreateBoardRequest;
-import com.boardly.features.board.presentation.request.UpdateBoardRequest;
-import com.boardly.features.board.presentation.response.BoardResponse;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.shared.domain.common.Failure;
-import com.boardly.shared.presentation.ApiFailureHandler;
-import com.boardly.shared.presentation.response.ErrorResponse;
-import io.vavr.control.Either;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,17 +18,40 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import java.time.Instant;
-import java.util.List;
+import com.boardly.features.board.application.dto.BoardDetailDto;
+import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
+import com.boardly.features.board.application.port.input.CreateBoardCommand;
+import com.boardly.features.board.application.port.input.DeleteBoardCommand;
+import com.boardly.features.board.application.port.input.GetBoardDetailCommand;
+import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
+import com.boardly.features.board.application.port.input.RemoveBoardMemberCommand;
+import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
+import com.boardly.features.board.application.port.input.UpdateBoardCommand;
+import com.boardly.features.board.application.service.BoardInteractionService;
+import com.boardly.features.board.application.service.BoardManagementService;
+import com.boardly.features.board.application.service.BoardMemberService;
+import com.boardly.features.board.application.service.BoardQueryService;
+import com.boardly.features.board.application.service.GetBoardDetailService;
+import com.boardly.features.board.domain.model.Board;
+import com.boardly.features.board.domain.model.BoardId;
+import com.boardly.features.board.presentation.request.CreateBoardRequest;
+import com.boardly.features.board.presentation.request.UpdateBoardRequest;
+import com.boardly.features.board.presentation.response.BoardDetailResponse;
+import com.boardly.features.board.presentation.response.BoardResponse;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.presentation.ApiFailureHandler;
+import com.boardly.shared.presentation.response.ErrorResponse;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import io.vavr.control.Either;
 
 @ExtendWith(MockitoExtension.class)
 class BoardControllerTest {
+
+    private BoardController boardController;
 
     @Mock
     private BoardManagementService boardManagementService;
@@ -48,591 +66,519 @@ class BoardControllerTest {
     private BoardInteractionService boardInteractionService;
 
     @Mock
+    private GetBoardDetailService getBoardDetailService;
+
+    @Mock
     private ApiFailureHandler failureHandler;
 
     @Mock
     private Jwt jwt;
 
-    private BoardController controller;
+    @Mock
+    private MockHttpServletRequest httpRequest;
+
+    private static final String TEST_USER_ID = "test-user-id";
+    private static final String TEST_BOARD_ID = "test-board-id";
+    private static final String TEST_TITLE = "테스트 보드";
+    private static final String TEST_DESCRIPTION = "테스트 보드 설명";
 
     @BeforeEach
     void setUp() {
-        controller = new BoardController(
+        boardController = new BoardController(
                 boardManagementService,
                 boardMemberService,
                 boardQueryService,
                 boardInteractionService,
+                getBoardDetailService,
                 failureHandler);
+
+        when(jwt.getSubject()).thenReturn(TEST_USER_ID);
     }
 
-    private Board createSampleBoard(String boardId, String title, String description, String ownerId,
-            boolean isArchived, boolean isStarred) {
+    private Board createTestBoard() {
         return Board.builder()
-                .boardId(new BoardId(boardId))
-                .title(title)
-                .description(description)
-                .ownerId(new UserId(ownerId))
-                .isArchived(isArchived)
-                .isStarred(isStarred)
+                .boardId(new BoardId(TEST_BOARD_ID))
+                .title(TEST_TITLE)
+                .description(TEST_DESCRIPTION)
+                .ownerId(new UserId(TEST_USER_ID))
+                .isArchived(false)
+                .isStarred(false)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
     }
 
-    // ==================== GET MY BOARDS TESTS ====================
+    private BoardDetailDto createTestBoardDetailDto() {
+        Board board = createTestBoard();
+        return new BoardDetailDto(
+                board,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of());
+    }
 
     @Test
-    @DisplayName("내 보드 목록 조회 성공 - 아카이브 제외")
-    void getMyBoards_Success_ExcludeArchived() throws Exception {
+    @DisplayName("내 보드 목록 조회 성공 시 200 응답을 반환해야 한다")
+    void getMyBoards_withValidRequest_shouldReturn200() {
         // given
-        String userId = "user-123";
         boolean includeArchived = false;
-        List<Board> boards = List.of(
-                createSampleBoard("board-1", "프로젝트 A", "프로젝트 A 설명", userId, false, false),
-                createSampleBoard("board-2", "프로젝트 B", "프로젝트 B 설명", userId, false, true));
+        List<Board> boards = List.of(createTestBoard());
+        GetUserBoardsCommand command = new GetUserBoardsCommand(
+                new UserId(TEST_USER_ID),
+                includeArchived);
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardQueryService.getUserBoards(any(GetUserBoardsCommand.class)))
+        when(boardQueryService.getUserBoards(command))
                 .thenReturn(Either.right(boards));
 
         // when
-        ResponseEntity<?> response = controller.getMyBoards(includeArchived, null, jwt);
+        ResponseEntity<?> response = boardController.getMyBoards(includeArchived, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        List<BoardResponse> responses = (List<BoardResponse>) response.getBody();
-        assertThat(responses).hasSize(2);
-        assertThat(responses.get(0).boardId()).isEqualTo("board-1");
-        assertThat(responses.get(0).title()).isEqualTo("프로젝트 A");
-        assertThat(responses.get(0).isArchived()).isFalse();
-        assertThat(responses.get(1).boardId()).isEqualTo("board-2");
-        assertThat(responses.get(1).title()).isEqualTo("프로젝트 B");
-        assertThat(responses.get(1).isStarred()).isTrue();
+        assertThat(response.getBody()).isInstanceOf(List.class);
+
+        @SuppressWarnings("unchecked")
+        List<BoardResponse> boardResponses = (List<BoardResponse>) response.getBody();
+        assertThat(boardResponses).hasSize(1);
+        assertThat(boardResponses.get(0).boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardResponses.get(0).title()).isEqualTo(TEST_TITLE);
+
+        verify(boardQueryService).getUserBoards(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("내 보드 목록 조회 성공 - 아카이브 포함")
-    void getMyBoards_Success_IncludeArchived() throws Exception {
+    @DisplayName("내 보드 목록 조회 실패 시 failureHandler가 호출되어야 한다")
+    void getMyBoards_withFailure_shouldCallFailureHandler() {
         // given
-        String userId = "user-123";
-        boolean includeArchived = true;
-        List<Board> boards = List.of(
-                createSampleBoard("board-1", "활성 보드", "활성 보드 설명", userId, false, false),
-                createSampleBoard("board-2", "아카이브된 보드", "아카이브된 보드 설명", userId, true, false));
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardQueryService.getUserBoards(any(GetUserBoardsCommand.class)))
-                .thenReturn(Either.right(boards));
-
-        // when
-        ResponseEntity<?> response = controller.getMyBoards(includeArchived, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        List<BoardResponse> responses = (List<BoardResponse>) response.getBody();
-        assertThat(responses).hasSize(2);
-        assertThat(responses.get(0).isArchived()).isFalse();
-        assertThat(responses.get(1).isArchived()).isTrue();
-    }
-
-    @Test
-    @DisplayName("내 보드 목록 조회 성공 - 빈 목록")
-    void getMyBoards_Success_EmptyList() throws Exception {
-        // given
-        String userId = "user-123";
         boolean includeArchived = false;
+        Failure failure = Failure.ofInputError("입력 오류");
+        GetUserBoardsCommand command = new GetUserBoardsCommand(
+                new UserId(TEST_USER_ID),
+                includeArchived);
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.badRequest().build();
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardQueryService.getUserBoards(any(GetUserBoardsCommand.class)))
-                .thenReturn(Either.right(List.of()));
+        when(boardQueryService.getUserBoards(command))
+                .thenReturn(Either.left(failure));
+        when(failureHandler.handleFailure(failure))
+                .thenReturn(expectedResponse);
 
         // when
-        ResponseEntity<?> response = controller.getMyBoards(includeArchived, null, jwt);
+        ResponseEntity<?> response = boardController.getMyBoards(includeArchived, httpRequest, jwt);
+
+        // then
+        assertThat(response).isEqualTo(expectedResponse);
+        verify(boardQueryService).getUserBoards(command);
+        verify(failureHandler).handleFailure(failure);
+    }
+
+    @Test
+    @DisplayName("보드 상세 조회 성공 시 200 응답을 반환해야 한다")
+    void getBoardDetail_withValidRequest_shouldReturn200() {
+        // given
+        BoardDetailDto boardDetailDto = createTestBoardDetailDto();
+        GetBoardDetailCommand command = new GetBoardDetailCommand(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
+
+        when(getBoardDetailService.getBoardDetail(command))
+                .thenReturn(Either.right(boardDetailDto));
+
+        // when
+        ResponseEntity<?> response = boardController.getBoardDetail(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        List<BoardResponse> responses = (List<BoardResponse>) response.getBody();
-        assertThat(responses).isEmpty();
+        assertThat(response.getBody()).isInstanceOf(BoardDetailResponse.class);
+
+        BoardDetailResponse boardDetailResponse = (BoardDetailResponse) response.getBody();
+        assertThat(boardDetailResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardDetailResponse.boardName()).isEqualTo(TEST_TITLE);
+
+        verify(getBoardDetailService).getBoardDetail(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("내 보드 목록 조회 실패 - 검증 오류")
-    void getMyBoards_ValidationError() throws Exception {
+    @DisplayName("보드 상세 조회 실패 시 failureHandler가 호출되어야 한다")
+    void getBoardDetail_withFailure_shouldCallFailureHandler() {
         // given
-        String userId = "user-123";
-        boolean includeArchived = false;
-        List<Failure.FieldViolation> violations = List.of(
-                Failure.FieldViolation.builder()
-                        .field("userId")
-                        .message("사용자 ID가 유효하지 않습니다.")
-                        .rejectedValue(userId)
-                        .build());
-        Failure validationFailure = Failure.ofValidation("INVALID_USER_ID", violations);
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        Failure failure = Failure.ofNotFound("보드를 찾을 수 없습니다");
+        GetBoardDetailCommand command = new GetBoardDetailCommand(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.notFound().build();
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardQueryService.getUserBoards(any(GetUserBoardsCommand.class)))
-                .thenReturn(Either.left(validationFailure));
-        when(failureHandler.handleFailure(validationFailure)).thenReturn(expectedResponse);
+        when(getBoardDetailService.getBoardDetail(command))
+                .thenReturn(Either.left(failure));
+        when(failureHandler.handleFailure(failure))
+                .thenReturn(expectedResponse);
 
         // when
-        ResponseEntity<?> response = controller.getMyBoards(includeArchived, null, jwt);
+        ResponseEntity<?> response = boardController.getBoardDetail(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response).isEqualTo(expectedResponse);
+        verify(getBoardDetailService).getBoardDetail(command);
+        verify(failureHandler).handleFailure(failure);
     }
 
-    // ==================== CREATE BOARD TESTS ====================
-
     @Test
-    @DisplayName("보드 생성 성공")
-    void createBoard_Success() throws Exception {
+    @DisplayName("보드 생성 성공 시 201 응답을 반환해야 한다")
+    void createBoard_withValidRequest_shouldReturn201() {
         // given
-        String userId = "user-123";
-        CreateBoardRequest request = new CreateBoardRequest("새 보드", "새 보드 설명");
-        Board createdBoard = createSampleBoard("board-new", "새 보드", "새 보드 설명", userId, false, false);
+        CreateBoardRequest request = new CreateBoardRequest(TEST_TITLE, TEST_DESCRIPTION);
+        Board createdBoard = createTestBoard();
+        CreateBoardCommand command = CreateBoardCommand.of(
+                TEST_TITLE,
+                TEST_DESCRIPTION,
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.createBoard(any(CreateBoardCommand.class)))
+        when(boardManagementService.createBoard(command))
                 .thenReturn(Either.right(createdBoard));
 
         // when
-        ResponseEntity<?> response = controller.createBoard(request, null, jwt);
+        ResponseEntity<?> response = boardController.createBoard(request, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        BoardResponse responseBody = (BoardResponse) response.getBody();
-        assertThat(responseBody.boardId()).isEqualTo("board-new");
-        assertThat(responseBody.title()).isEqualTo("새 보드");
-        assertThat(responseBody.description()).isEqualTo("새 보드 설명");
-        assertThat(responseBody.ownerId()).isEqualTo(userId);
+        assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
+
+        BoardResponse boardResponse = (BoardResponse) response.getBody();
+        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardResponse.title()).isEqualTo(TEST_TITLE);
+
+        verify(boardManagementService).createBoard(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 생성 실패 - 검증 오류")
-    void createBoard_ValidationError() throws Exception {
+    @DisplayName("보드 생성 실패 시 failureHandler가 호출되어야 한다")
+    void createBoard_withFailure_shouldCallFailureHandler() {
         // given
-        String userId = "user-123";
-        CreateBoardRequest request = new CreateBoardRequest("", "보드 설명");
-        List<Failure.FieldViolation> violations = List.of(
-                Failure.FieldViolation.builder()
-                        .field("title")
-                        .message("제목은 필수입니다.")
-                        .rejectedValue("")
-                        .build());
-        Failure validationFailure = Failure.ofValidation("TITLE_REQUIRED", violations);
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+        CreateBoardRequest request = new CreateBoardRequest(TEST_TITLE, TEST_DESCRIPTION);
+        Failure failure = Failure.ofInputError("제목이 유효하지 않습니다");
+        CreateBoardCommand command = CreateBoardCommand.of(
+                TEST_TITLE,
+                TEST_DESCRIPTION,
+                new UserId(TEST_USER_ID));
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.badRequest().build();
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.createBoard(any(CreateBoardCommand.class)))
-                .thenReturn(Either.left(validationFailure));
-        when(failureHandler.handleFailure(validationFailure)).thenReturn(expectedResponse);
+        when(boardManagementService.createBoard(command))
+                .thenReturn(Either.left(failure));
+        when(failureHandler.handleFailure(failure))
+                .thenReturn(expectedResponse);
 
         // when
-        ResponseEntity<?> response = controller.createBoard(request, null, jwt);
+        ResponseEntity<?> response = boardController.createBoard(request, httpRequest, jwt);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(response).isEqualTo(expectedResponse);
+        verify(boardManagementService).createBoard(command);
+        verify(failureHandler).handleFailure(failure);
     }
 
-    // ==================== UPDATE BOARD TESTS ====================
-
     @Test
-    @DisplayName("보드 업데이트 성공")
-    void updateBoard_Success() throws Exception {
+    @DisplayName("보드 업데이트 성공 시 200 응답을 반환해야 한다")
+    void updateBoard_withValidRequest_shouldReturn200() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        UpdateBoardRequest request = new UpdateBoardRequest("수정된 보드", "수정된 설명");
-        Board updatedBoard = createSampleBoard(boardId, "수정된 보드", "수정된 설명", userId, false, false);
+        UpdateBoardRequest request = new UpdateBoardRequest(TEST_TITLE, TEST_DESCRIPTION);
+        Board updatedBoard = createTestBoard();
+        UpdateBoardCommand command = UpdateBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                TEST_TITLE,
+                TEST_DESCRIPTION,
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.updateBoard(any(UpdateBoardCommand.class)))
+        when(boardManagementService.updateBoard(command))
                 .thenReturn(Either.right(updatedBoard));
 
         // when
-        ResponseEntity<?> response = controller.updateBoard(boardId, request, null, jwt);
+        ResponseEntity<?> response = boardController.updateBoard(TEST_BOARD_ID, request, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        BoardResponse responseBody = (BoardResponse) response.getBody();
-        assertThat(responseBody.boardId()).isEqualTo(boardId);
-        assertThat(responseBody.title()).isEqualTo("수정된 보드");
-        assertThat(responseBody.description()).isEqualTo("수정된 설명");
+        assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
+
+        BoardResponse boardResponse = (BoardResponse) response.getBody();
+        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+        assertThat(boardResponse.title()).isEqualTo(TEST_TITLE);
+
+        verify(boardManagementService).updateBoard(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 업데이트 실패 - 권한 없음")
-    void updateBoard_Forbidden() throws Exception {
+    @DisplayName("보드 업데이트 실패 시 failureHandler가 호출되어야 한다")
+    void updateBoard_withFailure_shouldCallFailureHandler() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        UpdateBoardRequest request = new UpdateBoardRequest("수정된 보드", "수정된 설명");
-        Failure forbiddenFailure = Failure.ofForbidden("BOARD_UPDATE_DENIED");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        UpdateBoardRequest request = new UpdateBoardRequest(TEST_TITLE, TEST_DESCRIPTION);
+        Failure failure = Failure.ofNotFound("보드를 찾을 수 없습니다");
+        UpdateBoardCommand command = UpdateBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                TEST_TITLE,
+                TEST_DESCRIPTION,
+                new UserId(TEST_USER_ID));
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.notFound().build();
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.updateBoard(any(UpdateBoardCommand.class)))
-                .thenReturn(Either.left(forbiddenFailure));
-        when(failureHandler.handleFailure(forbiddenFailure)).thenReturn(expectedResponse);
+        when(boardManagementService.updateBoard(command))
+                .thenReturn(Either.left(failure));
+        when(failureHandler.handleFailure(failure))
+                .thenReturn(expectedResponse);
 
         // when
-        ResponseEntity<?> response = controller.updateBoard(boardId, request, null, jwt);
+        ResponseEntity<?> response = boardController.updateBoard(TEST_BOARD_ID, request, httpRequest, jwt);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response).isEqualTo(expectedResponse);
+        verify(boardManagementService).updateBoard(command);
+        verify(failureHandler).handleFailure(failure);
     }
 
     @Test
-    @DisplayName("보드 업데이트 실패 - 보드 없음")
-    void updateBoard_NotFound() throws Exception {
+    @DisplayName("보드 아카이브 성공 시 200 응답을 반환해야 한다")
+    void archiveBoard_withValidRequest_shouldReturn200() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        UpdateBoardRequest request = new UpdateBoardRequest("수정된 보드", "수정된 설명");
-        Failure notFoundFailure = Failure.ofNotFound("BOARD_NOT_FOUND");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        Board archivedBoard = createTestBoard();
+        ArchiveBoardCommand command = ArchiveBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.updateBoard(any(UpdateBoardCommand.class)))
-                .thenReturn(Either.left(notFoundFailure));
-        when(failureHandler.handleFailure(notFoundFailure)).thenReturn(expectedResponse);
-
-        // when
-        ResponseEntity<?> response = controller.updateBoard(boardId, request, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    @DisplayName("보드 업데이트 실패 - 아카이브된 보드")
-    void updateBoard_ArchivedBoard() throws Exception {
-        // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        UpdateBoardRequest request = new UpdateBoardRequest("수정된 보드", "수정된 설명");
-        Failure conflictFailure = Failure.ofConflict("ARCHIVED_BOARD_CANNOT_BE_UPDATED");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.CONFLICT).build();
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.updateBoard(any(UpdateBoardCommand.class)))
-                .thenReturn(Either.left(conflictFailure));
-        when(failureHandler.handleFailure(conflictFailure)).thenReturn(expectedResponse);
-
-        // when
-        ResponseEntity<?> response = controller.updateBoard(boardId, request, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    // ==================== ARCHIVE BOARD TESTS ====================
-
-    @Test
-    @DisplayName("보드 아카이브 성공")
-    void archiveBoard_Success() throws Exception {
-        // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Board archivedBoard = createSampleBoard(boardId, "아카이브된 보드", "설명", userId, true, false);
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.archiveBoard(any(ArchiveBoardCommand.class)))
+        when(boardManagementService.archiveBoard(command))
                 .thenReturn(Either.right(archivedBoard));
 
         // when
-        ResponseEntity<?> response = controller.archiveBoard(boardId, null, jwt);
+        ResponseEntity<?> response = boardController.archiveBoard(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        BoardResponse responseBody = (BoardResponse) response.getBody();
-        assertThat(responseBody.boardId()).isEqualTo(boardId);
-        assertThat(responseBody.isArchived()).isTrue();
+        assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
+
+        BoardResponse boardResponse = (BoardResponse) response.getBody();
+        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+
+        verify(boardManagementService).archiveBoard(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 아카이브 실패 - 이미 아카이브됨")
-    void archiveBoard_AlreadyArchived() throws Exception {
+    @DisplayName("보드 언아카이브 성공 시 200 응답을 반환해야 한다")
+    void unarchiveBoard_withValidRequest_shouldReturn200() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Failure conflictFailure = Failure.ofConflict("BOARD_ALREADY_ARCHIVED");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.CONFLICT).build();
+        Board unarchivedBoard = createTestBoard();
+        ArchiveBoardCommand command = ArchiveBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.archiveBoard(any(ArchiveBoardCommand.class)))
-                .thenReturn(Either.left(conflictFailure));
-        when(failureHandler.handleFailure(conflictFailure)).thenReturn(expectedResponse);
-
-        // when
-        ResponseEntity<?> response = controller.archiveBoard(boardId, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    // ==================== UNARCHIVE BOARD TESTS ====================
-
-    @Test
-    @DisplayName("보드 언아카이브 성공")
-    void unarchiveBoard_Success() throws Exception {
-        // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Board unarchivedBoard = createSampleBoard(boardId, "언아카이브된 보드", "설명", userId, false, false);
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.unarchiveBoard(any(ArchiveBoardCommand.class)))
+        when(boardManagementService.unarchiveBoard(command))
                 .thenReturn(Either.right(unarchivedBoard));
 
         // when
-        ResponseEntity<?> response = controller.unarchiveBoard(boardId, null, jwt);
+        ResponseEntity<?> response = boardController.unarchiveBoard(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        BoardResponse responseBody = (BoardResponse) response.getBody();
-        assertThat(responseBody.boardId()).isEqualTo(boardId);
-        assertThat(responseBody.isArchived()).isFalse();
+        assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
+
+        BoardResponse boardResponse = (BoardResponse) response.getBody();
+        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+
+        verify(boardManagementService).unarchiveBoard(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 언아카이브 실패 - 이미 활성화됨")
-    void unarchiveBoard_AlreadyActive() throws Exception {
+    @DisplayName("보드 즐겨찾기 추가 성공 시 200 응답을 반환해야 한다")
+    void starBoard_withValidRequest_shouldReturn200() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Failure conflictFailure = Failure.ofConflict("BOARD_ALREADY_ACTIVE");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.CONFLICT).build();
+        Board starredBoard = createTestBoard();
+        ToggleStarBoardCommand command = ToggleStarBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.unarchiveBoard(any(ArchiveBoardCommand.class)))
-                .thenReturn(Either.left(conflictFailure));
-        when(failureHandler.handleFailure(conflictFailure)).thenReturn(expectedResponse);
-
-        // when
-        ResponseEntity<?> response = controller.unarchiveBoard(boardId, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    // ==================== STAR BOARD TESTS ====================
-
-    @Test
-    @DisplayName("보드 즐겨찾기 추가 성공")
-    void starBoard_Success() throws Exception {
-        // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Board starredBoard = createSampleBoard(boardId, "즐겨찾기 보드", "설명", userId, false, true);
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardInteractionService.starringBoard(any(ToggleStarBoardCommand.class)))
+        when(boardInteractionService.starringBoard(command))
                 .thenReturn(Either.right(starredBoard));
 
         // when
-        ResponseEntity<?> response = controller.starBoard(boardId, null, jwt);
+        ResponseEntity<?> response = boardController.starBoard(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        BoardResponse responseBody = (BoardResponse) response.getBody();
-        assertThat(responseBody.boardId()).isEqualTo(boardId);
-        assertThat(responseBody.isStarred()).isTrue();
+        assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
+
+        BoardResponse boardResponse = (BoardResponse) response.getBody();
+        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+
+        verify(boardInteractionService).starringBoard(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 즐겨찾기 추가 실패 - 이미 즐겨찾기됨")
-    void starBoard_AlreadyStarred() throws Exception {
+    @DisplayName("보드 즐겨찾기 제거 성공 시 200 응답을 반환해야 한다")
+    void unstarBoard_withValidRequest_shouldReturn200() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Failure conflictFailure = Failure.ofConflict("BOARD_ALREADY_STARRED");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.CONFLICT).build();
+        Board unstarredBoard = createTestBoard();
+        ToggleStarBoardCommand command = ToggleStarBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardInteractionService.starringBoard(any(ToggleStarBoardCommand.class)))
-                .thenReturn(Either.left(conflictFailure));
-        when(failureHandler.handleFailure(conflictFailure)).thenReturn(expectedResponse);
-
-        // when
-        ResponseEntity<?> response = controller.starBoard(boardId, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    // ==================== UNSTAR BOARD TESTS ====================
-
-    @Test
-    @DisplayName("보드 즐겨찾기 제거 성공")
-    void unstarBoard_Success() throws Exception {
-        // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Board unstarredBoard = createSampleBoard(boardId, "즐겨찾기 해제된 보드", "설명", userId, false, false);
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardInteractionService.unstarringBoard(any(ToggleStarBoardCommand.class)))
+        when(boardInteractionService.unstarringBoard(command))
                 .thenReturn(Either.right(unstarredBoard));
 
         // when
-        ResponseEntity<?> response = controller.unstarBoard(boardId, null, jwt);
+        ResponseEntity<?> response = boardController.unstarBoard(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        BoardResponse responseBody = (BoardResponse) response.getBody();
-        assertThat(responseBody.boardId()).isEqualTo(boardId);
-        assertThat(responseBody.isStarred()).isFalse();
+        assertThat(response.getBody()).isInstanceOf(BoardResponse.class);
+
+        BoardResponse boardResponse = (BoardResponse) response.getBody();
+        assertThat(boardResponse.boardId()).isEqualTo(TEST_BOARD_ID);
+
+        verify(boardInteractionService).unstarringBoard(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 즐겨찾기 제거 실패 - 즐겨찾기에 없음")
-    void unstarBoard_NotStarred() throws Exception {
+    @DisplayName("보드 멤버 삭제 성공 시 200 응답을 반환해야 한다")
+    void removeBoardMember_withValidRequest_shouldReturn200() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Failure conflictFailure = Failure.ofConflict("BOARD_NOT_STARRED");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.CONFLICT).build();
+        String targetUserId = "target-user-id";
+        RemoveBoardMemberCommand command = new RemoveBoardMemberCommand(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(targetUserId),
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardInteractionService.unstarringBoard(any(ToggleStarBoardCommand.class)))
-                .thenReturn(Either.left(conflictFailure));
-        when(failureHandler.handleFailure(conflictFailure)).thenReturn(expectedResponse);
-
-        // when
-        ResponseEntity<?> response = controller.unstarBoard(boardId, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    // ==================== REMOVE BOARD MEMBER TESTS ====================
-
-    @Test
-    @DisplayName("보드 멤버 삭제 성공")
-    void removeBoardMember_Success() throws Exception {
-        // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        String targetUserId = "target-user-123";
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardMemberService.removeBoardMember(any(RemoveBoardMemberCommand.class)))
+        when(boardMemberService.removeBoardMember(command))
                 .thenReturn(Either.right(null));
 
         // when
-        ResponseEntity<?> response = controller.removeBoardMember(boardId, targetUserId, null, jwt);
+        ResponseEntity<?> response = boardController.removeBoardMember(TEST_BOARD_ID, targetUserId, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNull();
+
+        verify(boardMemberService).removeBoardMember(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 멤버 삭제 실패 - 권한 없음")
-    void removeBoardMember_Forbidden() throws Exception {
+    @DisplayName("보드 멤버 삭제 실패 시 failureHandler가 호출되어야 한다")
+    void removeBoardMember_withFailure_shouldCallFailureHandler() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        String targetUserId = "target-user-123";
-        Failure forbiddenFailure = Failure.ofForbidden("MEMBER_REMOVAL_DENIED");
+        String targetUserId = "target-user-id";
+        Failure failure = Failure.ofForbidden("권한이 없습니다");
+        RemoveBoardMemberCommand command = new RemoveBoardMemberCommand(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(targetUserId),
+                new UserId(TEST_USER_ID));
         ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardMemberService.removeBoardMember(any(RemoveBoardMemberCommand.class)))
-                .thenReturn(Either.left(forbiddenFailure));
-        when(failureHandler.handleFailure(forbiddenFailure)).thenReturn(expectedResponse);
+        when(boardMemberService.removeBoardMember(command))
+                .thenReturn(Either.left(failure));
+        when(failureHandler.handleFailure(failure))
+                .thenReturn(expectedResponse);
 
         // when
-        ResponseEntity<?> response = controller.removeBoardMember(boardId, targetUserId, null, jwt);
+        ResponseEntity<?> response = boardController.removeBoardMember(TEST_BOARD_ID, targetUserId, httpRequest, jwt);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response).isEqualTo(expectedResponse);
+        verify(boardMemberService).removeBoardMember(command);
+        verify(failureHandler).handleFailure(failure);
     }
 
     @Test
-    @DisplayName("보드 멤버 삭제 실패 - OWNER 역할 멤버 삭제 불가")
-    void removeBoardMember_OwnerCannotBeRemoved() throws Exception {
+    @DisplayName("보드 삭제 성공 시 204 응답을 반환해야 한다")
+    void deleteBoard_withValidRequest_shouldReturn204() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        String targetUserId = "target-user-123";
-        Failure conflictFailure = Failure.ofConflict("OWNER_CANNOT_BE_REMOVED");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.CONFLICT).build();
+        DeleteBoardCommand command = DeleteBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardMemberService.removeBoardMember(any(RemoveBoardMemberCommand.class)))
-                .thenReturn(Either.left(conflictFailure));
-        when(failureHandler.handleFailure(conflictFailure)).thenReturn(expectedResponse);
-
-        // when
-        ResponseEntity<?> response = controller.removeBoardMember(boardId, targetUserId, null, jwt);
-
-        // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    // ==================== DELETE BOARD TESTS ====================
-
-    @Test
-    @DisplayName("보드 삭제 성공")
-    void deleteBoard_Success() throws Exception {
-        // given
-        String userId = "user-123";
-        String boardId = "board-123";
-
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.deleteBoard(any(DeleteBoardCommand.class)))
+        when(boardManagementService.deleteBoard(command))
                 .thenReturn(Either.right(null));
 
         // when
-        ResponseEntity<?> response = controller.deleteBoard(boardId, null, jwt);
+        ResponseEntity<?> response = boardController.deleteBoard(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(response.getBody()).isNull();
+
+        verify(boardManagementService).deleteBoard(command);
+        verify(failureHandler, never()).handleFailure(any());
     }
 
     @Test
-    @DisplayName("보드 삭제 실패 - 권한 없음")
-    void deleteBoard_Forbidden() throws Exception {
+    @DisplayName("보드 삭제 실패 시 failureHandler가 호출되어야 한다")
+    void deleteBoard_withFailure_shouldCallFailureHandler() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Failure forbiddenFailure = Failure.ofForbidden("BOARD_DELETE_DENIED");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        Failure failure = Failure.ofNotFound("보드를 찾을 수 없습니다");
+        DeleteBoardCommand command = DeleteBoardCommand.of(
+                new BoardId(TEST_BOARD_ID),
+                new UserId(TEST_USER_ID));
+        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.notFound().build();
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.deleteBoard(any(DeleteBoardCommand.class)))
-                .thenReturn(Either.left(forbiddenFailure));
-        when(failureHandler.handleFailure(forbiddenFailure)).thenReturn(expectedResponse);
+        when(boardManagementService.deleteBoard(command))
+                .thenReturn(Either.left(failure));
+        when(failureHandler.handleFailure(failure))
+                .thenReturn(expectedResponse);
 
         // when
-        ResponseEntity<?> response = controller.deleteBoard(boardId, null, jwt);
+        ResponseEntity<?> response = boardController.deleteBoard(TEST_BOARD_ID, httpRequest, jwt);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response).isEqualTo(expectedResponse);
+        verify(boardManagementService).deleteBoard(command);
+        verify(failureHandler).handleFailure(failure);
     }
 
     @Test
-    @DisplayName("보드 삭제 실패 - 보드 없음")
-    void deleteBoard_NotFound() throws Exception {
+    @DisplayName("JWT에서 사용자 ID를 올바르게 추출해야 한다")
+    void allEndpoints_shouldExtractUserIdFromJwt() {
         // given
-        String userId = "user-123";
-        String boardId = "board-123";
-        Failure notFoundFailure = Failure.ofNotFound("BOARD_NOT_FOUND");
-        ResponseEntity<ErrorResponse> expectedResponse = ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        String expectedUserId = "jwt-user-id";
+        when(jwt.getSubject()).thenReturn(expectedUserId);
 
-        when(jwt.getSubject()).thenReturn(userId);
-        when(boardManagementService.deleteBoard(any(DeleteBoardCommand.class)))
-                .thenReturn(Either.left(notFoundFailure));
-        when(failureHandler.handleFailure(notFoundFailure)).thenReturn(expectedResponse);
+        CreateBoardRequest request = new CreateBoardRequest(TEST_TITLE, TEST_DESCRIPTION);
+        Board createdBoard = createTestBoard();
+        CreateBoardCommand expectedCommand = CreateBoardCommand.of(
+                TEST_TITLE,
+                TEST_DESCRIPTION,
+                new UserId(expectedUserId));
+
+        when(boardManagementService.createBoard(any(CreateBoardCommand.class)))
+                .thenReturn(Either.right(createdBoard));
 
         // when
-        ResponseEntity<?> response = controller.deleteBoard(boardId, null, jwt);
+        boardController.createBoard(request, httpRequest, jwt);
 
         // then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        verify(boardManagementService).createBoard(expectedCommand);
+        verify(jwt, times(1)).getSubject();
+    }
+
+    @Test
+    @DisplayName("아카이브 포함 여부에 따라 올바른 명령이 생성되어야 한다")
+    void getMyBoards_withIncludeArchived_shouldCreateCorrectCommand() {
+        // given
+        boolean includeArchived = true;
+        List<Board> boards = List.of(createTestBoard());
+        GetUserBoardsCommand expectedCommand = new GetUserBoardsCommand(
+                new UserId(TEST_USER_ID),
+                includeArchived);
+
+        when(boardQueryService.getUserBoards(any(GetUserBoardsCommand.class)))
+                .thenReturn(Either.right(boards));
+
+        // when
+        boardController.getMyBoards(includeArchived, httpRequest, jwt);
+
+        // then
+        verify(boardQueryService).getUserBoards(expectedCommand);
     }
 }

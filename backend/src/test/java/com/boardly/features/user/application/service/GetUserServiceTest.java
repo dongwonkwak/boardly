@@ -1,25 +1,30 @@
 package com.boardly.features.user.application.service;
 
-import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.features.user.domain.model.UserProfile;
-import com.boardly.features.user.domain.repository.UserRepository;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.domain.common.Failure;
-import io.vavr.control.Either;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.Optional;
+import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.domain.model.UserProfile;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.domain.common.Failure;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import io.vavr.control.Either;
 
 @ExtendWith(MockitoExtension.class)
 class GetUserServiceTest {
@@ -27,14 +32,14 @@ class GetUserServiceTest {
     private GetUserService getUserService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserFinder userFinder;
 
     @Mock
     private ValidationMessageResolver validationMessageResolver;
 
     @BeforeEach
     void setUp() {
-        getUserService = new GetUserService(userRepository, validationMessageResolver);
+        getUserService = new GetUserService(userFinder, validationMessageResolver);
     }
 
     private UserId createValidUserId() {
@@ -60,8 +65,8 @@ class GetUserServiceTest {
         UserId userId = createValidUserId();
         User expectedUser = createValidUser();
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(expectedUser));
+        when(userFinder.findUserOrThrow(userId))
+                .thenReturn(expectedUser);
 
         // when
         Either<Failure, User> result = getUserService.get(userId);
@@ -72,7 +77,7 @@ class GetUserServiceTest {
         assertThat(result.get().getUserId()).isEqualTo(userId);
         assertThat(result.get().getEmail()).isEqualTo("test@example.com");
 
-        verify(userRepository).findById(userId);
+        verify(userFinder).findUserOrThrow(userId);
         verify(validationMessageResolver, never()).getMessage(anyString());
     }
 
@@ -83,8 +88,8 @@ class GetUserServiceTest {
         UserId userId = createValidUserId();
         String errorMessage = "사용자를 찾을 수 없습니다";
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
+        when(userFinder.findUserOrThrow(userId))
+                .thenThrow(new UsernameNotFoundException(userId.getId()));
         when(validationMessageResolver.getMessage("validation.user.email.not.found"))
                 .thenReturn(errorMessage);
 
@@ -104,78 +109,32 @@ class GetUserServiceTest {
         Map<String, Object> context = (Map<String, Object>) notFound.getContext();
         assertThat(context.get("userId")).isEqualTo(userId.getId());
 
-        verify(userRepository).findById(userId);
+        verify(userFinder).findUserOrThrow(userId);
         verify(validationMessageResolver).getMessage("validation.user.email.not.found");
     }
 
     @Test
-    @DisplayName("데이터베이스 예외 발생 시 InternalError를 반환해야 한다")
-    void get_withDatabaseException_shouldReturnInternalError() {
+    @DisplayName("동일한 사용자 ID로 여러 번 조회 시 매번 새로운 조회가 이루어져야 한다")
+    void get_withSameUserIdMultipleTimes_shouldCallFinderEachTime() {
         // given
         UserId userId = createValidUserId();
-        String errorMessage = "데이터베이스 연결 오류";
+        User expectedUser = createValidUser();
 
-        when(userRepository.findById(userId))
-                .thenThrow(new RuntimeException(errorMessage));
+        when(userFinder.findUserOrThrow(userId))
+                .thenReturn(expectedUser);
 
-        // when
-        Either<Failure, User> result = getUserService.get(userId);
+        // when - 첫 번째 조회
+        Either<Failure, User> result1 = getUserService.get(userId);
 
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
-
-        Failure.InternalError internalError = (Failure.InternalError) result.getLeft();
-        assertThat(internalError.getMessage()).isEqualTo(errorMessage);
-        assertThat(internalError.getErrorCode()).isEqualTo("USER_QUERY_ERROR");
-        assertThat(internalError.getContext()).isNull();
-
-        verify(userRepository).findById(userId);
-        verify(validationMessageResolver, never()).getMessage(anyString());
-    }
-
-    @Test
-    @DisplayName("사용자 조회 시 로그가 기록되어야 한다")
-    void get_shouldLogErrorWhenExceptionOccurs() {
-        // given
-        UserId userId = createValidUserId();
-        String errorMessage = "데이터베이스 연결 오류";
-
-        when(userRepository.findById(userId))
-                .thenThrow(new RuntimeException(errorMessage));
-
-        // when
-        Either<Failure, User> result = getUserService.get(userId);
+        // when - 두 번째 조회
+        Either<Failure, User> result2 = getUserService.get(userId);
 
         // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft().getMessage()).isEqualTo(errorMessage);
+        assertThat(result1.isRight()).isTrue();
+        assertThat(result2.isRight()).isTrue();
+        assertThat(result1.get()).isEqualTo(result2.get());
 
-        verify(userRepository).findById(userId);
-    }
-
-    @Test
-    @DisplayName("null UserId로 조회 시 예외를 반환해야 한다")
-    void get_withNullUserId_shouldReturnInternalError() {
-        // given
-        UserId userId = null;
-        String errorMessage = "User ID cannot be null";
-
-        when(userRepository.findById(userId))
-                .thenThrow(new IllegalArgumentException(errorMessage));
-
-        // when
-        Either<Failure, User> result = getUserService.get(userId);
-
-        // then
-        assertThat(result.isLeft()).isTrue();
-        assertThat(result.getLeft()).isInstanceOf(Failure.InternalError.class);
-
-        Failure.InternalError internalError = (Failure.InternalError) result.getLeft();
-        assertThat(internalError.getMessage()).isEqualTo(errorMessage);
-        assertThat(internalError.getErrorCode()).isEqualTo("USER_QUERY_ERROR");
-        assertThat(internalError.getContext()).isNull();
-
-        verify(userRepository).findById(userId);
+        // 캐싱이 없으므로 userFinder는 매번 호출되어야 함
+        verify(userFinder, times(2)).findUserOrThrow(userId);
     }
 }

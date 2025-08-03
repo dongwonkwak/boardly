@@ -6,6 +6,7 @@ import com.boardly.features.board.application.port.input.AddBoardMemberCommand;
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
 import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.board.application.port.input.DeleteBoardCommand;
+import com.boardly.features.board.application.port.input.GetBoardDetailCommand;
 import com.boardly.features.board.application.port.input.RemoveBoardMemberCommand;
 import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
@@ -44,6 +45,10 @@ public class BoardValidator {
 
     public ValidationResult<ArchiveBoardCommand> validateArchive(ArchiveBoardCommand command) {
         return getArchiveValidator().validate(command);
+    }
+
+    public ValidationResult<GetBoardDetailCommand> validateGetDetail(GetBoardDetailCommand command) {
+        return getGetDetailValidator().validate(command);
     }
 
     // ==================== TOGGLE STAR BOARD ====================
@@ -92,6 +97,12 @@ public class BoardValidator {
         return Validator.combine(
                 commonValidationRules.boardIdRequired(ArchiveBoardCommand::boardId),
                 commonValidationRules.userIdRequired(ArchiveBoardCommand::requestedBy));
+    }
+
+    private Validator<GetBoardDetailCommand> getGetDetailValidator() {
+        return Validator.combine(
+                commonValidationRules.boardIdRequired(GetBoardDetailCommand::boardId),
+                commonValidationRules.userIdRequired(GetBoardDetailCommand::userId));
     }
 
     private Validator<ToggleStarBoardCommand> getToggleStarValidator() {

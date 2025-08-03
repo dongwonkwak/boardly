@@ -15,6 +15,7 @@ import com.boardly.features.board.application.port.input.AddBoardMemberCommand;
 import com.boardly.features.board.application.port.input.ArchiveBoardCommand;
 import com.boardly.features.board.application.port.input.CreateBoardCommand;
 import com.boardly.features.board.application.port.input.DeleteBoardCommand;
+import com.boardly.features.board.application.port.input.GetBoardDetailCommand;
 import com.boardly.features.board.application.port.input.RemoveBoardMemberCommand;
 import com.boardly.features.board.application.port.input.ToggleStarBoardCommand;
 import com.boardly.features.board.application.port.input.UpdateBoardCommand;
@@ -117,6 +118,24 @@ class BoardValidatorTest {
     }
 
     @Test
+    @DisplayName("보드 상세 조회 검증 - 성공 케이스")
+    void shouldValidateGetBoardDetailSuccessfully() {
+        // given
+        GetBoardDetailCommand command = new GetBoardDetailCommand(new BoardId("board-1"), new UserId("user-1"));
+
+        Validator<Object> mockValidator = cmd -> ValidationResult.valid(cmd);
+        when(commonValidationRules.boardIdRequired(any())).thenReturn(mockValidator);
+        when(commonValidationRules.userIdRequired(any())).thenReturn(mockValidator);
+
+        // when
+        ValidationResult<GetBoardDetailCommand> result = boardValidator.validateGetDetail(command);
+
+        // then
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.get()).isEqualTo(command);
+    }
+
+    @Test
     @DisplayName("보드 즐겨찾기 토글 검증 - 성공 케이스")
     void shouldValidateToggleStarBoardSuccessfully() {
         // given
@@ -202,6 +221,8 @@ class BoardValidatorTest {
                 new UserId("user-1"));
         DeleteBoardCommand deleteCommand = new DeleteBoardCommand(new BoardId("board-1"), new UserId("user-1"));
         ArchiveBoardCommand archiveCommand = new ArchiveBoardCommand(new BoardId("board-1"), new UserId("user-1"));
+        GetBoardDetailCommand getDetailCommand = new GetBoardDetailCommand(new BoardId("board-1"),
+                new UserId("user-1"));
         ToggleStarBoardCommand toggleCommand = new ToggleStarBoardCommand(new BoardId("board-1"), new UserId("user-1"));
         AddBoardMemberCommand addMemberCommand = new AddBoardMemberCommand(new BoardId("board-1"), new UserId("user-1"),
                 BoardRole.EDITOR, new UserId("admin-1"));
@@ -223,6 +244,7 @@ class BoardValidatorTest {
         assertThat(boardValidator.validateUpdate(updateCommand)).isNotNull();
         assertThat(boardValidator.validateDelete(deleteCommand)).isNotNull();
         assertThat(boardValidator.validateArchive(archiveCommand)).isNotNull();
+        assertThat(boardValidator.validateGetDetail(getDetailCommand)).isNotNull();
         assertThat(boardValidator.validateToggleStar(toggleCommand)).isNotNull();
         assertThat(boardValidator.validateAddMember(addMemberCommand)).isNotNull();
         assertThat(boardValidator.validateRemoveMember(removeMemberCommand)).isNotNull();

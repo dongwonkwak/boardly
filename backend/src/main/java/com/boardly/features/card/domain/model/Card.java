@@ -32,16 +32,11 @@ public class Card extends BaseEntity {
     // 담당자들 (Many-to-Many)
     private Set<CardMember> assignedMembers;
 
-    // 연관 엔티티 개수 (성능 최적화용)
-    private int commentsCount;
-    private int attachmentsCount;
-    private int labelsCount;
-
     @Builder
     private Card(CardId cardId, String title, String description, int position, ListId listId, Instant createdAt,
             Instant updatedAt, Instant dueDate, Instant startDate, boolean isArchived, CardPriority priority,
             boolean isCompleted,
-            Set<CardMember> assignedMembers, int commentsCount, int attachmentsCount, int labelsCount) {
+            Set<CardMember> assignedMembers) {
         super(createdAt, updatedAt);
         this.cardId = cardId;
         this.title = title;
@@ -51,8 +46,9 @@ public class Card extends BaseEntity {
         this.dueDate = dueDate;
         this.startDate = startDate;
         this.isArchived = isArchived;
-        this.priority = priority != null ? priority : CardPriority.MEDIUM;
+        this.priority = priority != null ? CardPriority.MEDIUM : priority;
         this.isCompleted = isCompleted;
+        this.assignedMembers = assignedMembers != null ? assignedMembers : new HashSet<>();
     }
 
     /**
@@ -73,9 +69,6 @@ public class Card extends BaseEntity {
                 .priority(CardPriority.MEDIUM)
                 .isCompleted(false)
                 .assignedMembers(new HashSet<>())
-                .commentsCount(0)
-                .attachmentsCount(0)
-                .labelsCount(0)
                 .build();
     }
 
@@ -85,8 +78,7 @@ public class Card extends BaseEntity {
     public static Card restore(CardId cardId, String title, String description, int position,
             Instant dueDate, Instant startDate, boolean archived, ListId listId, CardPriority priority,
             boolean isCompleted,
-            Set<CardMember> assignedMembers, int commentsCount,
-            int attachmentsCount, int labelsCount,
+            Set<CardMember> assignedMembers,
             Instant createdAt, Instant updatedAt) {
         return Card.builder()
                 .cardId(cardId)
@@ -100,9 +92,6 @@ public class Card extends BaseEntity {
                 .priority(priority)
                 .isCompleted(isCompleted)
                 .assignedMembers(assignedMembers != null ? assignedMembers : new HashSet<>())
-                .commentsCount(commentsCount)
-                .attachmentsCount(attachmentsCount)
-                .labelsCount(labelsCount)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();
@@ -241,60 +230,6 @@ public class Card extends BaseEntity {
     }
 
     /**
-     * 댓글 수 증가
-     */
-    public void incrementCommentsCount() {
-        this.commentsCount++;
-        markAsUpdated();
-    }
-
-    /**
-     * 댓글 수 감소
-     */
-    public void decrementCommentsCount() {
-        if (this.commentsCount > 0) {
-            this.commentsCount--;
-            markAsUpdated();
-        }
-    }
-
-    /**
-     * 첨부파일 수 증가
-     */
-    public void incrementAttachmentsCount() {
-        this.attachmentsCount++;
-        markAsUpdated();
-    }
-
-    /**
-     * 첨부파일 수 감소
-     */
-    public void decrementAttachmentsCount() {
-        if (this.attachmentsCount > 0) {
-            this.attachmentsCount--;
-            markAsUpdated();
-        }
-    }
-
-    /**
-     * 라벨 수 증가
-     */
-    public void incrementLabelsCount() {
-        this.labelsCount++;
-        markAsUpdated();
-    }
-
-    /**
-     * 라벨 수 감소
-     */
-    public void decrementLabelsCount() {
-        if (this.labelsCount > 0) {
-            this.labelsCount--;
-            markAsUpdated();
-        }
-    }
-
-    /**
      * 마감일 초과 여부 확인
      */
     public boolean isOverdue() {
@@ -336,9 +271,6 @@ public class Card extends BaseEntity {
                 .priority(priority)
                 .isCompleted(false) // 복제된 카드는 미완료 상태로 시작
                 .assignedMembers(new HashSet<>()) // 담당자는 복제하지 않음
-                .commentsCount(0)
-                .attachmentsCount(0)
-                .labelsCount(0)
                 .build();
     }
 
@@ -369,9 +301,6 @@ public class Card extends BaseEntity {
                 .priority(priority)
                 .isCompleted(false) // 복제된 카드는 미완료 상태로 시작
                 .assignedMembers(new HashSet<>()) // 담당자는 복제하지 않음
-                .commentsCount(0)
-                .attachmentsCount(0)
-                .labelsCount(0)
                 .build();
     }
 

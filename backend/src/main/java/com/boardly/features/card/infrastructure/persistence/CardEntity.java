@@ -77,16 +77,6 @@ public class CardEntity {
     @OneToMany(mappedBy = "cardId", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<CardMemberEntity> assignedMembers = new HashSet<>();
 
-    // 성능 최적화를 위한 카운트 필드들
-    @Column(name = "comments_count", nullable = false, columnDefinition = "int default 0")
-    private int commentsCount = 0;
-
-    @Column(name = "attachments_count", nullable = false, columnDefinition = "int default 0")
-    private int attachmentsCount = 0;
-
-    @Column(name = "labels_count", nullable = false, columnDefinition = "int default 0")
-    private int labelsCount = 0;
-
     @Version
     @Column(name = "version")
     private Long version;
@@ -96,8 +86,7 @@ public class CardEntity {
             int position, String listId,
             Instant dueDate, Instant startDate, boolean archived, String priority, boolean isCompleted,
             Instant createdAt, Instant updatedAt,
-            Set<CardMemberEntity> assignedMembers,
-            int commentsCount, int attachmentsCount, int labelsCount) {
+            Set<CardMemberEntity> assignedMembers) {
         this.cardId = cardId;
         this.title = title;
         this.description = description;
@@ -111,9 +100,6 @@ public class CardEntity {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.assignedMembers = assignedMembers;
-        this.commentsCount = commentsCount;
-        this.attachmentsCount = attachmentsCount;
-        this.labelsCount = labelsCount;
     }
 
     /**
@@ -136,9 +122,6 @@ public class CardEntity {
                 CardPriority.fromValue(this.priority),
                 this.isCompleted,
                 members,
-                this.commentsCount,
-                this.attachmentsCount,
-                this.labelsCount,
                 this.createdAt,
                 this.updatedAt);
     }
@@ -160,9 +143,6 @@ public class CardEntity {
                 .isCompleted(card.isCompleted())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
-                .commentsCount(card.getCommentsCount())
-                .attachmentsCount(card.getAttachmentsCount())
-                .labelsCount(card.getLabelsCount())
                 .build();
 
         card.getAssignedMembers().forEach(member -> {
@@ -186,9 +166,6 @@ public class CardEntity {
         this.isCompleted = card.isCompleted();
         this.updatedAt = Instant.now();
         updateAssignedMembers(card.getAssignedMembers());
-        this.commentsCount = card.getCommentsCount();
-        this.attachmentsCount = card.getAttachmentsCount();
-        this.labelsCount = card.getLabelsCount();
     }
 
     /**
@@ -253,60 +230,6 @@ public class CardEntity {
     public void removeMember(UserId userId) {
         assignedMembers.removeIf(member -> member.getUserId().equals(userId.getId()));
         this.updatedAt = Instant.now();
-    }
-
-    /**
-     * 댓글 수 증가
-     */
-    public void incrementCommentsCount() {
-        this.commentsCount++;
-        this.updatedAt = Instant.now();
-    }
-
-    /**
-     * 댓글 수 감소
-     */
-    public void decrementCommentsCount() {
-        if (this.commentsCount > 0) {
-            this.commentsCount--;
-            this.updatedAt = Instant.now();
-        }
-    }
-
-    /**
-     * 첨부파일 수 증가
-     */
-    public void incrementAttachmentsCount() {
-        this.attachmentsCount++;
-        this.updatedAt = Instant.now();
-    }
-
-    /**
-     * 첨부파일 수 감소
-     */
-    public void decrementAttachmentsCount() {
-        if (this.attachmentsCount > 0) {
-            this.attachmentsCount--;
-            this.updatedAt = Instant.now();
-        }
-    }
-
-    /**
-     * 라벨 수 증가
-     */
-    public void incrementLabelsCount() {
-        this.labelsCount++;
-        this.updatedAt = Instant.now();
-    }
-
-    /**
-     * 라벨 수 감소
-     */
-    public void decrementLabelsCount() {
-        if (this.labelsCount > 0) {
-            this.labelsCount--;
-            this.updatedAt = Instant.now();
-        }
     }
 
     /**

@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.boardly.features.activity.application.helper.ActivityHelper;
 import com.boardly.features.activity.domain.model.ActivityType;
 import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.boardlist.domain.model.BoardList;
+import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.card.application.port.input.DeleteCardCommand;
 import com.boardly.features.card.application.usecase.DeleteCardUseCase;
@@ -17,11 +19,10 @@ import com.boardly.features.card.application.validation.CardValidator;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.repository.CardRepository;
-import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.comment.domain.repository.CommentRepository;
+import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
-import com.boardly.features.user.domain.model.UserId;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class DeleteCardService implements DeleteCardUseCase {
     private final CardRepository cardRepository;
     private final BoardListRepository boardListRepository;
     private final BoardRepository boardRepository;
+    private final CommentRepository commentRepository;
     private final ValidationMessageResolver validationMessageResolver;
     private final ActivityHelper activityHelper;
 
@@ -127,6 +129,15 @@ public class DeleteCardService implements DeleteCardUseCase {
      * 카드 삭제를 실행합니다.
      */
     private Either<Failure, Void> executeCardDeletion(CardId cardId) {
+        // 관련 댓글 삭제
+        var commentDeleteResult = commentRepository.deleteByCardId(cardId);
+        if (commentDeleteResult.isLeft()) {
+            log.error("카드 관련 댓글 삭제 실패: cardId={}, error={}",
+                    cardId.getId(), commentDeleteResult.getLeft().getMessage());
+            return Either.left(commentDeleteResult.getLeft());
+        }
+
+        // 카드 삭제
         var deleteResult = cardRepository.delete(cardId);
         if (deleteResult.isLeft()) {
             log.error("카드 삭제 실패: cardId={}, error={}",

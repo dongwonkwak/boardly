@@ -53,9 +53,6 @@ public class CardMapper {
             : com.boardly.features.card.domain.model.CardPriority.MEDIUM,
         entity.isCompleted(),
         assignedMembers,
-        entity.getCommentsCount(),
-        entity.getAttachmentsCount(),
-        entity.getLabelsCount(),
         entity.getCreatedAt(),
         entity.getUpdatedAt());
   }

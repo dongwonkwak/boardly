@@ -3,11 +3,13 @@ package com.boardly.features.board.application.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.boardly.features.attachment.domain.repository.AttachmentRepository;
 import com.boardly.features.board.application.dto.BoardDetailDto;
 import com.boardly.features.board.application.port.input.GetBoardDetailCommand;
 import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
@@ -18,6 +20,8 @@ import com.boardly.features.board.application.usecase.GetUserBoardsUseCase;
 import com.boardly.features.board.application.validation.BoardValidator;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.comment.domain.repository.CommentRepository;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
@@ -46,6 +50,8 @@ public class BoardQueryService implements GetUserBoardsUseCase, GetBoardDetailUs
     private final GetBoardDetailPort getBoardDetailPort;
     private final ValidationMessageResolver validationMessageResolver;
     private final BoardValidator boardValidator;
+    private final CommentRepository commentRepository;
+    private final AttachmentRepository attachmentRepository;
 
     @Override
     public Either<Failure, List<Board>> getUserBoards(GetUserBoardsCommand command) {
@@ -189,6 +195,22 @@ public class BoardQueryService implements GetUserBoardsUseCase, GetBoardDetailUs
 
     private Either<Failure, BoardDetailDto> createBoardDetailDto(BoardDetailData data, GetBoardDetailCommand command) {
         try {
+            // 카드별 댓글 수와 첨부파일 수 조회
+            List<CardId> cardIds = data.cards().values().stream()
+                    .flatMap(List::stream)
+                    .map(card -> card.getCardId())
+                    .collect(Collectors.toList());
+
+            Map<CardId, Integer> cardCommentCounts = cardIds.stream()
+                    .collect(Collectors.toMap(
+                            cardId -> cardId,
+                            cardId -> commentRepository.countByCardId(cardId)));
+
+            Map<CardId, Integer> cardAttachmentCounts = cardIds.stream()
+                    .collect(Collectors.toMap(
+                            cardId -> cardId,
+                            cardId -> attachmentRepository.countByCardId(cardId)));
+
             BoardDetailDto boardDetailDto = BoardDetailDto.of(
                     data.board(),
                     data.boardLists(),
@@ -196,6 +218,8 @@ public class BoardQueryService implements GetUserBoardsUseCase, GetBoardDetailUs
                     data.labels(),
                     data.cards().values().stream().flatMap(List::stream).collect(Collectors.toList()),
                     data.cardMembers(),
+                    cardCommentCounts,
+                    cardAttachmentCounts,
                     data.users().values().stream().collect(Collectors.toList()));
 
             log.info("보드 상세 조회 완료: boardId={}", command.boardId().getId());

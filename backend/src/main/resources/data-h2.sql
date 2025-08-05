@@ -90,33 +90,20 @@ INSERT INTO labels (label_id, board_id, name, color, created_at, updated_at, ver
 -- =====================================================
 -- 6. 카드 테스트 데이터 (H2 DATEADD 함수 사용)
 -- =====================================================
-INSERT INTO cards (card_id, title, description, position, due_date, start_date, archived, priority, is_completed, list_id, comments_count, attachments_count, labels_count, created_at, updated_at, version) VALUES
--- 웹 개발 프로젝트 카드들
-('card-1', '메인 페이지 디자인', '새로운 메인 페이지 디자인 작업', 1, DATEADD('DAY', 7, NOW()), DATEADD('DAY', -2, NOW()), FALSE, 'high', FALSE, 'list-1', 2, 0, 2, NOW(), NOW(), 0),
-('card-2', '로그인 기능 구현', '사용자 로그인/로그아웃 기능 개발', 2, DATEADD('DAY', 3, NOW()), DATEADD('DAY', -1, NOW()), FALSE, 'urgent', FALSE, 'list-1', 1, 0, 1, NOW(), NOW(), 0),
-('card-3', '데이터베이스 설계', '프로젝트 데이터베이스 스키마 설계', 1, NULL, DATEADD('DAY', -3, NOW()), FALSE, 'medium', TRUE, 'list-2', 0, 0, 1, NOW(), NOW(), 0),
-('card-4', 'API 문서 작성', 'REST API 문서화 작업', 2, DATEADD('DAY', 5, NOW()), DATEADD('DAY', -1, NOW()), FALSE, 'medium', FALSE, 'list-2', 3, 0, 0, NOW(), NOW(), 0),
-('card-5', '보안 테스트', '웹사이트 보안 취약점 테스트', 1, NULL, DATEADD('DAY', -5, NOW()), FALSE, 'high', FALSE, 'list-3', 1, 0, 2, NOW(), NOW(), 0),
-('card-6', '배포 환경 구축', '프로덕션 서버 환경 구축', 1, NULL, DATEADD('DAY', -7, NOW()), FALSE, 'low', TRUE, 'list-4', 0, 0, 0, NOW(), NOW(), 0),
-
--- 모바일 앱 개발 카드들
-('card-7', '앱 와이어프레임', '모바일 앱 화면 구성 설계', 1, DATEADD('DAY', 10, NOW()), DATEADD('DAY', -4, NOW()), FALSE, 'medium', FALSE, 'list-5', 2, 0, 1, NOW(), NOW(), 0),
-('card-8', '사용자 스토리 작성', '앱 기능별 사용자 스토리 정리', 2, NULL, DATEADD('DAY', -2, NOW()), FALSE, 'low', TRUE, 'list-5', 0, 0, 0, NOW(), NOW(), 0),
-('card-9', 'iOS 네이티브 개발', 'iOS 앱 네이티브 개발', 1, DATEADD('DAY', 14, NOW()), DATEADD('DAY', -6, NOW()), FALSE, 'high', FALSE, 'list-7', 1, 0, 1, NOW(), NOW(), 0),
-('card-10', 'Android 개발', 'Android 앱 개발', 2, DATEADD('DAY', 14, NOW()), DATEADD('DAY', -6, NOW()), FALSE, 'high', FALSE, 'list-7', 0, 0, 1, NOW(), NOW(), 0),
-
--- 마케팅 캠페인 카드들
-('card-11', 'SNS 콘텐츠 기획', '인스타그램, 페이스북 콘텐츠 기획', 1, DATEADD('DAY', 2, NOW()), DATEADD('DAY', -1, NOW()), FALSE, 'urgent', FALSE, 'list-9', 1, 0, 1, NOW(), NOW(), 0),
-('card-12', '이메일 템플릿 제작', '뉴스레터 이메일 템플릿 디자인', 1, NULL, DATEADD('DAY', -3, NOW()), FALSE, 'medium', FALSE, 'list-10', 0, 0, 1, NOW(), NOW(), 0),
-
--- 시작일/마감일이 null인 카드들 (테스트용)
-('card-14', '아이디어 브레인스토밍', '새로운 기능 아이디어 수집', 3, NULL, NULL, FALSE, 'low', FALSE, 'list-1', 0, 0, 0, NOW(), NOW(), 0),
-('card-15', '문서 정리', '프로젝트 문서 정리 작업', 4, NULL, NULL, FALSE, 'medium', FALSE, 'list-1', 0, 0, 0, NOW(), NOW(), 0),
-('card-16', '회의 준비', '다음 회의 자료 준비', 5, DATEADD('DAY', 1, NOW()), NULL, FALSE, 'high', FALSE, 'list-2', 0, 0, 0, NOW(), NOW(), 0),
-('card-17', '코드 리뷰', '팀원 코드 리뷰', 3, NULL, DATEADD('DAY', -1, NOW()), FALSE, 'medium', FALSE, 'list-2', 0, 0, 0, NOW(), NOW(), 0),
-('card-18', '테스트 케이스 작성', '단위 테스트 케이스 작성', 2, NULL, NULL, FALSE, 'low', FALSE, 'list-5', 0, 0, 0, NOW(), NOW(), 0),
-('card-19', '성능 최적화', '앱 성능 최적화 작업', 3, DATEADD('DAY', 5, NOW()), NULL, FALSE, 'high', FALSE, 'list-7', 0, 0, 0, NOW(), NOW(), 0),
-('card-20', '사용자 피드백 수집', '사용자 피드백 수집 및 분석', 2, NULL, NULL, FALSE, 'medium', FALSE, 'list-9', 0, 0, 0, NOW(), NOW(), 0);
+-- 카드 데이터
+INSERT INTO cards (card_id, title, description, position, due_date, archived, list_id, created_at, updated_at, version) VALUES
+('card-1', '메인 페이지 디자인', '사용자 인터페이스 디자인 작업', 1, DATEADD('DAY', 7, NOW()), false, 'list-1', NOW(), NOW(), 0),
+('card-2', '데이터베이스 설계', 'ERD 작성 및 테이블 설계', 2, DATEADD('DAY', 5, NOW()), false, 'list-1', NOW(), NOW(), 0),
+('card-3', 'API 개발', 'RESTful API 엔드포인트 구현', 3, DATEADD('DAY', 10, NOW()), false, 'list-1', NOW(), NOW(), 0),
+('card-4', '단위 테스트 작성', '핵심 기능에 대한 단위 테스트', 1, DATEADD('DAY', 3, NOW()), false, 'list-2', NOW(), NOW(), 0),
+('card-5', '보안 테스트', '인증 및 권한 검증', 2, DATEADD('DAY', 5, NOW()), false, 'list-2', NOW(), NOW(), 0),
+('card-6', '성능 최적화', '데이터베이스 쿼리 최적화', 3, DATEADD('DAY', 8, NOW()), false, 'list-2', NOW(), NOW(), 0),
+('card-7', '사용자 매뉴얼 작성', '시스템 사용법 가이드', 1, DATEADD('DAY', 2, NOW()), false, 'list-3', NOW(), NOW(), 0),
+('card-8', '배포 준비', '프로덕션 환경 배포 준비', 2, DATEADD('DAY', 1, NOW()), false, 'list-3', NOW(), NOW(), 0),
+('card-9', '모니터링 설정', '시스템 모니터링 도구 설정', 3, DATEADD('DAY', 4, NOW()), false, 'list-3', NOW(), NOW(), 0),
+('card-10', 'Android 개발', '모바일 앱 개발', 1, DATEADD('DAY', 15, NOW()), false, 'list-4', NOW(), NOW(), 0),
+('card-11', 'SNS 콘텐츠 기획', '소셜미디어 마케팅 콘텐츠', 1, DATEADD('DAY', 3, NOW()), false, 'list-5', NOW(), NOW(), 0),
+('card-12', '브랜드 가이드라인', '브랜드 아이덴티티 가이드', 2, DATEADD('DAY', 7, NOW()), false, 'list-5', NOW(), NOW(), 0);
 
 -- =====================================================
 -- 7. 카드 멤버 테스트 데이터 (카드 담당자)
@@ -197,27 +184,15 @@ INSERT INTO user_activity (activity_id, actor_id, board_id, list_id, card_id, ac
 ('activity-19', 'user-2', 'board-2', NULL, 'card-10', 'CARD_UPDATE_DESCRIPTION', 'Jane', 'Smith', NULL, '{"cardTitle": "Android 개발"}', DATEADD('HOUR', -1, NOW())),
 ('activity-20', 'user-5', 'board-3', NULL, 'card-11', 'CARD_ADD_COMMENT', 'David', 'Brown', NULL, '{"cardTitle": "SNS 콘텐츠 기획"}', DATEADD('MINUTE', -30, NOW()));
 
--- =====================================================
--- 데이터 일관성 업데이트
--- =====================================================
 
--- 카드의 댓글 수 업데이트
-UPDATE cards SET comments_count = (
-    SELECT COUNT(*) FROM comments WHERE comments.card_id = cards.card_id
-);
-
--- 카드의 라벨 수 업데이트  
-UPDATE cards SET labels_count = (
-    SELECT COUNT(*) FROM card_labels WHERE card_labels.card_id = cards.card_id
-);
 
 -- 보드 리스트의 위치 정렬 확인을 위한 추가 데이터
 INSERT INTO board_lists (list_id, title, description, position, color, board_id, created_at, updated_at, version) VALUES
 ('list-12', '아카이브', '완료된 오래된 작업들', 5, '#95A5A6', 'board-1', NOW(), NOW(), 0);
 
 -- 아카이브된 카드 예시
-INSERT INTO cards (card_id, title, description, position, due_date, start_date, archived, priority, is_completed, list_id, comments_count, attachments_count, labels_count, created_at, updated_at, version) VALUES
-('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, DATEADD('DAY', -15, NOW()), TRUE, 'low', TRUE, 'list-12', 0, 0, 0, DATEADD('DAY', -10, NOW()), NOW(), 0);
+INSERT INTO cards (card_id, title, description, position, due_date, archived, list_id, created_at, updated_at, version) VALUES
+('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, TRUE, 'list-12', DATEADD('DAY', -10, NOW()), NOW(), 0);
 
 -- 추가 보드 멤버 권한 예시
 INSERT INTO board_members (member_id, board_id, user_id, role, is_active, created_at, updated_at, version) VALUES

@@ -38,6 +38,8 @@ import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.comment.domain.repository.CommentRepository;
+import com.boardly.features.attachment.domain.repository.AttachmentRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
@@ -64,6 +66,12 @@ class BoardQueryServiceTest {
         @Mock
         private BoardValidator boardValidator;
 
+        @Mock
+        private CommentRepository commentRepository;
+
+        @Mock
+        private AttachmentRepository attachmentRepository;
+
         private BoardQueryService boardQueryService;
 
         @BeforeEach
@@ -73,7 +81,9 @@ class BoardQueryServiceTest {
                                 userFinder,
                                 getBoardDetailPort,
                                 validationMessageResolver,
-                                boardValidator);
+                                boardValidator,
+                                commentRepository,
+                                attachmentRepository);
         }
 
         // ==================== HELPER METHODS ====================

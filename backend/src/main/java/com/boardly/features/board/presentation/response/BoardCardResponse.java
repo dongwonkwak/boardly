@@ -55,18 +55,21 @@ public record BoardCardResponse(
     /**
      * Card 도메인 모델을 BoardCardResponse로 변환합니다.
      * 
-     * @param card          변환할 Card 도메인 모델
-     * @param labels        라벨 목록
-     * @param assignees     담당자 목록
-     * @param createdBy     생성자 정보
-     * @param completedBy   완료자 정보
-     * @param lastCommentAt 마지막 댓글 시간
-     * @param completedAt   완료 시간
+     * @param card            변환할 Card 도메인 모델
+     * @param labels          라벨 목록
+     * @param assignees       담당자 목록
+     * @param createdBy       생성자 정보
+     * @param completedBy     완료자 정보
+     * @param lastCommentAt   마지막 댓글 시간
+     * @param completedAt     완료 시간
+     * @param commentCount    댓글 개수
+     * @param attachmentCount 첨부파일 개수
      * @return BoardCardResponse 객체
      */
     public static BoardCardResponse from(Card card, List<CardLabelResponse> labels,
             List<CardAssigneeResponse> assignees, CardUserResponse createdBy,
-            CardUserResponse completedBy, Instant lastCommentAt, Instant completedAt) {
+            CardUserResponse completedBy, Instant lastCommentAt, Instant completedAt,
+            int commentCount, int attachmentCount) {
         return new BoardCardResponse(
                 card.getCardId().getId(),
                 card.getTitle(),
@@ -79,8 +82,8 @@ public record BoardCardResponse(
                 card.getStartDate(),
                 labels,
                 assignees,
-                card.getAttachmentsCount(),
-                card.getCommentsCount(),
+                attachmentCount,
+                commentCount,
                 lastCommentAt,
                 createdBy,
                 card.getCreatedAt(),

@@ -8,9 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.boardly.features.activity.application.helper.ActivityHelper;
 import com.boardly.features.activity.domain.model.ActivityType;
+import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.domain.model.BoardList;
+import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.comment.application.port.input.CreateCommentCommand;
 import com.boardly.features.comment.application.usecase.CreateCommentUseCase;
@@ -19,9 +22,6 @@ import com.boardly.features.comment.domain.model.Comment;
 import com.boardly.features.comment.domain.repository.CommentRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.board.domain.repository.BoardRepository;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -139,6 +139,7 @@ public class CommentCreateService implements CreateCommentUseCase {
             return Either.left(Failure.ofInternalServerError(
                     validationMessageResolver.getMessage("error.service.comment.create.save.failed")));
         }
+
         return saveResult;
     }
 

@@ -63,7 +63,9 @@ public record BoardDetailResponse(
 
                                         List<BoardCardResponse> cardResponses = listCards.stream()
                                                         .map(card -> convertToBoardCardResponse(card, userMap,
-                                                                        boardDetailDto.cardMembers()))
+                                                                        boardDetailDto.cardMembers(),
+                                                                        boardDetailDto.cardCommentCounts(),
+                                                                        boardDetailDto.cardAttachmentCounts()))
                                                         .collect(Collectors.toList());
 
                                         return BoardColumnResponse.from(boardList, cardResponses);
@@ -103,7 +105,9 @@ public record BoardDetailResponse(
         private static BoardCardResponse convertToBoardCardResponse(
                         com.boardly.features.card.domain.model.Card card,
                         Map<String, com.boardly.features.user.domain.model.User> userMap,
-                        Map<com.boardly.features.card.domain.model.CardId, List<com.boardly.features.card.domain.valueobject.CardMember>> cardMembers) {
+                        Map<com.boardly.features.card.domain.model.CardId, List<com.boardly.features.card.domain.valueobject.CardMember>> cardMembers,
+                        Map<com.boardly.features.card.domain.model.CardId, Integer> cardCommentCounts,
+                        Map<com.boardly.features.card.domain.model.CardId, Integer> cardAttachmentCounts) {
 
                 // 실제 구현에서는 카드별 라벨, 담당자, 댓글 정보 등을 조회해야 함
                 List<CardLabelResponse> labels = List.of(); // 임시 빈 리스트
@@ -130,7 +134,12 @@ public record BoardDetailResponse(
                 CardUserResponse createdBy = CardUserResponse.of("unknown", "Unknown", "User");
                 CardUserResponse completedBy = null; // 완료되지 않은 카드
 
-                return BoardCardResponse.from(card, labels, assignees, createdBy, completedBy, null, null);
+                // 댓글 수와 첨부파일 수 조회
+                int commentCount = cardCommentCounts.getOrDefault(card.getCardId(), 0);
+                int attachmentCount = cardAttachmentCounts.getOrDefault(card.getCardId(), 0);
+
+                return BoardCardResponse.from(card, labels, assignees, createdBy, completedBy, null, null, commentCount,
+                                attachmentCount);
         }
 
         /**

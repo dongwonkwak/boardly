@@ -6,20 +6,26 @@ import java.util.Map;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.boardly.features.activity.domain.model.Activity;
+import com.boardly.features.activity.domain.model.ActivityId;
 import com.boardly.features.activity.domain.model.ActivityType;
 import com.boardly.features.activity.domain.model.Actor;
 import com.boardly.features.activity.domain.model.Payload;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.activity.domain.model.ActivityId;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -105,7 +111,7 @@ public class ActivityEntity {
                     new TypeReference<Map<String, Object>>() {
                     });
 
-            var actor = Actor.of(activityId, actorFirstName, actorLastName, actorProfileImageUrl);
+            var actor = Actor.of(actorId, actorFirstName, actorLastName, actorProfileImageUrl);
             var payloadObj = new Payload(payloadData);
 
             return Activity.builder()

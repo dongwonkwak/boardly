@@ -5,15 +5,15 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.boardly.features.card.domain.repository.CardRepository;
+import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.shared.domain.common.Failure;
 
+import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import io.vavr.control.Either;
 
 @Slf4j
 @Repository
@@ -59,7 +59,7 @@ public class CardRepositoryImpl implements CardRepository {
   @Override
   public List<Card> findByListIdOrderByPosition(ListId listId) {
     log.debug("리스트 ID로 카드 조회 시작 (위치 순서): listId={}", listId.getId());
-    var entities = cardJpaRepository.findByListIdOrderByPosition(listId.getId());
+    var entities = cardJpaRepository.findByListIdOrderByPositionWithMembers(listId.getId());
     var cards = entities.stream()
         .map(cardMapper::toDomain)
         .toList();
@@ -71,7 +71,7 @@ public class CardRepositoryImpl implements CardRepository {
   @Override
   public List<Card> findByListId(ListId listId) {
     log.debug("리스트 ID로 카드 조회 시작: listId={}", listId.getId());
-    var entities = cardJpaRepository.findByListId(listId.getId());
+    var entities = cardJpaRepository.findByListIdWithMembers(listId.getId());
     var cards = entities.stream()
         .map(cardMapper::toDomain)
         .toList();
@@ -84,7 +84,7 @@ public class CardRepositoryImpl implements CardRepository {
   public List<Card> findByListIdAndPositionGreaterThan(ListId listId, int position) {
     log.debug("리스트 ID와 위치로 카드 조회 시작: listId={}, position={}",
         listId.getId(), position);
-    var entities = cardJpaRepository.findByListIdAndPositionGreaterThan(listId.getId(), position);
+    var entities = cardJpaRepository.findByListIdAndPositionGreaterThanWithMembers(listId.getId(), position);
     var cards = entities.stream()
         .map(cardMapper::toDomain)
         .toList();
@@ -97,7 +97,8 @@ public class CardRepositoryImpl implements CardRepository {
   public List<Card> findByListIdAndPositionBetween(ListId listId, int startPosition, int endPosition) {
     log.debug("리스트 ID와 위치 범위로 카드 조회 시작: listId={}, startPosition={}, endPosition={}",
         listId.getId(), startPosition, endPosition);
-    var entities = cardJpaRepository.findByListIdAndPositionBetween(listId.getId(), startPosition, endPosition);
+    var entities = cardJpaRepository.findByListIdAndPositionBetweenWithMembers(listId.getId(), startPosition,
+        endPosition);
     var cards = entities.stream()
         .map(cardMapper::toDomain)
         .toList();
@@ -146,7 +147,7 @@ public class CardRepositoryImpl implements CardRepository {
   public List<Card> findByListIdAndTitleContaining(ListId listId, String title) {
     log.debug("리스트 ID와 제목으로 카드 조회 시작: listId={}, title={}",
         listId.getId(), title);
-    var entities = cardJpaRepository.findByListIdAndTitleContaining(listId.getId(), title);
+    var entities = cardJpaRepository.findByListIdAndTitleContainingWithMembers(listId.getId(), title);
     var cards = entities.stream()
         .map(cardMapper::toDomain)
         .toList();
@@ -213,10 +214,12 @@ public class CardRepositoryImpl implements CardRepository {
     var listIdStrings = listIds.stream()
         .map(ListId::getId)
         .toList();
-    var entities = cardJpaRepository.findByListIdIn(listIdStrings);
+    var entities = cardJpaRepository.findByListIdInWithMembers(listIdStrings);
+
     var cards = entities.stream()
         .map(cardMapper::toDomain)
         .toList();
+
     log.debug("여러 리스트의 카드들 조회 완료: 카드 개수={}", cards.size());
     return cards;
   }

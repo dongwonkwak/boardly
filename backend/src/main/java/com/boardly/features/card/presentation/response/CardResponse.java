@@ -1,7 +1,8 @@
 package com.boardly.features.card.presentation.response;
 
-import com.boardly.features.card.domain.model.Card;
 import java.time.Instant;
+
+import com.boardly.features.card.domain.model.Card;
 
 /**
  * 카드 응답 DTO
@@ -12,6 +13,7 @@ public record CardResponse(
         String description,
         int position,
         String listId,
+        String priority,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -25,6 +27,7 @@ public record CardResponse(
                 card.getDescription(),
                 card.getPosition(),
                 card.getListId().getId(),
+                card.getPriority() != null ? card.getPriority().getValue() : null,
                 card.getCreatedAt(),
                 card.getUpdatedAt());
     }

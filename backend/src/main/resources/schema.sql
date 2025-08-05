@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS cards (
     due_date TIMESTAMP,
     start_date TIMESTAMP,
     archived BOOLEAN NOT NULL DEFAULT FALSE,
-    priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+    priority VARCHAR(20),
     is_completed BOOLEAN NOT NULL DEFAULT FALSE,
     list_id VARCHAR(50) NOT NULL,
     created_at TIMESTAMP NOT NULL,

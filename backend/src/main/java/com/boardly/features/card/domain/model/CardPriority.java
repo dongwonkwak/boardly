@@ -22,11 +22,20 @@ public enum CardPriority {
     }
 
     public static CardPriority fromValue(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        // 공백 제거 및 소문자 변환
+        String normalizedValue = value.trim().toLowerCase();
+
         for (CardPriority priority : values()) {
-            if (priority.value.equals(value)) {
+            if (priority.getValue().equals(normalizedValue)) {
                 return priority;
             }
         }
-        return MEDIUM; // 기본값
+
+        // 매칭되지 않으면 null 반환 (기본값 대신)
+        return null;
     }
 }

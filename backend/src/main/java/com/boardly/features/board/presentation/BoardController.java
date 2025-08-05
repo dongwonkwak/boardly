@@ -135,7 +135,9 @@ public class BoardController {
         return result.fold(
                 failureHandler::handleFailure,
                 boardDetailDto -> {
-                    log.info("보드 상세 조회 성공: boardId={}, userId={}", boardId, userId);
+                    log.info("보드 상세 조회 성공: boardId={}, userId={}, boardTitle={}",
+                            boardId, userId, boardDetailDto.board().getTitle());
+
                     BoardDetailResponse response = BoardDetailResponse.from(boardDetailDto);
                     return ResponseEntity.ok(response);
                 });

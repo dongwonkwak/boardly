@@ -46,7 +46,7 @@ public class Card extends BaseEntity {
         this.dueDate = dueDate;
         this.startDate = startDate;
         this.isArchived = isArchived;
-        this.priority = priority != null ? CardPriority.MEDIUM : priority;
+        this.priority = priority; // 수정: priority를 그대로 설정
         this.isCompleted = isCompleted;
         this.assignedMembers = assignedMembers != null ? assignedMembers : new HashSet<>();
     }
@@ -66,7 +66,7 @@ public class Card extends BaseEntity {
                 .dueDate(null)
                 .startDate(null)
                 .isArchived(false)
-                .priority(CardPriority.MEDIUM)
+                .priority(null)
                 .isCompleted(false)
                 .assignedMembers(new HashSet<>())
                 .build();
@@ -80,6 +80,7 @@ public class Card extends BaseEntity {
             boolean isCompleted,
             Set<CardMember> assignedMembers,
             Instant createdAt, Instant updatedAt) {
+
         return Card.builder()
                 .cardId(cardId)
                 .title(title)
@@ -190,7 +191,7 @@ public class Card extends BaseEntity {
      * 카드 우선순위를 설정합니다.
      */
     public void setPriority(CardPriority priority) {
-        this.priority = priority != null ? priority : CardPriority.MEDIUM;
+        this.priority = priority;
         markAsUpdated();
     }
 

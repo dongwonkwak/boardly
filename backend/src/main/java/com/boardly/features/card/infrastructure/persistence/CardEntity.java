@@ -58,8 +58,8 @@ public class CardEntity {
     @Column(name = "archived", nullable = false, columnDefinition = "boolean default false")
     private boolean archived = false;
 
-    @Column(name = "priority", nullable = false, length = 20, columnDefinition = "varchar(20) default 'medium'")
-    private String priority = "medium";
+    @Column(name = "priority", length = 20)
+    private String priority;
 
     @Column(name = "is_completed", nullable = false, columnDefinition = "boolean default false")
     private boolean isCompleted = false;
@@ -95,7 +95,7 @@ public class CardEntity {
         this.dueDate = dueDate;
         this.startDate = startDate;
         this.archived = archived;
-        this.priority = priority != null ? priority : "medium";
+        this.priority = priority;
         this.isCompleted = isCompleted;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -139,7 +139,7 @@ public class CardEntity {
                 .dueDate(card.getDueDate())
                 .startDate(card.getStartDate())
                 .archived(card.isArchived())
-                .priority(card.getPriority().getValue())
+                .priority(card.getPriority() != null ? card.getPriority().getValue() : null)
                 .isCompleted(card.isCompleted())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
@@ -162,7 +162,7 @@ public class CardEntity {
         this.listId = card.getListId().getId();
         this.dueDate = card.getDueDate();
         this.startDate = card.getStartDate();
-        this.priority = card.getPriority().getValue();
+        this.priority = card.getPriority() != null ? card.getPriority().getValue() : null;
         this.isCompleted = card.isCompleted();
         this.updatedAt = Instant.now();
         updateAssignedMembers(card.getAssignedMembers());
@@ -236,7 +236,7 @@ public class CardEntity {
      * 우선순위 업데이트
      */
     public void updatePriority(String priority) {
-        this.priority = priority != null ? priority : "medium";
+        this.priority = priority;
         this.updatedAt = Instant.now();
     }
 

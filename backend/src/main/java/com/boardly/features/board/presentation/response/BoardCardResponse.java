@@ -75,7 +75,7 @@ public record BoardCardResponse(
                 card.getTitle(),
                 card.getDescription(),
                 card.getPosition(),
-                card.getPriority().getValue(),
+                card.getPriority() != null ? card.getPriority().getValue() : null,
                 card.isCompleted(),
                 card.isArchived(),
                 card.getDueDate(),

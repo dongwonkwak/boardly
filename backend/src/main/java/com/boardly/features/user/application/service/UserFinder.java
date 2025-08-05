@@ -27,10 +27,14 @@ public class UserFinder {
                 .orElseThrow(() -> new UsernameNotFoundException(userId.getId()));
     }
 
-    @Cacheable(value = "userExists", key = "#userId.id", unless = "#result == false")
     public boolean checkUserExists(UserId userId) {
         log.info("사용자 존재 확인: userId={}", userId.getId());
-        return userRepository.findById(userId).isPresent();
+        try {
+            findUserOrThrow(userId);
+            return true;
+        } catch (UsernameNotFoundException e) {
+            return false;
+        }
     }
 
     @Cacheable(value = "userNames", key = "#userId.id")

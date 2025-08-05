@@ -7,6 +7,9 @@ import {
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import type { BoardCardResponse } from "@/services/api/client";
+import { useCurrentLanguage } from "@/store/languageStore";
+import { getCardPriorityColor } from "@/utils/cardUtils";
+import { formatDate } from "@/utils/formatDate";
 
 interface BoardCardProps {
 	card: BoardCardResponse;
@@ -19,28 +22,11 @@ export const BoardCard: React.FC<BoardCardProps> = ({
 	onClick,
 	onMore,
 }) => {
+	const currentLanguage = useCurrentLanguage();
+
 	const getInitials = (firstName?: string, lastName?: string) => {
 		if (!firstName && !lastName) return "?";
 		return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
-	};
-
-	const formatDate = (dateString?: string) => {
-		if (!dateString) return "";
-		const date = new Date(dateString);
-		return date.toLocaleDateString("ko-KR", { month: "long", day: "numeric" });
-	};
-
-	const getPriorityColor = (priority?: string) => {
-		switch (priority?.toLowerCase()) {
-			case "high":
-				return "bg-red-100 text-red-800";
-			case "medium":
-				return "bg-yellow-100 text-yellow-800";
-			case "low":
-				return "bg-green-100 text-green-800";
-			default:
-				return "bg-gray-100 text-gray-800";
-		}
 	};
 
 	return (
@@ -90,7 +76,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({
 			{card.priority && (
 				<div className="mb-3">
 					<span
-						className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(card.priority)}`}
+						className={`px-2 py-1 rounded-full text-xs font-medium ${getCardPriorityColor(card.priority)}`}
 					>
 						{card.priority}
 					</span>
@@ -104,7 +90,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({
 					{card.dueDate && (
 						<div className="flex items-center gap-1 text-xs text-gray-500">
 							<Calendar className="h-3 w-3" />
-							<span>{formatDate(card.dueDate)}</span>
+							<span>{formatDate(card.dueDate, currentLanguage)}</span>
 						</div>
 					)}
 

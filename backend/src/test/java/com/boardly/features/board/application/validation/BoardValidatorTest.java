@@ -158,7 +158,7 @@ class BoardValidatorTest {
     void shouldValidateAddBoardMemberSuccessfully() {
         // given
         AddBoardMemberCommand command = new AddBoardMemberCommand(
-                new BoardId("board-1"), new UserId("user-1"), BoardRole.EDITOR, new UserId("admin-1"));
+                new BoardId("board-1"), new UserId("user-1"), BoardRole.MEMBER, new UserId("admin-1"));
 
         Validator<Object> mockValidator = cmd -> ValidationResult.valid(cmd);
         when(commonValidationRules.boardIdRequired(any())).thenReturn(mockValidator);
@@ -225,7 +225,7 @@ class BoardValidatorTest {
                 new UserId("user-1"));
         ToggleStarBoardCommand toggleCommand = new ToggleStarBoardCommand(new BoardId("board-1"), new UserId("user-1"));
         AddBoardMemberCommand addMemberCommand = new AddBoardMemberCommand(new BoardId("board-1"), new UserId("user-1"),
-                BoardRole.EDITOR, new UserId("admin-1"));
+                BoardRole.MEMBER, new UserId("admin-1"));
         RemoveBoardMemberCommand removeMemberCommand = new RemoveBoardMemberCommand(new BoardId("board-1"),
                 new UserId("user-1"), new UserId("admin-1"));
         UpdateBoardMemberRoleCommand updateRoleCommand = new UpdateBoardMemberRoleCommand(new BoardId("board-1"),

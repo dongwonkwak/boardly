@@ -16,12 +16,7 @@ public enum BoardRole {
     ADMIN(true, true, true, false),
 
     /**
-     * 편집자 - 카드와 리스트 생성/수정 가능
-     */
-    EDITOR(true, true, false, false),
-
-    /**
-     * 멤버 - 편집자와 동일한 권한 (카드와 리스트 생성/수정 가능)
+     * 멤버 - 카드와 리스트 생성/수정 가능
      */
     MEMBER(true, true, false, false),
 
@@ -65,7 +60,7 @@ public enum BoardRole {
         return switch (this) {
             case OWNER -> 4;
             case ADMIN -> 3;
-            case EDITOR, MEMBER -> 2;
+            case MEMBER -> 2;
             case VIEWER -> 1;
         };
     }

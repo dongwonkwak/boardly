@@ -1,12 +1,21 @@
 package com.boardly.features.dashboard.application.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.boardly.features.activity.application.port.input.GetActivityQuery;
 import com.boardly.features.activity.application.port.output.ActivityResponse;
 import com.boardly.features.activity.application.service.ActivityReadService;
 import com.boardly.features.board.application.dto.BoardSummaryDto;
 import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
-import com.boardly.features.board.application.service.BoardQueryService;
 import com.boardly.features.board.application.service.BoardPermissionService;
+import com.boardly.features.board.application.service.BoardQueryService;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.model.BoardRole;
@@ -22,18 +31,11 @@ import com.boardly.features.dashboard.application.usecase.GetDashboardUseCase;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
+
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * 대시보드 서비스
@@ -351,7 +353,7 @@ public class DashboardService implements GetDashboardUseCase {
                 return "owner"; // 소유자인 경우
             }
 
-            return role.name().toLowerCase(); // ADMIN -> admin, EDITOR -> editor 등
+            return role.name().toLowerCase(); // ADMIN -> admin, MEMBER -> member 등
 
         } catch (Exception e) {
             log.warn("보드 역할 조회 중 예외 발생: boardId={}, userId={}, error={}",

@@ -1,5 +1,24 @@
 package com.boardly.features.board.application.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.model.BoardMember;
@@ -10,20 +29,8 @@ import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
+
 import io.vavr.control.Either;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BoardPermissionServiceTest {
@@ -158,7 +165,7 @@ class BoardPermissionServiceTest {
         void getUserBoardRole_InactiveBoardMember_ShouldReturnPermissionDeniedFailure() {
             // given
             Board board = createTestBoard(testBoardId, differentUserId);
-            BoardMember inactiveMember = createTestBoardMember(testBoardId, testUserId, BoardRole.EDITOR);
+            BoardMember inactiveMember = createTestBoardMember(testBoardId, testUserId, BoardRole.MEMBER);
             inactiveMember.deactivate();
 
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(board));
@@ -264,11 +271,11 @@ class BoardPermissionServiceTest {
         }
 
         @Test
-        @DisplayName("canWriteBoard - 편집자 역할 멤버는 쓰기 권한이 있어야 한다")
-        void canWriteBoard_EditorMember_ShouldReturnTrue() {
+        @DisplayName("canWriteBoard - 멤버 역할 멤버는 쓰기 권한이 있어야 한다")
+        void canWriteBoard_MemberRole_ShouldReturnTrue() {
             // given
             Board board = createTestBoard(testBoardId, differentUserId);
-            BoardMember member = createTestBoardMember(testBoardId, testUserId, BoardRole.EDITOR);
+            BoardMember member = createTestBoardMember(testBoardId, testUserId, BoardRole.MEMBER);
 
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(board));
             when(boardMemberRepository.findByBoardIdAndUserId(testBoardId, testUserId))
@@ -346,11 +353,11 @@ class BoardPermissionServiceTest {
         }
 
         @Test
-        @DisplayName("canAdminBoard - 편집자 역할 멤버는 관리 권한이 없어야 한다")
-        void canAdminBoard_EditorMember_ShouldReturnFalse() {
+        @DisplayName("canAdminBoard - 멤버 역할 멤버는 관리 권한이 없어야 한다")
+        void canAdminBoard_MemberRole_ShouldReturnFalse() {
             // given
             Board board = createTestBoard(testBoardId, differentUserId);
-            BoardMember member = createTestBoardMember(testBoardId, testUserId, BoardRole.EDITOR);
+            BoardMember member = createTestBoardMember(testBoardId, testUserId, BoardRole.MEMBER);
 
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(board));
             when(boardMemberRepository.findByBoardIdAndUserId(testBoardId, testUserId))
@@ -505,20 +512,20 @@ class BoardPermissionServiceTest {
         void permissionCheck_VariousBoardRoles_ShouldWorkCorrectly() {
             // given
             Board board = createTestBoard(testBoardId, differentUserId);
-            UserId editorUserId = new UserId();
+            UserId memberUserId = new UserId();
             UserId viewerUserId = new UserId();
 
-            BoardMember editorMember = createTestBoardMember(testBoardId, editorUserId, BoardRole.EDITOR);
+            BoardMember memberMember = createTestBoardMember(testBoardId, memberUserId, BoardRole.MEMBER);
             BoardMember viewerMember = createTestBoardMember(testBoardId, viewerUserId, BoardRole.VIEWER);
 
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(board));
 
-            // when & then - EDITOR
-            when(boardMemberRepository.findByBoardIdAndUserId(testBoardId, editorUserId))
-                    .thenReturn(Optional.of(editorMember));
-            Either<Failure, Boolean> editorResult = boardPermissionService.canWriteBoard(testBoardId, editorUserId);
-            assertThat(editorResult.isRight()).isTrue();
-            assertThat(editorResult.get()).isTrue();
+            // when & then - MEMBER
+            when(boardMemberRepository.findByBoardIdAndUserId(testBoardId, memberUserId))
+                    .thenReturn(Optional.of(memberMember));
+            Either<Failure, Boolean> memberResult = boardPermissionService.canWriteBoard(testBoardId, memberUserId);
+            assertThat(memberResult.isRight()).isTrue();
+            assertThat(memberResult.get()).isTrue();
 
             // when & then - VIEWER
             when(boardMemberRepository.findByBoardIdAndUserId(testBoardId, viewerUserId))

@@ -60,7 +60,7 @@ public record BoardMemberResponse(
         return switch (role) {
             case OWNER -> List.of("all");
             case ADMIN -> List.of("edit", "delete", "invite");
-            case EDITOR, MEMBER -> List.of("edit");
+            case MEMBER -> List.of("edit");
             case VIEWER -> List.of("read");
         };
     }

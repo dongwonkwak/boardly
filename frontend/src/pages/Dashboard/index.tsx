@@ -126,10 +126,11 @@ export default function Dashboard() {
 										givenName: oauthUser?.profile?.given_name,
 										familyName: oauthUser?.profile?.family_name,
 										email: oauthUser?.profile?.email,
+										sub: oauthUser?.profile?.sub,
 									}}
 								/>
 
-								<Activity activities={activities as any} />
+								<Activity activities={activities} />
 
 								<QuickActions
 									actions={[

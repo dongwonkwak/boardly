@@ -1,6 +1,5 @@
 import { Calendar, MessageSquare, Paperclip } from "lucide-react";
-import { useUserInitials } from "@/hooks";
-import { getUserInitials } from "@/lib/utils";
+import { Avatar } from "@/components/ui/avatar";
 import type { BoardCardResponse } from "@/services/api/client";
 import { useCurrentLanguage } from "@/store/languageStore";
 import { formatDate } from "@/utils/formatDate";
@@ -11,7 +10,6 @@ interface BoardCardFooterProps {
 
 export const BoardCardFooter: React.FC<BoardCardFooterProps> = ({ card }) => {
 	const currentLanguage = useCurrentLanguage();
-	const getUserInitialsWithLocale = useUserInitials();
 
 	return (
 		<div className="flex items-center justify-between mt-3">
@@ -46,17 +44,17 @@ export const BoardCardFooter: React.FC<BoardCardFooterProps> = ({ card }) => {
 			{card.assignees && card.assignees.length > 0 && (
 				<div className="flex items-center -space-x-1">
 					{card.assignees.slice(0, 3).map((assignee, index) => (
-						<div
+						<Avatar
 							key={assignee.userId}
-							className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium border-2 border-white shadow-sm whitespace-nowrap"
-							style={{
-								background: "linear-gradient(135deg, #2b7fff, #9810fa)",
-								zIndex: 3 - index,
-							}}
-							title={`${assignee.firstName} ${assignee.lastName}`}
-						>
-							{getUserInitialsWithLocale(assignee.firstName, assignee.lastName)}
-						</div>
+							firstName={assignee.firstName || ""}
+							lastName={assignee.lastName || ""}
+							size="sm"
+							useGradient={true}
+							gradientColors={{ from: "from-blue-500", to: "to-purple-600" }}
+							className="border-2 border-white shadow-sm"
+							style={{ zIndex: 3 - index }}
+							userId={assignee.userId}
+						/>
 					))}
 					{card.assignees.length > 3 && (
 						<div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium border-2 border-white shadow-sm">

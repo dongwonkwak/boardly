@@ -1,107 +1,104 @@
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import type { ActivityResponse } from "@/services/api/client";
 import { useLanguageStore } from "@/store/languageStore";
 import { formatTimeAgo } from "@/utils/formatDate";
-import { getAvatarBackgroundColor, getInitials } from "@/lib/utils";
 
 interface ActivityProps {
-  activities?: ActivityResponse[];
-  showViewAll?: boolean;
-  maxItems?: number;
+	activities?: ActivityResponse[];
+	showViewAll?: boolean;
+	maxItems?: number;
 }
 
-export function Activity({ 
-  activities = [], 
-  showViewAll = true, 
-  maxItems = 3 
+export function Activity({
+	activities = [],
+	showViewAll = true,
+	maxItems = 3,
 }: ActivityProps) {
-  const { t } = useTranslation('activity');
-  const { initializeLanguage, isInitialized, currentLanguage } = useLanguageStore();
-  const displayActivities = activities.slice(0, maxItems);
+	const { t } = useTranslation("activity");
+	const { initializeLanguage, isInitialized, currentLanguage } =
+		useLanguageStore();
+	const displayActivities = activities.slice(0, maxItems);
 
-  // 컴포넌트 마운트 시 언어 초기화
-  useEffect(() => {
-    if (!isInitialized) {
-      initializeLanguage();
-    }
-  }, [isInitialized, initializeLanguage]);
+	// 컴포넌트 마운트 시 언어 초기화
+	useEffect(() => {
+		if (!isInitialized) {
+			initializeLanguage();
+		}
+	}, [isInitialized, initializeLanguage]);
 
-  const getActivityMessage = (activity: ActivityResponse): string => {
-    const { type, payload, actor } = activity;
-    
-    // payload에 actor 정보 추가
-    const translationParams = {
-      ...payload,
-      actorFirstName: actor?.firstName,
-      actorLastName: actor?.lastName,
-    };
-    
-    return t(type || '', translationParams);
-  };
+	const getActivityMessage = (activity: ActivityResponse): string => {
+		const { type, payload, actor } = activity;
 
-  // 현재 언어에 따른 locale 설정
-  const getLocale = (): string => {
-    switch (currentLanguage) {
-      case 'ko':
-        return 'ko-KR';
-      case 'en':
-        return 'en-US';
-      default:
-        return 'en-US';
-    }
-  };
+		// payload에 actor 정보 추가
+		const translationParams = {
+			...payload,
+			actorFirstName: actor?.firstName,
+			actorLastName: actor?.lastName,
+		};
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h3 className="font-semibold text-gray-900 mb-4">{t('recentActivity')}</h3>
-      
-      {displayActivities.length === 0 ? (
-        <div className="text-center py-8">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <span className="text-gray-400 text-lg">📝</span>
-          </div>
-          <p className="text-sm text-gray-500">{t('noActivities')}</p>
-        </div>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {displayActivities.map((activity) => {
-              const message = getActivityMessage(activity);
-              const timeAgo = formatTimeAgo(activity.timestamp || '', getLocale());
-              
-              return (
-                <div key={activity.id} className="flex space-x-3">
-                  <div className="flex-shrink-0">
-                    <div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium ${getAvatarBackgroundColor(activity.actor?.id || 'default')}`}
-                    >
-                      {getInitials(activity.actor?.firstName)}
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">{message}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-blue-600">{activity.boardName || t('unknownBoard')}</span>
-                      <span className="text-xs text-gray-500">{timeAgo}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-          {showViewAll && activities.length > maxItems && (
-            <Button 
-              variant="ghost" 
-              className="w-full mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              {t('viewAllActivities')}
-            </Button>
-          )}
-        </>
-      )}
-    </div>
-  );
-} 
+		return t(type || "", translationParams);
+	};
+
+	return (
+		<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+			<h3 className="font-semibold text-gray-900 mb-4">
+				{t("recentActivity")}
+			</h3>
+
+			{displayActivities.length === 0 ? (
+				<div className="text-center py-8">
+					<div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+						<span className="text-gray-400 text-lg">📝</span>
+					</div>
+					<p className="text-sm text-gray-500">{t("noActivities")}</p>
+				</div>
+			) : (
+				<>
+					<div className="space-y-4">
+						{displayActivities.map((activity) => {
+							const message = getActivityMessage(activity);
+							const timeAgo = formatTimeAgo(
+								activity.timestamp || "",
+								currentLanguage,
+							);
+
+							return (
+								<div key={activity.id} className="flex space-x-3">
+									<div className="flex-shrink-0">
+										<Avatar
+											firstName={activity.actor?.firstName || ""}
+											lastName={activity.actor?.lastName || ""}
+											size="sm"
+											userId={activity.actor?.id}
+										/>
+									</div>
+									<div className="flex-1 min-w-0">
+										<p className="text-sm text-gray-900">{message}</p>
+										<div className="flex items-center justify-between mt-1">
+											<span className="text-xs text-blue-600">
+												{activity.boardName || t("unknownBoard")}
+											</span>
+											<span className="text-xs text-gray-500">{timeAgo}</span>
+										</div>
+									</div>
+								</div>
+							);
+						})}
+					</div>
+
+					{showViewAll && activities.length > maxItems && (
+						<Button
+							variant="ghost"
+							className="w-full mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
+						>
+							{t("viewAllActivities")}
+						</Button>
+					)}
+				</>
+			)}
+		</div>
+	);
+}

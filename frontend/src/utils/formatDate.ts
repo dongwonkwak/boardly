@@ -1,8 +1,9 @@
 // Intl.RelativeTimeFormat을 사용한 국제화된 상대적 시간 포맷팅 함수
-export const formatTimeAgo = (timestamp: string, locale: string): string => {
+export const formatTimeAgo = (timestamp: string, language: string): string => {
 	const now = new Date();
 	const date = new Date(timestamp);
 	const diffInMs = now.getTime() - date.getTime();
+	const locale = getLocale(language);
 
 	// 1분 미만
 	if (diffInMs < 60 * 1000) {

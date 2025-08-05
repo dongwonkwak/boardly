@@ -3,9 +3,7 @@ import type React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useUserInitials } from "@/hooks";
-import { getUserInitials } from "@/lib/utils";
 import type { BoardDetailResponse } from "@/services/api/client";
-import { useCurrentLanguage } from "@/store/languageStore";
 
 interface BoardHeaderProps {
 	board: BoardDetailResponse;
@@ -25,7 +23,6 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 	onInvite,
 }) => {
 	const { t } = useTranslation("board");
-	const currentLanguage = useCurrentLanguage();
 	const getUserInitialsWithLocale = useUserInitials();
 
 	return (

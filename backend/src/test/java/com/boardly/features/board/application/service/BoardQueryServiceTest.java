@@ -32,6 +32,8 @@ import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.model.User;
@@ -112,15 +114,15 @@ class BoardQueryServiceTest {
         private BoardDetailData createValidBoardDetailData() {
                 BoardId boardId = new BoardId();
                 UserId ownerId = new UserId();
-
                 Board board = createValidBoard(boardId, ownerId, false, Instant.now());
                 List<BoardList> boardLists = List.of();
                 List<BoardMember> boardMembers = List.of();
                 List<Label> labels = List.of();
                 Map<ListId, List<Card>> cards = Map.of();
+                Map<CardId, List<CardMember>> cardMembers = Map.of();
                 Map<UserId, User> users = Map.of();
 
-                return new BoardDetailData(board, boardLists, boardMembers, labels, cards, users);
+                return new BoardDetailData(board, boardLists, boardMembers, labels, cards, cardMembers, users);
         }
 
         // ==================== GET USER BOARDS TESTS ====================
@@ -422,7 +424,7 @@ class BoardQueryServiceTest {
                 GetBoardDetailCommand command = createValidGetBoardDetailCommand(boardId, userId);
 
                 // null 데이터를 전달하여 NPE 발생시키기
-                BoardDetailData boardDetailData = new BoardDetailData(null, null, null, null, null, null);
+                BoardDetailData boardDetailData = new BoardDetailData(null, null, null, null, null, null, null);
 
                 when(boardValidator.validateGetDetail(command))
                                 .thenReturn(ValidationResult.valid(command));

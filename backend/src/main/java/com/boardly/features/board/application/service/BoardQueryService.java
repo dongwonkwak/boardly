@@ -195,6 +195,7 @@ public class BoardQueryService implements GetUserBoardsUseCase, GetBoardDetailUs
                     data.boardMembers(),
                     data.labels(),
                     data.cards().values().stream().flatMap(List::stream).collect(Collectors.toList()),
+                    data.cardMembers(),
                     data.users().values().stream().collect(Collectors.toList()));
 
             log.info("보드 상세 조회 완료: boardId={}", command.boardId().getId());

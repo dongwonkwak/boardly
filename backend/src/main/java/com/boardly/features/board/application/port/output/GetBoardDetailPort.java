@@ -9,6 +9,8 @@ import com.boardly.features.board.domain.model.BoardMember;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
@@ -43,6 +45,7 @@ public interface GetBoardDetailPort {
      * @param boardMembers 보드 멤버 목록
      * @param labels       라벨 목록
      * @param cards        카드 목록 (리스트별로 그룹화)
+     * @param cardMembers  카드 멤버 목록 (카드별로 그룹화)
      * @param users        사용자 목록 (카드 담당자, 생성자 등)
      */
     record BoardDetailData(
@@ -51,6 +54,7 @@ public interface GetBoardDetailPort {
             List<BoardMember> boardMembers,
             List<Label> labels,
             Map<ListId, List<Card>> cards,
+            Map<CardId, List<CardMember>> cardMembers,
             Map<UserId, User> users) {
     }
 }

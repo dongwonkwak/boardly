@@ -16,7 +16,10 @@ import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
 import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.repository.CardRepository;
+import com.boardly.features.card.domain.valueobject.CardMember;
+import com.boardly.features.card.domain.repository.CardMemberRepository;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.repository.LabelRepository;
 import com.boardly.features.user.application.service.UserFinder;
@@ -46,6 +49,7 @@ public class GetBoardDetailAdapter implements GetBoardDetailPort {
     private final BoardMemberRepository boardMemberRepository;
     private final LabelRepository labelRepository;
     private final CardRepository cardRepository;
+    private final CardMemberRepository cardMemberRepository;
     private final UserFinder userFinder;
 
     @Override
@@ -71,11 +75,14 @@ public class GetBoardDetailAdapter implements GetBoardDetailPort {
             // 5. 카드 조회 (리스트별로 그룹화)
             Map<ListId, List<Card>> cards = loadCardsByList(boardLists);
 
-            // 6. 사용자 조회 (카드 담당자, 생성자 등)
-            Map<UserId, User> users = loadUsers(boardMembers, cards);
+            // 6. 카드 멤버 조회 (카드별로 그룹화)
+            Map<CardId, List<CardMember>> cardMembers = loadCardMembers(cards);
+
+            // 7. 사용자 조회 (카드 담당자, 생성자 등)
+            Map<UserId, User> users = loadUsers(boardMembers, cards, cardMembers);
 
             BoardDetailData data = new BoardDetailData(
-                    board, boardLists, boardMembers, labels, cards, users);
+                    board, boardLists, boardMembers, labels, cards, cardMembers, users);
 
             return Either.right(data);
 
@@ -106,18 +113,51 @@ public class GetBoardDetailAdapter implements GetBoardDetailPort {
     }
 
     /**
+     * 카드별 멤버를 로드합니다.
+     */
+    private Map<CardId, List<CardMember>> loadCardMembers(Map<ListId, List<Card>> cards) {
+        if (cards.isEmpty()) {
+            return Map.of();
+        }
+
+        // 모든 카드 ID 수집
+        List<CardId> cardIds = cards.values().stream()
+                .flatMap(List::stream)
+                .map(Card::getCardId)
+                .collect(Collectors.toList());
+
+        if (cardIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // 카드별 멤버 조회
+        Map<CardId, List<CardMember>> cardMembers = cardIds.stream()
+                .collect(Collectors.toMap(
+                        cardId -> cardId,
+                        cardId -> cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)));
+
+        return cardMembers;
+    }
+
+    /**
      * 필요한 사용자들을 로드합니다.
      */
     private Map<UserId, User> loadUsers(List<BoardMember> boardMembers,
-            Map<ListId, List<Card>> cards) {
+            Map<ListId, List<Card>> cards, Map<CardId, List<CardMember>> cardMembers) {
 
         // 보드 멤버들의 사용자 ID 수집
         List<UserId> userIds = boardMembers.stream()
                 .map(BoardMember::getUserId)
                 .collect(Collectors.toList());
 
-        // 카드 담당자들의 사용자 ID 수집 (실제로는 Card 도메인에 담당자 정보가 필요)
-        // 현재는 임시로 보드 멤버만 사용
+        // 카드 담당자들의 사용자 ID 수집
+        List<UserId> cardMemberUserIds = cardMembers.values().stream()
+                .flatMap(List::stream)
+                .map(CardMember::getUserId)
+                .collect(Collectors.toList());
+
+        // 모든 사용자 ID 합치기
+        userIds.addAll(cardMemberUserIds);
 
         // 중복 제거
         userIds = userIds.stream().distinct().collect(Collectors.toList());

@@ -1,11 +1,14 @@
 package com.boardly.features.board.application.dto;
 
 import java.util.List;
+import java.util.Map;
 
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardMember;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.user.domain.model.User;
 
@@ -24,6 +27,7 @@ public record BoardDetailDto(
         List<BoardMember> boardMembers,
         List<Label> labels,
         List<Card> cards,
+        Map<CardId, List<CardMember>> cardMembers,
         List<User> users) {
 
     /**
@@ -34,12 +38,13 @@ public record BoardDetailDto(
      * @param boardMembers 보드 멤버 목록
      * @param labels       라벨 목록
      * @param cards        카드 목록
+     * @param cardMembers  카드 멤버 목록 (카드별로 그룹화)
      * @param users        사용자 목록
      * @return BoardDetailDto 객체
      */
     public static BoardDetailDto of(Board board, List<BoardList> columns,
             List<BoardMember> boardMembers, List<Label> labels,
-            List<Card> cards, List<User> users) {
-        return new BoardDetailDto(board, columns, boardMembers, labels, cards, users);
+            List<Card> cards, Map<CardId, List<CardMember>> cardMembers, List<User> users) {
+        return new BoardDetailDto(board, columns, boardMembers, labels, cards, cardMembers, users);
     }
 }

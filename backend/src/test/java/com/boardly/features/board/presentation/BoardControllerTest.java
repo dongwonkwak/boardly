@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -111,6 +112,7 @@ class BoardControllerTest {
                 List.of(),
                 List.of(),
                 List.of(),
+                Map.of(),
                 List.of());
     }
 

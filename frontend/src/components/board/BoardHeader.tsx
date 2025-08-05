@@ -2,7 +2,10 @@ import { ArrowLeft, MoreHorizontal, Plus, Share2, Star } from "lucide-react";
 import type React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { useUserInitials } from "@/hooks";
+import { getUserInitials } from "@/lib/utils";
 import type { BoardDetailResponse } from "@/services/api/client";
+import { useCurrentLanguage } from "@/store/languageStore";
 
 interface BoardHeaderProps {
 	board: BoardDetailResponse;
@@ -22,11 +25,8 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 	onInvite,
 }) => {
 	const { t } = useTranslation("board");
-
-	const getInitials = (firstName?: string, lastName?: string) => {
-		if (!firstName && !lastName) return "?";
-		return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
-	};
+	const currentLanguage = useCurrentLanguage();
+	const getUserInitialsWithLocale = useUserInitials();
 
 	return (
 		<header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm border-b border-gray-200">
@@ -72,7 +72,7 @@ export const BoardHeader: React.FC<BoardHeaderProps> = ({
 									marginLeft: index > 0 ? "-8px" : "0",
 								}}
 							>
-								{getInitials(member.firstName, member.lastName)}
+								{getUserInitialsWithLocale(member.firstName, member.lastName)}
 							</div>
 						))}
 						{board.boardMembers && board.boardMembers.length > 3 && (

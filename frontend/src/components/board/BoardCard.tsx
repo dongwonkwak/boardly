@@ -1,15 +1,9 @@
-import {
-	Calendar,
-	MessageSquare,
-	MoreHorizontal,
-	Paperclip,
-} from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import type React from "react";
 import { Button } from "@/components/ui/button";
 import type { BoardCardResponse } from "@/services/api/client";
-import { useCurrentLanguage } from "@/store/languageStore";
 import { getCardPriorityColor } from "@/utils/cardUtils";
-import { formatDate } from "@/utils/formatDate";
+import { BoardCardFooter } from "./BoardCardFooter";
 
 interface BoardCardProps {
 	card: BoardCardResponse;
@@ -22,13 +16,6 @@ export const BoardCard: React.FC<BoardCardProps> = ({
 	onClick,
 	onMore,
 }) => {
-	const currentLanguage = useCurrentLanguage();
-
-	const getInitials = (firstName?: string, lastName?: string) => {
-		if (!firstName && !lastName) return "?";
-		return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
-	};
-
 	return (
 		<div
 			role="button"
@@ -83,56 +70,8 @@ export const BoardCard: React.FC<BoardCardProps> = ({
 				</div>
 			)}
 
-			{/* Bottom section */}
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-2">
-					{/* Due date */}
-					{card.dueDate && (
-						<div className="flex items-center gap-1 text-xs text-gray-500">
-							<Calendar className="h-3 w-3" />
-							<span>{formatDate(card.dueDate, currentLanguage)}</span>
-						</div>
-					)}
-
-					{/* Comments */}
-					{card.commentCount && card.commentCount > 0 && (
-						<div className="flex items-center gap-1 text-xs text-gray-500">
-							<MessageSquare className="h-3 w-3" />
-							<span>{card.commentCount}</span>
-						</div>
-					)}
-
-					{/* Attachments */}
-					{card.attachmentCount && card.attachmentCount > 0 && (
-						<div className="flex items-center gap-1 text-xs text-gray-500">
-							<Paperclip className="h-3 w-3" />
-							<span>{card.attachmentCount}</span>
-						</div>
-					)}
-				</div>
-
-				{/* Assignees */}
-				<div className="flex items-center gap-1">
-					{card.assignees?.slice(0, 2).map((assignee, index) => (
-						<div
-							key={assignee.userId}
-							className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium border-2 border-white"
-							style={{
-								background: "linear-gradient(135deg, #2b7fff, #9810fa)",
-								zIndex: 2 - index,
-								marginLeft: index > 0 ? "-4px" : "0",
-							}}
-						>
-							{getInitials(assignee.firstName, assignee.lastName)}
-						</div>
-					))}
-					{card.assignees && card.assignees.length > 2 && (
-						<div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-xs font-medium border-2 border-white -ml-1">
-							+{card.assignees.length - 2}
-						</div>
-					)}
-				</div>
-			</div>
+			{/* Footer */}
+			<BoardCardFooter card={card} />
 
 			{/* More button */}
 			<Button

@@ -94,6 +94,7 @@ class DeleteCardServiceTest {
 
     @Test
     @DisplayName("유효한 커맨드로 카드 삭제 시 성공한다")
+    @SuppressWarnings("unchecked")
     void shouldDeleteCardSuccessfully() {
         // given
         UserId userId = new UserId("user-123");

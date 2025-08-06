@@ -43,217 +43,218 @@ import io.vavr.control.Either;
 @DisplayName("DeleteCardService - 활동 로그 테스트")
 class DeleteCardServiceActivityLogTest {
 
-    @Mock
-    private CardValidator cardValidator;
+        @Mock
+        private CardValidator cardValidator;
 
-    @Mock
-    private CardRepository cardRepository;
+        @Mock
+        private CardRepository cardRepository;
 
-    @Mock
-    private BoardListRepository boardListRepository;
+        @Mock
+        private BoardListRepository boardListRepository;
 
-    @Mock
-    private BoardRepository boardRepository;
+        @Mock
+        private BoardRepository boardRepository;
 
-    @Mock
-    private ValidationMessageResolver validationMessageResolver;
+        @Mock
+        private ValidationMessageResolver validationMessageResolver;
 
-    @Mock
-    private CommentRepository commentRepository;
+        @Mock
+        private CommentRepository commentRepository;
 
-    @Mock
-    private ActivityHelper activityHelper;
+        @Mock
+        private ActivityHelper activityHelper;
 
-    private DeleteCardService deleteCardService;
+        private DeleteCardService deleteCardService;
 
-    @BeforeEach
-    void setUp() {
-        deleteCardService = new DeleteCardService(
-                cardValidator,
-                cardRepository,
-                boardListRepository,
-                boardRepository,
-                commentRepository,
-                validationMessageResolver,
-                activityHelper);
-    }
+        @BeforeEach
+        void setUp() {
+                deleteCardService = new DeleteCardService(
+                                cardValidator,
+                                cardRepository,
+                                boardListRepository,
+                                boardRepository,
+                                commentRepository,
+                                validationMessageResolver,
+                                activityHelper);
+        }
 
-    @Test
-    @DisplayName("활동 로그 기록 시 보드 정보를 찾을 수 없어도 삭제는 성공한다")
-    void shouldSucceedEvenWhenBoardInfoNotFoundForActivityLog() {
-        // given
-        UserId userId = new UserId("user-123");
-        CardId cardId = new CardId("card-123");
-        ListId listId = new ListId("list-123");
-        BoardId boardId = new BoardId("board-123");
-        DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
+        @Test
+        @DisplayName("활동 로그 기록 시 보드 정보를 찾을 수 없어도 삭제는 성공한다")
+        @SuppressWarnings("unchecked")
+        void shouldSucceedEvenWhenBoardInfoNotFoundForActivityLog() {
+                // given
+                UserId userId = new UserId("user-123");
+                CardId cardId = new CardId("card-123");
+                ListId listId = new ListId("list-123");
+                BoardId boardId = new BoardId("board-123");
+                DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
 
-        Card cardToDelete = Card.builder()
-                .cardId(cardId)
-                .title("테스트 카드")
-                .listId(listId)
-                .position(1)
-                .build();
+                Card cardToDelete = Card.builder()
+                                .cardId(cardId)
+                                .title("테스트 카드")
+                                .listId(listId)
+                                .position(1)
+                                .build();
 
-        BoardList boardList = BoardList.builder()
-                .listId(listId)
-                .title("테스트 리스트")
-                .boardId(boardId)
-                .position(1)
-                .build();
+                BoardList boardList = BoardList.builder()
+                                .listId(listId)
+                                .title("테스트 리스트")
+                                .boardId(boardId)
+                                .position(1)
+                                .build();
 
-        Board board = Board.builder()
-                .boardId(boardId)
-                .title("테스트 보드")
-                .ownerId(userId)
-                .isArchived(false)
-                .build();
+                Board board = Board.builder()
+                                .boardId(boardId)
+                                .title("테스트 보드")
+                                .ownerId(userId)
+                                .isArchived(false)
+                                .build();
 
-        when(cardValidator.validateDelete(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(cardRepository.findById(cardId))
-                .thenReturn(Optional.of(cardToDelete));
-        when(boardListRepository.findById(listId))
-                .thenReturn(Optional.of(boardList));
-        when(boardRepository.findByIdAndOwnerId(boardId, userId))
-                .thenReturn(Optional.of(board));
-        when(commentRepository.deleteByCardId(cardId))
-                .thenReturn(Either.right(null));
-        when(cardRepository.delete(cardId))
-                .thenReturn(Either.right(null));
-        when(cardRepository.findByListIdAndPositionGreaterThan(listId, 1))
-                .thenReturn(List.of());
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.empty());
+                when(cardValidator.validateDelete(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(cardRepository.findById(cardId))
+                                .thenReturn(Optional.of(cardToDelete));
+                when(boardListRepository.findById(listId))
+                                .thenReturn(Optional.of(boardList));
+                when(boardRepository.findByIdAndOwnerId(boardId, userId))
+                                .thenReturn(Optional.of(board));
+                when(commentRepository.deleteByCardId(cardId))
+                                .thenReturn(Either.right(null));
+                when(cardRepository.delete(cardId))
+                                .thenReturn(Either.right(null));
+                when(cardRepository.findByListIdAndPositionGreaterThan(listId, 1))
+                                .thenReturn(List.of());
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.empty());
 
-        // when
-        Either<Failure, Void> result = deleteCardService.deleteCard(command);
+                // when
+                Either<Failure, Void> result = deleteCardService.deleteCard(command);
 
-        // then
-        assertThat(result.isRight()).isTrue();
+                // then
+                assertThat(result.isRight()).isTrue();
 
-        verify(activityHelper).logCardActivity(
-                eq(ActivityType.CARD_DELETE),
-                eq(userId),
-                any(Map.class),
-                eq("알 수 없는 보드"),
-                eq(boardId),
-                eq(listId),
-                eq(cardId));
-    }
+                verify(activityHelper).logCardActivity(
+                                eq(ActivityType.CARD_DELETE),
+                                eq(userId),
+                                any(Map.class),
+                                eq("알 수 없는 보드"),
+                                eq(boardId),
+                                eq(listId),
+                                eq(cardId));
+        }
 
-    @Test
-    @DisplayName("활동 로그 기록 중 예외가 발생해도 삭제는 성공한다")
-    void shouldSucceedEvenWhenActivityLogThrowsException() {
-        // given
-        UserId userId = new UserId("user-123");
-        CardId cardId = new CardId("card-123");
-        ListId listId = new ListId("list-123");
-        BoardId boardId = new BoardId("board-123");
-        DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
+        @Test
+        @DisplayName("활동 로그 기록 중 예외가 발생해도 삭제는 성공한다")
+        void shouldSucceedEvenWhenActivityLogThrowsException() {
+                // given
+                UserId userId = new UserId("user-123");
+                CardId cardId = new CardId("card-123");
+                ListId listId = new ListId("list-123");
+                BoardId boardId = new BoardId("board-123");
+                DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
 
-        Card cardToDelete = Card.builder()
-                .cardId(cardId)
-                .title("테스트 카드")
-                .listId(listId)
-                .position(1)
-                .build();
+                Card cardToDelete = Card.builder()
+                                .cardId(cardId)
+                                .title("테스트 카드")
+                                .listId(listId)
+                                .position(1)
+                                .build();
 
-        BoardList boardList = BoardList.builder()
-                .listId(listId)
-                .title("테스트 리스트")
-                .boardId(boardId)
-                .position(1)
-                .build();
+                BoardList boardList = BoardList.builder()
+                                .listId(listId)
+                                .title("테스트 리스트")
+                                .boardId(boardId)
+                                .position(1)
+                                .build();
 
-        Board board = Board.builder()
-                .boardId(boardId)
-                .title("테스트 보드")
-                .ownerId(userId)
-                .isArchived(false)
-                .build();
+                Board board = Board.builder()
+                                .boardId(boardId)
+                                .title("테스트 보드")
+                                .ownerId(userId)
+                                .isArchived(false)
+                                .build();
 
-        when(cardValidator.validateDelete(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(cardRepository.findById(cardId))
-                .thenReturn(Optional.of(cardToDelete));
-        when(boardListRepository.findById(listId))
-                .thenReturn(Optional.of(boardList));
-        when(boardRepository.findByIdAndOwnerId(boardId, userId))
-                .thenReturn(Optional.of(board));
-        when(commentRepository.deleteByCardId(cardId))
-                .thenReturn(Either.right(null));
-        when(cardRepository.delete(cardId))
-                .thenReturn(Either.right(null));
-        when(cardRepository.findByListIdAndPositionGreaterThan(listId, 1))
-                .thenReturn(List.of());
-        when(boardRepository.findById(boardId))
-                .thenReturn(Optional.of(board));
-        lenient().doThrow(new RuntimeException("활동 로그 기록 실패"))
-                .when(activityHelper)
-                .logCardActivity(any(), any(), any(), any(), any(), any(), any());
+                when(cardValidator.validateDelete(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(cardRepository.findById(cardId))
+                                .thenReturn(Optional.of(cardToDelete));
+                when(boardListRepository.findById(listId))
+                                .thenReturn(Optional.of(boardList));
+                when(boardRepository.findByIdAndOwnerId(boardId, userId))
+                                .thenReturn(Optional.of(board));
+                when(commentRepository.deleteByCardId(cardId))
+                                .thenReturn(Either.right(null));
+                when(cardRepository.delete(cardId))
+                                .thenReturn(Either.right(null));
+                when(cardRepository.findByListIdAndPositionGreaterThan(listId, 1))
+                                .thenReturn(List.of());
+                when(boardRepository.findById(boardId))
+                                .thenReturn(Optional.of(board));
+                lenient().doThrow(new RuntimeException("활동 로그 기록 실패"))
+                                .when(activityHelper)
+                                .logCardActivity(any(), any(), any(), any(), any(), any(), any());
 
-        // when
-        Either<Failure, Void> result = deleteCardService.deleteCard(command);
+                // when
+                Either<Failure, Void> result = deleteCardService.deleteCard(command);
 
-        // then
-        assertThat(result.isRight()).isTrue();
-    }
+                // then
+                assertThat(result.isRight()).isTrue();
+        }
 
-    @Test
-    @DisplayName("활동 로그용 리스트 정보를 찾을 수 없어도 삭제는 성공한다")
-    void shouldSucceedEvenWhenBoardListNotFoundForActivityLog() {
-        // given
-        UserId userId = new UserId("user-123");
-        CardId cardId = new CardId("card-123");
-        ListId listId = new ListId("list-123");
-        BoardId boardId = new BoardId("board-123");
-        DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
+        @Test
+        @DisplayName("활동 로그용 리스트 정보를 찾을 수 없어도 삭제는 성공한다")
+        void shouldSucceedEvenWhenBoardListNotFoundForActivityLog() {
+                // given
+                UserId userId = new UserId("user-123");
+                CardId cardId = new CardId("card-123");
+                ListId listId = new ListId("list-123");
+                BoardId boardId = new BoardId("board-123");
+                DeleteCardCommand command = new DeleteCardCommand(cardId, userId);
 
-        Card cardToDelete = Card.builder()
-                .cardId(cardId)
-                .title("테스트 카드")
-                .listId(listId)
-                .position(1)
-                .build();
+                Card cardToDelete = Card.builder()
+                                .cardId(cardId)
+                                .title("테스트 카드")
+                                .listId(listId)
+                                .position(1)
+                                .build();
 
-        BoardList boardList = BoardList.builder()
-                .listId(listId)
-                .title("테스트 리스트")
-                .boardId(boardId)
-                .position(1)
-                .build();
+                BoardList boardList = BoardList.builder()
+                                .listId(listId)
+                                .title("테스트 리스트")
+                                .boardId(boardId)
+                                .position(1)
+                                .build();
 
-        Board board = Board.builder()
-                .boardId(boardId)
-                .title("테스트 보드")
-                .ownerId(userId)
-                .isArchived(false)
-                .build();
+                Board board = Board.builder()
+                                .boardId(boardId)
+                                .title("테스트 보드")
+                                .ownerId(userId)
+                                .isArchived(false)
+                                .build();
 
-        when(cardValidator.validateDelete(command))
-                .thenReturn(ValidationResult.valid(command));
-        when(cardRepository.findById(cardId))
-                .thenReturn(Optional.of(cardToDelete));
-        when(boardListRepository.findById(listId))
-                .thenReturn(Optional.of(boardList));
-        when(boardRepository.findByIdAndOwnerId(boardId, userId))
-                .thenReturn(Optional.of(board));
-        when(commentRepository.deleteByCardId(cardId))
-                .thenReturn(Either.right(null));
-        when(cardRepository.delete(cardId))
-                .thenReturn(Either.right(null));
-        when(cardRepository.findByListIdAndPositionGreaterThan(listId, 1))
-                .thenReturn(List.of());
-        // 활동 로그 기록 시에는 리스트를 찾을 수 없음
-        when(boardListRepository.findById(listId))
-                .thenReturn(Optional.of(boardList)) // 첫 번째 호출 (권한 검증)
-                .thenReturn(Optional.empty()); // 두 번째 호출 (활동 로그)
+                when(cardValidator.validateDelete(command))
+                                .thenReturn(ValidationResult.valid(command));
+                when(cardRepository.findById(cardId))
+                                .thenReturn(Optional.of(cardToDelete));
+                when(boardListRepository.findById(listId))
+                                .thenReturn(Optional.of(boardList));
+                when(boardRepository.findByIdAndOwnerId(boardId, userId))
+                                .thenReturn(Optional.of(board));
+                when(commentRepository.deleteByCardId(cardId))
+                                .thenReturn(Either.right(null));
+                when(cardRepository.delete(cardId))
+                                .thenReturn(Either.right(null));
+                when(cardRepository.findByListIdAndPositionGreaterThan(listId, 1))
+                                .thenReturn(List.of());
+                // 활동 로그 기록 시에는 리스트를 찾을 수 없음
+                when(boardListRepository.findById(listId))
+                                .thenReturn(Optional.of(boardList)) // 첫 번째 호출 (권한 검증)
+                                .thenReturn(Optional.empty()); // 두 번째 호출 (활동 로그)
 
-        // when
-        Either<Failure, Void> result = deleteCardService.deleteCard(command);
+                // when
+                Either<Failure, Void> result = deleteCardService.deleteCard(command);
 
-        // then
-        assertThat(result.isRight()).isTrue();
-    }
+                // then
+                assertThat(result.isRight()).isTrue();
+        }
 }

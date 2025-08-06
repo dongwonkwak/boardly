@@ -131,8 +131,13 @@ INSERT INTO card_labels (card_id, label_id, applied_at) VALUES
 ('card-1', 'label-3', NOW()), -- 기능개발
 ('card-2', 'label-3', NOW()), -- 기능개발
 ('card-3', 'label-3', NOW()), -- 기능개발
+('card-4', 'label-3', NOW()), -- 기능개발
 ('card-5', 'label-1', NOW()), -- 긴급
 ('card-5', 'label-2', NOW()), -- 버그
+('card-6', 'label-3', NOW()), -- 기능개발
+('card-7', 'label-4', NOW()), -- UI/UX
+('card-8', 'label-1', NOW()), -- 긴급
+('card-9', 'label-3', NOW()), -- 기능개발
 
 -- 모바일 앱 개발 카드 라벨
 ('card-7', 'label-5', NOW()), -- iOS

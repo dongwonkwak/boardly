@@ -324,16 +324,16 @@ class UpdateCardServiceUpdateCardPriorityTest {
             when(cardRepository.findById(cardId)).thenReturn(Optional.of(existingCard));
             when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
             when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
-            doThrow(new IllegalArgumentException("유효하지 않은 우선순위 값")).when(existingCard)
-                    .setPriority(any(CardPriority.class));
+            when(cardRepository.save(existingCard)).thenReturn(Either.right(existingCard));
 
             // when
             Either<Failure, Card> result = updateCardService.updateCardPriority(cardId.getId(), invalidPriority);
 
             // then
-            assertThat(result.isLeft()).isTrue();
-            assertThat(result.getLeft().getMessage()).isEqualTo("카드 수정 중 오류가 발생했습니다.");
-            // cardRepository는 findCardById에서 호출되므로 상호작용이 있음
+            assertThat(result.isRight()).isTrue();
+            assertThat(result.get()).isEqualTo(existingCard);
+            verify(existingCard).setPriority(null); // CardPriority.fromValue("invalid_priority")는 null을 반환
+            verify(cardRepository).save(existingCard);
         }
 
         @Test

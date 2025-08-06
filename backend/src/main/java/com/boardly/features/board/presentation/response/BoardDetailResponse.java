@@ -130,15 +130,11 @@ public record BoardDetailResponse(
                                 .filter(assignee -> assignee != null)
                                 .collect(Collectors.toList());
 
-                // 생성자 정보 (실제로는 Card 도메인에 createdBy 필드가 필요)
-                CardUserResponse createdBy = CardUserResponse.of("unknown", "Unknown", "User");
-                CardUserResponse completedBy = null; // 완료되지 않은 카드
-
                 // 댓글 수와 첨부파일 수 조회
                 int commentCount = cardCommentCounts.getOrDefault(card.getCardId(), 0);
                 int attachmentCount = cardAttachmentCounts.getOrDefault(card.getCardId(), 0);
 
-                return BoardCardResponse.from(card, labels, assignees, createdBy, completedBy, null, null, commentCount,
+                return BoardCardResponse.from(card, labels, assignees, null, commentCount,
                                 attachmentCount);
         }
 

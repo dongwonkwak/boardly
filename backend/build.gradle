@@ -84,20 +84,25 @@ tasks.register('copyOpenApiToProjectRoot') {
 
         def sourceFile = file("build/docs/openapi.json")
         def targetFile = file("${projectDocsDir}/openapi.json")
+        def readmeFile = file("${projectDocsDir}/README.md")
 
         if (sourceFile.exists()) {
+            // 기존 파일과 새 파일의 내용을 비교
+            def contentChanged = false
+            if (targetFile.exists()) {
+                def existingContent = targetFile.text
+                def newContent = sourceFile.text
+                contentChanged = existingContent != newContent
+            } else {
+                contentChanged = true
+            }
+
+            // openapi.json 파일 복사
             targetFile.text = sourceFile.text
 
-            // YAML 버전도 생성
-            def yamlFile = file("${projectDocsDir}/openapi.yml")
-            def yamlContent = sourceFile.text
-                    .replaceAll(/^\s*"/, '  ')
-                    .replaceAll(/",?\s*$/, '')
-                    .replaceAll(/^\s*\{/, '')
-                    .replaceAll(/^\s*\}/, '')
-
-            // README 파일도 생성
-            def readmeFile = file("${projectDocsDir}/README.md")
+            // README 파일 생성 또는 업데이트
+            def lastUpdateDate = contentChanged ? new Date().toString() : getLastUpdateDateFromReadme(readmeFile)
+            
             readmeFile.text = """# Boardly API Documentation
 
 ## OpenAPI 사양서
@@ -140,15 +145,33 @@ npx swagger-codegen-cli generate \\
 이 문서는 백엔드 빌드 시마다 자동으로 업데이트됩니다.
 최신 버전을 사용하고 있는지 확인하세요.
 
-마지막 업데이트: ${new Date().toString()}
+마지막 업데이트: ${lastUpdateDate}
 """
 
-            println "✅ OpenAPI 문서가 프로젝트 루트에 복사되었습니다:"
+            def statusMessage = contentChanged ? "✅ OpenAPI 문서가 업데이트되어 프로젝트 루트에 복사되었습니다:" : "ℹ️ OpenAPI 문서가 변경되지 않아 기존 날짜를 유지합니다:"
+            println statusMessage
             println "   📄 JSON: ${targetFile}"
             println "   📋 README: ${readmeFile}"
             println "   🌐 접근 URL: http://localhost:8080/docs/openapi.json"
         }
     }
+}
+
+// README 파일에서 마지막 업데이트 날짜를 추출하는 헬퍼 함수
+def getLastUpdateDateFromReadme(readmeFile) {
+    if (!readmeFile.exists()) {
+        return new Date().toString()
+    }
+    
+    def content = readmeFile.text
+    def pattern = /마지막 업데이트: (.+)/
+    def matcher = content =~ pattern
+    
+    if (matcher.find()) {
+        return matcher.group(1)
+    }
+    
+    return new Date().toString()
 }
 
 // YAML 형식 OpenAPI 문서를 위한 커스텀 태스크

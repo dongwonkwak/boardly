@@ -218,6 +218,7 @@ public class BoardQueryService implements GetUserBoardsUseCase, GetBoardDetailUs
                     data.labels(),
                     data.cards().values().stream().flatMap(List::stream).collect(Collectors.toList()),
                     data.cardMembers(),
+                    data.cardLabels(),
                     cardCommentCounts,
                     cardAttachmentCounts,
                     data.users().values().stream().collect(Collectors.toList()));

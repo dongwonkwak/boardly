@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import com.boardly.features.attachment.domain.repository.AttachmentRepository;
 import com.boardly.features.board.application.dto.BoardDetailDto;
 import com.boardly.features.board.application.port.input.GetBoardDetailCommand;
 import com.boardly.features.board.application.port.input.GetUserBoardsCommand;
@@ -34,12 +35,12 @@ import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.valueobject.CardMember;
+import com.boardly.features.comment.domain.repository.CommentRepository;
 import com.boardly.features.label.domain.model.Label;
+import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.model.User;
 import com.boardly.features.user.domain.model.UserId;
-import com.boardly.features.comment.domain.repository.CommentRepository;
-import com.boardly.features.attachment.domain.repository.AttachmentRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
@@ -130,9 +131,11 @@ class BoardQueryServiceTest {
                 List<Label> labels = List.of();
                 Map<ListId, List<Card>> cards = Map.of();
                 Map<CardId, List<CardMember>> cardMembers = Map.of();
+                Map<CardId, List<LabelId>> cardLabels = Map.of();
                 Map<UserId, User> users = Map.of();
 
-                return new BoardDetailData(board, boardLists, boardMembers, labels, cards, cardMembers, users);
+                return new BoardDetailData(board, boardLists, boardMembers, labels, cards, cardMembers, cardLabels,
+                                users);
         }
 
         // ==================== GET USER BOARDS TESTS ====================
@@ -434,7 +437,7 @@ class BoardQueryServiceTest {
                 GetBoardDetailCommand command = createValidGetBoardDetailCommand(boardId, userId);
 
                 // null 데이터를 전달하여 NPE 발생시키기
-                BoardDetailData boardDetailData = new BoardDetailData(null, null, null, null, null, null, null);
+                BoardDetailData boardDetailData = new BoardDetailData(null, null, null, null, null, null, null, null);
 
                 when(boardValidator.validateGetDetail(command))
                                 .thenReturn(ValidationResult.valid(command));

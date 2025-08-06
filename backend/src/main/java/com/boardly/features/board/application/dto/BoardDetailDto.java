@@ -10,6 +10,7 @@ import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.label.domain.model.Label;
+import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.features.user.domain.model.User;
 
 /**
@@ -28,6 +29,7 @@ public record BoardDetailDto(
         List<Label> labels,
         List<Card> cards,
         Map<CardId, List<CardMember>> cardMembers,
+        Map<CardId, List<LabelId>> cardLabels,
         Map<CardId, Integer> cardCommentCounts,
         Map<CardId, Integer> cardAttachmentCounts,
         List<User> users) {
@@ -35,23 +37,25 @@ public record BoardDetailDto(
     /**
      * BoardDetailDto를 생성합니다.
      * 
-     * @param board        보드 정보
-     * @param columns      컬럼 목록
-     * @param boardMembers 보드 멤버 목록
-     * @param labels       라벨 목록
-     * @param cards        카드 목록
-     * @param cardMembers  카드 멤버 목록 (카드별로 그룹화)
-     * @param cardCommentCounts 카드별 댓글 수
+     * @param board                보드 정보
+     * @param columns              컬럼 목록
+     * @param boardMembers         보드 멤버 목록
+     * @param labels               라벨 목록
+     * @param cards                카드 목록
+     * @param cardMembers          카드 멤버 목록 (카드별로 그룹화)
+     * @param cardLabels           카드 라벨 목록 (카드별로 그룹화)
+     * @param cardCommentCounts    카드별 댓글 수
      * @param cardAttachmentCounts 카드별 첨부파일 수
-     * @param users        사용자 목록
+     * @param users                사용자 목록
      * @return BoardDetailDto 객체
      */
     public static BoardDetailDto of(Board board, List<BoardList> columns,
             List<BoardMember> boardMembers, List<Label> labels,
-            List<Card> cards, Map<CardId, List<CardMember>> cardMembers, 
+            List<Card> cards, Map<CardId, List<CardMember>> cardMembers,
+            Map<CardId, List<LabelId>> cardLabels,
             Map<CardId, Integer> cardCommentCounts, Map<CardId, Integer> cardAttachmentCounts,
             List<User> users) {
-        return new BoardDetailDto(board, columns, boardMembers, labels, cards, cardMembers, 
-                cardCommentCounts, cardAttachmentCounts, users);
+        return new BoardDetailDto(board, columns, boardMembers, labels, cards, cardMembers,
+                cardLabels, cardCommentCounts, cardAttachmentCounts, users);
     }
 }

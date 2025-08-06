@@ -76,6 +76,7 @@ INSERT INTO labels (label_id, board_id, name, color, created_at, updated_at, ver
 ('label-2', 'board-1', '버그', '#FF6348', NOW(), NOW(), 0),
 ('label-3', 'board-1', '기능개발', '#1E90FF', NOW(), NOW(), 0),
 ('label-4', 'board-1', 'UI/UX', '#9C88FF', NOW(), NOW(), 0),
+('label-11', 'board-1', 'iOS', '#007AFF', NOW(), NOW(), 0),
 
 -- 모바일 앱 개발 라벨
 ('label-5', 'board-2', 'iOS', '#007AFF', NOW(), NOW(), 0),
@@ -136,17 +137,17 @@ INSERT INTO card_labels (card_id, label_id, applied_at) VALUES
 ('card-5', 'label-2', NOW()), -- 버그
 ('card-6', 'label-3', NOW()), -- 기능개발
 ('card-7', 'label-4', NOW()), -- UI/UX
+('card-7', 'label-11', NOW()), -- iOS (board-1의 iOS 라벨)
 ('card-8', 'label-1', NOW()), -- 긴급
 ('card-9', 'label-3', NOW()), -- 기능개발
+('card-9', 'label-11', NOW()), -- iOS (board-1의 iOS 라벨)
 
--- 모바일 앱 개발 카드 라벨
-('card-7', 'label-5', NOW()), -- iOS
-('card-9', 'label-5', NOW()), -- iOS
-('card-10', 'label-6', NOW()), -- Android
+-- 웹 개발 프로젝트 카드 라벨 (board-1)
+('card-10', 'label-3', NOW()), -- 기능개발
 
--- 마케팅 캠페인 카드 라벨
-('card-11', 'label-8', NOW()), -- 소셜미디어
-('card-12', 'label-9', NOW()); -- 이메일
+-- 모바일 앱 개발 카드 라벨 (board-2)
+('card-11', 'label-7', NOW()), -- API
+('card-12', 'label-5', NOW()); -- iOS
 
 -- =====================================================
 -- 9. 댓글 테스트 데이터

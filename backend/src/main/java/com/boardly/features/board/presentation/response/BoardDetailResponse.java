@@ -49,6 +49,12 @@ public record BoardDetailResponse(
                                                 user -> user.getUserId().getId(),
                                                 user -> user));
 
+                // 라벨 맵 생성 (ID로 빠른 조회를 위해)
+                Map<String, com.boardly.features.label.domain.model.Label> labelMap = boardDetailDto.labels().stream()
+                                .collect(Collectors.toMap(
+                                                label -> label.getLabelId().getId(),
+                                                label -> label));
+
                 // 컬럼 응답 변환
                 List<BoardColumnResponse> columns = boardDetailDto.columns().stream()
                                 .sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition()))
@@ -62,8 +68,9 @@ public record BoardDetailResponse(
                                                         .collect(Collectors.toList());
 
                                         List<BoardCardResponse> cardResponses = listCards.stream()
-                                                        .map(card -> convertToBoardCardResponse(card, userMap,
+                                                        .map(card -> convertToBoardCardResponse(card, userMap, labelMap,
                                                                         boardDetailDto.cardMembers(),
+                                                                        boardDetailDto.cardLabels(),
                                                                         boardDetailDto.cardCommentCounts(),
                                                                         boardDetailDto.cardAttachmentCounts()))
                                                         .collect(Collectors.toList());
@@ -105,12 +112,26 @@ public record BoardDetailResponse(
         private static BoardCardResponse convertToBoardCardResponse(
                         com.boardly.features.card.domain.model.Card card,
                         Map<String, com.boardly.features.user.domain.model.User> userMap,
+                        Map<String, com.boardly.features.label.domain.model.Label> labelMap,
                         Map<com.boardly.features.card.domain.model.CardId, List<com.boardly.features.card.domain.valueobject.CardMember>> cardMembers,
+                        Map<com.boardly.features.card.domain.model.CardId, List<com.boardly.features.label.domain.model.LabelId>> cardLabels,
                         Map<com.boardly.features.card.domain.model.CardId, Integer> cardCommentCounts,
                         Map<com.boardly.features.card.domain.model.CardId, Integer> cardAttachmentCounts) {
 
-                // 실제 구현에서는 카드별 라벨, 담당자, 댓글 정보 등을 조회해야 함
-                List<CardLabelResponse> labels = List.of(); // 임시 빈 리스트
+                // 카드별 라벨 정보 조회
+                List<com.boardly.features.label.domain.model.LabelId> cardLabelIds = cardLabels
+                                .getOrDefault(card.getCardId(), List.of());
+                List<CardLabelResponse> labels = cardLabelIds.stream()
+                                .map(labelId -> {
+                                        com.boardly.features.label.domain.model.Label label = labelMap
+                                                        .get(labelId.getId());
+                                        if (label != null) {
+                                                return CardLabelResponse.of(label.getLabelId().getId(), label.getName(),
+                                                                label.getColor());
+                                        }
+                                        return CardLabelResponse.of(labelId.getId(), "Unknown Label", "#000000");
+                                })
+                                .collect(Collectors.toList());
 
                 // 카드 멤버 정보 조회
                 List<CardAssigneeResponse> assignees = cardMembers.getOrDefault(card.getCardId(), List.of())

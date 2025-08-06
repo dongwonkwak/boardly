@@ -115,6 +115,7 @@ class BoardControllerTest {
                                 Map.of(),
                                 Map.of(),
                                 Map.of(),
+                                Map.of(),
                                 List.of());
         }
 

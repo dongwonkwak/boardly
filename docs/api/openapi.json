@@ -4022,6 +4022,9 @@
           "listId": {
             "type": "string"
           },
+          "priority": {
+            "type": "string"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -4619,9 +4622,6 @@
             "type": "string",
             "format": "date-time"
           },
-          "createdBy": {
-            "$ref": "#/components/schemas/CardUserResponse"
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -4629,13 +4629,6 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
-          },
-          "completedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "completedBy": {
-            "$ref": "#/components/schemas/CardUserResponse"
           }
         }
       },
@@ -4794,20 +4787,6 @@
             "type": "string"
           },
           "color": {
-            "type": "string"
-          }
-        }
-      },
-      "CardUserResponse": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
             "type": "string"
           }
         }

@@ -70,10 +70,12 @@ CREATE TABLE IF NOT EXISTS cards (
     priority VARCHAR(20),
     is_completed BOOLEAN NOT NULL DEFAULT FALSE,
     list_id VARCHAR(50) NOT NULL,
+    created_by VARCHAR(50) NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     version BIGINT NOT NULL DEFAULT 0,
-    FOREIGN KEY (list_id) REFERENCES board_lists(list_id) ON DELETE CASCADE
+    FOREIGN KEY (list_id) REFERENCES board_lists(list_id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- 6. 카드 멤버 테이블 (카드 담당자)
@@ -187,6 +189,7 @@ CREATE INDEX IF NOT EXISTS idx_cards_start_date ON cards(start_date);
 CREATE INDEX IF NOT EXISTS idx_cards_archived ON cards(archived);
 CREATE INDEX IF NOT EXISTS idx_cards_priority ON cards(priority);
 CREATE INDEX IF NOT EXISTS idx_cards_completed ON cards(is_completed);
+CREATE INDEX IF NOT EXISTS idx_cards_created_by ON cards(created_by);
 
 -- 카드 멤버 관련 인덱스
 CREATE INDEX IF NOT EXISTS idx_card_members_card_id ON card_members(card_id);

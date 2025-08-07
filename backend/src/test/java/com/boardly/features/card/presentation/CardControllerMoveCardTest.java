@@ -29,6 +29,7 @@ import com.boardly.features.card.presentation.request.MoveCardRequest;
 import com.boardly.features.card.presentation.response.CardResponse;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
+import com.boardly.features.user.domain.model.UserId;
 
 import io.vavr.control.Either;
 
@@ -80,6 +81,7 @@ class CardControllerMoveCardTest {
                 .position(2)
                 .priority(CardPriority.MEDIUM)
                 .isCompleted(false)
+                .createdBy(new UserId(TEST_USER_ID))
                 .startDate(Instant.now())
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())

@@ -14,6 +14,7 @@ public record CardResponse(
         int position,
         String listId,
         String priority,
+        String createdBy,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -28,6 +29,7 @@ public record CardResponse(
                 card.getPosition(),
                 card.getListId().getId(),
                 card.getPriority() != null ? card.getPriority().getValue() : null,
+                card.getCreatedBy().getId(),
                 card.getCreatedAt(),
                 card.getUpdatedAt());
     }

@@ -143,6 +143,7 @@ class DashboardServiceTest {
                 .description("테스트 카드 설명")
                 .position(1)
                 .listId(listId)
+                .createdBy(new UserId("test-user"))
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();

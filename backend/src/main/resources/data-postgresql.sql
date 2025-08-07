@@ -92,27 +92,27 @@ INSERT INTO labels (label_id, board_id, name, color, created_at, updated_at, ver
 -- 6. 카드 테스트 데이터 (PostgreSQL INTERVAL 사용)
 -- =====================================================
 -- 카드 데이터
-INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_at, updated_at, version) VALUES
-('card-1', '메인 페이지 디자인', '사용자 인터페이스 디자인 작업', 1, NOW() + INTERVAL '7 days', NULL, false, 'list-1', NOW(), NOW(), 0),
-('card-2', '데이터베이스 설계', 'ERD 작성 및 테이블 설계', 2, NOW() + INTERVAL '5 days', NULL, false, 'list-1', NOW(), NOW(), 0),
-('card-3', 'API 개발', 'RESTful API 엔드포인트 구현', 3, NOW() + INTERVAL '10 days', NULL, false, 'list-1', NOW(), NOW(), 0),
-('card-4', '단위 테스트 작성', '핵심 기능에 대한 단위 테스트', 1, NOW() + INTERVAL '3 days', NULL, false, 'list-2', NOW(), NOW(), 0),
-('card-5', '보안 테스트', '인증 및 권한 검증', 2, NOW() + INTERVAL '5 days', 'high', false, 'list-2', NOW(), NOW(), 0),
-('card-6', '성능 최적화', '데이터베이스 쿼리 최적화', 3, NOW() + INTERVAL '8 days', 'medium', false, 'list-2', NOW(), NOW(), 0),
-('card-7', '사용자 매뉴얼 작성', '시스템 사용법 가이드', 1, NOW() + INTERVAL '2 days', 'low', false, 'list-3', NOW(), NOW(), 0),
-('card-8', '배포 준비', '프로덕션 환경 배포 준비', 2, NOW() + INTERVAL '1 day', 'urgent', false, 'list-3', NOW(), NOW(), 0),
-('card-9', '모니터링 설정', '시스템 모니터링 도구 설정', 3, NOW() + INTERVAL '4 days', NULL, false, 'list-3', NOW(), NOW(), 0),
-('card-10', 'Android 개발', '모바일 앱 개발', 1, NOW() + INTERVAL '15 days', NULL, false, 'list-4', NOW(), NOW(), 0),
-('card-11', 'SNS 콘텐츠 기획', '소셜미디어 마케팅 콘텐츠', 1, NOW() + INTERVAL '3 days', NULL, false, 'list-5', NOW(), NOW(), 0),
-('card-12', '브랜드 가이드라인', '브랜드 아이덴티티 가이드', 2, NOW() + INTERVAL '7 days', NULL, false, 'list-5', NOW(), NOW(), 0),
+INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_by, created_at, updated_at, version) VALUES
+('card-1', '메인 페이지 디자인', '사용자 인터페이스 디자인 작업', 1, NOW() + INTERVAL '7 days', NULL, false, 'list-1', 'user-1', NOW(), NOW(), 0),
+('card-2', '데이터베이스 설계', 'ERD 작성 및 테이블 설계', 2, NOW() + INTERVAL '5 days', NULL, false, 'list-1', 'user-1', NOW(), NOW(), 0),
+('card-3', 'API 개발', 'RESTful API 엔드포인트 구현', 3, NOW() + INTERVAL '10 days', NULL, false, 'list-1', 'user-1', NOW(), NOW(), 0),
+('card-4', '단위 테스트 작성', '핵심 기능에 대한 단위 테스트', 1, NOW() + INTERVAL '3 days', NULL, false, 'list-2', 'user-2', NOW(), NOW(), 0),
+('card-5', '보안 테스트', '인증 및 권한 검증', 2, NOW() + INTERVAL '5 days', 'high', false, 'list-2', 'user-3', NOW(), NOW(), 0),
+('card-6', '성능 최적화', '데이터베이스 쿼리 최적화', 3, NOW() + INTERVAL '8 days', 'medium', false, 'list-2', 'user-2', NOW(), NOW(), 0),
+('card-7', '사용자 매뉴얼 작성', '시스템 사용법 가이드', 1, NOW() + INTERVAL '2 days', 'low', false, 'list-3', 'user-2', NOW(), NOW(), 0),
+('card-8', '배포 준비', '프로덕션 환경 배포 준비', 2, NOW() + INTERVAL '1 day', 'urgent', false, 'list-3', 'user-4', NOW(), NOW(), 0),
+('card-9', '모니터링 설정', '시스템 모니터링 도구 설정', 3, NOW() + INTERVAL '4 days', NULL, false, 'list-3', 'user-2', NOW(), NOW(), 0),
+('card-10', 'Android 개발', '모바일 앱 개발', 1, NOW() + INTERVAL '15 days', NULL, false, 'list-4', 'user-4', NOW(), NOW(), 0),
+('card-11', 'SNS 콘텐츠 기획', '소셜미디어 마케팅 콘텐츠', 1, NOW() + INTERVAL '3 days', NULL, false, 'list-5', 'user-5', NOW(), NOW(), 0),
+('card-12', '브랜드 가이드라인', '브랜드 아이덴티티 가이드', 2, NOW() + INTERVAL '7 days', NULL, false, 'list-5', 'user-1', NOW(), NOW(), 0),
 
 -- 마케팅 캠페인 보드 카드 (board-3)
-('card-14', '크리스마스 프로모션 아이디어', '연말 시즌 맞춤 프로모션 기획', 1, NOW() + INTERVAL '5 days', NULL, false, 'list-9', NOW(), NOW(), 0),
-('card-15', '인플루언서 협업 제안', '인기 인플루언서와의 협업 방안 검토', 2, NOW() + INTERVAL '7 days', NULL, false, 'list-9', NOW(), NOW(), 0),
-('card-16', '소셜미디어 캠페인 전략', '페이스북, 인스타그램 캠페인 기획', 1, NOW() + INTERVAL '10 days', NULL, false, 'list-10', NOW(), NOW(), 0),
-('card-17', '이메일 마케팅 시리즈', '고객 세그먼트별 이메일 캠페인 설계', 2, NOW() + INTERVAL '8 days', NULL, false, 'list-10', NOW(), NOW(), 0),
-('card-18', '온라인 광고 캠페인', '구글 애즈 및 페이스북 광고 집행', 1, NOW() + INTERVAL '12 days', NULL, false, 'list-11', NOW(), NOW(), 0),
-('card-19', '오프라인 이벤트 기획', '팝업 스토어 및 체험존 운영', 2, NOW() + INTERVAL '15 days', NULL, false, 'list-11', NOW(), NOW(), 0);
+('card-14', '크리스마스 프로모션 아이디어', '연말 시즌 맞춤 프로모션 기획', 1, NOW() + INTERVAL '5 days', NULL, false, 'list-9', 'user-1', NOW(), NOW(), 0),
+('card-15', '인플루언서 협업 제안', '인기 인플루언서와의 협업 방안 검토', 2, NOW() + INTERVAL '7 days', NULL, false, 'list-9', 'user-5', NOW(), NOW(), 0),
+('card-16', '소셜미디어 캠페인 전략', '페이스북, 인스타그램 캠페인 기획', 1, NOW() + INTERVAL '10 days', NULL, false, 'list-10', 'user-1', NOW(), NOW(), 0),
+('card-17', '이메일 마케팅 시리즈', '고객 세그먼트별 이메일 캠페인 설계', 2, NOW() + INTERVAL '8 days', NULL, false, 'list-10', 'user-5', NOW(), NOW(), 0),
+('card-18', '온라인 광고 캠페인', '구글 애즈 및 페이스북 광고 집행', 1, NOW() + INTERVAL '12 days', NULL, false, 'list-11', 'user-1', NOW(), NOW(), 0),
+('card-19', '오프라인 이벤트 기획', '팝업 스토어 및 체험존 운영', 2, NOW() + INTERVAL '15 days', NULL, false, 'list-11', 'user-5', NOW(), NOW(), 0);
 
 -- =====================================================
 -- 7. 카드 멤버 테스트 데이터 (카드 담당자)
@@ -238,8 +238,8 @@ INSERT INTO board_lists (list_id, title, description, position, color, board_id,
 ('list-12', '아카이브', '완료된 오래된 작업들', 5, '#95A5A6', 'board-1', NOW(), NOW(), 0);
 
 -- 아카이브된 카드 예시
-INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_at, updated_at, version) VALUES
-('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, NULL, TRUE, 'list-12', NOW() - INTERVAL '10 days', NOW(), 0);
+INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_by, created_at, updated_at, version) VALUES
+('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, NULL, TRUE, 'list-12', 'user-1', NOW() - INTERVAL '10 days', NOW(), 0);
 
 -- 추가 보드 멤버 권한 예시
 INSERT INTO board_members (member_id, board_id, user_id, role, is_active, created_at, updated_at, version) VALUES

@@ -28,6 +28,7 @@ public class Card extends BaseEntity {
     private boolean isArchived;
     private CardPriority priority;
     private boolean isCompleted;
+    private UserId createdBy; // 카드 생성자
 
     // 담당자들 (Many-to-Many)
     private Set<CardMember> assignedMembers;
@@ -35,7 +36,7 @@ public class Card extends BaseEntity {
     @Builder
     private Card(CardId cardId, String title, String description, int position, ListId listId, Instant createdAt,
             Instant updatedAt, Instant dueDate, Instant startDate, boolean isArchived, CardPriority priority,
-            boolean isCompleted,
+            boolean isCompleted, UserId createdBy,
             Set<CardMember> assignedMembers) {
         super(createdAt, updatedAt);
         this.cardId = cardId;
@@ -48,13 +49,14 @@ public class Card extends BaseEntity {
         this.isArchived = isArchived;
         this.priority = priority; // 수정: priority를 그대로 설정
         this.isCompleted = isCompleted;
+        this.createdBy = createdBy;
         this.assignedMembers = assignedMembers != null ? assignedMembers : new HashSet<>();
     }
 
     /**
      * 새 카드 생성 (팩토리 메서드)
      */
-    public static Card create(String title, String description, int position, ListId listId) {
+    public static Card create(String title, String description, int position, ListId listId, UserId createdBy) {
         return Card.builder()
                 .cardId(new CardId())
                 .title(title.trim())
@@ -68,6 +70,7 @@ public class Card extends BaseEntity {
                 .isArchived(false)
                 .priority(null)
                 .isCompleted(false)
+                .createdBy(createdBy)
                 .assignedMembers(new HashSet<>())
                 .build();
     }
@@ -77,7 +80,7 @@ public class Card extends BaseEntity {
      */
     public static Card restore(CardId cardId, String title, String description, int position,
             Instant dueDate, Instant startDate, boolean archived, ListId listId, CardPriority priority,
-            boolean isCompleted,
+            boolean isCompleted, UserId createdBy,
             Set<CardMember> assignedMembers,
             Instant createdAt, Instant updatedAt) {
 
@@ -92,6 +95,7 @@ public class Card extends BaseEntity {
                 .isArchived(archived)
                 .priority(priority)
                 .isCompleted(isCompleted)
+                .createdBy(createdBy)
                 .assignedMembers(assignedMembers != null ? assignedMembers : new HashSet<>())
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
@@ -257,7 +261,7 @@ public class Card extends BaseEntity {
      * 생성 시간은 현재 시간으로 설정합니다.
      * 업데이트 시간은 생성 시간으로 설정합니다.
      */
-    public Card clone(String newTitle, int newPosition) {
+    public Card clone(String newTitle, int newPosition, UserId createdBy) {
         return Card.builder()
                 .cardId(new CardId())
                 .title(newTitle.trim())
@@ -271,6 +275,7 @@ public class Card extends BaseEntity {
                 .isArchived(isArchived)
                 .priority(priority)
                 .isCompleted(false) // 복제된 카드는 미완료 상태로 시작
+                .createdBy(createdBy)
                 .assignedMembers(new HashSet<>()) // 담당자는 복제하지 않음
                 .build();
     }
@@ -287,7 +292,7 @@ public class Card extends BaseEntity {
     /**
      * 카드를 다른 리스트로 복사합니다.
      */
-    public Card cloneToList(String newTitle, ListId newListId, int newPosition) {
+    public Card cloneToList(String newTitle, ListId newListId, int newPosition, UserId createdBy) {
         return Card.builder()
                 .cardId(new CardId())
                 .title(newTitle.trim())
@@ -301,6 +306,7 @@ public class Card extends BaseEntity {
                 .isArchived(isArchived)
                 .priority(priority)
                 .isCompleted(false) // 복제된 카드는 미완료 상태로 시작
+                .createdBy(createdBy)
                 .assignedMembers(new HashSet<>()) // 담당자는 복제하지 않음
                 .build();
     }

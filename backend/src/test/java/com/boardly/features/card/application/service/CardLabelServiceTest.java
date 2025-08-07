@@ -133,6 +133,7 @@ class CardLabelServiceTest {
                                         .cardId(cardId)
                                         .title("테스트 카드")
                                         .listId(listId)
+                                        .createdBy(new UserId("test-user"))
                                         .build();
 
                         label = Label.builder()

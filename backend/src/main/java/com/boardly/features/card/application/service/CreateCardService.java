@@ -1,31 +1,33 @@
 package com.boardly.features.card.application.service;
 
-import com.boardly.features.activity.application.helper.ActivityHelper;
-import com.boardly.features.activity.domain.model.ActivityType;
-import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.card.application.port.input.CreateCardCommand;
-import com.boardly.features.card.application.port.input.CloneCardCommand;
-import com.boardly.features.card.application.usecase.CreateCardUseCase;
-import com.boardly.features.card.application.usecase.CloneCardUseCase;
-import com.boardly.features.card.application.validation.CardValidator;
-import com.boardly.features.card.domain.model.Card;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.card.domain.policy.CardCreationPolicy;
-import com.boardly.features.card.domain.policy.CardClonePolicy;
-import com.boardly.features.card.domain.repository.CardRepository;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.domain.common.Failure;
-import io.vavr.control.Either;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.activity.domain.model.ActivityType;
+import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.boardlist.domain.model.BoardList;
+import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.boardlist.domain.repository.BoardListRepository;
+import com.boardly.features.card.application.port.input.CloneCardCommand;
+import com.boardly.features.card.application.port.input.CreateCardCommand;
+import com.boardly.features.card.application.usecase.CloneCardUseCase;
+import com.boardly.features.card.application.usecase.CreateCardUseCase;
+import com.boardly.features.card.application.validation.CardValidator;
+import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.policy.CardClonePolicy;
+import com.boardly.features.card.domain.policy.CardCreationPolicy;
+import com.boardly.features.card.domain.repository.CardRepository;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.domain.common.Failure;
+
+import io.vavr.control.Either;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 카드 생성 서비스
@@ -139,8 +141,10 @@ public class CreateCardService implements CreateCardUseCase, CloneCardUseCase {
                     int newPosition = calculateNewCardPosition(command.listId());
 
                     // 카드 생성 및 저장
-                    Card card = Card.create(command.title(), command.description(), newPosition, command.listId());
-                    log.info("카드 생성 완료: cardId={}, title={}", card.getCardId().getId(), card.getTitle());
+                    Card card = Card.create(command.title(), command.description(), newPosition, command.listId(),
+                            command.userId());
+                    log.info("카드 생성 완료: cardId={}, title={}, createdBy={}", card.getCardId().getId(), card.getTitle(),
+                            card.getCreatedBy().getId());
 
                     return cardRepository.save(card)
                             .peek(savedCard -> logCardCreateActivity(command, boardList, savedCard));
@@ -251,12 +255,12 @@ public class CreateCardService implements CreateCardUseCase, CloneCardUseCase {
 
         // 카드 복제 및 저장
         Card clonedCard = targetListId.equals(originalCard.getListId())
-                ? originalCard.clone(command.newTitle(), newPosition)
-                : originalCard.cloneToList(command.newTitle(), targetListId, newPosition);
+                ? originalCard.clone(command.newTitle(), newPosition, command.userId())
+                : originalCard.cloneToList(command.newTitle(), targetListId, newPosition, command.userId());
 
-        log.info("카드 복제 완료: originalCardId={}, clonedCardId={}, title={}, targetListId={}",
+        log.info("카드 복제 완료: originalCardId={}, clonedCardId={}, title={}, targetListId={}, createdBy={}",
                 originalCard.getCardId().getId(), clonedCard.getCardId().getId(),
-                clonedCard.getTitle(), clonedCard.getListId().getId());
+                clonedCard.getTitle(), clonedCard.getListId().getId(), clonedCard.getCreatedBy().getId());
 
         return cardRepository.save(clonedCard)
                 .peek(savedClonedCard -> logCardDuplicateActivity(command, originalCard, savedClonedCard));

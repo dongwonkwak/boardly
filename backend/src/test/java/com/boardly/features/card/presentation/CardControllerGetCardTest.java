@@ -79,6 +79,7 @@ class CardControllerGetCardTest {
                 .position(1)
                 .priority(CardPriority.MEDIUM)
                 .isCompleted(false)
+                .createdBy(new UserId(TEST_USER_ID))
                 .startDate(Instant.now())
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())

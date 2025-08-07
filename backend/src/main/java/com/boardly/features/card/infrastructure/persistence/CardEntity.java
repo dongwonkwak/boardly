@@ -31,7 +31,8 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_card_list_id", columnList = "list_id"),
         @Index(name = "idx_card_position", columnList = "list_id, position"),
         @Index(name = "idx_card_due_date", columnList = "due_date"),
-        @Index(name = "idx_card_archived", columnList = "archived")
+        @Index(name = "idx_card_archived", columnList = "archived"),
+        @Index(name = "idx_card_created_by", columnList = "created_by")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -67,6 +68,9 @@ public class CardEntity {
     @Column(name = "list_id", nullable = false)
     private String listId;
 
+    @Column(name = "created_by", nullable = false)
+    private String createdBy;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -85,7 +89,7 @@ public class CardEntity {
     private CardEntity(String cardId, String title, String description,
             int position, String listId,
             Instant dueDate, Instant startDate, boolean archived, String priority, boolean isCompleted,
-            Instant createdAt, Instant updatedAt,
+            String createdBy, Instant createdAt, Instant updatedAt,
             Set<CardMemberEntity> assignedMembers) {
         this.cardId = cardId;
         this.title = title;
@@ -97,6 +101,7 @@ public class CardEntity {
         this.archived = archived;
         this.priority = priority;
         this.isCompleted = isCompleted;
+        this.createdBy = createdBy;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.assignedMembers = assignedMembers;
@@ -121,6 +126,7 @@ public class CardEntity {
                 new ListId(this.listId),
                 CardPriority.fromValue(this.priority),
                 this.isCompleted,
+                new UserId(this.createdBy),
                 members,
                 this.createdAt,
                 this.updatedAt);
@@ -141,6 +147,7 @@ public class CardEntity {
                 .archived(card.isArchived())
                 .priority(card.getPriority() != null ? card.getPriority().getValue() : null)
                 .isCompleted(card.isCompleted())
+                .createdBy(card.getCreatedBy().getId())
                 .createdAt(card.getCreatedAt())
                 .updatedAt(card.getUpdatedAt())
                 .build();

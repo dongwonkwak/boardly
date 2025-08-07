@@ -16,6 +16,7 @@ import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.shared.domain.common.Failure;
+import com.boardly.features.user.domain.model.UserId;
 
 import io.vavr.control.Either;
 
@@ -314,6 +315,7 @@ class CardMovePolicyTest {
         .description("테스트 설명")
         .position(position)
         .listId(listId)
+        .createdBy(new UserId("test-user"))
         .build();
   }
 }

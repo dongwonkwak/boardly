@@ -91,20 +91,20 @@ INSERT INTO labels (label_id, board_id, name, color, created_at, updated_at, ver
 -- =====================================================
 -- 6. 카드 테스트 데이터
 -- =====================================================
-INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_at, updated_at, version) VALUES
+INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_by, created_at, updated_at, version) VALUES
 -- 웹 개발 프로젝트 카드들 (우선순위 미지정)
-('card-1', '메인 페이지 디자인', '사용자 인터페이스 디자인 작업', 1, DATEADD('DAY', 7, NOW()), NULL, false, 'list-1', NOW(), NOW(), 0),
-('card-2', '데이터베이스 설계', 'ERD 작성 및 테이블 설계', 2, DATEADD('DAY', 5, NOW()), NULL, false, 'list-1', NOW(), NOW(), 0),
-('card-3', 'API 개발', 'RESTful API 엔드포인트 구현', 3, DATEADD('DAY', 10, NOW()), NULL, false, 'list-1', NOW(), NOW(), 0),
-('card-4', '단위 테스트 작성', '핵심 기능에 대한 단위 테스트', 1, DATEADD('DAY', 3, NOW()), NULL, false, 'list-2', NOW(), NOW(), 0),
-('card-5', '보안 테스트', '인증 및 권한 검증', 2, DATEADD('DAY', 5, NOW()), 'high', false, 'list-2', NOW(), NOW(), 0),
-('card-6', '성능 최적화', '데이터베이스 쿼리 최적화', 3, DATEADD('DAY', 8, NOW()), 'medium', false, 'list-2', NOW(), NOW(), 0),
-('card-7', '사용자 매뉴얼 작성', '시스템 사용법 가이드', 1, DATEADD('DAY', 2, NOW()), 'low', false, 'list-3', NOW(), NOW(), 0),
-('card-8', '배포 준비', '프로덕션 환경 배포 준비', 2, DATEADD('DAY', 1, NOW()), 'urgent', false, 'list-3', NOW(), NOW(), 0),
-('card-9', '모니터링 설정', '시스템 모니터링 도구 설정', 3, DATEADD('DAY', 4, NOW()), NULL, false, 'list-3', NOW(), NOW(), 0),
-('card-10', 'Android 개발', '모바일 앱 개발', 1, DATEADD('DAY', 15, NOW()), NULL, false, 'list-4', NOW(), NOW(), 0),
-('card-11', 'SNS 콘텐츠 기획', '소셜미디어 마케팅 콘텐츠', 1, DATEADD('DAY', 3, NOW()), NULL, false, 'list-5', NOW(), NOW(), 0),
-('card-12', '브랜드 가이드라인', '브랜드 아이덴티티 가이드', 2, DATEADD('DAY', 7, NOW()), NULL, false, 'list-5', NOW(), NOW(), 0);
+('card-1', '메인 페이지 디자인', '사용자 인터페이스 디자인 작업', 1, DATEADD('DAY', 7, NOW()), NULL, false, 'list-1', 'user-1', NOW(), NOW(), 0),
+('card-2', '데이터베이스 설계', 'ERD 작성 및 테이블 설계', 2, DATEADD('DAY', 5, NOW()), NULL, false, 'list-1', 'user-1', NOW(), NOW(), 0),
+('card-3', 'API 개발', 'RESTful API 엔드포인트 구현', 3, DATEADD('DAY', 10, NOW()), NULL, false, 'list-1', 'user-1', NOW(), NOW(), 0),
+('card-4', '단위 테스트 작성', '핵심 기능에 대한 단위 테스트', 1, DATEADD('DAY', 3, NOW()), NULL, false, 'list-2', 'user-2', NOW(), NOW(), 0),
+('card-5', '보안 테스트', '인증 및 권한 검증', 2, DATEADD('DAY', 5, NOW()), 'high', false, 'list-2', 'user-3', NOW(), NOW(), 0),
+('card-6', '성능 최적화', '데이터베이스 쿼리 최적화', 3, DATEADD('DAY', 8, NOW()), 'medium', false, 'list-2', 'user-2', NOW(), NOW(), 0),
+('card-7', '사용자 매뉴얼 작성', '시스템 사용법 가이드', 1, DATEADD('DAY', 2, NOW()), 'low', false, 'list-3', 'user-2', NOW(), NOW(), 0),
+('card-8', '배포 준비', '프로덕션 환경 배포 준비', 2, DATEADD('DAY', 1, NOW()), 'urgent', false, 'list-3', 'user-4', NOW(), NOW(), 0),
+('card-9', '모니터링 설정', '시스템 모니터링 도구 설정', 3, DATEADD('DAY', 4, NOW()), NULL, false, 'list-3', 'user-2', NOW(), NOW(), 0),
+('card-10', 'Android 개발', '모바일 앱 개발', 1, DATEADD('DAY', 15, NOW()), NULL, false, 'list-4', 'user-4', NOW(), NOW(), 0),
+('card-11', 'SNS 콘텐츠 기획', '소셜미디어 마케팅 콘텐츠', 1, DATEADD('DAY', 3, NOW()), NULL, false, 'list-5', 'user-5', NOW(), NOW(), 0),
+('card-12', '브랜드 가이드라인', '브랜드 아이덴티티 가이드', 2, DATEADD('DAY', 7, NOW()), NULL, false, 'list-5', 'user-1', NOW(), NOW(), 0);
 
 -- =====================================================
 -- 7. 카드 멤버 테스트 데이터 (카드 담당자)
@@ -197,8 +197,8 @@ INSERT INTO board_lists (list_id, title, description, position, color, board_id,
 ('list-12', '아카이브', '완료된 오래된 작업들', 5, '#95A5A6', 'board-1', NOW(), NOW(), 0);
 
 -- 아카이브된 카드 예시
-INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_at, updated_at, version) VALUES
-('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, NULL, TRUE, 'list-12', DATEADD('DAY', -10, NOW()), NOW(), 0);
+INSERT INTO cards (card_id, title, description, position, due_date, priority, archived, list_id, created_by, created_at, updated_at, version) VALUES
+('card-13', '구 버전 호환성 검사', '이전 버전과의 호환성 확인 (완료됨)', 1, NULL, NULL, TRUE, 'list-12', 'user-1', DATEADD('DAY', -10, NOW()), NOW(), 0);
 
 -- 추가 보드 멤버 권한 예시
 INSERT INTO board_members (member_id, board_id, user_id, role, is_active, created_at, updated_at, version) VALUES

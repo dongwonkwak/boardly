@@ -143,7 +143,8 @@ class CreateCardServiceTest {
                                         "테스트 카드",
                                         "테스트 설명",
                                         0,
-                                        listId);
+                                        listId,
+                                        userId);
                 }
 
                 @Test
@@ -448,7 +449,8 @@ class CreateCardServiceTest {
                                         "원본 카드",
                                         "원본 설명",
                                         0,
-                                        sourceListId);
+                                        sourceListId,
+                                        userId);
 
                         sourceBoardList = BoardList.create(
                                         "소스 리스트",
@@ -464,7 +466,8 @@ class CreateCardServiceTest {
                                         "복제된 카드",
                                         "원본 설명",
                                         0,
-                                        targetListId);
+                                        targetListId,
+                                        userId);
                 }
 
                 @Test
@@ -831,7 +834,7 @@ class CreateCardServiceTest {
                         when(cardValidator.validateClone(command))
                                         .thenReturn(ValidationResult.valid(command));
                         when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(Card.create("원본 카드", "원본 설명", 0, listId)));
+                                        .thenReturn(Optional.of(Card.create("원본 카드", "원본 설명", 0, listId, userId)));
                         when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.empty());
 
@@ -856,7 +859,7 @@ class CreateCardServiceTest {
                         when(cardValidator.validateClone(command))
                                         .thenReturn(ValidationResult.valid(command));
                         when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(Card.create("원본 카드", "원본 설명", 0, listId)));
+                                        .thenReturn(Optional.of(Card.create("원본 카드", "원본 설명", 0, listId, userId)));
                         when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
                         when(boardRepository.findByIdAndOwnerId(boardId, userId))
@@ -893,7 +896,7 @@ class CreateCardServiceTest {
                         when(cardValidator.validateClone(command))
                                         .thenReturn(ValidationResult.valid(command));
                         when(cardRepository.findById(command.cardId()))
-                                        .thenReturn(Optional.of(Card.create("원본 카드", "원본 설명", 0, listId)));
+                                        .thenReturn(Optional.of(Card.create("원본 카드", "원본 설명", 0, listId, userId)));
                         when(boardListRepository.findById(listId))
                                         .thenReturn(Optional.of(boardList));
                         when(boardRepository.findByIdAndOwnerId(boardId, userId))

@@ -32,6 +32,7 @@ import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.response.ErrorResponse;
 
 import io.vavr.control.Either;
+import com.boardly.features.user.domain.model.UserId;
 
 @ExtendWith(MockitoExtension.class)
 class CardControllerCreateCardTest {
@@ -81,6 +82,7 @@ class CardControllerCreateCardTest {
                 .position(1)
                 .priority(CardPriority.MEDIUM)
                 .isCompleted(false)
+                .createdBy(new UserId(TEST_USER_ID))
                 .startDate(Instant.now())
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())

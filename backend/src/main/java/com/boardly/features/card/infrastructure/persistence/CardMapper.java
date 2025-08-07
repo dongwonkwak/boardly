@@ -10,6 +10,7 @@ import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.model.CardPriority;
 import com.boardly.features.card.domain.valueobject.CardMember;
+import com.boardly.features.user.domain.model.UserId;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,7 @@ public class CardMapper {
         new ListId(entity.getListId()),
         CardPriority.fromValue(entity.getPriority()),
         entity.isCompleted(),
+        new UserId(entity.getCreatedBy()),
         assignedMembers,
         entity.getCreatedAt(),
         entity.getUpdatedAt());

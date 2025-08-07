@@ -33,6 +33,9 @@ dependencies {
     // springdoc
     implementation(libs.bundles.springdoc.dependencies)
 
+    // flyway
+    implementation(libs.bundles.flyway.dependencies)
+
     // lombok
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)

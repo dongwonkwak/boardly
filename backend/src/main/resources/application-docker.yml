@@ -15,12 +15,11 @@ spring:
         '[format_sql]': ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:false}
         jdbc:
           '[time_zone]': UTC
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath:schema.sql
-      data-locations: classpath:data.sql
-      encoding: utf-8
+  flyway:
+    enabled: true
+    locations:
+      - classpath:db/migration/common
+      - classpath:db/migration/local
   security:
     oauth2:
       authorizationserver:

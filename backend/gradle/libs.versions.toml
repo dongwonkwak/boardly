@@ -19,6 +19,7 @@ openapi-gradle-plugin = "1.9.0"
 ulid-creator = "5.2.3"
 caffeine = "3.2.2"
 version-catalog-update = "0.52.0"
+flyway = "11.10.5"
 
 [libraries]
 # Spring Boot Starters
@@ -40,6 +41,8 @@ vavr = { module = "io.vavr:vavr", version.ref = "vavr" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi-starter-webmvc-ui" }
 ulid-creator = { module = "com.github.f4b6a3:ulid-creator", version.ref = "ulid-creator" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
@@ -62,3 +65,5 @@ spring-test-dependencies = ["spring-boot-starter-test", "spring-security-test"]
 common-dependencies = ["commons-lang3", "vavr", "ulid-creator", "caffeine"]
 
 springdoc-dependencies = ["springdoc-openapi-starter-webmvc-ui"]
+
+flyway-dependencies = ["flyway-core", "flyway-postgres"]

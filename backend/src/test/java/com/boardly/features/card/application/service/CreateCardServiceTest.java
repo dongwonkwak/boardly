@@ -29,13 +29,13 @@ import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.boardlist.domain.model.BoardList;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.card.application.port.input.CreateCardCommand;
 import com.boardly.features.card.application.port.input.CloneCardCommand;
+import com.boardly.features.card.application.port.input.CreateCardCommand;
 import com.boardly.features.card.application.validation.CardValidator;
 import com.boardly.features.card.domain.model.Card;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.card.domain.policy.CardCreationPolicy;
 import com.boardly.features.card.domain.policy.CardClonePolicy;
+import com.boardly.features.card.domain.policy.CardCreationPolicy;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -472,6 +472,7 @@ class CreateCardServiceTest {
 
                 @Test
                 @DisplayName("유효한 커맨드로 카드 복제 시 성공한다")
+                @SuppressWarnings("unchecked")
                 void shouldCloneCardSuccessfully() {
                         // given
                         when(cardValidator.validateClone(validCommand))

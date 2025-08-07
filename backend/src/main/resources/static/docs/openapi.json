@@ -4025,6 +4025,9 @@
           "priority": {
             "type": "string"
           },
+          "createdBy": {
+            "type": "string"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"

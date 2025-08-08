@@ -25,10 +25,10 @@ public class CardLabelEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_id", nullable = false, length = 36)
+    @Column(name = "card_id", nullable = false, length = 50)
     private String cardId;
 
-    @Column(name = "label_id", nullable = false, length = 36)
+    @Column(name = "label_id", nullable = false, length = 50)
     private String labelId;
 
     @Column(name = "applied_at", nullable = false)

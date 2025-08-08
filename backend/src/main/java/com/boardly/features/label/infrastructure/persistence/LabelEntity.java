@@ -22,10 +22,10 @@ import jakarta.persistence.Version;
 public class LabelEntity {
 
     @Id
-    @Column(name = "label_id", nullable = false, length = 36)
+    @Column(name = "label_id", nullable = false, length = 50)
     private String labelId;
 
-    @Column(name = "board_id", nullable = false, length = 36)
+    @Column(name = "board_id", nullable = false, length = 50)
     private String boardId;
 
     @Column(name = "name", nullable = false, length = 50)
@@ -131,6 +131,14 @@ public class LabelEntity {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 
     @Override

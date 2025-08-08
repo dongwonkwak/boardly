@@ -85,6 +85,10 @@ class CommonValidationRulesTest {
             return firstName;
         }
 
+        public String getLastName() {
+            return lastName;
+        }
+
         public String getTitle() {
             return title;
         }
@@ -873,6 +877,71 @@ class CommonValidationRulesTest {
                     null,
                     "홍길동123",
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
+
+            // then
+            assertThat(result.isInvalid()).isTrue();
+            assertThat(result.getErrors()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("lastNameComplete() - 성 완전 검증 (성공)")
+        void lastNameComplete_ShouldReturnSuccess_WhenLastNameIsValid() {
+            // given
+            Function<TestData, String> lastNameExtractor = TestData::getLastName;
+            Validator<TestData> validator = validationRules.lastNameComplete(
+                lastNameExtractor
+            );
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    "김",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
+
+            // then
+            assertThat(result.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("lastNameComplete() - 성 완전 검증 (실패 - 특수문자/숫자 포함)")
+        void lastNameComplete_ShouldReturnFailure_WhenLastNameContainsInvalidChars() {
+            // given
+            Function<TestData, String> lastNameExtractor = TestData::getLastName;
+            Validator<TestData> validator = validationRules.lastNameComplete(
+                lastNameExtractor
+            );
+
+            // when
+            ValidationResult<TestData> result = validator.validate(
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    "Doe123!",
                     null,
                     null,
                     null,

@@ -148,8 +148,8 @@ class UserControllerTest {
 
                         ErrorResponse actualErrorResponse = (ErrorResponse) response.getBody();
                         if (actualErrorResponse != null) {
-                                assertThat(actualErrorResponse.code()).isEqualTo("VALIDATION_ERROR");
-                                assertThat(actualErrorResponse.message()).isEqualTo("이미 존재하는 이메일입니다");
+                                assertThat(actualErrorResponse.getCode()).isEqualTo("VALIDATION_ERROR");
+                                assertThat(actualErrorResponse.getMessage()).isEqualTo("이미 존재하는 이메일입니다");
                         }
 
                         verify(registerUserUseCase).register(any(RegisterUserCommand.class));
@@ -252,8 +252,8 @@ class UserControllerTest {
 
                         ErrorResponse actualErrorResponse = (ErrorResponse) response.getBody();
                         if (actualErrorResponse != null) {
-                                assertThat(actualErrorResponse.code()).isEqualTo("NOT_FOUND");
-                                assertThat(actualErrorResponse.message()).isEqualTo("사용자를 찾을 수 없습니다");
+                                assertThat(actualErrorResponse.getCode()).isEqualTo("NOT_FOUND");
+                                assertThat(actualErrorResponse.getMessage()).isEqualTo("사용자를 찾을 수 없습니다");
                         }
 
                         verify(jwt).getSubject();

@@ -6,9 +6,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
+import com.boardly.features.card.application.usecase.ManageCardMemberUseCase;
+import com.boardly.features.card.domain.valueobject.CardMember;
+import com.boardly.features.card.presentation.request.AssignCardMemberRequest;
+import com.boardly.features.card.presentation.request.UnassignCardMemberRequest;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.presentation.ApiFailureHandler;
+import io.vavr.control.Either;
 import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,16 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.jwt.Jwt;
-
-import com.boardly.features.card.application.usecase.ManageCardMemberUseCase;
-import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.card.presentation.request.AssignCardMemberRequest;
-import com.boardly.features.card.presentation.request.UnassignCardMemberRequest;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.shared.domain.common.Failure;
-import com.boardly.shared.presentation.ApiFailureHandler;
-
-import io.vavr.control.Either;
 
 @ExtendWith(MockitoExtension.class)
 class CardControllerManageCardMemberTest {
@@ -54,23 +50,23 @@ class CardControllerManageCardMemberTest {
     @BeforeEach
     void setUp() {
         cardController = new CardController(
-                null, // createCardUseCase
-                null, // cardQueryUseCase
-                null, // updateCardUseCase
-                null, // moveCardUseCase
-                null, // cloneCardUseCase
-                null, // deleteCardUseCase
-                manageCardMemberUseCase,
-                null, // manageCardLabelUseCase
-                failureHandler);
+            null, // createCardUseCase
+            null, // cardQueryUseCase
+            null, // getCardDetailUseCase
+            null, // updateCardUseCase
+            null, // moveCardUseCase
+            null, // cloneCardUseCase
+            null, // deleteCardUseCase
+            manageCardMemberUseCase,
+            null, // manageCardLabelUseCase
+            failureHandler
+        );
 
         when(jwt.getSubject()).thenReturn(TEST_USER_ID);
     }
 
     private CardMember createTestCardMember() {
-        return new CardMember(
-                new UserId(TEST_MEMBER_ID),
-                Instant.now());
+        return new CardMember(new UserId(TEST_MEMBER_ID));
     }
 
     private List<CardMember> createTestCardMembers() {
@@ -81,13 +77,21 @@ class CardControllerManageCardMemberTest {
     @DisplayName("카드 멤버 할당 성공 시 200 응답을 반환해야 한다")
     void assignCardMember_withValidRequest_shouldReturn200() {
         // given
-        AssignCardMemberRequest request = new AssignCardMemberRequest(TEST_MEMBER_ID);
+        AssignCardMemberRequest request = new AssignCardMemberRequest(
+            TEST_MEMBER_ID
+        );
 
-        when(manageCardMemberUseCase.assignMember(any()))
-                .thenReturn(Either.right(null));
+        when(manageCardMemberUseCase.assignMember(any())).thenReturn(
+            Either.right(null)
+        );
 
         // when
-        ResponseEntity<?> response = cardController.assignCardMember(TEST_CARD_ID, request, httpRequest, jwt);
+        ResponseEntity<?> response = cardController.assignCardMember(
+            TEST_CARD_ID,
+            request,
+            httpRequest,
+            jwt
+        );
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -100,16 +104,25 @@ class CardControllerManageCardMemberTest {
     @DisplayName("카드 멤버 할당 실패 시 failureHandler가 호출되어야 한다")
     void assignCardMember_withFailure_shouldCallFailureHandler() {
         // given
-        AssignCardMemberRequest request = new AssignCardMemberRequest(TEST_MEMBER_ID);
+        AssignCardMemberRequest request = new AssignCardMemberRequest(
+            TEST_MEMBER_ID
+        );
         Failure failure = Failure.ofNotFound("카드를 찾을 수 없습니다");
 
-        when(manageCardMemberUseCase.assignMember(any()))
-                .thenReturn(Either.left(failure));
-        when(failureHandler.handleFailure(failure))
-                .thenReturn(ResponseEntity.notFound().build());
+        when(manageCardMemberUseCase.assignMember(any())).thenReturn(
+            Either.left(failure)
+        );
+        when(failureHandler.handleFailure(failure)).thenReturn(
+            ResponseEntity.notFound().build()
+        );
 
         // when
-        ResponseEntity<?> response = cardController.assignCardMember(TEST_CARD_ID, request, httpRequest, jwt);
+        ResponseEntity<?> response = cardController.assignCardMember(
+            TEST_CARD_ID,
+            request,
+            httpRequest,
+            jwt
+        );
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -122,13 +135,21 @@ class CardControllerManageCardMemberTest {
     @DisplayName("카드 멤버 해제 성공 시 200 응답을 반환해야 한다")
     void unassignCardMember_withValidRequest_shouldReturn200() {
         // given
-        UnassignCardMemberRequest request = new UnassignCardMemberRequest(TEST_MEMBER_ID);
+        UnassignCardMemberRequest request = new UnassignCardMemberRequest(
+            TEST_MEMBER_ID
+        );
 
-        when(manageCardMemberUseCase.unassignMember(any()))
-                .thenReturn(Either.right(null));
+        when(manageCardMemberUseCase.unassignMember(any())).thenReturn(
+            Either.right(null)
+        );
 
         // when
-        ResponseEntity<?> response = cardController.unassignCardMember(TEST_CARD_ID, request, httpRequest, jwt);
+        ResponseEntity<?> response = cardController.unassignCardMember(
+            TEST_CARD_ID,
+            request,
+            httpRequest,
+            jwt
+        );
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -141,16 +162,25 @@ class CardControllerManageCardMemberTest {
     @DisplayName("카드 멤버 해제 실패 시 failureHandler가 호출되어야 한다")
     void unassignCardMember_withFailure_shouldCallFailureHandler() {
         // given
-        UnassignCardMemberRequest request = new UnassignCardMemberRequest(TEST_MEMBER_ID);
+        UnassignCardMemberRequest request = new UnassignCardMemberRequest(
+            TEST_MEMBER_ID
+        );
         Failure failure = Failure.ofNotFound("카드를 찾을 수 없습니다");
 
-        when(manageCardMemberUseCase.unassignMember(any()))
-                .thenReturn(Either.left(failure));
-        when(failureHandler.handleFailure(failure))
-                .thenReturn(ResponseEntity.notFound().build());
+        when(manageCardMemberUseCase.unassignMember(any())).thenReturn(
+            Either.left(failure)
+        );
+        when(failureHandler.handleFailure(failure)).thenReturn(
+            ResponseEntity.notFound().build()
+        );
 
         // when
-        ResponseEntity<?> response = cardController.unassignCardMember(TEST_CARD_ID, request, httpRequest, jwt);
+        ResponseEntity<?> response = cardController.unassignCardMember(
+            TEST_CARD_ID,
+            request,
+            httpRequest,
+            jwt
+        );
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -165,21 +195,30 @@ class CardControllerManageCardMemberTest {
         // given
         List<CardMember> members = createTestCardMembers();
 
-        when(manageCardMemberUseCase.getCardMembers(any(), any()))
-                .thenReturn(members);
+        when(manageCardMemberUseCase.getCardMembers(any(), any())).thenReturn(
+            members
+        );
 
         // when
-        ResponseEntity<?> response = cardController.getCardMembers(TEST_CARD_ID, httpRequest, jwt);
+        ResponseEntity<?> response = cardController.getCardMembers(
+            TEST_CARD_ID,
+            httpRequest,
+            jwt
+        );
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isInstanceOf(List.class);
 
         @SuppressWarnings("unchecked")
-        List<CardMember> responseMembers = (List<CardMember>) response.getBody();
+        List<CardMember> responseMembers = (List<
+            CardMember
+        >) response.getBody();
         assertThat(responseMembers).hasSize(1);
         assertNotNull(responseMembers);
-        assertThat(responseMembers.get(0).getUserId().getId()).isEqualTo(TEST_MEMBER_ID);
+        assertThat(responseMembers.get(0).getUserId().getId()).isEqualTo(
+            TEST_MEMBER_ID
+        );
 
         verify(manageCardMemberUseCase).getCardMembers(any(), any());
     }
@@ -190,18 +229,25 @@ class CardControllerManageCardMemberTest {
         // given
         List<CardMember> emptyMembers = List.of();
 
-        when(manageCardMemberUseCase.getCardMembers(any(), any()))
-                .thenReturn(emptyMembers);
+        when(manageCardMemberUseCase.getCardMembers(any(), any())).thenReturn(
+            emptyMembers
+        );
 
         // when
-        ResponseEntity<?> response = cardController.getCardMembers(TEST_CARD_ID, httpRequest, jwt);
+        ResponseEntity<?> response = cardController.getCardMembers(
+            TEST_CARD_ID,
+            httpRequest,
+            jwt
+        );
 
         // then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isInstanceOf(List.class);
 
         @SuppressWarnings("unchecked")
-        List<CardMember> responseMembers = (List<CardMember>) response.getBody();
+        List<CardMember> responseMembers = (List<
+            CardMember
+        >) response.getBody();
         assertThat(responseMembers).isEmpty();
 
         verify(manageCardMemberUseCase).getCardMembers(any(), any());
@@ -211,13 +257,21 @@ class CardControllerManageCardMemberTest {
     @DisplayName("JWT에서 사용자 ID를 올바르게 추출해야 한다")
     void manageCardMember_shouldExtractUserIdFromJwt() {
         // given
-        AssignCardMemberRequest request = new AssignCardMemberRequest(TEST_MEMBER_ID);
+        AssignCardMemberRequest request = new AssignCardMemberRequest(
+            TEST_MEMBER_ID
+        );
 
-        when(manageCardMemberUseCase.assignMember(any()))
-                .thenReturn(Either.right(null));
+        when(manageCardMemberUseCase.assignMember(any())).thenReturn(
+            Either.right(null)
+        );
 
         // when
-        cardController.assignCardMember(TEST_CARD_ID, request, httpRequest, jwt);
+        cardController.assignCardMember(
+            TEST_CARD_ID,
+            request,
+            httpRequest,
+            jwt
+        );
 
         // then
         verify(manageCardMemberUseCase).assignMember(any());

@@ -61,6 +61,7 @@ class CardControllerMoveCardTest {
         cardController = new CardController(
                 null, // createCardUseCase
                 null, // cardQueryUseCase
+                null, // getCardDetailUseCase
                 null, // updateCardUseCase
                 moveCardUseCase,
                 null, // cloneCardUseCase

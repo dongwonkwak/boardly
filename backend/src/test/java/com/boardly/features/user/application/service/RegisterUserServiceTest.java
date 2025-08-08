@@ -133,7 +133,7 @@ class RegisterUserServiceTest {
         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
         assertThat(inputError.getViolations()).hasSize(1);
         if (inputError.getViolations() != null && !inputError.getViolations().isEmpty()) {
-            assertThat(inputError.getViolations().get(0).field()).isEqualTo("email");
+            assertThat(inputError.getViolations().get(0).getField()).isEqualTo("email");
         }
 
         verify(userValidator).validateUserRegistration(command);
@@ -395,8 +395,8 @@ class RegisterUserServiceTest {
         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
         assertThat(inputError.getViolations()).hasSize(2);
         if (inputError.getViolations() != null && inputError.getViolations().size() >= 2) {
-            assertThat(inputError.getViolations().get(0).field()).isEqualTo("email");
-            assertThat(inputError.getViolations().get(1).field()).isEqualTo("password");
+            assertThat(inputError.getViolations().get(0).getField()).isEqualTo("email");
+            assertThat(inputError.getViolations().get(1).getField()).isEqualTo("password");
         }
 
         verify(userValidator).validateUserRegistration(command);

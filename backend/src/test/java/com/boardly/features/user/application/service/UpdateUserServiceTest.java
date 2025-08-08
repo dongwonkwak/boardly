@@ -139,7 +139,7 @@ class UpdateUserServiceTest {
         assertThat(inputError.getErrorCode()).isEqualTo("INVALID_INPUT");
         assertThat(inputError.getViolations()).hasSize(1);
         if (inputError.getViolations() != null && !inputError.getViolations().isEmpty()) {
-            assertThat(inputError.getViolations().get(0).field()).isEqualTo("firstName");
+            assertThat(inputError.getViolations().get(0).getField()).isEqualTo("firstName");
         }
 
         verify(userValidator).validateUserUpdate(command);

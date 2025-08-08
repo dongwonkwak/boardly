@@ -80,9 +80,9 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("field");
-      assertThat(violation.message()).isEqualTo("error message");
-      assertThat(violation.rejectedValue()).isEqualTo("test");
+      assertThat(violation.getField()).isEqualTo("field");
+      assertThat(violation.getMessage()).isEqualTo("error message");
+      assertThat(violation.getRejectedValue()).isEqualTo("test");
     }
 
     @Test
@@ -118,9 +118,9 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
-      assertThat(violation.rejectedValue()).isEqualTo("");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getRejectedValue()).isEqualTo("");
     }
   }
 
@@ -163,9 +163,9 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
-      assertThat(violation.rejectedValue()).isEqualTo("");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getRejectedValue()).isEqualTo("");
     }
 
     @Test
@@ -188,9 +188,9 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
-      assertThat(violation.rejectedValue()).isEqualTo("");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getRejectedValue()).isEqualTo("");
     }
   }
 
@@ -249,8 +249,8 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
     }
 
     @Test
@@ -279,8 +279,8 @@ class ValidatorTest {
       assertThat(result.getErrors()).hasSize(2);
 
       Seq<FieldViolation> violations = result.getErrors();
-      assertThat(violations.map(FieldViolation::field)).contains("name", "age");
-      assertThat(violations.map(FieldViolation::message)).contains("이름은 필수입니다", "나이는 0 이상이어야 합니다");
+      assertThat(violations.map(FieldViolation::getField)).contains("name", "age");
+      assertThat(violations.map(FieldViolation::getMessage)).contains("이름은 필수입니다", "나이는 0 이상이어야 합니다");
     }
 
     @Test
@@ -334,8 +334,8 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
     }
 
     @Test
@@ -363,8 +363,8 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("age");
-      assertThat(violation.message()).isEqualTo("나이는 0 이상이어야 합니다");
+      assertThat(violation.getField()).isEqualTo("age");
+      assertThat(violation.getMessage()).isEqualTo("나이는 0 이상이어야 합니다");
     }
   }
 
@@ -389,7 +389,7 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
+      assertThat(violation.getField()).isEqualTo("name");
     }
 
     @Test
@@ -434,9 +434,9 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
-      assertThat(violation.rejectedValue()).isEqualTo("");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getRejectedValue()).isEqualTo("");
     }
   }
 
@@ -508,7 +508,7 @@ class ValidatorTest {
       assertThat(result.getErrors()).hasSize(3);
 
       Seq<FieldViolation> violations = result.getErrors();
-      assertThat(violations.map(FieldViolation::field)).contains("name", "age", "email");
+      assertThat(violations.map(FieldViolation::getField)).contains("name", "age", "email");
     }
 
     @Test
@@ -542,8 +542,8 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
     }
 
     @Test
@@ -636,9 +636,9 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("name");
-      assertThat(violation.message()).isEqualTo("이름은 필수입니다");
-      assertThat(violation.rejectedValue()).isEqualTo("");
+      assertThat(violation.getField()).isEqualTo("name");
+      assertThat(violation.getMessage()).isEqualTo("이름은 필수입니다");
+      assertThat(violation.getRejectedValue()).isEqualTo("");
     }
   }
 
@@ -709,8 +709,8 @@ class ValidatorTest {
       assertThat(result.isInvalid()).isTrue();
       assertThat(result.getErrors()).hasSize(1);
       FieldViolation violation = result.getErrors().get(0);
-      assertThat(violation.field()).isEqualTo("age");
-      assertThat(violation.message()).isEqualTo("성인만 가입할 수 있습니다");
+      assertThat(violation.getField()).isEqualTo("age");
+      assertThat(violation.getMessage()).isEqualTo("성인만 가입할 수 있습니다");
     }
   }
 }

@@ -40,6 +40,10 @@ dependencies {
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     annotationProcessor(libs.lombok.mapstruct.binding)
+
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
+    testAnnotationProcessor(libs.lombok.mapstruct.binding)
 }
 
 tasks.named('test') {
@@ -105,7 +109,7 @@ tasks.register('copyOpenApiToProjectRoot') {
 
             // README 파일 생성 또는 업데이트
             def lastUpdateDate = contentChanged ? new Date().toString() : getLastUpdateDateFromReadme(readmeFile)
-            
+
             readmeFile.text = """# Boardly API Documentation
 
 ## OpenAPI 사양서
@@ -127,7 +131,7 @@ npx @openapitools/openapi-generator-cli generate \\
   -g typescript-axios \\
   -o ./generated-client
 
-# JavaScript 클라이언트 생성  
+# JavaScript 클라이언트 생성
 npx @openapitools/openapi-generator-cli generate \\
   -i openapi.json \\
   -g javascript \\
@@ -165,15 +169,15 @@ def getLastUpdateDateFromReadme(readmeFile) {
     if (!readmeFile.exists()) {
         return new Date().toString()
     }
-    
+
     def content = readmeFile.text
     def pattern = /마지막 업데이트: (.+)/
     def matcher = content =~ pattern
-    
+
     if (matcher.find()) {
         return matcher.group(1)
     }
-    
+
     return new Date().toString()
 }
 

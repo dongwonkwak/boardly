@@ -405,7 +405,7 @@
           "Cards"
         ],
         "summary": "카드 조회",
-        "description": "특정 카드의 상세 정보를 조회합니다.",
+        "description": "특정 카드의 기본 정보를 조회합니다.",
         "operationId": "getCard",
         "parameters": [
           {
@@ -2194,7 +2194,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/LabelId"
+                    "$ref": "#/components/schemas/Label"
                   }
                 }
               }
@@ -3306,6 +3306,87 @@
           },
           "404": {
             "description": "사용자를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "입력 값이 유효하지 않음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "read",
+              "openid"
+            ]
+          }
+        ]
+      }
+    },
+    "/api/cards/{cardId}/detail": {
+      "get": {
+        "tags": [
+          "Cards"
+        ],
+        "summary": "카드 상세 정보 조회",
+        "description": "특정 카드의 모든 상세 정보를 조회합니다.",
+        "operationId": "getCardDetail",
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "description": "조회할 카드 ID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "카드 상세 정보 조회 성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetailResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "카드 조회 권한 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "카드를 찾을 수 없음",
             "content": {
               "application/json": {
                 "schema": {
@@ -4545,10 +4626,6 @@
         "properties": {
           "userId": {
             "$ref": "#/components/schemas/UserId"
-          },
-          "assignedAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -4560,11 +4637,338 @@
           }
         }
       },
+      "BoardId": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "Label": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "labelId": {
+            "$ref": "#/components/schemas/LabelId"
+          },
+          "boardId": {
+            "$ref": "#/components/schemas/BoardId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "new": {
+            "type": "boolean"
+          },
+          "auditInfo": {
+            "type": "string"
+          },
+          "minutesSinceLastUpdate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ageInMinutes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
       "LabelId": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string"
+          }
+        }
+      },
+      "AssigneeResponse": {
+        "type": "object",
+        "description": "담당자 정보",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "사용자 ID",
+            "example": "user-2"
+          },
+          "firstName": {
+            "type": "string",
+            "description": "이름",
+            "example": "제인"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "성",
+            "example": "스미스"
+          },
+          "email": {
+            "type": "string",
+            "description": "이메일",
+            "example": "jane.smith@example.com"
+          },
+          "assignedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "할당일",
+            "example": "2025-08-06T09:21:33.436705Z"
+          }
+        }
+      },
+      "AttachmentResponse": {
+        "type": "object",
+        "description": "첨부파일 정보",
+        "properties": {
+          "attachmentId": {
+            "type": "string",
+            "description": "첨부파일 ID",
+            "example": "att-1"
+          },
+          "fileName": {
+            "type": "string",
+            "description": "파일명",
+            "example": "main-page-wireframe.png"
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "파일 크기",
+            "example": 2048576
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME 타입",
+            "example": "image/png"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "업로드일",
+            "example": "2025-08-06T14:30:00.000Z"
+          },
+          "uploadedBy": {
+            "$ref": "#/components/schemas/UserResponse",
+            "description": "업로드자 정보"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "다운로드 URL",
+            "example": "https://files.example.com/attachments/att-1"
+          }
+        }
+      },
+      "BoardMemberResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastActiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CardDetailResponse": {
+        "type": "object",
+        "description": "카드 상세 정보 응답",
+        "properties": {
+          "cardId": {
+            "type": "string",
+            "description": "카드 ID",
+            "example": "card-1"
+          },
+          "title": {
+            "type": "string",
+            "description": "카드 제목",
+            "example": "메인 페이지 디자인"
+          },
+          "description": {
+            "type": "string",
+            "description": "카드 설명",
+            "example": "사용자 인터페이스 디자인 작업"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int32",
+            "description": "카드 위치",
+            "example": 1
+          },
+          "priority": {
+            "type": "string",
+            "description": "우선순위",
+            "example": "high"
+          },
+          "isCompleted": {
+            "type": "boolean",
+            "description": "완료 여부",
+            "example": false
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "아카이브 여부",
+            "example": false
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "마감일",
+            "example": "2025-08-13T09:21:33.436705Z"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "시작일",
+            "example": "2025-08-01T09:00:00.000Z"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "완료일"
+          },
+          "completedBy": {
+            "$ref": "#/components/schemas/UserResponse",
+            "description": "완료자 정보"
+          },
+          "labels": {
+            "type": "array",
+            "description": "라벨 목록",
+            "items": {
+              "$ref": "#/components/schemas/LabelResponse"
+            }
+          },
+          "assignees": {
+            "type": "array",
+            "description": "담당자 목록",
+            "items": {
+              "$ref": "#/components/schemas/AssigneeResponse"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "description": "첨부파일 목록",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentResponse"
+            }
+          },
+          "comments": {
+            "type": "array",
+            "description": "댓글 목록",
+            "items": {
+              "$ref": "#/components/schemas/CommentResponse"
+            }
+          },
+          "boardMembers": {
+            "type": "array",
+            "description": "보드 멤버 목록",
+            "items": {
+              "$ref": "#/components/schemas/BoardMemberResponse"
+            }
+          },
+          "boardLabels": {
+            "type": "array",
+            "description": "보드 라벨 목록",
+            "items": {
+              "$ref": "#/components/schemas/LabelResponse"
+            }
+          },
+          "activities": {
+            "type": "array",
+            "description": "활동 내역 목록",
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            }
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserResponse",
+            "description": "생성자 정보"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "생성일",
+            "example": "2025-08-06T09:21:33.436705Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "수정일",
+            "example": "2025-08-07T16:45:30.000Z"
+          }
+        }
+      },
+      "CommentResponse": {
+        "type": "object",
+        "description": "댓글 정보",
+        "properties": {
+          "commentId": {
+            "type": "string",
+            "description": "댓글 ID",
+            "example": "comment-1"
+          },
+          "content": {
+            "type": "string",
+            "description": "댓글 내용",
+            "example": "와이어프레임 초안 완료했습니다. 검토 부탁드려요."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "생성일",
+            "example": "2025-08-06T15:20:00.000Z"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserResponse",
+            "description": "작성자 정보"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "수정일",
+            "example": "2025-08-06T15:20:00.000Z"
+          },
+          "isEdited": {
+            "type": "boolean",
+            "description": "수정 여부",
+            "example": false
           }
         }
       },
@@ -4723,43 +5127,6 @@
           },
           "description": {
             "type": "string"
-          }
-        }
-      },
-      "BoardMemberResponse": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string"
-          },
-          "permissions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "joinedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastActiveAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "isActive": {
-            "type": "boolean"
           }
         }
       },

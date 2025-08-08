@@ -7,10 +7,20 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Instant;
+import com.boardly.features.activity.application.helper.ActivityHelper;
+import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.boardlist.domain.model.ListId;
+import com.boardly.features.boardlist.domain.repository.BoardListRepository;
+import com.boardly.features.card.domain.model.Card;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.repository.CardMemberRepository;
+import com.boardly.features.card.domain.repository.CardRepository;
+import com.boardly.features.card.domain.valueobject.CardMember;
+import com.boardly.features.user.application.service.UserFinder;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,27 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.boardly.features.activity.application.helper.ActivityHelper;
-import com.boardly.features.board.domain.model.Board;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.card.domain.model.Card;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.card.domain.repository.CardRepository;
-import com.boardly.features.card.domain.repository.CardMemberRepository;
-import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.user.application.service.UserFinder;
-import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.features.user.domain.model.UserProfile;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.domain.common.Failure;
-
-import io.vavr.control.Either;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CardMemberService getCardMembers 테스트")
@@ -72,18 +61,22 @@ class CardMemberServiceGetCardMembersTest {
     @BeforeEach
     void setUp() {
         cardMemberService = new CardMemberService(
-                null, // validator는 getCardMembers에서 사용하지 않음
-                messageResolver,
-                cardRepository,
-                cardMemberRepository,
-                userFinder,
-                activityHelper,
-                boardListRepository,
-                boardRepository);
+            null, // validator는 getCardMembers에서 사용하지 않음
+            messageResolver,
+            cardRepository,
+            cardMemberRepository,
+            userFinder,
+            activityHelper,
+            boardListRepository,
+            boardRepository
+        );
 
         // 공통으로 사용되는 메시지 설정
-        lenient().when(messageResolver.getMessage("error.service.card.read.not_found"))
-                .thenReturn("카드를 찾을 수 없습니다.");
+        lenient()
+            .when(
+                messageResolver.getMessage("error.service.card.read.not_found")
+            )
+            .thenReturn("카드를 찾을 수 없습니다.");
     }
 
     @Nested
@@ -103,19 +96,19 @@ class CardMemberServiceGetCardMembersTest {
             ListId listId = new ListId("list-1");
 
             card = Card.builder()
-                    .cardId(cardId)
-                    .title("테스트 카드")
-                    .listId(listId)
-                    .build();
+                .cardId(cardId)
+                .title("테스트 카드")
+                .listId(listId)
+                .build();
 
             // 카드 멤버 목록 생성
             UserId member1Id = new UserId("member-1");
             UserId member2Id = new UserId("member-2");
             UserId member3Id = new UserId("member-3");
 
-            CardMember member1 = new CardMember(member1Id, Instant.now().minusSeconds(3600)); // 1시간 전
-            CardMember member2 = new CardMember(member2Id, Instant.now().minusSeconds(1800)); // 30분 전
-            CardMember member3 = new CardMember(member3Id, Instant.now()); // 현재
+            CardMember member1 = new CardMember(member1Id);
+            CardMember member2 = new CardMember(member2Id);
+            CardMember member3 = new CardMember(member3Id);
 
             cardMembers = List.of(member1, member2, member3);
         }
@@ -125,17 +118,25 @@ class CardMemberServiceGetCardMembersTest {
         void shouldGetCardMembersSuccessfully() {
             // given
             when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
-            when(cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)).thenReturn(cardMembers);
+            when(
+                cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)
+            ).thenReturn(cardMembers);
 
             // when
-            List<CardMember> result = cardMemberService.getCardMembers(cardId, requesterId);
+            List<CardMember> result = cardMemberService.getCardMembers(
+                cardId,
+                requesterId
+            );
 
             // then
             assertThat(result).isNotNull();
             assertThat(result).hasSize(3);
             assertThat(result).isEqualTo(cardMembers);
             verify(cardRepository, times(1)).findById(cardId);
-            verify(cardMemberRepository, times(1)).findByCardIdOrderByAssignedAt(cardId);
+            verify(
+                cardMemberRepository,
+                times(1)
+            ).findByCardIdOrderByAssignedAt(cardId);
         }
 
         @Test
@@ -145,13 +146,19 @@ class CardMemberServiceGetCardMembersTest {
             when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
 
             // when
-            List<CardMember> result = cardMemberService.getCardMembers(cardId, requesterId);
+            List<CardMember> result = cardMemberService.getCardMembers(
+                cardId,
+                requesterId
+            );
 
             // then
             assertThat(result).isNotNull();
             assertThat(result).isEmpty();
             verify(cardRepository, times(1)).findById(cardId);
-            verify(cardMemberRepository, times(0)).findByCardIdOrderByAssignedAt(any());
+            verify(
+                cardMemberRepository,
+                times(0)
+            ).findByCardIdOrderByAssignedAt(any());
         }
 
         @Test
@@ -159,16 +166,24 @@ class CardMemberServiceGetCardMembersTest {
         void shouldReturnEmptyListWhenNoMembers() {
             // given
             when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
-            when(cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)).thenReturn(List.of());
+            when(
+                cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)
+            ).thenReturn(List.of());
 
             // when
-            List<CardMember> result = cardMemberService.getCardMembers(cardId, requesterId);
+            List<CardMember> result = cardMemberService.getCardMembers(
+                cardId,
+                requesterId
+            );
 
             // then
             assertThat(result).isNotNull();
             assertThat(result).isEmpty();
             verify(cardRepository, times(1)).findById(cardId);
-            verify(cardMemberRepository, times(1)).findByCardIdOrderByAssignedAt(cardId);
+            verify(
+                cardMemberRepository,
+                times(1)
+            ).findByCardIdOrderByAssignedAt(cardId);
         }
 
         @Test
@@ -176,19 +191,25 @@ class CardMemberServiceGetCardMembersTest {
         void shouldReturnMembersInAssignedOrder() {
             // given
             when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
-            when(cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)).thenReturn(cardMembers);
+            when(
+                cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)
+            ).thenReturn(cardMembers);
 
             // when
-            List<CardMember> result = cardMemberService.getCardMembers(cardId, requesterId);
+            List<CardMember> result = cardMemberService.getCardMembers(
+                cardId,
+                requesterId
+            );
 
             // then
             assertThat(result).hasSize(3);
-            
-            // 할당된 순서대로 정렬되어 있는지 확인
-            assertThat(result.get(0).getAssignedAt()).isBefore(result.get(1).getAssignedAt());
-            assertThat(result.get(1).getAssignedAt()).isBefore(result.get(2).getAssignedAt());
-            
-            verify(cardMemberRepository, times(1)).findByCardIdOrderByAssignedAt(cardId);
+            // 저장소가 정렬해서 반환한 순서를 그대로 유지하는지 확인
+            assertThat(result).containsExactlyElementsOf(cardMembers);
+
+            verify(
+                cardMemberRepository,
+                times(1)
+            ).findByCardIdOrderByAssignedAt(cardId);
         }
 
         @Test
@@ -198,13 +219,19 @@ class CardMemberServiceGetCardMembersTest {
             when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
 
             // when
-            List<CardMember> result = cardMemberService.getCardMembers(cardId, requesterId);
+            List<CardMember> result = cardMemberService.getCardMembers(
+                cardId,
+                requesterId
+            );
 
             // then
             assertThat(result).isNotNull();
             assertThat(result).isEmpty();
             verify(cardRepository, times(1)).findById(cardId);
-            verify(cardMemberRepository, times(0)).findByCardIdOrderByAssignedAt(any());
+            verify(
+                cardMemberRepository,
+                times(0)
+            ).findByCardIdOrderByAssignedAt(any());
         }
 
         @Test
@@ -212,17 +239,24 @@ class CardMemberServiceGetCardMembersTest {
         void shouldReturnEmptyListWhenMemberLookupFails() {
             // given
             when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
-            when(cardMemberRepository.findByCardIdOrderByAssignedAt(cardId))
-                    .thenReturn(List.of()); // 실제로는 예외가 발생하지 않고 빈 리스트를 반환
+            when(
+                cardMemberRepository.findByCardIdOrderByAssignedAt(cardId)
+            ).thenReturn(List.of()); // 실제로는 예외가 발생하지 않고 빈 리스트를 반환
 
             // when
-            List<CardMember> result = cardMemberService.getCardMembers(cardId, requesterId);
+            List<CardMember> result = cardMemberService.getCardMembers(
+                cardId,
+                requesterId
+            );
 
             // then
             assertThat(result).isNotNull();
             assertThat(result).isEmpty();
             verify(cardRepository, times(1)).findById(cardId);
-            verify(cardMemberRepository, times(1)).findByCardIdOrderByAssignedAt(cardId);
+            verify(
+                cardMemberRepository,
+                times(1)
+            ).findByCardIdOrderByAssignedAt(cardId);
         }
     }
-} 
+}

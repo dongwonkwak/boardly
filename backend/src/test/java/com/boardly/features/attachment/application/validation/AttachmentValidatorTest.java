@@ -5,8 +5,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 
+import com.boardly.features.attachment.application.port.input.DeleteAttachmentCommand;
+import com.boardly.features.attachment.application.port.input.UpdateAttachmentCommand;
+import com.boardly.features.attachment.application.port.input.UploadAttachmentCommand;
+import com.boardly.features.attachment.domain.model.AttachmentId;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.application.validation.CommonValidationRules;
+import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.application.validation.ValidationResult;
 import java.util.Locale;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,16 +25,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mock.web.MockMultipartFile;
-
-import com.boardly.features.attachment.application.port.input.DeleteAttachmentCommand;
-import com.boardly.features.attachment.application.port.input.UpdateAttachmentCommand;
-import com.boardly.features.attachment.application.port.input.UploadAttachmentCommand;
-import com.boardly.features.attachment.domain.model.AttachmentId;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
-import com.boardly.shared.application.validation.CommonValidationRules;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AttachmentValidator 테스트")
@@ -44,22 +42,32 @@ class AttachmentValidatorTest {
         LocaleContextHolder.setLocale(Locale.KOREAN);
 
         // 기본 메시지 설정 - lenient로 설정하여 불필요한 stubbing 허용
-        lenient().when(messageSource.getMessage(anyString(), any(Object[].class), any(Locale.class)))
-                .thenAnswer(invocation -> {
-                    String code = invocation.getArgument(0);
-                    Object[] args = invocation.getArgument(1);
-                    StringBuilder message = new StringBuilder(code);
-                    if (args != null) {
-                        for (Object arg : args) {
-                            message.append(" ").append(arg);
-                        }
+        lenient()
+            .when(
+                messageSource.getMessage(
+                    anyString(),
+                    any(Object[].class),
+                    any(Locale.class)
+                )
+            )
+            .thenAnswer(invocation -> {
+                String code = invocation.getArgument(0);
+                Object[] args = invocation.getArgument(1);
+                StringBuilder message = new StringBuilder(code);
+                if (args != null) {
+                    for (Object arg : args) {
+                        message.append(" ").append(arg);
                     }
-                    return message.toString();
-                });
+                }
+                return message.toString();
+            });
 
         messageResolver = new ValidationMessageResolver(messageSource);
         commonValidationRules = new CommonValidationRules(messageResolver);
-        attachmentValidator = new AttachmentValidator(commonValidationRules, messageResolver);
+        attachmentValidator = new AttachmentValidator(
+            commonValidationRules,
+            messageResolver
+        );
     }
 
     @Nested
@@ -73,15 +81,21 @@ class AttachmentValidatorTest {
             CardId cardId = new CardId("card-123");
             UserId uploaderId = new UserId("user-123");
             MockMultipartFile file = new MockMultipartFile(
-                    "file",
-                    "test.txt",
-                    "text/plain",
-                    "Hello, World!".getBytes());
+                "file",
+                "test.txt",
+                "text/plain",
+                "Hello, World!".getBytes()
+            );
 
-            UploadAttachmentCommand command = new UploadAttachmentCommand(cardId, uploaderId, file);
+            UploadAttachmentCommand command = new UploadAttachmentCommand(
+                cardId,
+                uploaderId,
+                file
+            );
 
             // when
-            ValidationResult<UploadAttachmentCommand> result = attachmentValidator.validateUpload(command);
+            ValidationResult<UploadAttachmentCommand> result =
+                attachmentValidator.validateUpload(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -93,15 +107,20 @@ class AttachmentValidatorTest {
             // given
             CardId cardId = new CardId("card-123");
             UserId uploaderId = new UserId("user-123");
-            UploadAttachmentCommand command = new UploadAttachmentCommand(cardId, uploaderId, null);
+            UploadAttachmentCommand command = new UploadAttachmentCommand(
+                cardId,
+                uploaderId,
+                null
+            );
 
             // when
-            ValidationResult<UploadAttachmentCommand> result = attachmentValidator.validateUpload(command);
+            ValidationResult<UploadAttachmentCommand> result =
+                attachmentValidator.validateUpload(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("file");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("file");
         }
 
         @Test
@@ -110,16 +129,26 @@ class AttachmentValidatorTest {
             // given
             CardId cardId = new CardId("card-123");
             UserId uploaderId = new UserId("user-123");
-            MockMultipartFile file = new MockMultipartFile("file", "test.txt", "text/plain", new byte[0]);
-            UploadAttachmentCommand command = new UploadAttachmentCommand(cardId, uploaderId, file);
+            MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test.txt",
+                "text/plain",
+                new byte[0]
+            );
+            UploadAttachmentCommand command = new UploadAttachmentCommand(
+                cardId,
+                uploaderId,
+                file
+            );
 
             // when
-            ValidationResult<UploadAttachmentCommand> result = attachmentValidator.validateUpload(command);
+            ValidationResult<UploadAttachmentCommand> result =
+                attachmentValidator.validateUpload(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("file");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("file");
         }
 
         @Test
@@ -129,19 +158,25 @@ class AttachmentValidatorTest {
             CardId cardId = new CardId("card-123");
             UserId uploaderId = new UserId("user-123");
             MockMultipartFile file = new MockMultipartFile(
-                    "file",
-                    "test.exe",
-                    "application/x-executable",
-                    "executable content".getBytes());
-            UploadAttachmentCommand command = new UploadAttachmentCommand(cardId, uploaderId, file);
+                "file",
+                "test.exe",
+                "application/x-executable",
+                "executable content".getBytes()
+            );
+            UploadAttachmentCommand command = new UploadAttachmentCommand(
+                cardId,
+                uploaderId,
+                file
+            );
 
             // when
-            ValidationResult<UploadAttachmentCommand> result = attachmentValidator.validateUpload(command);
+            ValidationResult<UploadAttachmentCommand> result =
+                attachmentValidator.validateUpload(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("file");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("file");
         }
 
         @Test
@@ -153,32 +188,55 @@ class AttachmentValidatorTest {
 
             // 허용되는 파일 타입들
             String[] allowedTypes = {
-                    "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml",
-                    "application/pdf", "application/msword",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    "application/vnd.ms-powerpoint",
-                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                    "text/plain", "text/csv", "text/html", "text/css", "text/javascript",
-                    "application/zip", "application/x-rar-compressed", "application/x-7z-compressed",
-                    "application/json", "application/xml"
+                "image/jpeg",
+                "image/jpg",
+                "image/png",
+                "image/gif",
+                "image/webp",
+                "image/svg+xml",
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.ms-excel",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "application/vnd.ms-powerpoint",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "text/plain",
+                "text/csv",
+                "text/html",
+                "text/css",
+                "text/javascript",
+                "application/zip",
+                "application/x-rar-compressed",
+                "application/x-7z-compressed",
+                "application/json",
+                "application/xml",
             };
 
             for (String contentType : allowedTypes) {
                 MockMultipartFile file = new MockMultipartFile(
-                        "file",
-                        "test." + contentType.split("/")[1],
-                        contentType,
-                        "test content".getBytes());
-                UploadAttachmentCommand command = new UploadAttachmentCommand(cardId, uploaderId, file);
+                    "file",
+                    "test." + contentType.split("/")[1],
+                    contentType,
+                    "test content".getBytes()
+                );
+                UploadAttachmentCommand command = new UploadAttachmentCommand(
+                    cardId,
+                    uploaderId,
+                    file
+                );
 
                 // when
-                ValidationResult<UploadAttachmentCommand> result = attachmentValidator.validateUpload(command);
+                ValidationResult<UploadAttachmentCommand> result =
+                    attachmentValidator.validateUpload(command);
 
                 // then
                 assertThat(result.isValid())
-                        .withFailMessage("파일 타입 %s가 허용되어야 함", contentType)
-                        .isTrue();
+                    .withFailMessage(
+                        "파일 타입 %s가 허용되어야 함",
+                        contentType
+                    )
+                    .isTrue();
             }
         }
 
@@ -189,15 +247,21 @@ class AttachmentValidatorTest {
             CardId cardId = new CardId("card-123");
             UserId uploaderId = new UserId("user-123");
             MockMultipartFile file = new MockMultipartFile(
-                    "file",
-                    "test.txt",
-                    "text/plain",
-                    "Hello, World!".getBytes());
+                "file",
+                "test.txt",
+                "text/plain",
+                "Hello, World!".getBytes()
+            );
 
-            UploadAttachmentCommand command = new UploadAttachmentCommand(cardId, uploaderId, file);
+            UploadAttachmentCommand command = new UploadAttachmentCommand(
+                cardId,
+                uploaderId,
+                file
+            );
 
             // when
-            ValidationResult<UploadAttachmentCommand> result = attachmentValidator.validate(command);
+            ValidationResult<UploadAttachmentCommand> result =
+                attachmentValidator.validate(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -214,10 +278,14 @@ class AttachmentValidatorTest {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
             String fileName = "updated-file.txt";
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, fileName);
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                attachmentId,
+                fileName
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validateUpdate(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -228,15 +296,21 @@ class AttachmentValidatorTest {
         void validateUpdate_NullAttachmentId_ShouldReturnFailure() {
             // given
             String fileName = "updated-file.txt";
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(null, fileName);
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                null,
+                fileName
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validateUpdate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("attachmentId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "attachmentId"
+            );
         }
 
         @Test
@@ -244,15 +318,21 @@ class AttachmentValidatorTest {
         void validateUpdate_NullFileName_ShouldReturnFailure() {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, null);
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                attachmentId,
+                null
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validateUpdate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("fileName");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "fileName"
+            );
         }
 
         @Test
@@ -260,16 +340,24 @@ class AttachmentValidatorTest {
         void validateUpdate_EmptyFileName_ShouldReturnFailure() {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, "");
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                attachmentId,
+                ""
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validateUpdate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(2); // 필수 검증과 패턴 검증 모두 실패
-            assertThat(result.getErrors().map(v -> v.field()).forAll(field -> field.equals("fileName")))
-                    .isTrue();
+            assertThat(
+                result
+                    .getErrors()
+                    .map(v -> v.getField())
+                    .forAll(field -> field.equals("fileName"))
+            ).isTrue();
         }
 
         @Test
@@ -277,16 +365,24 @@ class AttachmentValidatorTest {
         void validateUpdate_WhitespaceOnlyFileName_ShouldReturnFailure() {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, "   ");
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                attachmentId,
+                "   "
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validateUpdate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(2); // 필수 검증과 패턴 검증 모두 실패
-            assertThat(result.getErrors().map(v -> v.field()).forAll(field -> field.equals("fileName")))
-                    .isTrue();
+            assertThat(
+                result
+                    .getErrors()
+                    .map(v -> v.getField())
+                    .forAll(field -> field.equals("fileName"))
+            ).isTrue();
         }
 
         @Test
@@ -295,15 +391,21 @@ class AttachmentValidatorTest {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
             String fileName = "<script>alert('test')</script>.txt";
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, fileName);
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                attachmentId,
+                fileName
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validateUpdate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("fileName");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "fileName"
+            );
         }
 
         @Test
@@ -312,15 +414,21 @@ class AttachmentValidatorTest {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
             String fileName = "file@#$%^&*().txt";
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, fileName);
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                attachmentId,
+                fileName
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validateUpdate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("fileName");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "fileName"
+            );
         }
 
         @Test
@@ -331,28 +439,32 @@ class AttachmentValidatorTest {
 
             // 유효한 파일명들
             String[] validFileNames = {
-                    "document.txt",
-                    "image.jpg",
-                    "file-name.pdf",
-                    "한글파일.docx",
-                    "file with spaces.txt",
-                    "file_with_underscore.pdf",
-                    "file.with.dots.docx",
-                    "file!with!exclamation.pdf",
-                    "file(with)parentheses.txt",
-                    "file,with,commas.pdf"
+                "document.txt",
+                "image.jpg",
+                "file-name.pdf",
+                "한글파일.docx",
+                "file with spaces.txt",
+                "file_with_underscore.pdf",
+                "file.with.dots.docx",
+                "file!with!exclamation.pdf",
+                "file(with)parentheses.txt",
+                "file,with,commas.pdf",
             };
 
             for (String fileName : validFileNames) {
-                UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, fileName);
+                UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                    attachmentId,
+                    fileName
+                );
 
                 // when
-                ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validateUpdate(command);
+                ValidationResult<UpdateAttachmentCommand> result =
+                    attachmentValidator.validateUpdate(command);
 
                 // then
                 assertThat(result.isValid())
-                        .withFailMessage("파일명 '%s'가 유효해야 함", fileName)
-                        .isTrue();
+                    .withFailMessage("파일명 '%s'가 유효해야 함", fileName)
+                    .isTrue();
             }
         }
 
@@ -362,10 +474,14 @@ class AttachmentValidatorTest {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
             String fileName = "updated-file.txt";
-            UpdateAttachmentCommand command = new UpdateAttachmentCommand(attachmentId, fileName);
+            UpdateAttachmentCommand command = new UpdateAttachmentCommand(
+                attachmentId,
+                fileName
+            );
 
             // when
-            ValidationResult<UpdateAttachmentCommand> result = attachmentValidator.validate(command);
+            ValidationResult<UpdateAttachmentCommand> result =
+                attachmentValidator.validate(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -382,10 +498,14 @@ class AttachmentValidatorTest {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
             UserId requesterId = new UserId("user-123");
-            DeleteAttachmentCommand command = new DeleteAttachmentCommand(attachmentId, requesterId);
+            DeleteAttachmentCommand command = new DeleteAttachmentCommand(
+                attachmentId,
+                requesterId
+            );
 
             // when
-            ValidationResult<DeleteAttachmentCommand> result = attachmentValidator.validateDelete(command);
+            ValidationResult<DeleteAttachmentCommand> result =
+                attachmentValidator.validateDelete(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -396,15 +516,21 @@ class AttachmentValidatorTest {
         void validateDelete_NullAttachmentId_ShouldReturnFailure() {
             // given
             UserId requesterId = new UserId("user-123");
-            DeleteAttachmentCommand command = new DeleteAttachmentCommand(null, requesterId);
+            DeleteAttachmentCommand command = new DeleteAttachmentCommand(
+                null,
+                requesterId
+            );
 
             // when
-            ValidationResult<DeleteAttachmentCommand> result = attachmentValidator.validateDelete(command);
+            ValidationResult<DeleteAttachmentCommand> result =
+                attachmentValidator.validateDelete(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("attachmentId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "attachmentId"
+            );
         }
 
         @Test
@@ -412,15 +538,21 @@ class AttachmentValidatorTest {
         void validateDelete_NullRequesterId_ShouldReturnFailure() {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
-            DeleteAttachmentCommand command = new DeleteAttachmentCommand(attachmentId, null);
+            DeleteAttachmentCommand command = new DeleteAttachmentCommand(
+                attachmentId,
+                null
+            );
 
             // when
-            ValidationResult<DeleteAttachmentCommand> result = attachmentValidator.validateDelete(command);
+            ValidationResult<DeleteAttachmentCommand> result =
+                attachmentValidator.validateDelete(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("requesterId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "requesterId"
+            );
         }
 
         @Test
@@ -429,10 +561,14 @@ class AttachmentValidatorTest {
             // given
             AttachmentId attachmentId = new AttachmentId("attachment-123");
             UserId requesterId = new UserId("user-123");
-            DeleteAttachmentCommand command = new DeleteAttachmentCommand(attachmentId, requesterId);
+            DeleteAttachmentCommand command = new DeleteAttachmentCommand(
+                attachmentId,
+                requesterId
+            );
 
             // when
-            ValidationResult<DeleteAttachmentCommand> result = attachmentValidator.validate(command);
+            ValidationResult<DeleteAttachmentCommand> result =
+                attachmentValidator.validate(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -447,27 +583,44 @@ class AttachmentValidatorTest {
         @DisplayName("파일 크기 읽기 쉬운 형태 변환 테스트")
         void getReadableFileSize_ShouldReturnFormattedSize() {
             // given & when & then
-            assertThat(AttachmentValidator.getReadableFileSize(512)).isEqualTo("512 B");
-            assertThat(AttachmentValidator.getReadableFileSize(1024)).isEqualTo("1.0 KB");
-            assertThat(AttachmentValidator.getReadableFileSize(1024 * 1024)).isEqualTo("1.0 MB");
-            assertThat(AttachmentValidator.getReadableFileSize(1536 * 1024)).isEqualTo("1.5 MB");
-            assertThat(AttachmentValidator.getReadableFileSize(2048 * 1024)).isEqualTo("2.0 MB");
+            assertThat(AttachmentValidator.getReadableFileSize(512)).isEqualTo(
+                "512 B"
+            );
+            assertThat(AttachmentValidator.getReadableFileSize(1024)).isEqualTo(
+                "1.0 KB"
+            );
+            assertThat(
+                AttachmentValidator.getReadableFileSize(1024 * 1024)
+            ).isEqualTo("1.0 MB");
+            assertThat(
+                AttachmentValidator.getReadableFileSize(1536 * 1024)
+            ).isEqualTo("1.5 MB");
+            assertThat(
+                AttachmentValidator.getReadableFileSize(2048 * 1024)
+            ).isEqualTo("2.0 MB");
         }
 
         @Test
         @DisplayName("파일 크기 0바이트 테스트")
         void getReadableFileSize_ZeroBytes_ShouldReturnZeroB() {
             // given & when & then
-            assertThat(AttachmentValidator.getReadableFileSize(0)).isEqualTo("0 B");
+            assertThat(AttachmentValidator.getReadableFileSize(0)).isEqualTo(
+                "0 B"
+            );
         }
 
         @Test
         @DisplayName("파일 크기 큰 값 테스트")
         void getReadableFileSize_LargeFile_ShouldReturnCorrectFormat() {
             // given & when & then
-            assertThat(AttachmentValidator.getReadableFileSize(1024 * 1024 * 1024)).isEqualTo("1024.0 MB");
-            assertThat(AttachmentValidator.getReadableFileSize(1024 * 1024 * 1024 + 512 * 1024 * 1024))
-                    .isEqualTo("1536.0 MB");
+            assertThat(
+                AttachmentValidator.getReadableFileSize(1024 * 1024 * 1024)
+            ).isEqualTo("1024.0 MB");
+            assertThat(
+                AttachmentValidator.getReadableFileSize(
+                    1024 * 1024 * 1024 + 512 * 1024 * 1024
+                )
+            ).isEqualTo("1536.0 MB");
         }
     }
 }

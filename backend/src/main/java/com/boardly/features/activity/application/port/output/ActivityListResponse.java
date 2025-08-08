@@ -2,9 +2,10 @@ package com.boardly.features.activity.application.port.output;
 
 import java.util.List;
 
-import lombok.Builder;
-
-@Builder
+/**
+ * 활동 목록 응답 객체
+ * 활동 목록과 페이징 정보를 포함
+ */
 public record ActivityListResponse(
         List<ActivityResponse> activities,
         int totalCount,
@@ -13,30 +14,43 @@ public record ActivityListResponse(
         boolean hasNextPage,
         boolean hasPreviousPage) {
 
+    /**
+     * 페이징 없이 활동 목록만으로 응답 객체 생성
+     * 
+     * @param activities 활동 목록
+     * @return ActivityListResponse 객체
+     */
     public static ActivityListResponse of(List<ActivityResponse> activities) {
-        return ActivityListResponse.builder()
-                .activities(activities)
-                .totalCount(activities.size())
-                .currentPage(0)
-                .totalPages(1)
-                .hasNextPage(false)
-                .hasPreviousPage(false)
-                .build();
+        return new ActivityListResponse(
+                activities,
+                activities.size(),
+                0,
+                1,
+                false,
+                false);
     }
 
+    /**
+     * 페이징 정보와 함께 활동 목록 응답 객체 생성
+     * 
+     * @param activities  활동 목록
+     * @param totalCount  전체 활동 수
+     * @param currentPage 현재 페이지 번호
+     * @param pageSize    페이지 크기
+     * @return ActivityListResponse 객체
+     */
     public static ActivityListResponse withPaging(
             List<ActivityResponse> activities,
             int totalCount,
             int currentPage,
             int pageSize) {
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
-        return ActivityListResponse.builder()
-                .activities(activities)
-                .totalCount(totalCount)
-                .currentPage(currentPage)
-                .totalPages(totalPages)
-                .hasNextPage(currentPage < totalPages - 1)
-                .hasPreviousPage(currentPage > 0)
-                .build();
+        return new ActivityListResponse(
+                activities,
+                totalCount,
+                currentPage,
+                totalPages,
+                currentPage < totalPages - 1,
+                currentPage > 0);
     }
 }

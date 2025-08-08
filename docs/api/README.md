@@ -19,7 +19,7 @@ npx @openapitools/openapi-generator-cli generate \
   -g typescript-axios \
   -o ./generated-client
 
-# JavaScript 클라이언트 생성  
+# JavaScript 클라이언트 생성
 npx @openapitools/openapi-generator-cli generate \
   -i openapi.json \
   -g javascript \
@@ -40,4 +40,4 @@ npx swagger-codegen-cli generate \
 이 문서는 백엔드 빌드 시마다 자동으로 업데이트됩니다.
 최신 버전을 사용하고 있는지 확인하세요.
 
-마지막 업데이트: Wed Aug 06 17:47:07 KST 2025
+마지막 업데이트: Fri Aug 08 19:08:07 KST 2025

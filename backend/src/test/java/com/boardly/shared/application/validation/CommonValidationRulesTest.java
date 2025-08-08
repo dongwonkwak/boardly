@@ -3,13 +3,12 @@ package com.boardly.shared.application.validation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
+import com.boardly.features.boardlist.domain.model.ListColor;
+import com.boardly.shared.domain.common.Failure.FieldViolation;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,9 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.boardly.features.boardlist.domain.model.ListColor;
-import com.boardly.shared.domain.common.Failure.FieldViolation;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CommonValidationRules 테스트")
@@ -32,6 +28,7 @@ class CommonValidationRulesTest {
 
     // 테스트용 데이터 클래스들
     private static class TestData {
+
         private final String email;
         private final String password;
         private final String firstName;
@@ -46,9 +43,21 @@ class CommonValidationRulesTest {
         private final String color;
         private final ListColor listColor;
 
-        public TestData(String email, String password, String firstName, String lastName,
-                String title, String description, Object userId, Object boardId,
-                Object listId, Object cardId, Object position, String color, ListColor listColor) {
+        public TestData(
+            String email,
+            String password,
+            String firstName,
+            String lastName,
+            String title,
+            String description,
+            Object userId,
+            Object boardId,
+            Object listId,
+            Object cardId,
+            Object position,
+            String color,
+            ListColor listColor
+        ) {
             this.email = email;
             this.password = password;
             this.firstName = firstName;
@@ -74,10 +83,6 @@ class CommonValidationRulesTest {
 
         public String getFirstName() {
             return firstName;
-        }
-
-        public String getLastName() {
-            return lastName;
         }
 
         public String getTitle() {
@@ -122,10 +127,12 @@ class CommonValidationRulesTest {
         validationRules = new CommonValidationRules(messageResolver);
 
         // 기본 메시지 설정 - lenient로 설정하여 불필요한 stubbing 허용
-        lenient().when(messageResolver.getMessage(anyString(), any())).thenAnswer(invocation -> {
-            String messageKey = invocation.getArgument(0);
-            return messageKey.replace("validation.", "").replace(".", " ");
-        });
+        lenient()
+            .when(messageResolver.getMessage(anyString(), any()))
+            .thenAnswer(invocation -> {
+                String messageKey = invocation.getArgument(0);
+                return messageKey.replace("validation.", "").replace(".", " ");
+            });
     }
 
     @Nested
@@ -138,12 +145,29 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.required(
-                    fieldExtractor, "title", messageResolver);
+                fieldExtractor,
+                "title",
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "Valid Title", null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Valid Title",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -155,17 +179,35 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.required(
-                    fieldExtractor, "title", messageResolver);
+                fieldExtractor,
+                "title",
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("title");
+            assertThat(violation.getField()).isEqualTo("title");
         }
 
         @Test
@@ -174,17 +216,35 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.required(
-                    fieldExtractor, "title", messageResolver);
+                fieldExtractor,
+                "title",
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "", null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("title");
+            assertThat(violation.getField()).isEqualTo("title");
         }
 
         @Test
@@ -193,11 +253,30 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.maxLength(
-                    fieldExtractor, "title", 10, messageResolver);
+                fieldExtractor,
+                "title",
+                10,
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "Short", null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Short",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -209,11 +288,30 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.maxLength(
-                    fieldExtractor, "title", 10, messageResolver);
+                fieldExtractor,
+                "title",
+                10,
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -225,18 +323,36 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.maxLength(
-                    fieldExtractor, "title", 5, messageResolver);
+                fieldExtractor,
+                "title",
+                5,
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "Too Long Title", null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Too Long Title",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("title");
+            assertThat(violation.getField()).isEqualTo("title");
         }
 
         @Test
@@ -245,11 +361,30 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.minLength(
-                    fieldExtractor, "title", 3, messageResolver);
+                fieldExtractor,
+                "title",
+                3,
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "ABC", null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "ABC",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -261,17 +396,36 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.minLength(
-                    fieldExtractor, "title", 5, messageResolver);
+                fieldExtractor,
+                "title",
+                5,
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "ABC", null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "ABC",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("title");
+            assertThat(violation.getField()).isEqualTo("title");
         }
 
         @Test
@@ -279,14 +433,34 @@ class CommonValidationRulesTest {
         void pattern_ShouldReturnSuccess_WhenFieldMatchesPattern() {
             // given
             Function<TestData, String> fieldExtractor = TestData::getEmail;
-            Pattern emailPattern = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+            Pattern emailPattern = Pattern.compile(
+                "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+            );
             Validator<TestData> validator = CommonValidationRules.pattern(
-                    fieldExtractor, "email", emailPattern, messageResolver);
+                fieldExtractor,
+                "email",
+                emailPattern,
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData("test@example.com", null, null, null, null, null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    "test@example.com",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -297,20 +471,40 @@ class CommonValidationRulesTest {
         void pattern_ShouldReturnFailure_WhenFieldDoesNotMatchPattern() {
             // given
             Function<TestData, String> fieldExtractor = TestData::getEmail;
-            Pattern emailPattern = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+            Pattern emailPattern = Pattern.compile(
+                "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+            );
             Validator<TestData> validator = CommonValidationRules.pattern(
-                    fieldExtractor, "email", emailPattern, messageResolver);
+                fieldExtractor,
+                "email",
+                emailPattern,
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData("invalid-email", null, null, null, null, null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    "invalid-email",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("email");
+            assertThat(violation.getField()).isEqualTo("email");
         }
 
         @Test
@@ -319,12 +513,29 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.noHtmlTags(
-                    fieldExtractor, "title", messageResolver);
+                fieldExtractor,
+                "title",
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "Clean Title", null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Clean Title",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -336,18 +547,35 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, String> fieldExtractor = TestData::getTitle;
             Validator<TestData> validator = CommonValidationRules.noHtmlTags(
-                    fieldExtractor, "title", messageResolver);
+                fieldExtractor,
+                "title",
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "<script>alert('xss')</script>", null, null, null, null, null,
-                            null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "<script>alert('xss')</script>",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("title");
+            assertThat(violation.getField()).isEqualTo("title");
         }
 
         @Test
@@ -356,11 +584,29 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, Object> fieldExtractor = TestData::getUserId;
             Validator<TestData> validator = CommonValidationRules.idRequired(
-                    fieldExtractor, "userId", messageResolver);
+                fieldExtractor,
+                "userId",
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, "user123", null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "user123",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -372,17 +618,35 @@ class CommonValidationRulesTest {
             // given
             Function<TestData, Object> fieldExtractor = TestData::getUserId;
             Validator<TestData> validator = CommonValidationRules.idRequired(
-                    fieldExtractor, "userId", messageResolver);
+                fieldExtractor,
+                "userId",
+                messageResolver
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("userId");
+            assertThat(violation.getField()).isEqualTo("userId");
         }
     }
 
@@ -395,12 +659,28 @@ class CommonValidationRulesTest {
         void emailComplete_ShouldReturnSuccess_WhenEmailIsValid() {
             // given
             Function<TestData, String> emailExtractor = TestData::getEmail;
-            Validator<TestData> validator = validationRules.emailComplete(emailExtractor);
+            Validator<TestData> validator = validationRules.emailComplete(
+                emailExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData("test@example.com", null, null, null, null, null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    "test@example.com",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -411,11 +691,28 @@ class CommonValidationRulesTest {
         void emailComplete_ShouldReturnFailure_WhenEmailIsEmpty() {
             // given
             Function<TestData, String> emailExtractor = TestData::getEmail;
-            Validator<TestData> validator = validationRules.emailComplete(emailExtractor);
+            Validator<TestData> validator = validationRules.emailComplete(
+                emailExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData("", null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    "",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -427,12 +724,28 @@ class CommonValidationRulesTest {
         void emailComplete_ShouldReturnFailure_WhenEmailFormatIsInvalid() {
             // given
             Function<TestData, String> emailExtractor = TestData::getEmail;
-            Validator<TestData> validator = validationRules.emailComplete(emailExtractor);
+            Validator<TestData> validator = validationRules.emailComplete(
+                emailExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData("invalid-email", null, null, null, null, null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    "invalid-email",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -443,28 +756,65 @@ class CommonValidationRulesTest {
         @DisplayName("passwordComplete() - 비밀번호 완전 검증 (성공)")
         void passwordComplete_ShouldReturnSuccess_WhenPasswordIsValid() {
             // given
-            Function<TestData, String> passwordExtractor = TestData::getPassword;
-            Validator<TestData> validator = validationRules.passwordComplete(passwordExtractor);
+            Function<TestData, String> passwordExtractor =
+                TestData::getPassword;
+            Validator<TestData> validator = validationRules.passwordComplete(
+                passwordExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, "ValidPass1!", null, null, null, null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    "ValidPass1!",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("passwordComplete() - 비밀번호 완전 검증 (실패 - 너무 짧음)")
+        @DisplayName(
+            "passwordComplete() - 비밀번호 완전 검증 (실패 - 너무 짧음)"
+        )
         void passwordComplete_ShouldReturnFailure_WhenPasswordIsTooShort() {
             // given
-            Function<TestData, String> passwordExtractor = TestData::getPassword;
-            Validator<TestData> validator = validationRules.passwordComplete(passwordExtractor);
+            Function<TestData, String> passwordExtractor =
+                TestData::getPassword;
+            Validator<TestData> validator = validationRules.passwordComplete(
+                passwordExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, "Short1!", null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    "Short1!",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -475,27 +825,65 @@ class CommonValidationRulesTest {
         @DisplayName("firstNameComplete() - 이름 완전 검증 (성공)")
         void firstNameComplete_ShouldReturnSuccess_WhenFirstNameIsValid() {
             // given
-            Function<TestData, String> firstNameExtractor = TestData::getFirstName;
-            Validator<TestData> validator = validationRules.firstNameComplete(firstNameExtractor);
+            Function<TestData, String> firstNameExtractor =
+                TestData::getFirstName;
+            Validator<TestData> validator = validationRules.firstNameComplete(
+                firstNameExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, "홍길동", null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    "홍길동",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("firstNameComplete() - 이름 완전 검증 (실패 - 특수문자 포함)")
+        @DisplayName(
+            "firstNameComplete() - 이름 완전 검증 (실패 - 특수문자 포함)"
+        )
         void firstNameComplete_ShouldReturnFailure_WhenFirstNameContainsSpecialChars() {
             // given
-            Function<TestData, String> firstNameExtractor = TestData::getFirstName;
-            Validator<TestData> validator = validationRules.firstNameComplete(firstNameExtractor);
+            Function<TestData, String> firstNameExtractor =
+                TestData::getFirstName;
+            Validator<TestData> validator = validationRules.firstNameComplete(
+                firstNameExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, "홍길동123", null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    "홍길동123",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -507,12 +895,28 @@ class CommonValidationRulesTest {
         void titleComplete_ShouldReturnSuccess_WhenTitleIsValid() {
             // given
             Function<TestData, String> titleExtractor = TestData::getTitle;
-            Validator<TestData> validator = validationRules.titleComplete(titleExtractor);
+            Validator<TestData> validator = validationRules.titleComplete(
+                titleExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "Valid Title", null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Valid Title",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -523,12 +927,28 @@ class CommonValidationRulesTest {
         void titleComplete_ShouldReturnFailure_WhenTitleContainsHtmlTags() {
             // given
             Function<TestData, String> titleExtractor = TestData::getTitle;
-            Validator<TestData> validator = validationRules.titleComplete(titleExtractor);
+            Validator<TestData> validator = validationRules.titleComplete(
+                titleExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "<script>alert('xss')</script>", null, null, null, null, null,
-                            null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "<script>alert('xss')</script>",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -540,11 +960,28 @@ class CommonValidationRulesTest {
         void titleOptional_ShouldReturnSuccess_WhenTitleIsNull() {
             // given
             Function<TestData, String> titleExtractor = TestData::getTitle;
-            Validator<TestData> validator = validationRules.titleOptional(titleExtractor);
+            Validator<TestData> validator = validationRules.titleOptional(
+                titleExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -554,13 +991,30 @@ class CommonValidationRulesTest {
         @DisplayName("descriptionComplete() - 설명 완전 검증 (성공)")
         void descriptionComplete_ShouldReturnSuccess_WhenDescriptionIsValid() {
             // given
-            Function<TestData, String> descriptionExtractor = TestData::getDescription;
-            Validator<TestData> validator = validationRules.descriptionComplete(descriptionExtractor);
+            Function<TestData, String> descriptionExtractor =
+                TestData::getDescription;
+            Validator<TestData> validator = validationRules.descriptionComplete(
+                descriptionExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, "Valid description", null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Valid description",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -570,12 +1024,30 @@ class CommonValidationRulesTest {
         @DisplayName("descriptionComplete() - 설명 완전 검증 (성공 - null)")
         void descriptionComplete_ShouldReturnSuccess_WhenDescriptionIsNull() {
             // given
-            Function<TestData, String> descriptionExtractor = TestData::getDescription;
-            Validator<TestData> validator = validationRules.descriptionComplete(descriptionExtractor);
+            Function<TestData, String> descriptionExtractor =
+                TestData::getDescription;
+            Validator<TestData> validator = validationRules.descriptionComplete(
+                descriptionExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -591,11 +1063,28 @@ class CommonValidationRulesTest {
         void userIdRequired_ShouldReturnSuccess_WhenUserIdIsNotNull() {
             // given
             Function<TestData, Object> userIdExtractor = TestData::getUserId;
-            Validator<TestData> validator = validationRules.userIdRequired(userIdExtractor);
+            Validator<TestData> validator = validationRules.userIdRequired(
+                userIdExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, "user123", null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "user123",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -606,11 +1095,28 @@ class CommonValidationRulesTest {
         void boardIdRequired_ShouldReturnSuccess_WhenBoardIdIsNotNull() {
             // given
             Function<TestData, Object> boardIdExtractor = TestData::getBoardId;
-            Validator<TestData> validator = validationRules.boardIdRequired(boardIdExtractor);
+            Validator<TestData> validator = validationRules.boardIdRequired(
+                boardIdExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, "board123", null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "board123",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -621,11 +1127,28 @@ class CommonValidationRulesTest {
         void listIdRequired_ShouldReturnSuccess_WhenListIdIsNotNull() {
             // given
             Function<TestData, Object> listIdExtractor = TestData::getListId;
-            Validator<TestData> validator = validationRules.listIdRequired(listIdExtractor);
+            Validator<TestData> validator = validationRules.listIdRequired(
+                listIdExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, "list123", null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "list123",
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -636,11 +1159,28 @@ class CommonValidationRulesTest {
         void cardIdRequired_ShouldReturnSuccess_WhenCardIdIsNotNull() {
             // given
             Function<TestData, Object> cardIdExtractor = TestData::getCardId;
-            Validator<TestData> validator = validationRules.cardIdRequired(cardIdExtractor);
+            Validator<TestData> validator = validationRules.cardIdRequired(
+                cardIdExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, "card123", null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "card123",
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -650,12 +1190,30 @@ class CommonValidationRulesTest {
         @DisplayName("positionRequired() - 위치 검증 (성공)")
         void positionRequired_ShouldReturnSuccess_WhenPositionIsNotNull() {
             // given
-            Function<TestData, Object> positionExtractor = TestData::getPosition;
-            Validator<TestData> validator = validationRules.positionRequired(positionExtractor);
+            Function<TestData, Object> positionExtractor =
+                TestData::getPosition;
+            Validator<TestData> validator = validationRules.positionRequired(
+                positionExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, 1, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    1,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -671,11 +1229,28 @@ class CommonValidationRulesTest {
         void colorRequired_ShouldReturnSuccess_WhenColorIsValid() {
             // given
             Function<TestData, String> colorExtractor = TestData::getColor;
-            Validator<TestData> validator = validationRules.colorRequired(colorExtractor);
+            Validator<TestData> validator = validationRules.colorRequired(
+                colorExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, "#FF0000", null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "#FF0000",
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -686,11 +1261,28 @@ class CommonValidationRulesTest {
         void colorRequired_ShouldReturnFailure_WhenColorIsEmpty() {
             // given
             Function<TestData, String> colorExtractor = TestData::getColor;
-            Validator<TestData> validator = validationRules.colorRequired(colorExtractor);
+            Validator<TestData> validator = validationRules.colorRequired(
+                colorExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, "", null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "",
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -702,12 +1294,28 @@ class CommonValidationRulesTest {
         void listColorRequired_ShouldReturnSuccess_WhenListColorIsValid() {
             // given
             Function<TestData, Object> colorExtractor = TestData::getListColor;
-            Validator<TestData> validator = validationRules.listColorRequired(colorExtractor);
+            Validator<TestData> validator = validationRules.listColorRequired(
+                colorExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null,
-                            new ListColor("#0079BF")));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    new ListColor("#0079BF")
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -718,11 +1326,28 @@ class CommonValidationRulesTest {
         void listColorRequired_ShouldReturnFailure_WhenListColorIsNull() {
             // given
             Function<TestData, Object> colorExtractor = TestData::getListColor;
-            Validator<TestData> validator = validationRules.listColorRequired(colorExtractor);
+            Validator<TestData> validator = validationRules.listColorRequired(
+                colorExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -739,28 +1364,63 @@ class CommonValidationRulesTest {
         void cardTitleComplete_ShouldReturnSuccess_WhenCardTitleIsValid() {
             // given
             Function<TestData, String> titleExtractor = TestData::getTitle;
-            Validator<TestData> validator = validationRules.cardTitleComplete(titleExtractor);
+            Validator<TestData> validator = validationRules.cardTitleComplete(
+                titleExtractor
+            );
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, "Valid Card Title", null, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Valid Card Title",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("cardTitleComplete() - 카드 제목 완전 검증 (실패 - 너무 김)")
+        @DisplayName(
+            "cardTitleComplete() - 카드 제목 완전 검증 (실패 - 너무 김)"
+        )
         void cardTitleComplete_ShouldReturnFailure_WhenCardTitleIsTooLong() {
             // given
             Function<TestData, String> titleExtractor = TestData::getTitle;
-            Validator<TestData> validator = validationRules.cardTitleComplete(titleExtractor);
+            Validator<TestData> validator = validationRules.cardTitleComplete(
+                titleExtractor
+            );
 
             // when
             String longTitle = "A".repeat(201); // 201자
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, longTitle, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    longTitle,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -771,45 +1431,98 @@ class CommonValidationRulesTest {
         @DisplayName("cardDescriptionComplete() - 카드 설명 완전 검증 (성공)")
         void cardDescriptionComplete_ShouldReturnSuccess_WhenCardDescriptionIsValid() {
             // given
-            Function<TestData, String> descriptionExtractor = TestData::getDescription;
-            Validator<TestData> validator = validationRules.cardDescriptionComplete(descriptionExtractor);
+            Function<TestData, String> descriptionExtractor =
+                TestData::getDescription;
+            Validator<TestData> validator =
+                validationRules.cardDescriptionComplete(descriptionExtractor);
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, "Valid card description", null, null, null, null, null,
-                            null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "Valid card description",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("cardDescriptionComplete() - 카드 설명 완전 검증 (성공 - null)")
+        @DisplayName(
+            "cardDescriptionComplete() - 카드 설명 완전 검증 (성공 - null)"
+        )
         void cardDescriptionComplete_ShouldReturnSuccess_WhenCardDescriptionIsNull() {
             // given
-            Function<TestData, String> descriptionExtractor = TestData::getDescription;
-            Validator<TestData> validator = validationRules.cardDescriptionComplete(descriptionExtractor);
+            Function<TestData, String> descriptionExtractor =
+                TestData::getDescription;
+            Validator<TestData> validator =
+                validationRules.cardDescriptionComplete(descriptionExtractor);
 
             // when
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isValid()).isTrue();
         }
 
         @Test
-        @DisplayName("cardDescriptionComplete() - 카드 설명 완전 검증 (실패 - 너무 김)")
+        @DisplayName(
+            "cardDescriptionComplete() - 카드 설명 완전 검증 (실패 - 너무 김)"
+        )
         void cardDescriptionComplete_ShouldReturnFailure_WhenCardDescriptionIsTooLong() {
             // given
-            Function<TestData, String> descriptionExtractor = TestData::getDescription;
-            Validator<TestData> validator = validationRules.cardDescriptionComplete(descriptionExtractor);
+            Function<TestData, String> descriptionExtractor =
+                TestData::getDescription;
+            Validator<TestData> validator =
+                validationRules.cardDescriptionComplete(descriptionExtractor);
 
             // when
             String longDescription = "A".repeat(2001); // 2001자
             ValidationResult<TestData> result = validator.validate(
-                    new TestData(null, null, null, null, null, longDescription, null, null, null, null, null, null,
-                            null));
+                new TestData(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    longDescription,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            );
 
             // then
             assertThat(result.isInvalid()).isTrue();
@@ -840,7 +1553,9 @@ class CommonValidationRulesTest {
             assertThat(CommonValidationRules.PASSWORD_MAX_LENGTH).isEqualTo(20);
             assertThat(CommonValidationRules.NAME_MAX_LENGTH).isEqualTo(50);
             assertThat(CommonValidationRules.TITLE_MAX_LENGTH).isEqualTo(100);
-            assertThat(CommonValidationRules.DESCRIPTION_MAX_LENGTH).isEqualTo(500);
+            assertThat(CommonValidationRules.DESCRIPTION_MAX_LENGTH).isEqualTo(
+                500
+            );
         }
 
         @Test
@@ -850,9 +1565,15 @@ class CommonValidationRulesTest {
             Pattern emailPattern = CommonValidationRules.EMAIL_PATTERN;
 
             // then
-            assertThat(emailPattern.matcher("test@example.com").matches()).isTrue();
-            assertThat(emailPattern.matcher("user.name@domain.co.uk").matches()).isTrue();
-            assertThat(emailPattern.matcher("invalid-email").matches()).isFalse();
+            assertThat(
+                emailPattern.matcher("test@example.com").matches()
+            ).isTrue();
+            assertThat(
+                emailPattern.matcher("user.name@domain.co.uk").matches()
+            ).isTrue();
+            assertThat(
+                emailPattern.matcher("invalid-email").matches()
+            ).isFalse();
             assertThat(emailPattern.matcher("@domain.com").matches()).isFalse();
         }
 
@@ -863,13 +1584,25 @@ class CommonValidationRulesTest {
             Pattern passwordPattern = CommonValidationRules.PASSWORD_PATTERN;
 
             // then
-            assertThat(passwordPattern.matcher("ValidPass1!").matches()).isTrue();
-            assertThat(passwordPattern.matcher("Password123@").matches()).isTrue();
-            assertThat(passwordPattern.matcher("nouppercase123!").matches()).isTrue(); // 유효한 비밀번호 (알파벳+숫자+특수문자)
+            assertThat(
+                passwordPattern.matcher("ValidPass1!").matches()
+            ).isTrue();
+            assertThat(
+                passwordPattern.matcher("Password123@").matches()
+            ).isTrue();
+            assertThat(
+                passwordPattern.matcher("nouppercase123!").matches()
+            ).isTrue(); // 유효한 비밀번호 (알파벳+숫자+특수문자)
             assertThat(passwordPattern.matcher("short1!").matches()).isFalse(); // 너무 짧음 (7자)
-            assertThat(passwordPattern.matcher("NOSPECIAL123").matches()).isFalse(); // 특수문자 없음
-            assertThat(passwordPattern.matcher("nouppercase123").matches()).isFalse(); // 특수문자 없음
-            assertThat(passwordPattern.matcher("nouppercase!@#").matches()).isFalse(); // 숫자 없음
+            assertThat(
+                passwordPattern.matcher("NOSPECIAL123").matches()
+            ).isFalse(); // 특수문자 없음
+            assertThat(
+                passwordPattern.matcher("nouppercase123").matches()
+            ).isFalse(); // 특수문자 없음
+            assertThat(
+                passwordPattern.matcher("nouppercase!@#").matches()
+            ).isFalse(); // 숫자 없음
         }
 
         @Test
@@ -893,11 +1626,19 @@ class CommonValidationRulesTest {
             Pattern htmlTagPattern = CommonValidationRules.HTML_TAG_PATTERN;
 
             // then
-            assertThat(htmlTagPattern.matcher("<script>alert('xss')</script>").find()).isTrue();
-            assertThat(htmlTagPattern.matcher("<div>content</div>").find()).isTrue();
+            assertThat(
+                htmlTagPattern.matcher("<script>alert('xss')</script>").find()
+            ).isTrue();
+            assertThat(
+                htmlTagPattern.matcher("<div>content</div>").find()
+            ).isTrue();
             assertThat(htmlTagPattern.matcher("<p>text</p>").find()).isTrue();
-            assertThat(htmlTagPattern.matcher("Clean text without tags").find()).isFalse();
-            assertThat(htmlTagPattern.matcher("Text with > symbol").find()).isFalse();
+            assertThat(
+                htmlTagPattern.matcher("Clean text without tags").find()
+            ).isFalse();
+            assertThat(
+                htmlTagPattern.matcher("Text with > symbol").find()
+            ).isFalse();
         }
     }
 }

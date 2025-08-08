@@ -23,7 +23,6 @@ import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.repository.CardLabelRepository;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.label.domain.model.Label;
-import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.features.label.domain.repository.LabelRepository;
 import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
@@ -76,7 +75,7 @@ public class CardLabelService implements ManageCardLabelUseCase {
     }
 
     @Override
-    public List<LabelId> getCardLabels(CardId cardId, UserId requesterId) {
+    public List<Label> getCardLabels(CardId cardId, UserId requesterId) {
         log.debug("CardLabelService.getCardLabels() called with cardId={}, requesterId={}",
                 cardId.getId(), requesterId.getId());
 
@@ -95,9 +94,10 @@ public class CardLabelService implements ManageCardLabelUseCase {
             return List.of();
         }
 
-        List<LabelId> labelIds = cardLabelRepository.findLabelIdsByCardId(cardId);
-        log.debug("카드 라벨 조회 완료: cardId={}, 라벨 수={}", cardId.getId(), labelIds.size());
-        return labelIds;
+        // 라벨 목록 조회 (Label 객체 반환)
+        List<Label> labels = cardLabelRepository.findLabelsByCardId(cardId);
+        log.debug("카드 라벨 조회 완료: cardId={}, 라벨 수={}", cardId.getId(), labels.size());
+        return labels;
     }
 
     // ==================== PRIVATE HELPER METHODS ====================

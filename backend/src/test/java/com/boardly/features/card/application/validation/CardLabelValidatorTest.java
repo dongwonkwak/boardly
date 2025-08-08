@@ -5,14 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import com.boardly.features.card.application.port.input.AddCardLabelCommand;
 import com.boardly.features.card.application.port.input.RemoveCardLabelCommand;
 import com.boardly.features.card.domain.model.CardId;
@@ -23,8 +15,14 @@ import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.application.validation.Validator;
 import com.boardly.shared.domain.common.Failure.FieldViolation;
-
 import io.vavr.collection.Seq;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CardLabelValidator 테스트")
@@ -40,7 +38,10 @@ class CardLabelValidatorTest {
 
     @BeforeEach
     void setUp() {
-        cardLabelValidator = new CardLabelValidator(commonValidationRules, messageResolver);
+        cardLabelValidator = new CardLabelValidator(
+            commonValidationRules,
+            messageResolver
+        );
     }
 
     @Nested
@@ -55,12 +56,17 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("label-123");
             UserId requesterId = new UserId("requester-456");
 
-            AddCardLabelCommand command = new AddCardLabelCommand(cardId, labelId, requesterId);
+            AddCardLabelCommand command = new AddCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
             setupAllValidatorsToSuccess();
 
             // when
-            ValidationResult<AddCardLabelCommand> result = cardLabelValidator.validateAdd(command);
+            ValidationResult<AddCardLabelCommand> result =
+                cardLabelValidator.validateAdd(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -75,22 +81,31 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("label-123");
             UserId requesterId = new UserId("requester-456");
 
-            AddCardLabelCommand command = new AddCardLabelCommand(cardId, labelId, requesterId);
+            AddCardLabelCommand command = new AddCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.invalid("cardId", "카드 ID는 필수입니다"));
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.valid());
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.invalid("cardId", "카드 ID는 필수입니다")
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
 
             // when
-            ValidationResult<AddCardLabelCommand> result = cardLabelValidator.validateAdd(command);
+            ValidationResult<AddCardLabelCommand> result =
+                cardLabelValidator.validateAdd(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("cardId");
-            assertThat(violation.message()).isEqualTo("카드 ID는 필수입니다");
+            assertThat(violation.getField()).isEqualTo("cardId");
+            assertThat(violation.getMessage()).isEqualTo(
+                "카드 ID는 필수입니다"
+            );
         }
 
         @Test
@@ -101,21 +116,28 @@ class CardLabelValidatorTest {
             LabelId labelId = null; // null 라벨 ID
             UserId requesterId = new UserId("requester-456");
 
-            AddCardLabelCommand command = new AddCardLabelCommand(cardId, labelId, requesterId);
+            AddCardLabelCommand command = new AddCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.valid());
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.valid());
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
 
             // when
-            ValidationResult<AddCardLabelCommand> result = cardLabelValidator.validateAdd(command);
+            ValidationResult<AddCardLabelCommand> result =
+                cardLabelValidator.validateAdd(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("labelId");
+            assertThat(violation.getField()).isEqualTo("labelId");
         }
 
         @Test
@@ -126,22 +148,31 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("label-123");
             UserId requesterId = null; // null 요청자 ID
 
-            AddCardLabelCommand command = new AddCardLabelCommand(cardId, labelId, requesterId);
+            AddCardLabelCommand command = new AddCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.valid());
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.invalid("requesterId", "요청자 ID는 필수입니다"));
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.invalid("requesterId", "요청자 ID는 필수입니다")
+            );
 
             // when
-            ValidationResult<AddCardLabelCommand> result = cardLabelValidator.validateAdd(command);
+            ValidationResult<AddCardLabelCommand> result =
+                cardLabelValidator.validateAdd(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("requesterId");
-            assertThat(violation.message()).isEqualTo("요청자 ID는 필수입니다");
+            assertThat(violation.getField()).isEqualTo("requesterId");
+            assertThat(violation.getMessage()).isEqualTo(
+                "요청자 ID는 필수입니다"
+            );
         }
 
         @Test
@@ -152,22 +183,35 @@ class CardLabelValidatorTest {
             LabelId labelId = null; // null 라벨 ID
             UserId requesterId = null; // null 요청자 ID
 
-            AddCardLabelCommand command = new AddCardLabelCommand(cardId, labelId, requesterId);
+            AddCardLabelCommand command = new AddCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.invalid("cardId", "카드 ID는 필수입니다"));
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.invalid("requesterId", "요청자 ID는 필수입니다"));
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.invalid("cardId", "카드 ID는 필수입니다")
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.invalid("requesterId", "요청자 ID는 필수입니다")
+            );
 
             // when
-            ValidationResult<AddCardLabelCommand> result = cardLabelValidator.validateAdd(command);
+            ValidationResult<AddCardLabelCommand> result =
+                cardLabelValidator.validateAdd(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(3);
 
-            Seq<String> errorFields = result.getErrors().map(FieldViolation::field);
-            assertThat(errorFields).contains("cardId", "labelId", "requesterId");
+            Seq<String> errorFields = result
+                .getErrors()
+                .map(FieldViolation::getField);
+            assertThat(errorFields).contains(
+                "cardId",
+                "labelId",
+                "requesterId"
+            );
         }
     }
 
@@ -183,12 +227,17 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("label-123");
             UserId requesterId = new UserId("requester-456");
 
-            RemoveCardLabelCommand command = new RemoveCardLabelCommand(cardId, labelId, requesterId);
+            RemoveCardLabelCommand command = new RemoveCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
             setupAllValidatorsToSuccess();
 
             // when
-            ValidationResult<RemoveCardLabelCommand> result = cardLabelValidator.validateRemove(command);
+            ValidationResult<RemoveCardLabelCommand> result =
+                cardLabelValidator.validateRemove(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -203,22 +252,31 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("label-123");
             UserId requesterId = new UserId("requester-456");
 
-            RemoveCardLabelCommand command = new RemoveCardLabelCommand(cardId, labelId, requesterId);
+            RemoveCardLabelCommand command = new RemoveCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.invalid("cardId", "카드 ID는 필수입니다"));
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.valid());
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.invalid("cardId", "카드 ID는 필수입니다")
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
 
             // when
-            ValidationResult<RemoveCardLabelCommand> result = cardLabelValidator.validateRemove(command);
+            ValidationResult<RemoveCardLabelCommand> result =
+                cardLabelValidator.validateRemove(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("cardId");
-            assertThat(violation.message()).isEqualTo("카드 ID는 필수입니다");
+            assertThat(violation.getField()).isEqualTo("cardId");
+            assertThat(violation.getMessage()).isEqualTo(
+                "카드 ID는 필수입니다"
+            );
         }
 
         @Test
@@ -229,21 +287,28 @@ class CardLabelValidatorTest {
             LabelId labelId = null; // null 라벨 ID
             UserId requesterId = new UserId("requester-456");
 
-            RemoveCardLabelCommand command = new RemoveCardLabelCommand(cardId, labelId, requesterId);
+            RemoveCardLabelCommand command = new RemoveCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.valid());
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.valid());
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
 
             // when
-            ValidationResult<RemoveCardLabelCommand> result = cardLabelValidator.validateRemove(command);
+            ValidationResult<RemoveCardLabelCommand> result =
+                cardLabelValidator.validateRemove(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("labelId");
+            assertThat(violation.getField()).isEqualTo("labelId");
         }
 
         @Test
@@ -254,22 +319,31 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("label-123");
             UserId requesterId = null; // null 요청자 ID
 
-            RemoveCardLabelCommand command = new RemoveCardLabelCommand(cardId, labelId, requesterId);
+            RemoveCardLabelCommand command = new RemoveCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.valid());
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.invalid("requesterId", "요청자 ID는 필수입니다"));
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.valid()
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.invalid("requesterId", "요청자 ID는 필수입니다")
+            );
 
             // when
-            ValidationResult<RemoveCardLabelCommand> result = cardLabelValidator.validateRemove(command);
+            ValidationResult<RemoveCardLabelCommand> result =
+                cardLabelValidator.validateRemove(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
             FieldViolation violation = result.getErrors().get(0);
-            assertThat(violation.field()).isEqualTo("requesterId");
-            assertThat(violation.message()).isEqualTo("요청자 ID는 필수입니다");
+            assertThat(violation.getField()).isEqualTo("requesterId");
+            assertThat(violation.getMessage()).isEqualTo(
+                "요청자 ID는 필수입니다"
+            );
         }
 
         @Test
@@ -280,22 +354,35 @@ class CardLabelValidatorTest {
             LabelId labelId = null; // null 라벨 ID
             UserId requesterId = null; // null 요청자 ID
 
-            RemoveCardLabelCommand command = new RemoveCardLabelCommand(cardId, labelId, requesterId);
+            RemoveCardLabelCommand command = new RemoveCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
-            when(commonValidationRules.cardIdRequired(any()))
-                    .thenReturn(Validator.invalid("cardId", "카드 ID는 필수입니다"));
-            when(commonValidationRules.userIdRequired(any()))
-                    .thenReturn(Validator.invalid("requesterId", "요청자 ID는 필수입니다"));
+            when(commonValidationRules.cardIdRequired(any())).thenReturn(
+                Validator.invalid("cardId", "카드 ID는 필수입니다")
+            );
+            when(commonValidationRules.userIdRequired(any())).thenReturn(
+                Validator.invalid("requesterId", "요청자 ID는 필수입니다")
+            );
 
             // when
-            ValidationResult<RemoveCardLabelCommand> result = cardLabelValidator.validateRemove(command);
+            ValidationResult<RemoveCardLabelCommand> result =
+                cardLabelValidator.validateRemove(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(3);
 
-            Seq<String> errorFields = result.getErrors().map(FieldViolation::field);
-            assertThat(errorFields).contains("cardId", "labelId", "requesterId");
+            Seq<String> errorFields = result
+                .getErrors()
+                .map(FieldViolation::getField);
+            assertThat(errorFields).contains(
+                "cardId",
+                "labelId",
+                "requesterId"
+            );
         }
     }
 
@@ -311,14 +398,24 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("label-123");
             UserId requesterId = new UserId("requester-456");
 
-            AddCardLabelCommand addCommand = new AddCardLabelCommand(cardId, labelId, requesterId);
-            RemoveCardLabelCommand removeCommand = new RemoveCardLabelCommand(cardId, labelId, requesterId);
+            AddCardLabelCommand addCommand = new AddCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
+            RemoveCardLabelCommand removeCommand = new RemoveCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
             setupAllValidatorsToSuccess();
 
             // when
-            ValidationResult<AddCardLabelCommand> addResult = cardLabelValidator.validateAdd(addCommand);
-            ValidationResult<RemoveCardLabelCommand> removeResult = cardLabelValidator.validateRemove(removeCommand);
+            ValidationResult<AddCardLabelCommand> addResult =
+                cardLabelValidator.validateAdd(addCommand);
+            ValidationResult<RemoveCardLabelCommand> removeResult =
+                cardLabelValidator.validateRemove(removeCommand);
 
             // then
             assertThat(addResult.isValid()).isTrue();
@@ -336,14 +433,24 @@ class CardLabelValidatorTest {
             LabelId labelId = new LabelId("different-label-789");
             UserId requesterId = new UserId("different-requester-101");
 
-            AddCardLabelCommand addCommand = new AddCardLabelCommand(cardId, labelId, requesterId);
-            RemoveCardLabelCommand removeCommand = new RemoveCardLabelCommand(cardId, labelId, requesterId);
+            AddCardLabelCommand addCommand = new AddCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
+            RemoveCardLabelCommand removeCommand = new RemoveCardLabelCommand(
+                cardId,
+                labelId,
+                requesterId
+            );
 
             setupAllValidatorsToSuccess();
 
             // when
-            ValidationResult<AddCardLabelCommand> addResult = cardLabelValidator.validateAdd(addCommand);
-            ValidationResult<RemoveCardLabelCommand> removeResult = cardLabelValidator.validateRemove(removeCommand);
+            ValidationResult<AddCardLabelCommand> addResult =
+                cardLabelValidator.validateAdd(addCommand);
+            ValidationResult<RemoveCardLabelCommand> removeResult =
+                cardLabelValidator.validateRemove(removeCommand);
 
             // then
             assertThat(addResult.isValid()).isTrue();
@@ -355,7 +462,11 @@ class CardLabelValidatorTest {
      * 모든 검증기를 성공으로 설정하는 헬퍼 메서드
      */
     private void setupAllValidatorsToSuccess() {
-        lenient().when(commonValidationRules.cardIdRequired(any())).thenReturn(Validator.valid());
-        lenient().when(commonValidationRules.userIdRequired(any())).thenReturn(Validator.valid());
+        lenient()
+            .when(commonValidationRules.cardIdRequired(any()))
+            .thenReturn(Validator.valid());
+        lenient()
+            .when(commonValidationRules.userIdRequired(any()))
+            .thenReturn(Validator.valid());
     }
 }

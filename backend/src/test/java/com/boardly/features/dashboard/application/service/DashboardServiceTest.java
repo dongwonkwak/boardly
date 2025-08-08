@@ -190,14 +190,7 @@ class DashboardServiceTest {
                     .thenReturn(Either.right(List.of(board)));
             when(activityReadService.getActivities(any(GetActivityQuery.class)))
                     .thenReturn(Either
-                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.builder()
-                                    .activities(List.of(activity))
-                                    .totalCount(1)
-                                    .currentPage(0)
-                                    .totalPages(1)
-                                    .hasNextPage(false)
-                                    .hasPreviousPage(false)
-                                    .build()));
+                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.of(List.of(activity))));
             when(boardListRepository.findByBoardId(boardId))
                     .thenReturn(List.of(boardList));
             when(cardRepository.findByListIdIn(List.of(listId)))
@@ -212,12 +205,12 @@ class DashboardServiceTest {
             assertThat(result.isRight()).isTrue();
             DashboardResponse response = result.get();
 
-            assertThat(response.boards()).hasSize(1);
-            assertThat(response.recentActivity()).hasSize(1);
-            assertThat(response.statistics()).isNotNull();
-            assertThat(response.statistics().totalBoards()).isEqualTo(1);
-            assertThat(response.statistics().totalCards()).isEqualTo(1);
-            assertThat(response.statistics().starredBoards()).isEqualTo(0);
+            assertThat(response.getBoards()).hasSize(1);
+            assertThat(response.getRecentActivity()).hasSize(1);
+            assertThat(response.getStatistics()).isNotNull();
+            assertThat(response.getStatistics().getTotalBoards()).isEqualTo(1);
+            assertThat(response.getStatistics().getTotalCards()).isEqualTo(1);
+            assertThat(response.getStatistics().getStarredBoards()).isEqualTo(0);
 
             // 검증
             verify(userFinder, atLeastOnce()).checkUserExists(userId);
@@ -246,14 +239,7 @@ class DashboardServiceTest {
                     .thenReturn(Either.right(List.of(board1, board2)));
             when(activityReadService.getActivities(any(GetActivityQuery.class)))
                     .thenReturn(Either
-                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.builder()
-                                    .activities(List.of())
-                                    .totalCount(0)
-                                    .currentPage(0)
-                                    .totalPages(1)
-                                    .hasNextPage(false)
-                                    .hasPreviousPage(false)
-                                    .build()));
+                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.of(List.of())));
             when(boardListRepository.findByBoardId(any(BoardId.class)))
                     .thenReturn(List.of());
             when(boardPermissionService.getUserBoardRole(any(BoardId.class), eq(userId)))
@@ -266,9 +252,9 @@ class DashboardServiceTest {
             assertThat(result.isRight()).isTrue();
             DashboardResponse response = result.get();
 
-            assertThat(response.statistics().totalBoards()).isEqualTo(2);
-            assertThat(response.statistics().starredBoards()).isEqualTo(1);
-            assertThat(response.statistics().totalCards()).isEqualTo(0);
+            assertThat(response.getStatistics().getTotalBoards()).isEqualTo(2);
+            assertThat(response.getStatistics().getStarredBoards()).isEqualTo(1);
+            assertThat(response.getStatistics().getTotalCards()).isEqualTo(0);
         }
 
         @Test
@@ -284,14 +270,7 @@ class DashboardServiceTest {
                     .thenReturn(Either.right(List.of()));
             when(activityReadService.getActivities(any(GetActivityQuery.class)))
                     .thenReturn(Either
-                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.builder()
-                                    .activities(List.of())
-                                    .totalCount(0)
-                                    .currentPage(0)
-                                    .totalPages(1)
-                                    .hasNextPage(false)
-                                    .hasPreviousPage(false)
-                                    .build()));
+                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.of(List.of())));
 
             // when
             Either<Failure, DashboardResponse> result = dashboardService.getDashboard(command);
@@ -300,11 +279,11 @@ class DashboardServiceTest {
             assertThat(result.isRight()).isTrue();
             DashboardResponse response = result.get();
 
-            assertThat(response.boards()).isEmpty();
-            assertThat(response.recentActivity()).isEmpty();
-            assertThat(response.statistics().totalBoards()).isEqualTo(0);
-            assertThat(response.statistics().totalCards()).isEqualTo(0);
-            assertThat(response.statistics().starredBoards()).isEqualTo(0);
+            assertThat(response.getBoards()).isEmpty();
+            assertThat(response.getRecentActivity()).isEmpty();
+            assertThat(response.getStatistics().getTotalBoards()).isEqualTo(0);
+            assertThat(response.getStatistics().getTotalCards()).isEqualTo(0);
+            assertThat(response.getStatistics().getStarredBoards()).isEqualTo(0);
         }
     }
 
@@ -327,7 +306,7 @@ class DashboardServiceTest {
             Failure.InputError inputError = (Failure.InputError) failure;
             assertThat(inputError.getErrorCode()).isEqualTo("INVALID_COMMAND");
             assertThat(inputError.getViolations()).hasSize(1);
-            assertThat(inputError.getViolations().get(0).field()).isEqualTo("command");
+            assertThat(inputError.getViolations().get(0).getField()).isEqualTo("command");
 
             verify(validationMessageResolver).getMessage("validation.dashboard.command.null");
             verify(validationMessageResolver).getMessage("validation.input.invalid");
@@ -528,14 +507,7 @@ class DashboardServiceTest {
                     .thenReturn(Either.right(List.of(board)));
             when(activityReadService.getActivities(any(GetActivityQuery.class)))
                     .thenReturn(Either
-                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.builder()
-                                    .activities(List.of(activity))
-                                    .totalCount(1)
-                                    .currentPage(0)
-                                    .totalPages(1)
-                                    .hasNextPage(false)
-                                    .hasPreviousPage(false)
-                                    .build()));
+                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.of(List.of(activity))));
             when(boardListRepository.findByBoardId(boardId))
                     .thenReturn(List.of(boardList));
             when(cardRepository.findByListIdIn(List.of(listId)))
@@ -550,17 +522,17 @@ class DashboardServiceTest {
             assertThat(result.isRight()).isTrue();
             DashboardResponse response = result.get();
 
-            assertThat(response.boards()).hasSize(1);
-            BoardSummaryDto boardSummary = response.boards().get(0);
+            assertThat(response.getBoards()).hasSize(1);
+            BoardSummaryDto boardSummary = response.getBoards().get(0);
 
-            assertThat(boardSummary.id()).isEqualTo(boardId.getId());
-            assertThat(boardSummary.title()).isEqualTo("테스트 보드");
-            assertThat(boardSummary.description()).isEqualTo("테스트 보드 설명");
+            assertThat(boardSummary.getId()).isEqualTo(boardId.getId());
+            assertThat(boardSummary.getTitle()).isEqualTo("테스트 보드");
+            assertThat(boardSummary.getDescription()).isEqualTo("테스트 보드 설명");
             assertThat(boardSummary.isStarred()).isTrue();
-            assertThat(boardSummary.listCount()).isEqualTo(1);
-            assertThat(boardSummary.cardCount()).isEqualTo(1);
-            assertThat(boardSummary.role()).isEqualTo("owner");
-            assertThat(boardSummary.color()).isNotNull();
+            assertThat(boardSummary.getListCount()).isEqualTo(1);
+            assertThat(boardSummary.getCardCount()).isEqualTo(1);
+            assertThat(boardSummary.getRole()).isEqualTo("owner");
+            assertThat(boardSummary.getColor()).isNotNull();
         }
 
         @Test
@@ -579,14 +551,7 @@ class DashboardServiceTest {
                     .thenReturn(Either.right(List.of(board)));
             when(activityReadService.getActivities(any(GetActivityQuery.class)))
                     .thenReturn(Either
-                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.builder()
-                                    .activities(List.of())
-                                    .totalCount(0)
-                                    .currentPage(0)
-                                    .totalPages(1)
-                                    .hasNextPage(false)
-                                    .hasPreviousPage(false)
-                                    .build()));
+                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.of(List.of())));
             when(boardListRepository.findByBoardId(boardId))
                     .thenReturn(List.of());
             when(boardPermissionService.getUserBoardRole(boardId, userId))
@@ -599,9 +564,9 @@ class DashboardServiceTest {
             assertThat(result.isRight()).isTrue();
             DashboardResponse response = result.get();
 
-            assertThat(response.boards()).hasSize(1);
-            BoardSummaryDto boardSummary = response.boards().get(0);
-            assertThat(boardSummary.role()).isEqualTo("unknown");
+            assertThat(response.getBoards()).hasSize(1);
+            BoardSummaryDto boardSummary = response.getBoards().get(0);
+            assertThat(boardSummary.getRole()).isEqualTo("unknown");
         }
     }
 
@@ -640,14 +605,7 @@ class DashboardServiceTest {
                     .thenReturn(Either.right(List.of(board1, board2)));
             when(activityReadService.getActivities(any(GetActivityQuery.class)))
                     .thenReturn(Either
-                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.builder()
-                                    .activities(List.of(activity))
-                                    .totalCount(1)
-                                    .currentPage(0)
-                                    .totalPages(1)
-                                    .hasNextPage(false)
-                                    .hasPreviousPage(false)
-                                    .build()));
+                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.of(List.of(activity))));
             when(boardListRepository.findByBoardId(boardId1))
                     .thenReturn(List.of(boardList1));
             when(boardListRepository.findByBoardId(boardId2))
@@ -663,12 +621,12 @@ class DashboardServiceTest {
             // then
             assertThat(result.isRight()).isTrue();
             DashboardResponse response = result.get();
-            DashboardStatisticsDto statistics = response.statistics();
+            DashboardStatisticsDto statistics = response.getStatistics();
 
-            assertThat(statistics.totalBoards()).isEqualTo(2);
-            assertThat(statistics.starredBoards()).isEqualTo(1);
-            assertThat(statistics.totalCards()).isEqualTo(3);
-            assertThat(statistics.archivedBoards()).isEqualTo(0);
+            assertThat(statistics.getTotalBoards()).isEqualTo(2);
+            assertThat(statistics.getStarredBoards()).isEqualTo(1);
+            assertThat(statistics.getTotalCards()).isEqualTo(3);
+            assertThat(statistics.getArchivedBoards()).isEqualTo(0);
         }
 
         @Test
@@ -687,14 +645,7 @@ class DashboardServiceTest {
                     .thenReturn(Either.right(List.of(board)));
             when(activityReadService.getActivities(any(GetActivityQuery.class)))
                     .thenReturn(Either
-                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.builder()
-                                    .activities(List.of())
-                                    .totalCount(0)
-                                    .currentPage(0)
-                                    .totalPages(1)
-                                    .hasNextPage(false)
-                                    .hasPreviousPage(false)
-                                    .build()));
+                            .right(com.boardly.features.activity.application.port.output.ActivityListResponse.of(List.of())));
             when(boardListRepository.findByBoardId(boardId))
                     .thenThrow(new RuntimeException("리스트 조회 오류"));
             when(boardPermissionService.getUserBoardRole(any(BoardId.class), eq(userId)))
@@ -706,10 +657,10 @@ class DashboardServiceTest {
             // then
             assertThat(result.isRight()).isTrue();
             DashboardResponse response = result.get();
-            DashboardStatisticsDto statistics = response.statistics();
+            DashboardStatisticsDto statistics = response.getStatistics();
 
-            assertThat(statistics.totalBoards()).isEqualTo(1);
-            assertThat(statistics.totalCards()).isEqualTo(0);
+            assertThat(statistics.getTotalBoards()).isEqualTo(1);
+            assertThat(statistics.getTotalCards()).isEqualTo(0);
         }
     }
 }

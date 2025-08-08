@@ -22,6 +22,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.boardly.features.card.application.usecase.ManageCardLabelUseCase;
 import com.boardly.features.card.presentation.request.AddCardLabelRequest;
 import com.boardly.features.card.presentation.request.RemoveCardLabelRequest;
+import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
@@ -54,6 +55,7 @@ class CardControllerManageCardLabelTest {
         cardController = new CardController(
                 null, // createCardUseCase
                 null, // cardQueryUseCase
+                null, // getCardDetailUseCase
                 null, // updateCardUseCase
                 null, // moveCardUseCase
                 null, // cloneCardUseCase
@@ -65,8 +67,13 @@ class CardControllerManageCardLabelTest {
         when(jwt.getSubject()).thenReturn(TEST_USER_ID);
     }
 
-    private List<LabelId> createTestLabelIds() {
-        return List.of(new LabelId(TEST_LABEL_ID));
+    private List<Label> createTestLabels() {
+        return List.of(Label.builder()
+                .labelId(new LabelId(TEST_LABEL_ID))
+                .name("test-label")
+                .color("#ffffff")
+                .boardId(null)
+                .build());
     }
 
     @Test
@@ -155,7 +162,7 @@ class CardControllerManageCardLabelTest {
     @DisplayName("카드 라벨 목록 조회 성공 시 200 응답을 반환해야 한다")
     void getCardLabels_withValidRequest_shouldReturn200() {
         // given
-        List<LabelId> labels = createTestLabelIds();
+        List<Label> labels = createTestLabels();
 
         when(manageCardLabelUseCase.getCardLabels(any(), any()))
                 .thenReturn(labels);
@@ -168,10 +175,10 @@ class CardControllerManageCardLabelTest {
         assertThat(response.getBody()).isInstanceOf(List.class);
 
         @SuppressWarnings("unchecked")
-        List<LabelId> responseLabels = (List<LabelId>) response.getBody();
+        List<Label> responseLabels = (List<Label>) response.getBody();
         assertNotNull(responseLabels);
         assertThat(responseLabels).hasSize(1);
-        assertThat(responseLabels.get(0).getId()).isEqualTo(TEST_LABEL_ID);
+        assertThat(responseLabels.get(0).getLabelId().getId()).isEqualTo(TEST_LABEL_ID);
 
         verify(manageCardLabelUseCase).getCardLabels(any(), any());
     }
@@ -180,7 +187,7 @@ class CardControllerManageCardLabelTest {
     @DisplayName("빈 라벨 목록 조회 시 빈 리스트를 반환해야 한다")
     void getCardLabels_withEmptyList_shouldReturnEmptyList() {
         // given
-        List<LabelId> emptyLabels = List.of();
+        List<Label> emptyLabels = List.of();
 
         when(manageCardLabelUseCase.getCardLabels(any(), any()))
                 .thenReturn(emptyLabels);
@@ -193,7 +200,7 @@ class CardControllerManageCardLabelTest {
         assertThat(response.getBody()).isInstanceOf(List.class);
 
         @SuppressWarnings("unchecked")
-        List<LabelId> responseLabels = (List<LabelId>) response.getBody();
+        List<Label> responseLabels = (List<Label>) response.getBody();
         assertThat(responseLabels).isEmpty();
 
         verify(manageCardLabelUseCase).getCardLabels(any(), any());

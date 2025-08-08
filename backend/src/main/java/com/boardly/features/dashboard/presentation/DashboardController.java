@@ -79,7 +79,7 @@ public class DashboardController {
                 failureHandler::handleFailure,
                 dashboard -> {
                     log.info("대시보드 조회 성공: userId={}, boardCount={}, activityCount={}",
-                            userId, dashboard.boards().size(), dashboard.recentActivity().size());
+                            userId, dashboard.getBoards().size(), dashboard.getRecentActivity().size());
                     return ResponseEntity.ok(dashboard);
                 });
     }

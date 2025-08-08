@@ -115,8 +115,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("name")
-                                        && error.message().contains("validation.label.name.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("name")
+                                        && error.getMessage().contains("validation.label.name.required"));
                 }
 
                 @Test
@@ -135,8 +135,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("name")
-                                        && error.message().contains("validation.label.name.max.length"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("name")
+                                        && error.getMessage().contains("validation.label.name.max.length"));
                 }
 
                 @Test
@@ -155,8 +155,8 @@ class LabelValidatorTest {
                         // then
                         assertThat(result.isInvalid()).isTrue();
                         assertThat(result.getErrors()).anyMatch(
-                                        error -> error.field().equals("name")
-                                                        && error.message().contains("validation.label.name.invalid"));
+                                        error -> error.getField().equals("name")
+                                                        && error.getMessage().contains("validation.label.name.invalid"));
                 }
 
                 @Test
@@ -174,8 +174,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("color")
-                                        && error.message().contains("validation.label.color.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("color")
+                                        && error.getMessage().contains("validation.label.color.required"));
                 }
 
                 @Test
@@ -193,8 +193,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("color")
-                                        && error.message().contains("validation.label.color.invalid"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("color")
+                                        && error.getMessage().contains("validation.label.color.invalid"));
                 }
 
                 @Test
@@ -246,8 +246,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("boardId")
-                                        && error.message().contains("validation.boardId.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("boardId")
+                                        && error.getMessage().contains("validation.boardId.required"));
                 }
 
                 @Test
@@ -265,8 +265,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("requesterId")
-                                        && error.message().contains("validation.label.userId.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("requesterId")
+                                        && error.getMessage().contains("validation.label.userId.required"));
                 }
         }
 
@@ -303,8 +303,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("name")
-                                        && error.message().contains("validation.label.name.max.length"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("name")
+                                        && error.getMessage().contains("validation.label.name.max.length"));
                 }
 
                 @Test
@@ -323,8 +323,8 @@ class LabelValidatorTest {
                         // then
                         assertThat(result.isInvalid()).isTrue();
                         assertThat(result.getErrors()).anyMatch(
-                                        error -> error.field().equals("name")
-                                                        && error.message().contains("validation.label.name.invalid"));
+                                        error -> error.getField().equals("name")
+                                                        && error.getMessage().contains("validation.label.name.invalid"));
                 }
 
                 @Test
@@ -342,8 +342,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("color")
-                                        && error.message().contains("validation.label.color.invalid"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("color")
+                                        && error.getMessage().contains("validation.label.color.invalid"));
                 }
 
                 @Test
@@ -378,8 +378,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("labelId")
-                                        && error.message().contains("validation.label.id.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("labelId")
+                                        && error.getMessage().contains("validation.label.id.required"));
                 }
 
                 @Test
@@ -397,8 +397,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("userId")
-                                        && error.message().contains("validation.label.userId.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("userId")
+                                        && error.getMessage().contains("validation.label.userId.required"));
                 }
         }
 
@@ -432,8 +432,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("labelId")
-                                        && error.message().contains("validation.label.id.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("labelId")
+                                        && error.getMessage().contains("validation.label.id.required"));
                 }
 
                 @Test
@@ -449,8 +449,8 @@ class LabelValidatorTest {
 
                         // then
                         assertThat(result.isInvalid()).isTrue();
-                        assertThat(result.getErrors()).anyMatch(error -> error.field().equals("userId")
-                                        && error.message().contains("validation.label.userId.required"));
+                        assertThat(result.getErrors()).anyMatch(error -> error.getField().equals("userId")
+                                        && error.getMessage().contains("validation.label.userId.required"));
                 }
         }
 }

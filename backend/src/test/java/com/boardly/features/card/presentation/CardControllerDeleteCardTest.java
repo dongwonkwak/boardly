@@ -48,6 +48,7 @@ class CardControllerDeleteCardTest {
         cardController = new CardController(
                 null, // createCardUseCase
                 null, // cardQueryUseCase
+                null, // getCardDetailUseCase
                 null, // updateCardUseCase
                 null, // moveCardUseCase
                 null, // cloneCardUseCase

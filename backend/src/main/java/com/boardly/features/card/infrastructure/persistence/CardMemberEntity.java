@@ -10,10 +10,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
-import jakarta.persistence.Index;
 
 @Entity
 @Table(name = "card_members", uniqueConstraints = @UniqueConstraint(columnNames = { "card_id", "user_id" }), indexes = {
@@ -57,7 +57,7 @@ public class CardMemberEntity {
         CardMemberEntity entity = new CardMemberEntity();
         entity.cardId = cardId;
         entity.userId = cardMember.getUserId().getId();
-        entity.assignedAt = cardMember.getAssignedAt();
+        entity.assignedAt = Instant.now(); // assignedAt은 현재 시간으로 설정
         return entity;
     }
 
@@ -65,9 +65,15 @@ public class CardMemberEntity {
      * 엔티티를 도메인 값 객체로 변환
      */
     public CardMember toDomainVO() {
-        return new CardMember(new UserId(userId), assignedAt);
+        return new CardMember(new UserId(userId));
     }
 
+    /**
+     * 카드 ID와 사용자 ID를 기준으로 동등성 비교
+     * 
+     * @param obj 비교할 객체
+     * @return 동등 여부
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -79,11 +85,21 @@ public class CardMemberEntity {
                 userId != null && userId.equals(that.userId);
     }
 
+    /**
+     * 카드 ID와 사용자 ID를 기준으로 해시 코드 생성
+     * 
+     * @return 해시 코드
+     */
     @Override
     public int hashCode() {
         return java.util.Objects.hash(cardId, userId);
     }
 
+    /**
+     * 엔티티의 문자열 표현 반환
+     * 
+     * @return 엔티티 정보를 포함한 문자열
+     */
     @Override
     public String toString() {
         return String.format("CardMemberEntity{cardId='%s', userId='%s', assignedAt=%s}",

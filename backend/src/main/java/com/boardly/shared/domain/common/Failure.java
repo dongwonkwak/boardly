@@ -4,6 +4,7 @@ package com.boardly.shared.domain.common;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import java.util.List;
 
 @Getter
@@ -15,11 +16,12 @@ public abstract class Failure {
   /**
    * 필드 위반 정보
    */
+  @Value
   @Builder
-  public record FieldViolation(
-      String field,
-      String message,
-      Object rejectedValue) {
+  public static class FieldViolation {
+    String field;
+    String message;
+    Object rejectedValue;
   }
 
   // ======================== 400 Bad Request ========================

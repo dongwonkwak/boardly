@@ -4,13 +4,16 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import com.boardly.features.card.domain.repository.CardLabelRepository;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.features.board.domain.model.BoardId;
+import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.card.domain.repository.CardLabelRepository;
+import com.boardly.features.label.domain.model.Label;
+import com.boardly.features.label.domain.model.LabelId;
+import com.boardly.features.label.infrastructure.persistence.LabelEntity;
+import com.boardly.features.label.infrastructure.persistence.LabelMapper;
 import com.boardly.shared.domain.common.Failure;
-import io.vavr.control.Either;
 
+import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class CardLabelRepositoryImpl implements CardLabelRepository {
     private final CardLabelJpaRepository cardLabelJpaRepository;
+    private final LabelMapper labelMapper;
 
     @Override
     public Either<Failure, Void> addLabelToCard(CardId cardId, LabelId labelId) {
@@ -68,6 +72,22 @@ public class CardLabelRepositoryImpl implements CardLabelRepository {
                 .toList();
         log.debug("카드별 라벨 ID 조회 완료: cardId={}, 라벨 수={}", cardId.getId(), labelIds.size());
         return labelIds;
+    }
+
+    @Override
+    public List<Label> findLabelsByCardId(CardId cardId) {
+        log.debug("카드별 라벨 조회 시작: cardId={}", cardId.getId());
+
+        // JOIN 쿼리로 한 번에 조회
+        List<LabelEntity> labelEntities = cardLabelJpaRepository.findLabelsByCardId(cardId.getId());
+
+        // Entity를 Domain 객체로 변환
+        List<Label> labels = labelEntities.stream()
+                .map(labelMapper::toDomain)
+                .toList();
+
+        log.debug("카드별 라벨 조회 완료: cardId={}, 라벨 수={}", cardId.getId(), labels.size());
+        return labels;
     }
 
     @Override

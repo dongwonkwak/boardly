@@ -184,12 +184,7 @@ class ActivityControllerTest {
                         controller.getBoardActivities(boardId, page, size, since, httpRequest, jwt);
 
                         // then
-                        verify(getActivityUseCase).getActivities(eq(GetActivityQuery.builder()
-                                        .boardId(new BoardId(boardId))
-                                        .page(page)
-                                        .size(size)
-                                        .since(since)
-                                        .build()));
+                        verify(getActivityUseCase).getActivities(eq(GetActivityQuery.forBoardWithPagination(new BoardId(boardId), page, size)));
                 }
         }
 
@@ -307,11 +302,7 @@ class ActivityControllerTest {
                         controller.getMyActivities(page, size, httpRequest, jwt);
 
                         // then
-                        verify(getActivityUseCase).getActivities(eq(GetActivityQuery.builder()
-                                        .userId(new UserId(userId))
-                                        .page(page)
-                                        .size(size)
-                                        .build()));
+                        verify(getActivityUseCase).getActivities(eq(GetActivityQuery.forUserWithPagination(new UserId(userId), page, size)));
                 }
         }
 
@@ -358,13 +349,6 @@ class ActivityControllerTest {
                                 .boardId("board_123")
                                 .build();
 
-                return ActivityListResponse.builder()
-                                .activities(List.of(activity))
-                                .totalCount(1)
-                                .currentPage(0)
-                                .totalPages(1)
-                                .hasNextPage(false)
-                                .hasPreviousPage(false)
-                                .build();
+                return ActivityListResponse.of(List.of(activity));
         }
 }

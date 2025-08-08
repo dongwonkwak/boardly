@@ -71,12 +71,7 @@ public class ActivityController {
         log.info("보드 활동 목록 조회 요청: userId={}, boardId={}, page={}, size={}, since={}",
                 userId, boardId, page, size, since);
 
-        GetActivityQuery query = GetActivityQuery.builder()
-                .boardId(new BoardId(boardId))
-                .page(page)
-                .size(size)
-                .since(since)
-                .build();
+        GetActivityQuery query = GetActivityQuery.forBoardWithPagination(new BoardId(boardId), page, size);
 
         Either<Failure, ActivityListResponse> result = getActivityUseCase.getActivities(query);
 
@@ -110,11 +105,7 @@ public class ActivityController {
         log.info("내 활동 목록 조회 요청: userId={}, page={}, size={}",
                 userId, page, size);
 
-        GetActivityQuery query = GetActivityQuery.builder()
-                .userId(new UserId(userId))
-                .page(page)
-                .size(size)
-                .build();
+        GetActivityQuery query = GetActivityQuery.forUserWithPagination(new UserId(userId), page, size);
 
         Either<Failure, ActivityListResponse> result = getActivityUseCase.getActivities(query);
 

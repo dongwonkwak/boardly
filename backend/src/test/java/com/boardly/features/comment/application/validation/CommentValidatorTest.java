@@ -96,7 +96,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("cardId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("cardId");
         }
 
         @Test
@@ -114,7 +114,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("authorId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("authorId");
         }
 
         @Test
@@ -132,7 +132,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("content");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("content");
         }
 
         @Test
@@ -150,7 +150,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("content");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("content");
         }
 
         @Test
@@ -168,7 +168,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("content");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("content");
         }
 
         @Test
@@ -187,7 +187,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("content");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("content");
         }
 
         @Test
@@ -243,7 +243,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("commentId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("commentId");
         }
 
         @Test
@@ -261,7 +261,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("requesterId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("requesterId");
         }
 
         @Test
@@ -279,7 +279,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("content");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("content");
         }
 
         @Test
@@ -298,7 +298,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("content");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("content");
         }
     }
 
@@ -335,7 +335,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("commentId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("commentId");
         }
 
         @Test
@@ -352,7 +352,7 @@ class CommentValidatorTest {
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("requesterId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("requesterId");
         }
     }
 }

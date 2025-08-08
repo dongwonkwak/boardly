@@ -18,6 +18,6 @@ public class CardMemberMapper {
      * 엔티티를 도메인 값 객체로 변환
      */
     public CardMember toDomain(CardMemberEntity entity) {
-        return new CardMember(new UserId(entity.getUserId()), entity.getAssignedAt());
+        return new CardMember(new UserId(entity.getUserId()));
     }
 }

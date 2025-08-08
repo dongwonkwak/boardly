@@ -1,13 +1,14 @@
 package com.boardly.features.card.infrastructure.persistence;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
-import org.springframework.data.jpa.repository.Modifying;
+import com.boardly.features.label.infrastructure.persistence.LabelEntity;
 
 @Repository
 public interface CardLabelJpaRepository extends JpaRepository<CardLabelEntity, Long> {
@@ -17,6 +18,15 @@ public interface CardLabelJpaRepository extends JpaRepository<CardLabelEntity, L
      */
     @Query("SELECT cl.labelId FROM CardLabelEntity cl WHERE cl.cardId = :cardId ORDER BY cl.appliedAt ASC")
     List<String> findLabelIdsByCardId(@Param("cardId") String cardId);
+
+    /**
+     * 카드별 라벨 정보 조회 (JOIN으로 한 번에 조회)
+     */
+    @Query("SELECT l FROM LabelEntity l " +
+            "JOIN CardLabelEntity cl ON l.labelId = cl.labelId " +
+            "WHERE cl.cardId = :cardId " +
+            "ORDER BY cl.appliedAt ASC")
+    List<LabelEntity> findLabelsByCardId(@Param("cardId") String cardId);
 
     /**
      * 라벨별 카드 ID 조회

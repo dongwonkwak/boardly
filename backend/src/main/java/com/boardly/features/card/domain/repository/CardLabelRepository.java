@@ -2,10 +2,12 @@ package com.boardly.features.card.domain.repository;
 
 import java.util.List;
 
+import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.shared.domain.common.Failure;
-import com.boardly.features.board.domain.model.BoardId;
+
 import io.vavr.control.Either;
 
 public interface CardLabelRepository {
@@ -23,6 +25,11 @@ public interface CardLabelRepository {
      * 카드별 라벨 ID 목록 조회
      */
     List<LabelId> findLabelIdsByCardId(CardId cardId);
+
+    /**
+     * 카드별 라벨 목록 조회 (Label 객체 반환)
+     */
+    List<Label> findLabelsByCardId(CardId cardId);
 
     /**
      * 라벨별 카드 ID 목록 조회

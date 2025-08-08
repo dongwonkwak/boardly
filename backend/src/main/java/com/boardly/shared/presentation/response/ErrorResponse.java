@@ -4,30 +4,26 @@ package com.boardly.shared.presentation.response;
 import com.boardly.shared.domain.common.Failure;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-
 import java.time.Instant;
 import java.util.List;
+import lombok.Builder;
+import lombok.Value;
 
 /**
  * API 오류 응답을 위한 공통 클래스
  */
+@Value
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record ErrorResponse(
-        String code, // 에러 코드
-        String message, // 사용자 친화적 메시지
-        @JsonFormat(shape = JsonFormat.Shape.STRING) Instant timestamp, // 오류 발생 시간
-        String path, // 요청 경로 (컨트롤러에서 설정)
-        List<Failure.FieldViolation> details, // 상세 검증 오류 (400일 때만)
-        Object context // 추가 컨텍스트 정보
-) {
-
-    public ErrorResponse {
-        if (timestamp == null) {
-            timestamp = Instant.now();
-        }
-    }
+public class ErrorResponse {
+    String code; // 에러 코드
+    String message; // 사용자 친화적 메시지
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @Builder.Default
+    Instant timestamp = Instant.now(); // 오류 발생 시간
+    String path; // 요청 경로 (컨트롤러에서 설정)
+    List<Failure.FieldViolation> details; // 상세 검증 오류 (400일 때만)
+    Object context; // 추가 컨텍스트 정보
 
     /**
      * 기본 에러 응답 생성

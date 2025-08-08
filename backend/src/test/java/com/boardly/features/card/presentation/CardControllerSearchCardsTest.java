@@ -63,6 +63,7 @@ class CardControllerSearchCardsTest {
         cardController = new CardController(
                 null, // createCardUseCase
                 cardQueryUseCase,
+                null, // getCardDetailUseCase
                 null, // updateCardUseCase
                 null, // moveCardUseCase
                 null, // cloneCardUseCase

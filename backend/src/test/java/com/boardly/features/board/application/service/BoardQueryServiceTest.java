@@ -221,7 +221,7 @@ class BoardQueryServiceTest {
                 assertThat(((Failure.InputError) result.getLeft()).getErrorCode()).isEqualTo("INVALID_COMMAND");
                 assertThat(result.getLeft().getMessage()).isEqualTo("입력이 유효하지 않습니다");
                 assertThat(((Failure.InputError) result.getLeft()).getViolations()).hasSize(1);
-                assertThat(((Failure.InputError) result.getLeft()).getViolations().get(0).field()).isEqualTo("command");
+                assertThat(((Failure.InputError) result.getLeft()).getViolations().get(0).getField()).isEqualTo("command");
 
                 verify(userFinder, never()).checkUserExists(any());
                 verify(boardRepository, never()).findActiveByOwnerId(any());
@@ -248,7 +248,7 @@ class BoardQueryServiceTest {
                 assertThat(((Failure.InputError) result.getLeft()).getErrorCode()).isEqualTo("INVALID_INPUT");
                 assertThat(result.getLeft().getMessage()).isEqualTo("입력이 유효하지 않습니다");
                 assertThat(((Failure.InputError) result.getLeft()).getViolations()).hasSize(1);
-                assertThat(((Failure.InputError) result.getLeft()).getViolations().get(0).field()).isEqualTo("userId");
+                assertThat(((Failure.InputError) result.getLeft()).getViolations().get(0).getField()).isEqualTo("userId");
 
                 verify(userFinder, never()).checkUserExists(any());
                 verify(boardRepository, never()).findActiveByOwnerId(any());

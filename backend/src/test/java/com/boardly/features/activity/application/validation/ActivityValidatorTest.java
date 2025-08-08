@@ -5,21 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
-
 import com.boardly.features.activity.application.port.input.CreateActivityCommand;
 import com.boardly.features.activity.application.port.input.GetActivityQuery;
 import com.boardly.features.activity.domain.model.ActivityType;
@@ -30,6 +15,19 @@ import com.boardly.features.user.domain.model.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ActivityValidator 테스트")
@@ -47,22 +45,32 @@ class ActivityValidatorTest {
         LocaleContextHolder.setLocale(Locale.KOREAN);
 
         // 기본 메시지 설정 - lenient로 설정하여 불필요한 stubbing 허용
-        lenient().when(messageSource.getMessage(anyString(), any(Object[].class), any(Locale.class)))
-                .thenAnswer(invocation -> {
-                    String code = invocation.getArgument(0);
-                    Object[] args = invocation.getArgument(1);
-                    StringBuilder message = new StringBuilder(code);
-                    if (args != null) {
-                        for (Object arg : args) {
-                            message.append(" ").append(arg);
-                        }
+        lenient()
+            .when(
+                messageSource.getMessage(
+                    anyString(),
+                    any(Object[].class),
+                    any(Locale.class)
+                )
+            )
+            .thenAnswer(invocation -> {
+                String code = invocation.getArgument(0);
+                Object[] args = invocation.getArgument(1);
+                StringBuilder message = new StringBuilder(code);
+                if (args != null) {
+                    for (Object arg : args) {
+                        message.append(" ").append(arg);
                     }
-                    return message.toString();
-                });
+                }
+                return message.toString();
+            });
 
         messageResolver = new ValidationMessageResolver(messageSource);
         commonValidationRules = new CommonValidationRules(messageResolver);
-        activityValidator = new ActivityValidator(commonValidationRules, messageResolver);
+        activityValidator = new ActivityValidator(
+            commonValidationRules,
+            messageResolver
+        );
     }
 
     @Nested
@@ -77,19 +85,26 @@ class ActivityValidatorTest {
             BoardId boardId = new BoardId("board-123");
             ListId listId = new ListId("list-123");
             CardId cardId = new CardId("card-123");
-            Map<String, Object> payload = Map.of("title", "새 카드", "description", "카드 설명");
+            Map<String, Object> payload = Map.of(
+                "title",
+                "새 카드",
+                "description",
+                "카드 설명"
+            );
 
             CreateActivityCommand command = CreateActivityCommand.forCard(
-                    ActivityType.CARD_CREATE,
-                    actorId,
-                    payload,
-                    "프로젝트 A",
-                    boardId,
-                    listId,
-                    cardId);
+                ActivityType.CARD_CREATE,
+                actorId,
+                payload,
+                "프로젝트 A",
+                boardId,
+                listId,
+                cardId
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -105,15 +120,17 @@ class ActivityValidatorTest {
             Map<String, Object> payload = Map.of("title", "새 리스트");
 
             CreateActivityCommand command = CreateActivityCommand.forList(
-                    ActivityType.LIST_CREATE,
-                    actorId,
-                    payload,
-                    "프로젝트 A",
-                    boardId,
-                    listId);
+                ActivityType.LIST_CREATE,
+                actorId,
+                payload,
+                "프로젝트 A",
+                boardId,
+                listId
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -128,14 +145,16 @@ class ActivityValidatorTest {
             Map<String, Object> payload = Map.of("title", "새 보드");
 
             CreateActivityCommand command = CreateActivityCommand.forBoard(
-                    ActivityType.BOARD_CREATE,
-                    actorId,
-                    payload,
-                    "프로젝트 A",
-                    boardId);
+                ActivityType.BOARD_CREATE,
+                actorId,
+                payload,
+                "프로젝트 A",
+                boardId
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -149,21 +168,23 @@ class ActivityValidatorTest {
             Map<String, Object> payload = Map.of("title", "새 보드");
 
             CreateActivityCommand command = new CreateActivityCommand(
-                    null,
-                    actorId,
-                    payload,
-                    "프로젝트 A",
-                    null,
-                    null,
-                    null);
+                null,
+                actorId,
+                payload,
+                "프로젝트 A",
+                null,
+                null,
+                null
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("type");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("type");
         }
 
         @Test
@@ -173,21 +194,25 @@ class ActivityValidatorTest {
             Map<String, Object> payload = Map.of("title", "새 보드");
 
             CreateActivityCommand command = new CreateActivityCommand(
-                    ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
-                    null,
-                    payload,
-                    "프로젝트 A",
-                    null,
-                    null,
-                    null);
+                ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
+                null,
+                payload,
+                "프로젝트 A",
+                null,
+                null,
+                null
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("userId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "userId"
+            );
         }
 
         @Test
@@ -197,21 +222,25 @@ class ActivityValidatorTest {
             UserId actorId = new UserId("user-123");
 
             CreateActivityCommand command = new CreateActivityCommand(
-                    ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
-                    actorId,
-                    null,
-                    "프로젝트 A",
-                    null,
-                    null,
-                    null);
+                ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
+                actorId,
+                null,
+                "프로젝트 A",
+                null,
+                null,
+                null
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("payload");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "payload"
+            );
         }
 
         @Test
@@ -222,21 +251,25 @@ class ActivityValidatorTest {
             Map<String, Object> payload = new HashMap<>();
 
             CreateActivityCommand command = new CreateActivityCommand(
-                    ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
-                    actorId,
-                    payload,
-                    "프로젝트 A",
-                    null,
-                    null,
-                    null);
+                ActivityType.USER_UPDATE_PROFILE, // 사용자 활동으로 변경
+                actorId,
+                payload,
+                "프로젝트 A",
+                null,
+                null,
+                null
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("payload");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "payload"
+            );
         }
 
         @Test
@@ -249,21 +282,25 @@ class ActivityValidatorTest {
             Map<String, Object> payload = Map.of("title", "새 카드");
 
             CreateActivityCommand command = new CreateActivityCommand(
-                    ActivityType.CARD_CREATE,
-                    actorId,
-                    payload,
-                    "프로젝트 A",
-                    boardId,
-                    listId,
-                    null);
+                ActivityType.CARD_CREATE,
+                actorId,
+                payload,
+                "프로젝트 A",
+                boardId,
+                listId,
+                null
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("cardId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "cardId"
+            );
         }
 
         @Test
@@ -275,21 +312,25 @@ class ActivityValidatorTest {
             Map<String, Object> payload = Map.of("title", "새 리스트");
 
             CreateActivityCommand command = new CreateActivityCommand(
-                    ActivityType.LIST_CREATE,
-                    actorId,
-                    payload,
-                    null,
-                    boardId,
-                    null,
-                    null);
+                ActivityType.LIST_CREATE,
+                actorId,
+                payload,
+                null,
+                boardId,
+                null,
+                null
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("listId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "listId"
+            );
         }
 
         @Test
@@ -300,21 +341,25 @@ class ActivityValidatorTest {
             Map<String, Object> payload = Map.of("title", "새 보드");
 
             CreateActivityCommand command = new CreateActivityCommand(
-                    ActivityType.BOARD_CREATE,
-                    actorId,
-                    payload,
-                    null,
-                    null,
-                    null,
-                    null);
+                ActivityType.BOARD_CREATE,
+                actorId,
+                payload,
+                null,
+                null,
+                null,
+                null
+            );
 
             // when
-            ValidationResult<CreateActivityCommand> result = activityValidator.validateCreate(command);
+            ValidationResult<CreateActivityCommand> result =
+                activityValidator.validateCreate(command);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("boardId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "boardId"
+            );
         }
     }
 
@@ -327,10 +372,15 @@ class ActivityValidatorTest {
         void validateGet_WithValidBoardQuery_ShouldBeValid() {
             // given
             BoardId boardId = new BoardId("board-123");
-            GetActivityQuery query = GetActivityQuery.forBoardWithPagination(boardId, 0, 20);
+            GetActivityQuery query = GetActivityQuery.forBoardWithPagination(
+                boardId,
+                0,
+                20
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -341,10 +391,15 @@ class ActivityValidatorTest {
         void validateGet_WithValidUserQuery_ShouldBeValid() {
             // given
             UserId userId = new UserId("user-123");
-            GetActivityQuery query = GetActivityQuery.forUserWithPagination(userId, 0, 20);
+            GetActivityQuery query = GetActivityQuery.forUserWithPagination(
+                userId,
+                0,
+                20
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -355,10 +410,15 @@ class ActivityValidatorTest {
         void validateGet_WithValidPaginationQuery_ShouldBeValid() {
             // given
             BoardId boardId = new BoardId("board-123");
-            GetActivityQuery query = GetActivityQuery.forBoardWithPagination(boardId, 0, 20);
+            GetActivityQuery query = GetActivityQuery.forBoardWithPagination(
+                boardId,
+                0,
+                20
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isValid()).isTrue();
@@ -368,17 +428,25 @@ class ActivityValidatorTest {
         @DisplayName("userId와 boardId가 모두 null이면 검증에 실패해야 한다")
         void validateGet_WithNullUserAndBoardId_ShouldBeInvalid() {
             // given
-            GetActivityQuery query = GetActivityQuery.builder()
-                    .size(20) // 기본값 문제 해결
-                    .build();
+            GetActivityQuery query = new GetActivityQuery(
+                null,
+                null,
+                null,
+                null,
+                0,
+                20
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("userId,boardId");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "userId,boardId"
+            );
         }
 
         @Test
@@ -386,19 +454,23 @@ class ActivityValidatorTest {
         void validateGet_WithNegativePage_ShouldBeInvalid() {
             // given
             BoardId boardId = new BoardId("board-123");
-            GetActivityQuery query = GetActivityQuery.builder()
-                    .boardId(boardId)
-                    .page(-1)
-                    .size(20) // 기본값 문제 해결
-                    .build();
+            GetActivityQuery query = new GetActivityQuery(
+                null,
+                boardId,
+                null,
+                null,
+                -1,
+                20
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("page");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("page");
         }
 
         @Test
@@ -406,18 +478,23 @@ class ActivityValidatorTest {
         void validateGet_WithTooSmallPageSize_ShouldBeInvalid() {
             // given
             BoardId boardId = new BoardId("board-123");
-            GetActivityQuery query = GetActivityQuery.builder()
-                    .boardId(boardId)
-                    .size(0)
-                    .build();
+            GetActivityQuery query = new GetActivityQuery(
+                null,
+                boardId,
+                null,
+                null,
+                0,
+                0
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("size");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("size");
         }
 
         @Test
@@ -425,18 +502,23 @@ class ActivityValidatorTest {
         void validateGet_WithTooLargePageSize_ShouldBeInvalid() {
             // given
             BoardId boardId = new BoardId("board-123");
-            GetActivityQuery query = GetActivityQuery.builder()
-                    .boardId(boardId)
-                    .size(101)
-                    .build();
+            GetActivityQuery query = new GetActivityQuery(
+                null,
+                boardId,
+                null,
+                null,
+                0,
+                101
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("size");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo("size");
         }
 
         @Test
@@ -447,20 +529,25 @@ class ActivityValidatorTest {
             Instant since = Instant.now();
             Instant until = since.minusSeconds(3600); // 1시간 전
 
-            GetActivityQuery query = GetActivityQuery.builder()
-                    .boardId(boardId)
-                    .since(since)
-                    .until(until)
-                    .size(20) // 기본값 문제 해결
-                    .build();
+            GetActivityQuery query = new GetActivityQuery(
+                null,
+                boardId,
+                since,
+                until,
+                0,
+                20
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isInvalid()).isTrue();
             assertThat(result.getErrors()).hasSize(1);
-            assertThat(result.getErrors().get(0).field()).isEqualTo("since,until");
+            assertThat(result.getErrors().get(0).getField()).isEqualTo(
+                "since,until"
+            );
         }
 
         @Test
@@ -471,15 +558,18 @@ class ActivityValidatorTest {
             Instant since = Instant.now().minusSeconds(3600); // 1시간 전
             Instant until = Instant.now();
 
-            GetActivityQuery query = GetActivityQuery.builder()
-                    .boardId(boardId)
-                    .since(since)
-                    .until(until)
-                    .size(20) // 기본값 문제 해결
-                    .build();
+            GetActivityQuery query = new GetActivityQuery(
+                null,
+                boardId,
+                since,
+                until,
+                0,
+                20
+            );
 
             // when
-            ValidationResult<GetActivityQuery> result = activityValidator.validateGet(query);
+            ValidationResult<GetActivityQuery> result =
+                activityValidator.validateGet(query);
 
             // then
             assertThat(result.isValid()).isTrue();

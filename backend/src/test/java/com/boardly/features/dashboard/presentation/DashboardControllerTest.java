@@ -223,12 +223,12 @@ class DashboardControllerTest {
             // then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
             DashboardResponse responseBody = (DashboardResponse) response.getBody();
-            assertThat(responseBody.boards()).isEmpty();
-            assertThat(responseBody.recentActivity()).isEmpty();
-            assertThat(responseBody.statistics().totalBoards()).isEqualTo(0);
-            assertThat(responseBody.statistics().totalCards()).isEqualTo(0);
-            assertThat(responseBody.statistics().starredBoards()).isEqualTo(0);
-            assertThat(responseBody.statistics().archivedBoards()).isEqualTo(0);
+            assertThat(responseBody.getBoards()).isEmpty();
+            assertThat(responseBody.getRecentActivity()).isEmpty();
+            assertThat(responseBody.getStatistics().getTotalBoards()).isEqualTo(0);
+            assertThat(responseBody.getStatistics().getTotalCards()).isEqualTo(0);
+            assertThat(responseBody.getStatistics().getStarredBoards()).isEqualTo(0);
+            assertThat(responseBody.getStatistics().getArchivedBoards()).isEqualTo(0);
 
             // verify
             verify(getDashboardUseCase).getDashboard(any(GetDashboardCommand.class));
@@ -266,8 +266,7 @@ class DashboardControllerTest {
                 ActivityResponse.builder()
                         .id("activity-1")
                         .type(com.boardly.features.activity.domain.model.ActivityType.CARD_CREATE)
-                        .actor(com.boardly.features.activity.application.port.output.ActorResponse
-                                .builder()
+                        .actor(com.boardly.features.activity.application.port.output.ActorResponse.builder()
                                 .id("user-123")
                                 .firstName("홍")
                                 .lastName("길동")
@@ -281,8 +280,7 @@ class DashboardControllerTest {
                 ActivityResponse.builder()
                         .id("activity-2")
                         .type(com.boardly.features.activity.domain.model.ActivityType.BOARD_UPDATE_DESCRIPTION)
-                        .actor(com.boardly.features.activity.application.port.output.ActorResponse
-                                .builder()
+                        .actor(com.boardly.features.activity.application.port.output.ActorResponse.builder()
                                 .id("user-123")
                                 .firstName("홍")
                                 .lastName("길동")

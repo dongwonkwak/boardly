@@ -46,14 +46,30 @@ export const BoardContainer: React.FC<BoardContainerProps> = ({
 
 				{/* Add new list button */}
 				<div className="flex-shrink-0 w-80">
-					<Button
-						variant="outline"
-						onClick={onAddList}
-						className="w-full h-60 border-dashed border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 flex flex-col items-center justify-center"
-					>
-						<Plus className="h-6 w-6 mb-2" />
-						<span className="text-sm">{t("boardDetail.addAnotherList")}</span>
-					</Button>
+					<div className="bg-gray-50 rounded-lg p-4 h-full">
+						{/* Header height matching section */}
+						<div className="flex items-center justify-between mb-4">
+							<div className="flex items-center gap-2">
+								<div className="w-4 h-4 rounded bg-gray-200" />
+								<h3 className="font-semibold text-gray-900">
+									{t("boardDetail.addAnotherList")}
+								</h3>
+								<span className="bg-white text-gray-600 text-sm font-medium px-2 py-1 rounded-full">
+									0
+								</span>
+							</div>
+						</div>
+
+						{/* Add list button */}
+						<Button
+							variant="outline"
+							onClick={onAddList}
+							className="w-full border-dashed border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 flex items-center justify-center py-8"
+						>
+							<Plus className="h-6 w-6 mr-2" />
+							<span className="text-sm whitespace-nowrap">{t("boardDetail.addAnotherList")}</span>
+						</Button>
+					</div>
 				</div>
 			</div>
 		</div>

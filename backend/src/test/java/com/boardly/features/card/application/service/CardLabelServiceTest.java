@@ -552,21 +552,21 @@ class CardLabelServiceTest {
                 @DisplayName("유효한 요청으로 카드 라벨 조회 시 성공한다")
                 void shouldGetCardLabelsSuccessfully() {
                         // given
-                        List<LabelId> expectedLabelIds = List.of(
-                                        new LabelId("label-1"),
-                                        new LabelId("label-2"));
+                        List<Label> expectedLabels = List.of(
+                                        Label.builder().labelId(new LabelId("label-1")).name("라벨1").boardId(boardId).color("#111111").build(),
+                                        Label.builder().labelId(new LabelId("label-2")).name("라벨2").boardId(boardId).color("#222222").build());
 
                         when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
                         when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
                         when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
-                        when(cardLabelRepository.findLabelIdsByCardId(cardId)).thenReturn(expectedLabelIds);
+                        when(cardLabelRepository.findLabelsByCardId(cardId)).thenReturn(expectedLabels);
 
                         // when
-                        List<LabelId> result = cardLabelService.getCardLabels(cardId, userId);
+                        List<Label> result = cardLabelService.getCardLabels(cardId, userId);
 
                         // then
-                        assertThat(result).isEqualTo(expectedLabelIds);
-                        verify(cardLabelRepository).findLabelIdsByCardId(cardId);
+                        assertThat(result).isEqualTo(expectedLabels);
+                        verify(cardLabelRepository).findLabelsByCardId(cardId);
                 }
 
                 @Test
@@ -576,7 +576,7 @@ class CardLabelServiceTest {
                         when(cardRepository.findById(cardId)).thenReturn(Optional.empty());
 
                         // when
-                        List<LabelId> result = cardLabelService.getCardLabels(cardId, userId);
+                        List<Label> result = cardLabelService.getCardLabels(cardId, userId);
 
                         // then
                         assertThat(result).isEmpty();
@@ -591,7 +591,7 @@ class CardLabelServiceTest {
                         when(boardListRepository.findById(listId)).thenReturn(Optional.empty());
 
                         // when
-                        List<LabelId> result = cardLabelService.getCardLabels(cardId, userId);
+                        List<Label> result = cardLabelService.getCardLabels(cardId, userId);
 
                         // then
                         assertThat(result).isEmpty();
@@ -607,7 +607,7 @@ class CardLabelServiceTest {
                         when(boardRepository.findById(boardId)).thenReturn(Optional.empty());
 
                         // when
-                        List<LabelId> result = cardLabelService.getCardLabels(cardId, userId);
+                        List<Label> result = cardLabelService.getCardLabels(cardId, userId);
 
                         // then
                         assertThat(result).isEmpty();
@@ -630,7 +630,7 @@ class CardLabelServiceTest {
                         when(boardRepository.findById(boardId)).thenReturn(Optional.of(differentOwnerBoard));
 
                         // when
-                        List<LabelId> result = cardLabelService.getCardLabels(cardId, userId);
+                        List<Label> result = cardLabelService.getCardLabels(cardId, userId);
 
                         // then
                         assertThat(result).isEmpty();
@@ -644,14 +644,14 @@ class CardLabelServiceTest {
                         when(cardRepository.findById(cardId)).thenReturn(Optional.of(card));
                         when(boardListRepository.findById(listId)).thenReturn(Optional.of(boardList));
                         when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
-                        when(cardLabelRepository.findLabelIdsByCardId(cardId)).thenReturn(List.of());
+                        when(cardLabelRepository.findLabelsByCardId(cardId)).thenReturn(List.of());
 
                         // when
-                        List<LabelId> result = cardLabelService.getCardLabels(cardId, userId);
+                        List<Label> result = cardLabelService.getCardLabels(cardId, userId);
 
                         // then
                         assertThat(result).isEmpty();
-                        verify(cardLabelRepository).findLabelIdsByCardId(cardId);
+                        verify(cardLabelRepository).findLabelsByCardId(cardId);
                 }
         }
 

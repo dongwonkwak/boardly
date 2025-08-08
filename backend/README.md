@@ -114,46 +114,139 @@ graph TD
 ```
 src/main/java/com/boardly/
 ├── features/                           # 기능별 모듈
-│   ├── auth/                          # 인증 기능
+│   ├── activity/                      # 활동 로그 관리
 │   │   ├── application/               # 애플리케이션 계층
+│   │   │   ├── helper/               # 헬퍼 클래스
+│   │   │   ├── port/                 # 포트 정의
+│   │   │   │   ├── input/            # 입력 포트 (Query)
+│   │   │   │   └── output/           # 출력 포트 (Response)
 │   │   │   ├── service/              # 서비스 구현체
 │   │   │   ├── usecase/              # 유스케이스 인터페이스
+│   │   │   └── validation/           # 검증 로직
+│   │   ├── domain/                   # 도메인 계층
+│   │   │   ├── model/                # 도메인 엔티티
+│   │   │   └── repository/           # 리포지토리 인터페이스
+│   │   ├── infrastructure/           # 인프라스트럭처 계층
+│   │   │   ├── config/               # 설정
+│   │   │   └── persistence/          # 데이터 저장소
+│   │   └── presentation/             # 프레젠테이션 계층
+│   │       └── ActivityController.java
+│   │
+│   ├── attachment/                   # 첨부파일 관리
+│   │   ├── application/              # 애플리케이션 계층
+│   │   │   ├── port/                 # 포트 정의
+│   │   │   ├── usecase/              # 유스케이스 인터페이스
+│   │   │   └── validation/           # 검증 로직
+│   │   ├── domain/                   # 도메인 계층
+│   │   │   ├── model/                # 도메인 엔티티
+│   │   │   ├── policy/               # 도메인 정책
+│   │   │   └── repository/           # 리포지토리 인터페이스
+│   │   └── infrastructure/           # 인프라스트럭처 계층
+│   │       ├── config/               # 설정
+│   │       └── persistence/          # 데이터 저장소
+│   │
+│   ├── auth/                         # 인증 기능
+│   │   └── presentation/             # 프레젠테이션 계층
+│   │       └── LoginController.java
+│   │
+│   ├── board/                        # 보드 관리
+│   │   ├── application/              # 애플리케이션 계층
+│   │   │   ├── dto/                  # 데이터 전송 객체
 │   │   │   ├── port/                 # 포트 정의
 │   │   │   │   ├── input/            # 입력 포트 (Command/Query)
 │   │   │   │   └── output/           # 출력 포트
-│   │   │   └── dto/                  # 데이터 전송 객체
+│   │   │   ├── service/              # 서비스 구현체
+│   │   │   ├── usecase/              # 유스케이스 인터페이스
+│   │   │   └── validation/           # 검증 로직
 │   │   ├── domain/                   # 도메인 계층
 │   │   │   ├── model/                # 도메인 엔티티
-│   │   │   ├── repository/           # 리포지토리 인터페이스
-│   │   │   └── service/              # 도메인 서비스
+│   │   │   └── repository/           # 리포지토리 인터페이스
 │   │   ├── infrastructure/           # 인프라스트럭처 계층
-│   │   │   ├── persistence/          # 데이터 저장소
-│   │   │   └── config/               # 설정
+│   │   │   └── persistence/          # 데이터 저장소
 │   │   └── presentation/             # 프레젠테이션 계층
-│   │       ├── controller/           # REST 컨트롤러
-│   │       └── dto/                  # API DTO
+│   │       ├── BoardController.java
+│   │       ├── request/              # 요청 DTO
+│   │       └── response/             # 응답 DTO
 │   │
-│   ├── user/                         # 사용자 관리
-│   ├── board/                        # 보드 관리
 │   ├── boardlist/                    # 리스트 관리
+│   │   ├── application/              # 애플리케이션 계층
+│   │   │   ├── port/                 # 포트 정의
+│   │   │   ├── service/              # 서비스 구현체
+│   │   │   ├── usecase/              # 유스케이스 인터페이스
+│   │   │   └── validation/           # 검증 로직
+│   │   ├── domain/                   # 도메인 계층
+│   │   │   ├── model/                # 도메인 엔티티
+│   │   │   ├── policy/               # 도메인 정책
+│   │   │   └── repository/           # 리포지토리 인터페이스
+│   │   ├── infrastructure/           # 인프라스트럭처 계층
+│   │   │   ├── config/               # 설정
+│   │   │   └── persistence/          # 데이터 저장소
+│   │   └── presentation/             # 프레젠테이션 계층
+│   │       ├── BoardListController.java
+│   │       ├── request/              # 요청 DTO
+│   │       └── response/             # 응답 DTO
+│   │
 │   ├── card/                         # 카드 관리
-│   ├── activity/                     # 활동 로그
+│   │   ├── application/              # 애플리케이션 계층
+│   │   │   ├── port/                 # 포트 정의
+│   │   │   ├── service/              # 서비스 구현체
+│   │   │   ├── usecase/              # 유스케이스 인터페이스
+│   │   │   └── validation/           # 검증 로직
+│   │   ├── domain/                   # 도메인 계층
+│   │   │   ├── model/                # 도메인 엔티티
+│   │   │   ├── policy/               # 도메인 정책
+│   │   │   ├── repository/           # 리포지토리 인터페이스
+│   │   │   └── valueobject/          # 값 객체
+│   │   ├── infrastructure/           # 인프라스트럭처 계층
+│   │   └── presentation/             # 프레젠테이션 계층
+│   │       ├── CardController.java
+│   │       ├── request/              # 요청 DTO
+│   │       └── response/             # 응답 DTO
+│   │
+│   ├── comment/                      # 댓글 관리 (구현 예정)
+│   │   ├── application/              # 애플리케이션 계층
+│   │   ├── domain/                   # 도메인 계층
+│   │   └── infrastructure/           # 인프라스트럭처 계층
+│   │
 │   ├── dashboard/                    # 대시보드
-│   ├── attachment/                   # 첨부파일 (계획 중)
-│   └── label/                        # 라벨 시스템 (계획 중)
+│   │   ├── application/              # 애플리케이션 계층
+│   │   ├── domain/                   # 도메인 계층
+│   │   ├── infrastructure/           # 인프라스트럭처 계층
+│   │   └── presentation/             # 프레젠테이션 계층
+│   │       ├── DashboardController.java
+│   │       ├── request/              # 요청 DTO
+│   │       └── response/             # 응답 DTO
+│   │
+│   ├── label/                        # 라벨 시스템 (구현 예정)
+│   │   ├── application/              # 애플리케이션 계층
+│   │   ├── domain/                   # 도메인 계층
+│   │   ├── infrastructure/           # 인프라스트럭처 계층
+│   │   └── presentation/             # 프레젠테이션 계층
+│   │       └── LabelController.java
+│   │
+│   └── user/                         # 사용자 관리
+│       ├── application/              # 애플리케이션 계층
+│       ├── domain/                   # 도메인 계층
+│       ├── infrastructure/           # 인프라스트럭처 계층
+│       └── presentation/             # 프레젠테이션 계층
+│           ├── UserController.java
+│           ├── request/              # 요청 DTO
+│           └── response/             # 응답 DTO
 │
 ├── shared/                           # 공통 모듈
 │   ├── application/                  # 공통 애플리케이션 로직
+│   │   ├── authorization/            # 권한 관리
+│   │   ├── config/                   # 설정
 │   │   └── validation/               # 검증 로직
 │   ├── domain/                       # 공통 도메인 로직
 │   │   ├── common/                   # 공통 도메인 객체
-│   │   └── event/                    # 도메인 이벤트
+│   │   └── valueobject/              # 공통 값 객체
 │   ├── infrastructure/               # 공통 인프라
-│   │   ├── config/                   # 글로벌 설정
 │   │   └── persistence/              # 공통 데이터 액세스
-│   └── presentation/                 # 공통 프레젠테이션
-│       ├── response/                 # 공통 응답 형식
-│       └── exception/                # 글로벌 예외 처리
+│   ├── presentation/                 # 공통 프레젠테이션
+│   │   ├── response/                 # 공통 응답 형식
+│   │   └── validation/               # 공통 검증
+│   └── util/                         # 유틸리티
 │
 └── BoardlyApplication.java           # 메인 애플리케이션 클래스
 
@@ -161,18 +254,47 @@ src/main/java/com/boardly/
 src/main/resources/
 ├── application.yml                   # 메인 설정 파일
 ├── application-dev.yml               # 개발 환경 설정
-├── application-prod.yml              # 운영 환경 설정
-├── application-test.yml              # 테스트 환경 설정
-├── data.sql                         # 초기 데이터
-├── schema.sql                       # 데이터베이스 스키마
-└── static/                          # 정적 리소스
-    └── docs/                        # API 문서
+├── application-docker.yml            # Docker 환경 설정
+├── application-local.yml             # 로컬 환경 설정
+├── db/                              # 데이터베이스 관련
+│   └── migration/                   # 마이그레이션 스크립트
+│       ├── common/                  # 공통 스키마
+│       ├── dev/                     # 개발 환경 데이터
+│       └── local/                   # 로컬 환경 데이터
+├── messages/                        # 다국어 메시지
+│   ├── messages.properties          # 기본 메시지
+│   ├── messages_ko.properties       # 한국어 메시지
+│   ├── ValidationMessages.properties # 검증 메시지
+│   └── ValidationMessages_ko.properties # 한국어 검증 메시지
+├── META-INF/                        # 메타 정보
+├── static/                          # 정적 리소스
+│   └── docs/                        # API 문서
+│       └── openapi.json             # OpenAPI 스펙
+└── templates/                       # 템플릿 파일
+
+# 테스트 파일
+src/test/java/com/boardly/
+├── features/                        # 기능별 테스트
+│   ├── activity/                    # 활동 테스트
+│   ├── attachment/                  # 첨부파일 테스트
+│   ├── auth/                        # 인증 테스트
+│   ├── board/                       # 보드 테스트
+│   ├── boardlist/                   # 리스트 테스트
+│   ├── card/                        # 카드 테스트
+│   ├── comment/                     # 댓글 테스트
+│   ├── dashboard/                   # 대시보드 테스트
+│   ├── label/                       # 라벨 테스트
+│   └── user/                        # 사용자 테스트
+└── shared/                          # 공통 모듈 테스트
 
 # 설정 파일
 ├── build.gradle                     # Gradle 빌드 설정
 ├── gradle/                          # Gradle Wrapper
 │   └── libs.versions.toml           # 라이브러리 버전 관리
+├── gradlew                          # Gradle Wrapper 실행 스크립트 (Unix)
+├── gradlew.bat                      # Gradle Wrapper 실행 스크립트 (Windows)
 ├── settings.gradle                  # Gradle 프로젝트 설정
+├── Dockerfile                       # Docker 이미지 빌드 설정
 ├── .gitignore                      # Git 무시 파일
 └── README.md                       # 백엔드 문서 (현재 파일)
 ```

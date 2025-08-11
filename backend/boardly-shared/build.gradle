@@ -22,9 +22,6 @@ dependencies {
     compileOnly libs.lombok
     annotationProcessor libs.lombok
 
-    // Minimal Spring/Jackson for shared validation and responses
-    implementation libs.spring.boot.starter.web
-
     testImplementation libs.spring.boot.starter.test
 }
 

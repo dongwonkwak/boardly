@@ -1,1 +1,7 @@
 rootProject.name = 'backend'
+
+include(':boardly-shared')
+include(':boardly-api')
+include(':boardly-infrastructure')
+include(':boardly-domain')
+include(':boardly-application')

@@ -56,7 +56,7 @@ import com.boardly.features.card.presentation.response.CardDetailResponse;
 import com.boardly.features.card.presentation.response.CardResponse;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.Path;

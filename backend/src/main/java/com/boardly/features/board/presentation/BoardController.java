@@ -38,7 +38,7 @@ import com.boardly.features.board.presentation.request.CreateBoardRequest;
 import com.boardly.features.board.presentation.request.UpdateBoardRequest;
 import com.boardly.features.board.presentation.response.BoardDetailResponse;
 import com.boardly.features.board.presentation.response.BoardResponse;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.Path;

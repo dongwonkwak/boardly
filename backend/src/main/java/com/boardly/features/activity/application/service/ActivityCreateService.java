@@ -8,7 +8,7 @@ import com.boardly.features.activity.domain.model.Actor;
 import com.boardly.features.activity.domain.model.Payload;
 import com.boardly.features.activity.domain.repository.ActivityRepository;
 import com.boardly.features.user.application.service.UserFinder;
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.features.activity.application.port.input.CreateActivityCommand;
 import com.boardly.features.activity.application.usecase.CreateActivityUseCase;

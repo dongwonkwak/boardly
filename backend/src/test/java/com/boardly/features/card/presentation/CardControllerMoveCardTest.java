@@ -29,7 +29,7 @@ import com.boardly.features.card.presentation.request.MoveCardRequest;
 import com.boardly.features.card.presentation.response.CardResponse;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 import io.vavr.control.Either;
 

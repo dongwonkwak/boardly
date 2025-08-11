@@ -1,6 +1,6 @@
 package com.boardly.features.board.application.port.input;
 
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 import static org.apache.commons.lang3.StringUtils.trim;
 

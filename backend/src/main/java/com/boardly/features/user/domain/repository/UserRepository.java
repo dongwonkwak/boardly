@@ -1,8 +1,8 @@
 package com.boardly.features.user.domain.repository;
 
 import com.boardly.features.user.application.dto.UserNameDto;
-import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.domain.User;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 

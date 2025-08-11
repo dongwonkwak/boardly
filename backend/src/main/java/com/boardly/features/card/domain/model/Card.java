@@ -7,7 +7,7 @@ import java.util.Set;
 
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.BaseEntity;
 
 import lombok.AccessLevel;

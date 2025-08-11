@@ -30,7 +30,7 @@ import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.features.label.presentation.request.CreateLabelRequest;
 import com.boardly.features.label.presentation.request.UpdateLabelRequest;
 import com.boardly.features.label.presentation.response.LabelResponse;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.response.ErrorResponse;

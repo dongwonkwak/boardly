@@ -1,6 +1,6 @@
 package com.boardly.features.board.application.port.input;
 
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 사용자 보드 목록 조회 커맨드

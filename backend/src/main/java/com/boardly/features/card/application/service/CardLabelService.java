@@ -24,7 +24,7 @@ import com.boardly.features.card.domain.repository.CardLabelRepository;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.repository.LabelRepository;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 

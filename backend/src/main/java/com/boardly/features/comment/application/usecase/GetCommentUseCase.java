@@ -5,7 +5,7 @@ import java.util.List;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.comment.domain.model.Comment;
 import com.boardly.features.comment.domain.model.CommentId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 
 import io.vavr.control.Either;

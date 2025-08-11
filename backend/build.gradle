@@ -20,6 +20,7 @@ repositories {
 }
 
 dependencies {
+    implementation project(':boardly-shared')
     implementation libs.bundles.spring.boot.dependencies
     implementation libs.bundles.common.dependencies
     testImplementation libs.bundles.spring.test.dependencies
@@ -44,6 +45,11 @@ dependencies {
     testCompileOnly(libs.lombok)
     testAnnotationProcessor(libs.lombok)
     testAnnotationProcessor(libs.lombok.mapstruct.binding)
+
+    // mapstruct
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.mapstruct.processor)
+    testAnnotationProcessor(libs.mapstruct.processor)
 }
 
 tasks.named('test') {

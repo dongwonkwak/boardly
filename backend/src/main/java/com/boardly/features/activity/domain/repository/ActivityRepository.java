@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.boardly.features.activity.domain.model.Activity;
 import com.boardly.features.activity.domain.model.ActivityId;
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 
 import io.vavr.control.Either;

@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 활동 조회를 위한 쿼리 객체

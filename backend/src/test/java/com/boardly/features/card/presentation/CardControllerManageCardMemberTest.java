@@ -10,7 +10,7 @@ import com.boardly.features.card.application.usecase.ManageCardMemberUseCase;
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.card.presentation.request.AssignCardMemberRequest;
 import com.boardly.features.card.presentation.request.UnassignCardMemberRequest;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import io.vavr.control.Either;

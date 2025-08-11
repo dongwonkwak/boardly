@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.boardly.features.dashboard.application.dto.DashboardResponse;
 import com.boardly.features.dashboard.application.port.input.GetDashboardCommand;
 import com.boardly.features.dashboard.application.usecase.GetDashboardUseCase;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.Path;

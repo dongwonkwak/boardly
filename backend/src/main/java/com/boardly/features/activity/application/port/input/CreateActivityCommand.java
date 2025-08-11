@@ -6,7 +6,7 @@ import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.activity.domain.model.ActivityType;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 활동 생성 커맨드

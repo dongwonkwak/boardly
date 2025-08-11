@@ -1,7 +1,7 @@
 package com.boardly.features.user.application.usecase;
 
 import com.boardly.features.user.application.port.input.UpdateUserCommand;
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 

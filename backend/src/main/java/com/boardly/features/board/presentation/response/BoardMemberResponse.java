@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.boardly.features.board.domain.model.BoardMember;
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**

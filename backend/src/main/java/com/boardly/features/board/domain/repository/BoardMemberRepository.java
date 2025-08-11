@@ -4,7 +4,7 @@ import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.model.BoardMember;
 import com.boardly.features.board.domain.model.BoardMemberId;
 import com.boardly.features.board.domain.model.BoardRole;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 

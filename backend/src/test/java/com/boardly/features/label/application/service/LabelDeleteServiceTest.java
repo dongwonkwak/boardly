@@ -26,7 +26,7 @@ import com.boardly.features.label.application.validation.LabelValidator;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.model.LabelId;
 import com.boardly.features.label.domain.repository.LabelRepository;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;

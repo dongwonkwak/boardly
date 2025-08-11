@@ -22,7 +22,7 @@ import com.boardly.features.comment.application.port.input.UpdateCommentCommand;
 import com.boardly.features.comment.application.port.input.DeleteCommentCommand;
 import com.boardly.features.comment.domain.model.CommentId;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;

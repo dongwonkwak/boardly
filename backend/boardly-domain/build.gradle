@@ -1,0 +1,43 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.boardly'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Pure domain model: no Spring or other module linkage
+// Keep dependencies minimal and focused on value-objects and domain services
+
+dependencies {
+    api project(':boardly-shared')
+    api libs.vavr
+
+    // Optional: common utility libs used across domain code
+    api libs.commons.lang3
+
+    // Lombok for boilerplate reduction
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+
+    // Jackson annotations (for @JsonIgnore, etc.)
+    implementation libs.jackson.annotations
+
+    // Micrometer commons (for io.micrometer.common.lang.NonNull)
+    implementation libs.micrometer.commons
+
+    testImplementation libs.spring.boot.starter.test
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

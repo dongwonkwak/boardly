@@ -2,7 +2,7 @@ package com.boardly.features.card.domain.model;
 
 import java.util.List;
 
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 import com.boardly.shared.domain.common.BaseEntity;
 
 import lombok.AccessLevel;

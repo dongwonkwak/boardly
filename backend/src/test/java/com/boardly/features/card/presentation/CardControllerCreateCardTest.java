@@ -32,7 +32,7 @@ import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.response.ErrorResponse;
 
 import io.vavr.control.Either;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 @ExtendWith(MockitoExtension.class)
 class CardControllerCreateCardTest {

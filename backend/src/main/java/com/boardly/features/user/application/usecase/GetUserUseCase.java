@@ -1,8 +1,8 @@
 package com.boardly.features.user.application.usecase;
 
 import com.boardly.shared.domain.common.Failure;
-import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.domain.User;
+import com.boardly.shared.common.value.UserId;
 import io.vavr.control.Either;
 
 public interface GetUserUseCase {

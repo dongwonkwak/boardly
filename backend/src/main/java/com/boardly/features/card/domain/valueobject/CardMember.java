@@ -2,7 +2,7 @@ package com.boardly.features.card.domain.valueobject;
 
 import java.util.Objects;
 
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 public class CardMember {
 

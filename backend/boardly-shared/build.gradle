@@ -1,0 +1,33 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'com.boardly'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api libs.bundles.common.dependencies
+
+    // Lombok for boilerplate reduction
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+
+    // Minimal Spring/Jackson for shared validation and responses
+    implementation libs.spring.boot.starter.web
+
+    testImplementation libs.spring.boot.starter.test
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

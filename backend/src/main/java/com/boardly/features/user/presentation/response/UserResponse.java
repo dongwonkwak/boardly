@@ -1,6 +1,6 @@
 package com.boardly.features.user.presentation.response;
 
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 
 /**
  * 사용자 응답 DTO

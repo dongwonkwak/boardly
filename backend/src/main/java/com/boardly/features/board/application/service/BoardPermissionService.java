@@ -10,7 +10,7 @@ import com.boardly.features.board.domain.model.BoardMember;
 import com.boardly.features.board.domain.model.BoardRole;
 import com.boardly.features.board.domain.repository.BoardMemberRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 

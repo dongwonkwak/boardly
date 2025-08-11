@@ -1,7 +1,7 @@
 package com.boardly.features.board.application.port.input;
 
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 보드 즐겨찾기 상태 토글 커맨드

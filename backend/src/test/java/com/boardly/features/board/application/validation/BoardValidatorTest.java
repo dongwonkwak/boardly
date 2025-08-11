@@ -22,7 +22,7 @@ import com.boardly.features.board.application.port.input.UpdateBoardCommand;
 import com.boardly.features.board.application.port.input.UpdateBoardMemberRoleCommand;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.model.BoardRole;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.application.validation.Validator;

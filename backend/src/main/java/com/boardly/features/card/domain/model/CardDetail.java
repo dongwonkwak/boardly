@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.label.domain.model.Label;
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 import com.boardly.shared.domain.common.BaseEntity;
 
 import lombok.AccessLevel;

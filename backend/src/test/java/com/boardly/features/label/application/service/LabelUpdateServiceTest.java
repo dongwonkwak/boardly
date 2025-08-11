@@ -35,7 +35,7 @@ import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.domain.common.Failure.FieldViolation;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 import io.vavr.control.Either;
 

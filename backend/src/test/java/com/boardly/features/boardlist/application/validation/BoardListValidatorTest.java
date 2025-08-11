@@ -18,7 +18,7 @@ import com.boardly.features.boardlist.application.port.input.UpdateBoardListComm
 import com.boardly.features.boardlist.application.port.input.UpdateBoardListPositionCommand;
 import com.boardly.features.boardlist.domain.model.ListColor;
 import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;

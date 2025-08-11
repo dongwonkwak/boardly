@@ -19,7 +19,7 @@ import com.boardly.features.dashboard.application.dto.DashboardResponse;
 import com.boardly.features.dashboard.application.dto.DashboardStatisticsDto;
 import com.boardly.features.dashboard.application.port.input.GetDashboardCommand;
 import com.boardly.features.user.application.service.UserFinder;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;

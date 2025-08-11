@@ -1,7 +1,7 @@
 package com.boardly.features.label.application.port.input;
 
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 public record CreateLabelCommand(
         BoardId boardId,

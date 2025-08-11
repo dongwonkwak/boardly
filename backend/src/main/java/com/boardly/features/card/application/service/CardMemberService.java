@@ -24,8 +24,8 @@ import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.card.domain.repository.CardMemberRepository;
 import com.boardly.features.user.application.dto.UserNameDto;
 import com.boardly.features.user.application.service.UserFinder;
-import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.domain.User;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 

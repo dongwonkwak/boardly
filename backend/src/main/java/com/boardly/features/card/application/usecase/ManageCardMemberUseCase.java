@@ -6,7 +6,7 @@ import com.boardly.features.card.application.port.input.AssignCardMemberCommand;
 import com.boardly.features.card.application.port.input.UnassignCardMemberCommand;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.valueobject.CardMember;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 
 import io.vavr.control.Either;

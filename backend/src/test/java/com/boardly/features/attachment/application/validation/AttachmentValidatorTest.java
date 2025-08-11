@@ -10,7 +10,7 @@ import com.boardly.features.attachment.application.port.input.UpdateAttachmentCo
 import com.boardly.features.attachment.application.port.input.UploadAttachmentCommand;
 import com.boardly.features.attachment.domain.model.AttachmentId;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;

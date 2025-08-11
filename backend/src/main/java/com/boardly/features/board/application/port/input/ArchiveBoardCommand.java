@@ -1,7 +1,7 @@
 package com.boardly.features.board.application.port.input;
 
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 보드 아카이브 상태 변경 커맨드

@@ -3,8 +3,8 @@ package com.boardly.features.user.application.service;
 import org.springframework.stereotype.Service;
 
 import com.boardly.features.user.application.usecase.GetUserUseCase;
-import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.domain.User;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 

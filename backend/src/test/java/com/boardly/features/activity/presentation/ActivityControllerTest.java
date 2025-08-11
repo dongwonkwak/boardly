@@ -28,7 +28,7 @@ import com.boardly.features.activity.application.port.output.ActorResponse;
 import com.boardly.features.activity.application.usecase.GetActivityUseCase;
 import com.boardly.features.activity.domain.model.ActivityType;
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.response.ErrorResponse;

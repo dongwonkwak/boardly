@@ -13,8 +13,8 @@ import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.features.user.domain.model.User;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.features.user.domain.User;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 
 import io.vavr.control.Either;

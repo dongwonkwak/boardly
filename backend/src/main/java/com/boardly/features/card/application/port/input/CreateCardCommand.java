@@ -1,7 +1,7 @@
 package com.boardly.features.card.application.port.input;
 
 import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 import static org.apache.commons.lang3.StringUtils.trim;
 

@@ -1,7 +1,7 @@
 package com.boardly.features.boardlist.application.port.input;
 
 import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 보드 리스트 위치 변경 커맨드

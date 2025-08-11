@@ -22,7 +22,7 @@ import com.boardly.features.label.application.port.input.CreateLabelCommand;
 import com.boardly.features.label.application.port.input.DeleteLabelCommand;
 import com.boardly.features.label.application.port.input.UpdateLabelCommand;
 import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;

@@ -11,7 +11,7 @@ import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.boardlist.domain.policy.BoardListCreationPolicy;
 import com.boardly.features.boardlist.domain.policy.BoardListCreationPolicy.ListCountStatus;
 import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;

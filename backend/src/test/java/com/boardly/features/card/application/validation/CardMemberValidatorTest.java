@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 import com.boardly.features.card.application.port.input.AssignCardMemberCommand;
 import com.boardly.features.card.application.port.input.UnassignCardMemberCommand;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;

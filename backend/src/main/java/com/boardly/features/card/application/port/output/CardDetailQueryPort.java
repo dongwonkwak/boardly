@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import com.boardly.features.card.domain.model.CardDetail;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 카드 상세 정보 조회 포트

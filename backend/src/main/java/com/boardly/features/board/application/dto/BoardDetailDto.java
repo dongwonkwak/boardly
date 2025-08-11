@@ -11,7 +11,7 @@ import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.label.domain.model.Label;
 import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 
 /**
  * 보드 상세 정보 DTO

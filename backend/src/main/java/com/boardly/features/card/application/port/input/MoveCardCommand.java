@@ -2,7 +2,7 @@ package com.boardly.features.card.application.port.input;
 
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 
 /**
  * 카드 이동 커맨드

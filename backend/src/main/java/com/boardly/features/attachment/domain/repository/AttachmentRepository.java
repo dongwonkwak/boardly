@@ -6,7 +6,7 @@ import java.util.Optional;
 import com.boardly.features.attachment.domain.model.Attachment;
 import com.boardly.features.attachment.domain.model.AttachmentId;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 

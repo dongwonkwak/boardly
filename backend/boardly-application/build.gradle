@@ -1,0 +1,27 @@
+plugins {
+  id 'java-library'
+}
+
+group = 'com.boardly'
+version = '0.0.1-SNAPSHOT'
+
+java {
+  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+  api project(':boardly-shared')
+  implementation project(':boardly-domain')
+  implementation project(':boardly-api')
+  implementation project(':boardly-infrastructure')
+
+  implementation libs.bundles.spring.boot.dependencies
+  testImplementation libs.spring.boot.starter.test
+
+  compileOnly libs.lombok
+  annotationProcessor libs.lombok
+}
+
+tasks.named('test') { useJUnitPlatform() }

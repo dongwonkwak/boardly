@@ -1,6 +1,7 @@
 package com.boardly.features.user.domain.model;
 
 import com.boardly.shared.domain.valueobject.EntityId;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 

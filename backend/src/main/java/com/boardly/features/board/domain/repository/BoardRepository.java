@@ -3,7 +3,7 @@ package com.boardly.features.board.domain.repository;
 import com.boardly.features.board.application.dto.BoardNameDto;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.Failure;
 import io.vavr.control.Either;
 

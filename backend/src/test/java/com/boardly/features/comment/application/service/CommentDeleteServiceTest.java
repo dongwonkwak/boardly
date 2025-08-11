@@ -24,7 +24,7 @@ import com.boardly.features.comment.domain.model.Comment;
 import com.boardly.features.comment.domain.model.CommentId;
 import com.boardly.features.comment.domain.repository.CommentRepository;
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 import com.boardly.shared.domain.common.Failure;

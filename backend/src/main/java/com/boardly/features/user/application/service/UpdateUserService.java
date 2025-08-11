@@ -3,7 +3,7 @@ package com.boardly.features.user.application.service;
 import com.boardly.features.user.application.port.input.UpdateUserCommand;
 import com.boardly.features.user.application.usecase.UpdateUserUseCase;
 import com.boardly.features.user.application.validation.UserValidator;
-import com.boardly.features.user.domain.model.User;
+import com.boardly.features.user.domain.User;
 import com.boardly.features.user.domain.model.UserProfile;
 import com.boardly.features.user.domain.repository.UserRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;

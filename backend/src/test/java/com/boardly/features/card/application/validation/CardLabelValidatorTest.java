@@ -9,7 +9,7 @@ import com.boardly.features.card.application.port.input.AddCardLabelCommand;
 import com.boardly.features.card.application.port.input.RemoveCardLabelCommand;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;

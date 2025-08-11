@@ -17,7 +17,7 @@ import com.boardly.features.card.domain.repository.CardMemberRepository;
 import com.boardly.features.card.domain.repository.CardRepository;
 import com.boardly.features.card.domain.valueobject.CardMember;
 import com.boardly.features.user.application.service.UserFinder;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import java.util.List;
 import java.util.Optional;

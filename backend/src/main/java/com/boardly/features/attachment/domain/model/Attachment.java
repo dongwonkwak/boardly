@@ -3,7 +3,7 @@ package com.boardly.features.attachment.domain.model;
 import java.time.Instant;
 
 import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.user.domain.model.UserId;
+import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.domain.common.BaseEntity;
 
 import lombok.Builder;

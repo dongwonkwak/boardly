@@ -29,11 +29,7 @@ dependencies {
     compileOnly libs.lombok
     annotationProcessor libs.lombok
 
-    // Jackson annotations (for @JsonIgnore, etc.)
-    implementation libs.jackson.annotations
-
-    // Micrometer commons (for io.micrometer.common.lang.NonNull)
-    implementation libs.micrometer.commons
+    // Keep domain free from serialization/metrics libs
 
     testImplementation libs.spring.boot.starter.test
 }

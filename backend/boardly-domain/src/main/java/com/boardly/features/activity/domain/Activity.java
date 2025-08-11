@@ -4,7 +4,7 @@ import com.boardly.shared.common.value.ActivityId;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.CardId;
 import com.boardly.shared.common.value.ListId;
-import io.micrometer.common.lang.NonNull;
+import lombok.NonNull;
 import java.time.Instant;
 import lombok.Builder;
 import lombok.Value;

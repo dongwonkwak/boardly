@@ -18,6 +18,9 @@ dependencies {
   implementation libs.bundles.spring.boot.dependencies
   implementation libs.bundles.flyway.dependencies
   implementation libs.bundles.springdoc.dependencies
+  // MapStruct for mapping between domain <-> entity and domain <-> dto
+  implementation libs.mapstruct
+  annotationProcessor libs.mapstruct.processor
   runtimeOnly libs.postgres
 
   compileOnly libs.lombok

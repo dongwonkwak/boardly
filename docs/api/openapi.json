@@ -4569,14 +4569,14 @@
             "type": "integer",
             "format": "int32"
           },
-          "isStarred": {
-            "type": "boolean"
-          },
           "color": {
             "type": "string"
           },
           "role": {
             "type": "string"
+          },
+          "starred": {
+            "type": "boolean"
           }
         }
       },
@@ -4672,15 +4672,15 @@
           "color": {
             "type": "string"
           },
-          "new": {
-            "type": "boolean"
+          "minutesSinceLastUpdate": {
+            "type": "integer",
+            "format": "int64"
           },
           "auditInfo": {
             "type": "string"
           },
-          "minutesSinceLastUpdate": {
-            "type": "integer",
-            "format": "int64"
+          "new": {
+            "type": "boolean"
           },
           "ageInMinutes": {
             "type": "integer",

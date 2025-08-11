@@ -12,15 +12,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-@Component
+@org.springframework.stereotype.Repository
 @RequiredArgsConstructor
 public class BoardRepositoryImpl implements BoardRepository {
 
     private final BoardJpaRepository boardJpaRepository;
+    private final BoardMapper boardMapper;
 
     @Override
+    @Transactional
     public Either<Failure, Board> save(Board board) {
         try {
             BoardEntity savedEntity;
@@ -50,7 +53,7 @@ public class BoardRepositoryImpl implements BoardRepository {
                     board.getOwnerId().getId()
                 );
 
-                BoardEntity boardEntity = BoardEntity.fromDomainEntity(board);
+                BoardEntity boardEntity = boardMapper.toEntity(board);
                 savedEntity = boardJpaRepository.save(boardEntity);
 
                 log.debug(
@@ -60,7 +63,7 @@ public class BoardRepositoryImpl implements BoardRepository {
                 );
             }
 
-            return Either.right(savedEntity.toDomainEntity());
+            return Either.right(boardMapper.toDomain(savedEntity));
         } catch (DataIntegrityViolationException e) {
             log.error("보드 저장 중 제약 조건 위반 오류: {}", e.getMessage());
             return Either.left(
@@ -73,44 +76,49 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Board> findById(BoardId boardId) {
         log.debug("findById: boardId={}", boardId.getId());
         return boardJpaRepository
             .findById(boardId.getId())
-            .map(BoardEntity::toDomainEntity);
+            .map(boardMapper::toDomain);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Board> findByOwnerId(UserId ownerId) {
         log.debug("findByOwnerId: ownerId={}", ownerId.getId());
         return boardJpaRepository
             .findByOwnerId(ownerId.getId())
             .stream()
-            .map(BoardEntity::toDomainEntity)
+            .map(boardMapper::toDomain)
             .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Board> findActiveByOwnerId(UserId ownerId) {
         log.debug("findActiveByOwnerId: ownerId={}", ownerId.getId());
         return boardJpaRepository
             .findByOwnerIdAndIsArchivedFalse(ownerId.getId())
             .stream()
-            .map(BoardEntity::toDomainEntity)
+            .map(boardMapper::toDomain)
             .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Board> findArchivedByOwnerId(UserId ownerId) {
         log.debug("findArchivedByOwnerId: ownerId={}", ownerId.getId());
         return boardJpaRepository
             .findByOwnerIdAndIsArchivedTrue(ownerId.getId())
             .stream()
-            .map(BoardEntity::toDomainEntity)
+            .map(boardMapper::toDomain)
             .toList();
     }
 
     @Override
+    @Transactional
     public Either<Failure, Void> delete(BoardId boardId) {
         try {
             if (boardJpaRepository.existsById(boardId.getId())) {
@@ -127,17 +135,20 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public boolean existsById(BoardId boardId) {
         return boardJpaRepository.existsByBoardId(boardId.getId());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countByOwnerId(UserId ownerId) {
         log.debug("countByOwnerId: ownerId={}", ownerId.getId());
         return boardJpaRepository.countByOwnerId(ownerId.getId());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long countActiveByOwnerId(UserId ownerId) {
         log.debug("countActiveByOwnerId: ownerId={}", ownerId.getId());
         return boardJpaRepository.countByOwnerIdAndIsArchivedFalse(
@@ -146,6 +157,7 @@ public class BoardRepositoryImpl implements BoardRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Board> findByOwnerIdAndTitleContaining(
         UserId ownerId,
         String title
@@ -158,11 +170,12 @@ public class BoardRepositoryImpl implements BoardRepository {
         return boardJpaRepository
             .findByOwnerIdAndTitleContaining(ownerId.getId(), title)
             .stream()
-            .map(BoardEntity::toDomainEntity)
+            .map(boardMapper::toDomain)
             .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Board> findByIdAndOwnerId(BoardId boardId, UserId ownerId) {
         log.debug(
             "findByIdAndOwnerId: boardId={}, ownerId={}",
@@ -171,14 +184,13 @@ public class BoardRepositoryImpl implements BoardRepository {
         );
         return boardJpaRepository
             .findByBoardIdAndOwnerId(boardId.getId(), ownerId.getId())
-            .map(BoardEntity::toDomainEntity);
+            .map(boardMapper::toDomain);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<String> findBoardNameById(BoardId boardId) {
         log.debug("findBoardNameById: boardId={}", boardId.getId());
-        return boardJpaRepository
-            .findBoardNameById(boardId.getId())
-            .map(entity -> entity.getTitle());
+        return boardJpaRepository.findTitleById(boardId.getId());
     }
 }

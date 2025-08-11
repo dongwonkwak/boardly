@@ -1,16 +1,14 @@
 package com.boardly.features.board.infrastructure.persistence;
 
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
-
 @Repository
 public interface BoardJpaRepository extends JpaRepository<BoardEntity, String> {
-
     /**
      * 소유자 ID로 보드 목록을 조회합니다.
      */
@@ -39,13 +37,21 @@ public interface BoardJpaRepository extends JpaRepository<BoardEntity, String> {
     /**
      * 소유자 ID와 보드 ID로 보드를 조회합니다.
      */
-    Optional<BoardEntity> findByBoardIdAndOwnerId(String boardId, String ownerId);
+    Optional<BoardEntity> findByBoardIdAndOwnerId(
+        String boardId,
+        String ownerId
+    );
 
     /**
      * 제목으로 보드를 검색합니다.
      */
-    @Query("SELECT b FROM BoardEntity b WHERE b.ownerId = :ownerId AND b.title LIKE %:title%")
-    List<BoardEntity> findByOwnerIdAndTitleContaining(@Param("ownerId") String ownerId, @Param("title") String title);
+    @Query(
+        "SELECT b FROM BoardEntity b WHERE b.ownerId = :ownerId AND b.title LIKE %:title%"
+    )
+    List<BoardEntity> findByOwnerIdAndTitleContaining(
+        @Param("ownerId") String ownerId,
+        @Param("title") String title
+    );
 
     /**
      * 보드 ID가 존재하는지 확인합니다.
@@ -53,8 +59,8 @@ public interface BoardJpaRepository extends JpaRepository<BoardEntity, String> {
     boolean existsByBoardId(String boardId);
 
     /**
-     * 보드 ID로 보드 이름 정보만 조회
+     * 보드 ID로 보드 제목만 조회 (Projection)
      */
-    @Query("SELECT b FROM BoardEntity b WHERE b.boardId = :boardId")
-    Optional<BoardEntity> findBoardNameById(@Param("boardId") String boardId);
+    @Query("SELECT b.title FROM BoardEntity b WHERE b.boardId = :boardId")
+    Optional<String> findTitleById(@Param("boardId") String boardId);
 }

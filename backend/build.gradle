@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'jacoco'
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.openapi.gradle.plugin)
@@ -54,6 +55,39 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+// JaCoCo aggregate coverage across subprojects
+jacoco { toolVersion = '0.8.12' }
+
+subprojects { p ->
+    plugins.withId('jacoco') {
+        p.tasks.matching { it.name == 'test' }.configureEach { finalizedBy p.tasks.named('jacocoTestReport') }
+        p.tasks.matching { it.name == 'jacocoTestReport' }.configureEach { it.enabled = true }
+    }
+}
+
+tasks.register('jacocoRootReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates aggregate JaCoCo coverage report for all modules'
+    dependsOn subprojects.collect { it.tasks.matching { t -> t.name == 'test' } }
+
+    def execDataFiles = files(subprojects.collect { it.layout.buildDirectory.file('jacoco/test.exec') })
+    executionData.setFrom(execDataFiles)
+
+    def sourceDirs = files(subprojects.collect { it.file('src/main/java') })
+    def classDirs = files(subprojects.collect { it.layout.buildDirectory.dir('classes/java/main') })
+
+    sourceDirectories.setFrom(sourceDirs)
+    classDirectories.setFrom(classDirs)
+
+    reports {
+        html.required = true
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacocoRoot/html')
+        xml.outputLocation = layout.buildDirectory.file('reports/jacocoRoot/jacocoRootReport.xml')
+    }
 }
 
 // OpenAPI 문서 생성 설정

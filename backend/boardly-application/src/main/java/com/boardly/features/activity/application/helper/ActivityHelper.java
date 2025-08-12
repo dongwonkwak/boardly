@@ -5,12 +5,12 @@ import java.util.Map;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import com.boardly.features.activity.application.port.input.CreateActivityCommand;
+import com.boardly.features.activity.application.command.CreateActivityCommand;
 import com.boardly.features.activity.application.usecase.CreateActivityUseCase;
-import com.boardly.features.activity.domain.model.ActivityType;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.card.domain.model.CardId;
+import com.boardly.features.activity.domain.ActivityType;
+import com.boardly.shared.common.value.BoardId;
+import com.boardly.shared.common.value.ListId;
+import com.boardly.shared.common.value.CardId;
 import com.boardly.shared.common.value.UserId;
 
 import lombok.RequiredArgsConstructor;

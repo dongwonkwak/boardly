@@ -41,6 +41,11 @@ class ActivityCreationContext {
 @RequiredArgsConstructor
 public class ActivityCreateService implements CreateActivityUseCase {
 
+    private static final String MSG_VALIDATION_FAILED = "activity.validation.failed";
+    private static final String MSG_USER_NOT_FOUND = "activity.user.not.found";
+    private static final String ERROR_CODE_VALIDATION = "VALIDATION_ERROR";
+    private static final String ERROR_CODE_USER_NOT_FOUND = "USER_NOT_FOUND";
+
     private final ActivityRepository activityRepository;
     private final UserFinder userFinder;
     private final ActivityValidator activityValidator;
@@ -48,7 +53,7 @@ public class ActivityCreateService implements CreateActivityUseCase {
 
     @Override
     public Either<Failure, Activity> createActivity(CreateActivityCommand command) {
-        log.info("ActivityCreateService.createActivity() called with command: {}", command);
+        log.info("createActivity called: {}", command);
 
         return validateCommand(command)
                 .flatMap(this::findUser)
@@ -58,88 +63,84 @@ public class ActivityCreateService implements CreateActivityUseCase {
                 .flatMap(this::saveActivity);
     }
 
-    /**
-     * 명령 유효성 검사
-     */
     private Either<Failure, CreateActivityCommand> validateCommand(CreateActivityCommand command) {
         var validationResult = activityValidator.validateCreate(command);
         if (validationResult.isInvalid()) {
-            log.warn("Activity creation failed due to validation: {}", validationResult.getErrors());
-            return Either.left(Failure.ofInputError(
-                    messageResolver.getMessage("activity.validation.failed"),
-                    "VALIDATION_ERROR",
-                    validationResult.getErrorsAsCollection().stream().toList()));
+            log.warn("Validation failed: {}", validationResult.getErrors());
+            return Either.left(
+                Failure.ofInputError(
+                    messageResolver.getMessage(MSG_VALIDATION_FAILED),
+                    ERROR_CODE_VALIDATION,
+                    validationResult.getErrorsAsCollection().stream().toList()
+                )
+            );
         }
         return Either.right(command);
     }
 
-    /**
-     * 사용자 조회
-     */
     private Either<Failure, ActivityCreationContext> findUser(CreateActivityCommand command) {
         try {
             User user = userFinder.findUserOrThrow(command.actorId());
             return Either.right(new ActivityCreationContext(command, user, null, null, null, command.boardName()));
         } catch (Exception e) {
-            log.warn("Activity creation failed due to user not found: {}", command.actorId(), e);
-            return Either.left(Failure.ofNotFound(
-                    messageResolver.getMessage("activity.user.not.found"),
-                    "USER_NOT_FOUND",
-                    command.actorId()));
+            log.warn("User not found: {}", command.actorId(), e);
+            return Either.left(
+                Failure.ofNotFound(
+                    messageResolver.getMessage(MSG_USER_NOT_FOUND),
+                    ERROR_CODE_USER_NOT_FOUND,
+                    command.actorId()
+                )
+            );
         }
     }
 
-    /**
-     * Actor 생성
-     */
     private Either<Failure, ActivityCreationContext> createActor(ActivityCreationContext context) {
         Actor actor = Actor.of(
-                context.getUser().getUserId().toString(),
-                context.getUser().getFirstName(),
-                context.getUser().getLastName(),
-                ""); // UserProfile에는 profileImageUrl이 없으므로 빈 문자열 사용
-        return Either.right(new ActivityCreationContext(context.getCommand(), context.getUser(), actor, null, null,
-                context.getBoardName()));
+                context.user().getUserId().toString(),
+                context.user().getFirstName(),
+                context.user().getLastName(),
+                ""
+        );
+        return Either.right(new ActivityCreationContext(
+                context.command(), context.user(), actor, null, null, context.boardName()
+        ));
     }
 
-    /**
-     * Payload 생성
-     */
     private Either<Failure, ActivityCreationContext> createPayload(ActivityCreationContext context) {
-        // boardName을 payload에 포함
-        Map<String, Object> payloadWithBoardName = new HashMap<>(context.getCommand().payload());
-        if (context.getBoardName() != null) {
-            payloadWithBoardName.put("boardName", context.getBoardName());
+        Map<String, Object> payloadData = new HashMap<>(context.command().payload());
+        if (context.boardName() != null) {
+            payloadData.put("boardName", context.boardName());
         }
 
-        Payload payload = Payload.of(payloadWithBoardName);
-        return Either.right(new ActivityCreationContext(context.getCommand(), context.getUser(), context.getActor(),
-                payload, null, context.getBoardName()));
+        Payload payload = Payload.of(payloadData);
+        return Either.right(new ActivityCreationContext(
+                context.command(), context.user(), context.actor(), payload, null, context.boardName()
+        ));
     }
 
-    /**
-     * Activity 도메인 객체 생성
-     */
     private Either<Failure, ActivityCreationContext> createActivity(ActivityCreationContext context) {
         Activity activity = Activity.create(
-                context.getCommand().type(),
-                context.getActor(),
-                context.getPayload(),
-                context.getBoardName(),
-                context.getCommand().boardId(),
-                context.getCommand().listId(),
-                context.getCommand().cardId());
-        return Either.right(new ActivityCreationContext(context.getCommand(), context.getUser(), context.getActor(),
-                context.getPayload(), activity, context.getBoardName()));
+                context.command().type(),
+                context.actor(),
+                contextPayloadOrEmpty(context),
+                context.boardName(),
+                context.command().boardId(),
+                context.command().listId(),
+                context.command().cardId()
+        );
+        return Either.right(new ActivityCreationContext(
+                context.command(), context.user(), context.actor(), context.payload(), activity, context.boardName()
+        ));
     }
 
-    /**
-     * Activity 저장
-     */
+    private Payload contextPayloadOrEmpty(ActivityCreationContext context) {
+        return context.payload() != null ? context.payload() : Payload.empty();
+    }
+
     private Either<Failure, Activity> saveActivity(ActivityCreationContext context) {
-        Either<Failure, Activity> saveResult = activityRepository.save(context.getActivity());
+        Either<Failure, Activity> saveResult = activityRepository.save(context.activity());
         if (saveResult.isLeft()) {
-            log.error("Activity creation failed due to repository error: {}", saveResult.getLeft());
+            log.error("Repository error: {}", saveResult.getLeft());
             return Either.left(saveResult.getLeft());
         }
 
@@ -147,4 +148,13 @@ public class ActivityCreateService implements CreateActivityUseCase {
         log.info("Activity created successfully: {}", savedActivity.getId());
         return Either.right(savedActivity);
     }
+
+    private static record ActivityCreationContext(
+            CreateActivityCommand command,
+            User user,
+            Actor actor,
+            Payload payload,
+            Activity activity,
+            String boardName
+    ) {}
 }

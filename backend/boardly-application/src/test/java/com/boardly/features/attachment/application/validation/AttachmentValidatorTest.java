@@ -2,9 +2,9 @@ package com.boardly.features.attachment.application.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.boardly.features.attachment.application.port.input.DeleteAttachmentCommand;
-import com.boardly.features.attachment.application.port.input.UpdateAttachmentCommand;
-import com.boardly.features.attachment.application.port.input.UploadAttachmentCommand;
+import com.boardly.features.attachment.application.command.DeleteAttachmentCommand;
+import com.boardly.features.attachment.application.command.UpdateAttachmentCommand;
+import com.boardly.features.attachment.application.command.UploadAttachmentCommand;
 import com.boardly.infrastructure.validation.CommonValidationRules;
 import com.boardly.shared.common.value.AttachmentId;
 import com.boardly.shared.common.value.CardId;

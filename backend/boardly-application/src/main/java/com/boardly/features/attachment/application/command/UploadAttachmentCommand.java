@@ -1,4 +1,4 @@
-package com.boardly.features.attachment.application.port.input;
+package com.boardly.features.attachment.application.command;
 
 import org.springframework.web.multipart.MultipartFile;
 

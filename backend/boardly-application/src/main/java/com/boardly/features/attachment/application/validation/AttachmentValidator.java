@@ -6,9 +6,9 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
-import com.boardly.features.attachment.application.port.input.UploadAttachmentCommand;
-import com.boardly.features.attachment.application.port.input.UpdateAttachmentCommand;
-import com.boardly.features.attachment.application.port.input.DeleteAttachmentCommand;
+import com.boardly.features.attachment.application.command.UploadAttachmentCommand;
+import com.boardly.features.attachment.application.command.UpdateAttachmentCommand;
+import com.boardly.features.attachment.application.command.DeleteAttachmentCommand;
 import com.boardly.infrastructure.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;

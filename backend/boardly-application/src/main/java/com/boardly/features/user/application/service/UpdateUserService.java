@@ -1,32 +1,33 @@
 package com.boardly.features.user.application.service;
 
-import com.boardly.features.user.application.port.input.UpdateUserCommand;
-import com.boardly.features.user.application.usecase.UpdateUserUseCase;
-import com.boardly.features.user.application.validation.UserValidator;
-import com.boardly.features.user.domain.User;
-import com.boardly.features.user.domain.model.UserProfile;
-import com.boardly.features.user.domain.repository.UserRepository;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.domain.common.Failure;
-import io.vavr.control.Either;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.boardly.features.user.application.command.UpdateUserCommand;
+import com.boardly.features.user.application.usecase.UpdateUserUseCase;
+import com.boardly.features.user.application.validation.UserValidator;
+import com.boardly.features.user.domain.User;
+import com.boardly.features.user.domain.UserProfile;
+import com.boardly.shared.common.error.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+
+import io.vavr.control.Either;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UpdateUserService implements UpdateUserUseCase {
 
-    private final UserRepository userRepository;
+    private final com.boardly.features.user.domain.port.UserRepository userRepository;
     private final UserValidator userValidator;
-    private final ValidationMessageResolver validationMessageResolver;
+    private final MessageResolver messageResolver;
 
     @Override
     @Transactional
@@ -39,7 +40,7 @@ public class UpdateUserService implements UpdateUserUseCase {
             log.warn("사용자 업데이트 검증 실패: userId={}, violations={}",
                     command.userId().getId(), validationResult.getErrorsAsCollection());
             return Either.left(Failure.ofInputError(
-                    validationMessageResolver.getMessage("validation.input.invalid"),
+                    messageResolver.getMessage("validation.input.invalid"),
                     "INVALID_INPUT",
                     List.copyOf(validationResult.getErrorsAsCollection())));
         }
@@ -50,7 +51,7 @@ public class UpdateUserService implements UpdateUserUseCase {
             log.warn("업데이트할 사용자를 찾을 수 없음: userId={}", command.userId().getId());
             Map<String, Object> context = Map.of("userId", command.userId().getId());
             return Either.left(Failure.ofNotFound(
-                    validationMessageResolver.getMessage("validation.user.email.not.found"),
+                    messageResolver.getMessage("validation.user.email.not.found"),
                     "USER_NOT_FOUND",
                     context));
         }

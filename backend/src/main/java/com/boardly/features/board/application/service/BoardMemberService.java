@@ -24,7 +24,7 @@ import com.boardly.features.board.domain.model.BoardMember;
 import com.boardly.features.board.domain.repository.BoardMemberRepository;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.user.application.dto.UserNameDto;
-import com.boardly.features.user.application.service.UserFinder;
+import com.boardly.features.user.domain.port.UserFinder;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.features.user.domain.repository.UserRepository;
 import com.boardly.shared.application.validation.ValidationMessageResolver;

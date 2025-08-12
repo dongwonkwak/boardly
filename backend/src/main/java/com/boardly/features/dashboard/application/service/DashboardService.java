@@ -28,7 +28,7 @@ import com.boardly.features.dashboard.application.dto.DashboardResponse;
 import com.boardly.features.dashboard.application.dto.DashboardStatisticsDto;
 import com.boardly.features.dashboard.application.port.input.GetDashboardCommand;
 import com.boardly.features.dashboard.application.usecase.GetDashboardUseCase;
-import com.boardly.features.user.application.service.UserFinder;
+import com.boardly.features.user.domain.port.UserFinder;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.common.error.Failure;
 

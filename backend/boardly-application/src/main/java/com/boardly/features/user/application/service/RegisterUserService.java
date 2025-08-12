@@ -1,35 +1,36 @@
 package com.boardly.features.user.application.service;
 
-import com.boardly.features.user.application.port.input.RegisterUserCommand;
-import com.boardly.features.user.application.usecase.RegisterUserUseCase;
-import com.boardly.features.user.application.validation.UserValidator;
-import com.boardly.features.user.domain.User;
-import com.boardly.features.user.domain.model.UserProfile;
-import com.boardly.features.user.domain.repository.UserRepository;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.domain.common.Failure;
-import io.vavr.control.Either;
-import io.vavr.control.Try;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
+import com.boardly.features.user.application.command.RegisterUserCommand;
+import com.boardly.features.user.application.usecase.RegisterUserUseCase;
+import com.boardly.features.user.application.validation.UserValidator;
+import com.boardly.features.user.domain.User;
+import com.boardly.features.user.domain.UserProfile;
+import com.boardly.shared.common.error.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+
+import io.vavr.control.Either;
+import io.vavr.control.Try;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RegisterUserService implements RegisterUserUseCase {
 
-    private final UserRepository userRepository;
+    private final com.boardly.features.user.domain.port.UserRepository userRepository;
     private final UserValidator userValidator;
     private final PasswordEncoder passwordEncoder;
-    private final ValidationMessageResolver validationMessageResolver;
+    private final MessageResolver messageResolver;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -42,7 +43,7 @@ public class RegisterUserService implements RegisterUserUseCase {
             log.warn("사용자 등록 검증 실패: email={}, violations={}", command.email(),
                     validationResult.getErrorsAsCollection());
             return Either.left(Failure.ofInputError(
-                    validationMessageResolver.getMessage("validation.input.invalid"),
+                    messageResolver.getMessage("validation.input.invalid"),
                     "INVALID_INPUT",
                     List.copyOf(validationResult.getErrorsAsCollection())));
         }
@@ -54,7 +55,7 @@ public class RegisterUserService implements RegisterUserUseCase {
                     "email", command.email(),
                     "conflictType", "EMAIL_DUPLICATE");
             return Either.left(Failure.ofResourceConflict(
-                    validationMessageResolver.getMessage("validation.user.email.duplicate"),
+                    messageResolver.getMessage("validation.user.email.duplicate"),
                     "EMAIL_ALREADY_EXISTS",
                     context));
         }
@@ -78,7 +79,7 @@ public class RegisterUserService implements RegisterUserUseCase {
                                         "email", command.email(),
                                         "conflictType", "EMAIL_DUPLICATE");
                                 return Either.left(Failure.ofResourceConflict(
-                                        validationMessageResolver.getMessage("validation.user.email.duplicate"),
+                                        messageResolver.getMessage("validation.user.email.duplicate"),
                                         "EMAIL_ALREADY_EXISTS",
                                         context));
                             } else {

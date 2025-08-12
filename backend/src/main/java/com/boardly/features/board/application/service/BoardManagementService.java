@@ -21,7 +21,7 @@ import com.boardly.features.board.application.validation.BoardValidator;
 import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.user.application.service.UserFinder;
+import com.boardly.features.user.domain.port.UserFinder;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;

@@ -22,7 +22,7 @@ import com.boardly.features.board.domain.model.Board;
 import com.boardly.features.board.domain.repository.BoardRepository;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.features.comment.domain.repository.CommentRepository;
-import com.boardly.features.user.application.service.UserFinder;
+import com.boardly.features.user.domain.port.UserFinder;
 import com.boardly.shared.application.validation.ValidationMessageResolver;
 import com.boardly.shared.domain.common.Failure;
 

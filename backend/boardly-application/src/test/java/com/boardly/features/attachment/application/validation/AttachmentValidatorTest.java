@@ -1,73 +1,34 @@
 package com.boardly.features.attachment.application.validation;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
 
 import com.boardly.features.attachment.application.port.input.DeleteAttachmentCommand;
 import com.boardly.features.attachment.application.port.input.UpdateAttachmentCommand;
 import com.boardly.features.attachment.application.port.input.UploadAttachmentCommand;
-import com.boardly.features.attachment.domain.model.AttachmentId;
-import com.boardly.features.card.domain.model.CardId;
+import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.shared.common.value.AttachmentId;
+import com.boardly.shared.common.value.CardId;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.shared.application.validation.CommonValidationRules;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import java.util.Locale;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
+import org.mockito.Mockito;
 import org.springframework.mock.web.MockMultipartFile;
 
-@ExtendWith(MockitoExtension.class)
-@DisplayName("AttachmentValidator 테스트")
 class AttachmentValidatorTest {
-
-    @Mock
-    private MessageSource messageSource;
 
     private AttachmentValidator attachmentValidator;
     private CommonValidationRules commonValidationRules;
-    private ValidationMessageResolver messageResolver;
+    private MessageResolver messageResolver;
 
     @BeforeEach
     void setUp() {
-        LocaleContextHolder.setLocale(Locale.KOREAN);
-
-        // 기본 메시지 설정 - lenient로 설정하여 불필요한 stubbing 허용
-        lenient()
-            .when(
-                messageSource.getMessage(
-                    anyString(),
-                    any(Object[].class),
-                    any(Locale.class)
-                )
-            )
-            .thenAnswer(invocation -> {
-                String code = invocation.getArgument(0);
-                Object[] args = invocation.getArgument(1);
-                StringBuilder message = new StringBuilder(code);
-                if (args != null) {
-                    for (Object arg : args) {
-                        message.append(" ").append(arg);
-                    }
-                }
-                return message.toString();
-            });
-
-        messageResolver = new ValidationMessageResolver(messageSource);
+        messageResolver = Mockito.mock(MessageResolver.class);
         commonValidationRules = new CommonValidationRules(messageResolver);
-        attachmentValidator = new AttachmentValidator(
-            commonValidationRules,
-            messageResolver
-        );
+        attachmentValidator = new AttachmentValidator(commonValidationRules, messageResolver);
     }
 
     @Nested

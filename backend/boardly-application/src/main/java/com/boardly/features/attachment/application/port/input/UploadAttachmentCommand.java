@@ -2,7 +2,7 @@ package com.boardly.features.attachment.application.port.input;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import com.boardly.features.card.domain.model.CardId;
+import com.boardly.shared.common.value.CardId;
 import com.boardly.shared.common.value.UserId;
 
 public record UploadAttachmentCommand(

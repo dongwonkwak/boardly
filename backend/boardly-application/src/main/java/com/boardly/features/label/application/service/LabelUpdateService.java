@@ -7,14 +7,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.boardly.features.board.application.service.BoardPermissionService;
-import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.board.domain.port.BoardRepository;
 import com.boardly.features.label.application.port.input.UpdateLabelCommand;
 import com.boardly.features.label.application.validation.LabelValidator;
 import com.boardly.features.label.application.usecase.UpdateLabelUseCase;
-import com.boardly.features.label.domain.model.Label;
-import com.boardly.features.label.domain.repository.LabelRepository;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.features.label.domain.Label;
+import com.boardly.features.label.domain.port.LabelRepository;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 public class LabelUpdateService implements UpdateLabelUseCase {
 
     private final LabelValidator labelValidator;
-    private final ValidationMessageResolver messageResolver;
+    private final MessageResolver messageResolver;
     private final LabelRepository labelRepository;
     private final BoardRepository boardRepository;
     private final BoardPermissionService boardPermissionService;

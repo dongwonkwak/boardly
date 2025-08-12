@@ -3,14 +3,14 @@ package com.boardly.features.label.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.board.domain.port.BoardRepository;
 import com.boardly.features.label.application.port.input.CreateLabelCommand;
 import com.boardly.features.label.application.usecase.CreateLabelUseCase;
 import com.boardly.features.label.application.validation.LabelValidator;
-import com.boardly.features.label.domain.model.Label;
-import com.boardly.features.label.domain.repository.LabelRepository;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.features.label.domain.Label;
+import com.boardly.features.label.domain.port.LabelRepository;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class LabelCreateService implements CreateLabelUseCase {
 
     private final LabelRepository labelRepository;
     private final LabelValidator labelValidator;
-    private final ValidationMessageResolver validationMessageResolver;
+    private final MessageResolver validationMessageResolver;
     private final BoardRepository boardRepository;
 
     @Override

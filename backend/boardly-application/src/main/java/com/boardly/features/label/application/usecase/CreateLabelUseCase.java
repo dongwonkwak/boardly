@@ -1,8 +1,8 @@
 package com.boardly.features.label.application.usecase;
 
 import com.boardly.features.label.application.port.input.CreateLabelCommand;
-import com.boardly.features.label.domain.model.Label;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.features.label.domain.Label;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 

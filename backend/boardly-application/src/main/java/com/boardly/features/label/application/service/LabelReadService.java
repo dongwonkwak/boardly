@@ -6,16 +6,16 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boardly.features.board.domain.model.Board;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.board.domain.repository.BoardRepository;
+import com.boardly.features.board.domain.Board;
+import com.boardly.shared.common.value.BoardId;
+import com.boardly.features.board.domain.port.BoardRepository;
 import com.boardly.features.label.application.usecase.GetLabelUseCase;
-import com.boardly.features.label.domain.model.Label;
-import com.boardly.features.label.domain.model.LabelId;
-import com.boardly.features.label.domain.repository.LabelRepository;
+import com.boardly.features.label.domain.Label;
+import com.boardly.shared.common.value.LabelId;
+import com.boardly.features.label.domain.port.LabelRepository;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class LabelReadService implements GetLabelUseCase {
 
     private final LabelRepository labelRepository;
     private final BoardRepository boardRepository;
-    private final ValidationMessageResolver validationMessageResolver;
+    private final MessageResolver validationMessageResolver;
 
     @Override
     public Either<Failure, Label> getLabel(LabelId labelId, UserId requesterId) {

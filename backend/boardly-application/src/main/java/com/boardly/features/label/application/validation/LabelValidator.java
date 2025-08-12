@@ -7,10 +7,10 @@ import org.springframework.stereotype.Component;
 import com.boardly.features.label.application.port.input.CreateLabelCommand;
 import com.boardly.features.label.application.port.input.DeleteLabelCommand;
 import com.boardly.features.label.application.port.input.UpdateLabelCommand;
-import com.boardly.shared.application.validation.CommonValidationRules;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.application.validation.Validator;
+import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+import com.boardly.shared.validation.Validator;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class LabelValidator {
 
     private final CommonValidationRules commonValidationRules;
-    private final ValidationMessageResolver messageResolver;
+    private final MessageResolver messageResolver;
 
     // 상수 정의
     private static final int LABEL_NAME_MAX_LENGTH = 50;

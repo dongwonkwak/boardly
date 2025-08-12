@@ -1,7 +1,7 @@
 package com.boardly.features.label.application.usecase;
 
 import com.boardly.features.label.application.port.input.DeleteLabelCommand;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 

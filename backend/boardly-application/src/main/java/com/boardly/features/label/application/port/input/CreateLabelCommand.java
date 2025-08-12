@@ -1,16 +1,17 @@
 package com.boardly.features.label.application.port.input;
 
-import com.boardly.features.label.domain.model.LabelId;
+import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.UserId;
 
-public record UpdateLabelCommand(
-        LabelId labelId,
+public record CreateLabelCommand(
+        BoardId boardId,
         UserId requesterId,
         String name,
         String color) {
-    public static UpdateLabelCommand of(LabelId labelId, UserId requesterId, String name, String color) {
-        return new UpdateLabelCommand(
-                labelId,
+
+    public static CreateLabelCommand of(BoardId boardId, UserId requesterId, String name, String color) {
+        return new CreateLabelCommand(
+                boardId,
                 requesterId,
                 name != null ? name.trim() : "",
                 color != null ? color.trim() : "");

@@ -3,7 +3,7 @@ package com.boardly.features.comment.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boardly.features.comment.application.port.input.DeleteCommentCommand;
+import com.boardly.features.comment.application.command.DeleteCommentCommand;
 import com.boardly.features.comment.application.usecase.DeleteCommentUseCase;
 import com.boardly.features.comment.application.validation.CommentValidator;
 import com.boardly.features.comment.domain.Comment;

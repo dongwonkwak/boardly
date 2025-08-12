@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boardly.features.comment.application.port.input.UpdateCommentCommand;
+import com.boardly.features.comment.application.command.UpdateCommentCommand;
 import com.boardly.features.comment.application.usecase.UpdateCommentUseCase;
 import com.boardly.features.comment.application.validation.CommentValidator;
 import com.boardly.features.comment.domain.Comment;

@@ -2,9 +2,9 @@ package com.boardly.features.comment.application.validation;
 
 import org.springframework.stereotype.Component;
 
-import com.boardly.features.comment.application.port.input.CreateCommentCommand;
-import com.boardly.features.comment.application.port.input.UpdateCommentCommand;
-import com.boardly.features.comment.application.port.input.DeleteCommentCommand;
+import com.boardly.features.comment.application.command.CreateCommentCommand;
+import com.boardly.features.comment.application.command.UpdateCommentCommand;
+import com.boardly.features.comment.application.command.DeleteCommentCommand;
 import com.boardly.infrastructure.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;

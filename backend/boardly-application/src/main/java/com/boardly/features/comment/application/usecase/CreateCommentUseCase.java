@@ -1,6 +1,6 @@
 package com.boardly.features.comment.application.usecase;
 
-import com.boardly.features.comment.application.port.input.CreateCommentCommand;
+import com.boardly.features.comment.application.command.CreateCommentCommand;
 import com.boardly.features.comment.domain.Comment;
 import com.boardly.shared.common.error.Failure;
 

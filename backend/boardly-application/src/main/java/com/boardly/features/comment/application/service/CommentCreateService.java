@@ -15,7 +15,7 @@ import com.boardly.features.boardlist.domain.port.BoardListRepository;
 import com.boardly.features.card.domain.Card;
 import com.boardly.shared.common.value.CardId;
 import com.boardly.features.card.domain.port.CardRepository;
-import com.boardly.features.comment.application.port.input.CreateCommentCommand;
+import com.boardly.features.comment.application.command.CreateCommentCommand;
 import com.boardly.features.comment.application.usecase.CreateCommentUseCase;
 import com.boardly.features.comment.application.validation.CommentValidator;
 import com.boardly.features.comment.domain.Comment;

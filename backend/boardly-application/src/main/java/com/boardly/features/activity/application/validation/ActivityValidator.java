@@ -1,27 +1,24 @@
 package com.boardly.features.activity.application.validation;
 
+import com.boardly.features.activity.application.command.*;
+import com.boardly.features.activity.application.query.*;
+import com.boardly.features.activity.domain.ActivityType;
+import com.boardly.infrastructure.validation.*;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+import com.boardly.shared.validation.Validator;
 import java.time.Instant;
 import java.util.Map;
-
-import org.springframework.stereotype.Component;
-
-import com.boardly.features.activity.application.port.input.CreateActivityCommand;
-import com.boardly.features.activity.application.port.input.GetActivityQuery;
-import com.boardly.features.activity.domain.model.ActivityType;
-import com.boardly.shared.application.validation.CommonValidationRules;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.application.validation.Validator;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /**
  * 활동 통합 검증기
- * 
+ *
  * <p>
  * 모든 활동 관련 Command와 Query들의 입력 검증을 담당합니다.
  * CreateActivityCommand와 GetActivityQuery의 검증 로직을 통합하여 관리합니다.
- * 
+ *
  * @since 1.0.0
  */
 @Component
@@ -29,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class ActivityValidator {
 
     private final CommonValidationRules commonValidationRules;
-    private final ValidationMessageResolver messageResolver;
+    private final MessageResolver messageResolver;
 
     // 상수 정의
     private static final int PAYLOAD_MAX_SIZE = 1000; // payload의 최대 크기
@@ -39,14 +36,18 @@ public class ActivityValidator {
     /**
      * 활동 생성 커맨드 검증
      */
-    public ValidationResult<CreateActivityCommand> validateCreate(CreateActivityCommand command) {
+    public ValidationResult<CreateActivityCommand> validateCreate(
+        CreateActivityCommand command
+    ) {
         return getCreateValidator().validate(command);
     }
 
     /**
      * 활동 조회 쿼리 검증
      */
-    public ValidationResult<GetActivityQuery> validateGet(GetActivityQuery query) {
+    public ValidationResult<GetActivityQuery> validateGet(
+        GetActivityQuery query
+    ) {
         return getGetValidator().validate(query);
     }
 
@@ -55,15 +56,18 @@ public class ActivityValidator {
      */
     private Validator<CreateActivityCommand> getCreateValidator() {
         return Validator.combine(
-                // 활동 유형 검증: 필수
-                activityTypeRequired(),
-                // 활동 생성자 ID 검증: 필수
-                commonValidationRules.userIdRequired(CreateActivityCommand::actorId),
-                // payload 검증: 필수, 크기 제한
-                payloadRequired(),
-                payloadSizeValid(),
-                // 컨텍스트 ID 검증: 활동 유형에 따른 필수/선택 검증
-                contextIdsValid());
+            // 활동 유형 검증: 필수
+            activityTypeRequired(),
+            // 활동 생성자 ID 검증: 필수
+            commonValidationRules.userIdRequired(
+                CreateActivityCommand::actorId
+            ),
+            // payload 검증: 필수, 크기 제한
+            payloadRequired(),
+            payloadSizeValid(),
+            // 컨텍스트 ID 검증: 활동 유형에 따른 필수/선택 검증
+            contextIdsValid()
+        );
     }
 
     /**
@@ -71,14 +75,15 @@ public class ActivityValidator {
      */
     private Validator<GetActivityQuery> getGetValidator() {
         return Validator.combine(
-                // 사용자 ID 또는 보드 ID 중 하나는 필수
-                userOrBoardIdRequired(),
-                // 페이지 번호 검증
-                pageNumberValid(),
-                // 페이지 크기 검증
-                pageSizeValid(),
-                // 날짜 범위 검증
-                dateRangeValid());
+            // 사용자 ID 또는 보드 ID 중 하나는 필수
+            userOrBoardIdRequired(),
+            // 페이지 번호 검증
+            pageNumberValid(),
+            // 페이지 크기 검증
+            pageSizeValid(),
+            // 날짜 범위 검증
+            dateRangeValid()
+        );
     }
 
     /**
@@ -86,11 +91,12 @@ public class ActivityValidator {
      */
     private Validator<CreateActivityCommand> activityTypeRequired() {
         return Validator.fieldWithMessage(
-                CreateActivityCommand::type,
-                type -> type != null,
-                "type",
-                "validation.activity.type.required",
-                messageResolver);
+            CreateActivityCommand::type,
+            type -> type != null,
+            "type",
+            "validation.activity.type.required",
+            messageResolver
+        );
     }
 
     /**
@@ -98,11 +104,12 @@ public class ActivityValidator {
      */
     private Validator<CreateActivityCommand> payloadRequired() {
         return Validator.fieldWithMessage(
-                CreateActivityCommand::payload,
-                payload -> payload != null && !payload.isEmpty(),
-                "payload",
-                "validation.activity.payload.required",
-                messageResolver);
+            CreateActivityCommand::payload,
+            payload -> payload != null && !payload.isEmpty(),
+            "payload",
+            "validation.activity.payload.required",
+            messageResolver
+        );
     }
 
     /**
@@ -110,12 +117,13 @@ public class ActivityValidator {
      */
     private Validator<CreateActivityCommand> payloadSizeValid() {
         return Validator.fieldWithMessage(
-                CreateActivityCommand::payload,
-                payload -> payload == null || payload.size() <= PAYLOAD_MAX_SIZE,
-                "payload",
-                "validation.activity.payload.size.exceeded",
-                messageResolver,
-                PAYLOAD_MAX_SIZE);
+            CreateActivityCommand::payload,
+            payload -> payload == null || payload.size() <= PAYLOAD_MAX_SIZE,
+            "payload",
+            "validation.activity.payload.size.exceeded",
+            messageResolver,
+            PAYLOAD_MAX_SIZE
+        );
     }
 
     /**
@@ -129,45 +137,75 @@ public class ActivityValidator {
             if (isCardActivity(type)) {
                 if (command.cardId() == null) {
                     return ValidationResult.invalid(
+                        "cardId",
+                        messageResolver.getDomainValidationMessage(
+                            "activity",
                             "cardId",
-                            messageResolver.getDomainValidationMessage("activity", "cardId", "required"),
-                            null);
+                            "required"
+                        ),
+                        null
+                    );
                 }
                 if (command.listId() == null) {
                     return ValidationResult.invalid(
+                        "listId",
+                        messageResolver.getDomainValidationMessage(
+                            "activity",
                             "listId",
-                            messageResolver.getDomainValidationMessage("activity", "listId", "required"),
-                            null);
+                            "required"
+                        ),
+                        null
+                    );
                 }
                 if (command.boardId() == null) {
                     return ValidationResult.invalid(
+                        "boardId",
+                        messageResolver.getDomainValidationMessage(
+                            "activity",
                             "boardId",
-                            messageResolver.getDomainValidationMessage("activity", "boardId", "required"),
-                            null);
+                            "required"
+                        ),
+                        null
+                    );
                 }
             }
             // 리스트 관련 활동
             else if (isListActivity(type)) {
                 if (command.listId() == null) {
                     return ValidationResult.invalid(
+                        "listId",
+                        messageResolver.getDomainValidationMessage(
+                            "activity",
                             "listId",
-                            messageResolver.getDomainValidationMessage("activity", "listId", "required"),
-                            null);
+                            "required"
+                        ),
+                        null
+                    );
                 }
                 if (command.boardId() == null) {
                     return ValidationResult.invalid(
+                        "boardId",
+                        messageResolver.getDomainValidationMessage(
+                            "activity",
                             "boardId",
-                            messageResolver.getDomainValidationMessage("activity", "boardId", "required"),
-                            null);
+                            "required"
+                        ),
+                        null
+                    );
                 }
             }
             // 보드 관련 활동
             else if (isBoardActivity(type)) {
                 if (command.boardId() == null) {
                     return ValidationResult.invalid(
+                        "boardId",
+                        messageResolver.getDomainValidationMessage(
+                            "activity",
                             "boardId",
-                            messageResolver.getDomainValidationMessage("activity", "boardId", "required"),
-                            null);
+                            "required"
+                        ),
+                        null
+                    );
                 }
             }
             // 사용자 관련 활동은 추가 컨텍스트 ID가 필요하지 않음
@@ -185,9 +223,14 @@ public class ActivityValidator {
                 return ValidationResult.valid(query);
             }
             return ValidationResult.invalid(
-                    "userId,boardId",
-                    messageResolver.getDomainValidationMessage("activity", "query", "userOrBoardId.required"),
-                    null);
+                "userId,boardId",
+                messageResolver.getDomainValidationMessage(
+                    "activity",
+                    "query",
+                    "userOrBoardId.required"
+                ),
+                null
+            );
         };
     }
 
@@ -201,9 +244,14 @@ public class ActivityValidator {
                 return ValidationResult.valid(query);
             }
             return ValidationResult.invalid(
-                    "page",
-                    messageResolver.getDomainValidationMessage("activity", "query", "page.negative"),
-                    page);
+                "page",
+                messageResolver.getDomainValidationMessage(
+                    "activity",
+                    "query",
+                    "page.negative"
+                ),
+                page
+            );
         };
     }
 
@@ -217,10 +265,16 @@ public class ActivityValidator {
                 return ValidationResult.valid(query);
             }
             return ValidationResult.invalid(
-                    "size",
-                    messageResolver.getDomainValidationMessage("activity", "query", "size.range", MIN_PAGE_SIZE,
-                            MAX_PAGE_SIZE),
-                    size);
+                "size",
+                messageResolver.getDomainValidationMessage(
+                    "activity",
+                    "query",
+                    "size.range",
+                    MIN_PAGE_SIZE,
+                    MAX_PAGE_SIZE
+                ),
+                size
+            );
         };
     }
 
@@ -234,9 +288,14 @@ public class ActivityValidator {
 
             if (since != null && until != null && since.isAfter(until)) {
                 return ValidationResult.invalid(
-                        "since,until",
-                        messageResolver.getDomainValidationMessage("activity", "dateRange", "invalid"),
-                        Map.of("since", since, "until", until));
+                    "since,until",
+                    messageResolver.getDomainValidationMessage(
+                        "activity",
+                        "dateRange",
+                        "invalid"
+                    ),
+                    Map.of("since", since, "until", until)
+                );
             }
 
             return ValidationResult.valid(query);
@@ -247,7 +306,9 @@ public class ActivityValidator {
      * 카드 관련 활동인지 확인
      */
     private boolean isCardActivity(ActivityType type) {
-        return type != null && (type == ActivityType.CARD_CREATE ||
+        return (
+            type != null &&
+            (type == ActivityType.CARD_CREATE ||
                 type == ActivityType.CARD_MOVE ||
                 type == ActivityType.CARD_RENAME ||
                 type == ActivityType.CARD_ARCHIVE ||
@@ -259,26 +320,32 @@ public class ActivityValidator {
                 type == ActivityType.CARD_ADD_ATTACHMENT ||
                 type == ActivityType.CARD_ADD_CHECKLIST ||
                 type == ActivityType.CARD_DUPLICATE ||
-                type == ActivityType.CARD_UPDATE_DESCRIPTION);
+                type == ActivityType.CARD_UPDATE_DESCRIPTION)
+        );
     }
 
     /**
      * 리스트 관련 활동인지 확인
      */
     private boolean isListActivity(ActivityType type) {
-        return type != null && (type == ActivityType.LIST_CREATE ||
+        return (
+            type != null &&
+            (type == ActivityType.LIST_CREATE ||
                 type == ActivityType.LIST_RENAME ||
                 type == ActivityType.LIST_ARCHIVE ||
                 type == ActivityType.LIST_MOVE ||
                 type == ActivityType.LIST_CHANGE_COLOR ||
-                type == ActivityType.LIST_DELETE);
+                type == ActivityType.LIST_DELETE)
+        );
     }
 
     /**
      * 보드 관련 활동인지 확인
      */
     private boolean isBoardActivity(ActivityType type) {
-        return type != null && (type == ActivityType.BOARD_CREATE ||
+        return (
+            type != null &&
+            (type == ActivityType.BOARD_CREATE ||
                 type == ActivityType.BOARD_RENAME ||
                 type == ActivityType.BOARD_ARCHIVE ||
                 type == ActivityType.BOARD_MOVE ||
@@ -287,6 +354,7 @@ public class ActivityValidator {
                 type == ActivityType.BOARD_ADD_MEMBER ||
                 type == ActivityType.BOARD_REMOVE_MEMBER ||
                 type == ActivityType.BOARD_UPDATE_MEMBER_ROLE ||
-                type == ActivityType.BOARD_DUPLICATE);
+                type == ActivityType.BOARD_DUPLICATE)
+        );
     }
 }

@@ -1,0 +1,1 @@
+package com.boardly.features.boardlist.application.query;

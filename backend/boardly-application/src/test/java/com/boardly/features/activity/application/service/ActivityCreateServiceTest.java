@@ -8,8 +8,6 @@ import com.boardly.features.activity.application.command.CreateActivityCommand;
 import com.boardly.features.activity.application.validation.ActivityValidator;
 import com.boardly.features.activity.domain.Activity;
 import com.boardly.features.activity.domain.ActivityType;
-import com.boardly.features.activity.domain.Actor;
-import com.boardly.features.activity.domain.Payload;
 import com.boardly.features.activity.domain.port.ActivityRepository;
 import com.boardly.features.user.domain.User;
 import com.boardly.features.user.domain.UserProfile;
@@ -37,136 +35,168 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ActivityCreateServiceTest {
 
-  @Mock private ActivityRepository activityRepository;
-  @Mock private UserFinder userFinder;
-  @Mock private ActivityValidator activityValidator;
-  @Mock private MessageResolver messageResolver;
+    @Mock
+    private ActivityRepository activityRepository;
 
-  @InjectMocks private ActivityCreateService service;
+    @Mock
+    private UserFinder userFinder;
 
-  private CreateActivityCommand validCommand;
-  private UserId actorId;
-  private BoardId boardId;
-  private ListId listId;
-  private CardId cardId;
-  private Map<String, Object> payload;
+    @Mock
+    private ActivityValidator activityValidator;
 
-  @BeforeEach
-  void setUp() {
-    actorId = new UserId("user-1");
-    boardId = new BoardId("board-1");
-    listId = new ListId("list-1");
-    cardId = new CardId("card-1");
-    payload = new HashMap<>();
-    payload.put("k", "v");
+    @Mock
+    private MessageResolver messageResolver;
 
-    validCommand = CreateActivityCommand.of(
-        ActivityType.CARD_CREATE,
-        actorId,
-        payload,
-        "My Board",
-        boardId,
-        listId,
-        cardId
-    );
-  }
+    @InjectMocks
+    private ActivityCreateService service;
 
-  @Test
-  @DisplayName("createActivity: 성공 경로")
-  void createActivity_success() {
-    when(activityValidator.validateCreate(validCommand)).thenReturn(ValidationResult.valid(validCommand));
+    private CreateActivityCommand validCommand;
+    private UserId actorId;
+    private BoardId boardId;
+    private ListId listId;
+    private CardId cardId;
+    private Map<String, Object> payload;
 
-    User user = User.builder()
-        .userId(actorId)
-        .email("user@example.com")
-        .hashedPassword("hashed")
-        .userProfile(new UserProfile("First", "Last"))
-        .isActive(true)
-        .createdAt(Instant.now())
-        .updatedAt(Instant.now())
-        .build();
-    when(userFinder.findUserOrThrow(actorId)).thenReturn(user);
+    @BeforeEach
+    void setUp() {
+        actorId = new UserId("user-1");
+        boardId = new BoardId("board-1");
+        listId = new ListId("list-1");
+        cardId = new CardId("card-1");
+        payload = new HashMap<>();
+        payload.put("k", "v");
 
-    // repository.save는 전달받은 Activity를 그대로 성공으로 반환
-    when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> Either.right(inv.getArgument(0)));
+        validCommand = CreateActivityCommand.of(
+            ActivityType.CARD_CREATE,
+            actorId,
+            payload,
+            "My Board",
+            boardId,
+            listId,
+            cardId
+        );
+    }
 
-    Either<Failure, Activity> result = service.createActivity(validCommand);
+    @Test
+    @DisplayName("createActivity: 성공 경로")
+    void createActivity_success() {
+        when(activityValidator.validateCreate(validCommand)).thenReturn(
+            ValidationResult.valid(validCommand)
+        );
 
-    assertTrue(result.isRight());
-    Activity saved = result.get();
-    assertEquals(ActivityType.CARD_CREATE, saved.getType());
-    assertEquals("My Board", saved.getBoardName());
-    assertNotNull(saved.getId());
+        User user = User.builder()
+            .userId(actorId)
+            .email("user@example.com")
+            .hashedPassword("hashed")
+            .userProfile(new UserProfile("First", "Last"))
+            .isActive(true)
+            .createdAt(Instant.now())
+            .updatedAt(Instant.now())
+            .build();
+        when(userFinder.findUserOrThrow(actorId)).thenReturn(user);
 
-    ArgumentCaptor<Activity> captor = ArgumentCaptor.forClass(Activity.class);
-    verify(activityRepository, times(1)).save(captor.capture());
-    Activity toSave = captor.getValue();
-    assertEquals(boardId, toSave.getBoardId());
-    assertEquals(listId, toSave.getListId());
-    assertEquals(cardId, toSave.getCardId());
-    assertEquals("v", toSave.getPayload().getString("k"));
-  }
+        // repository.save는 전달받은 Activity를 그대로 성공으로 반환
+        when(activityRepository.save(any(Activity.class))).thenAnswer(inv ->
+            Either.right(inv.getArgument(0))
+        );
 
-  @Test
-  @DisplayName("createActivity: 검증 실패시 InputError 반환")
-  void createActivity_validationFailure() {
-    when(activityValidator.validateCreate(validCommand))
-        .thenReturn(ValidationResult.invalid("type", "invalid", null));
-    when(messageResolver.getMessage("activity.validation.failed"))
-        .thenReturn("Validation failed");
+        Either<Failure, Activity> result = service.createActivity(validCommand);
 
-    Either<Failure, Activity> result = service.createActivity(validCommand);
+        assertTrue(result.isRight());
+        Activity saved = result.get();
+        assertEquals(ActivityType.CARD_CREATE, saved.getType());
+        assertEquals("My Board", saved.getBoardName());
+        assertNotNull(saved.getId());
 
-    assertTrue(result.isLeft());
-    Failure failure = result.getLeft();
-    assertInstanceOf(Failure.InputError.class, failure);
-    assertEquals("Validation failed", failure.getMessage());
-    assertEquals("VALIDATION_ERROR", ((Failure.InputError) failure).getErrorCode());
+        ArgumentCaptor<Activity> captor = ArgumentCaptor.forClass(
+            Activity.class
+        );
+        verify(activityRepository, times(1)).save(captor.capture());
+        Activity toSave = captor.getValue();
+        assertEquals(boardId, toSave.getBoardId());
+        assertEquals(listId, toSave.getListId());
+        assertEquals(cardId, toSave.getCardId());
+        assertEquals("v", toSave.getPayload().getString("k"));
+    }
 
-    verifyNoInteractions(userFinder);
-    verifyNoInteractions(activityRepository);
-  }
+    @Test
+    @DisplayName("createActivity: 검증 실패시 InputError 반환")
+    void createActivity_validationFailure() {
+        when(activityValidator.validateCreate(validCommand)).thenReturn(
+            ValidationResult.invalid("type", "invalid", null)
+        );
+        when(
+            messageResolver.getMessage("activity.validation.failed")
+        ).thenReturn("Validation failed");
 
-  @Test
-  @DisplayName("createActivity: 사용자 미존재시 NotFound 반환")
-  void createActivity_userNotFound() {
-    when(activityValidator.validateCreate(validCommand)).thenReturn(ValidationResult.valid(validCommand));
-    when(userFinder.findUserOrThrow(actorId)).thenThrow(new RuntimeException("no user"));
-    when(messageResolver.getMessage("activity.user.not.found")).thenReturn("User not found");
+        Either<Failure, Activity> result = service.createActivity(validCommand);
 
-    Either<Failure, Activity> result = service.createActivity(validCommand);
+        assertTrue(result.isLeft());
+        Failure failure = result.getLeft();
+        assertInstanceOf(Failure.InputError.class, failure);
+        assertEquals("Validation failed", failure.getMessage());
+        assertEquals(
+            "VALIDATION_ERROR",
+            ((Failure.InputError) failure).getErrorCode()
+        );
 
-    assertTrue(result.isLeft());
-    Failure failure = result.getLeft();
-    assertInstanceOf(Failure.NotFound.class, failure);
-    assertEquals("User not found", failure.getMessage());
-    assertEquals("USER_NOT_FOUND", ((Failure.NotFound) failure).getErrorCode());
+        verifyNoInteractions(userFinder);
+        verifyNoInteractions(activityRepository);
+    }
 
-    verifyNoInteractions(activityRepository);
-  }
+    @Test
+    @DisplayName("createActivity: 사용자 미존재시 NotFound 반환")
+    void createActivity_userNotFound() {
+        when(activityValidator.validateCreate(validCommand)).thenReturn(
+            ValidationResult.valid(validCommand)
+        );
+        when(userFinder.findUserOrThrow(actorId)).thenThrow(
+            new RuntimeException("no user")
+        );
+        when(messageResolver.getMessage("activity.user.not.found")).thenReturn(
+            "User not found"
+        );
 
-  @Test
-  @DisplayName("createActivity: 저장 실패시 동일 Failure 전파")
-  void createActivity_repositoryFailure() {
-    when(activityValidator.validateCreate(validCommand)).thenReturn(ValidationResult.valid(validCommand));
+        Either<Failure, Activity> result = service.createActivity(validCommand);
 
-    User user = User.builder()
-        .userId(actorId)
-        .email("user@example.com")
-        .hashedPassword("hashed")
-        .userProfile(new UserProfile("First", "Last"))
-        .isActive(true)
-        .createdAt(Instant.now())
-        .updatedAt(Instant.now())
-        .build();
-    when(userFinder.findUserOrThrow(actorId)).thenReturn(user);
+        assertTrue(result.isLeft());
+        Failure failure = result.getLeft();
+        assertInstanceOf(Failure.NotFound.class, failure);
+        assertEquals("User not found", failure.getMessage());
+        assertEquals(
+            "USER_NOT_FOUND",
+            ((Failure.NotFound) failure).getErrorCode()
+        );
 
-    Failure dbError = Failure.ofInternalServerError("db error");
-    when(activityRepository.save(any(Activity.class))).thenReturn(Either.left(dbError));
+        verifyNoInteractions(activityRepository);
+    }
 
-    Either<Failure, Activity> result = service.createActivity(validCommand);
+    @Test
+    @DisplayName("createActivity: 저장 실패시 동일 Failure 전파")
+    void createActivity_repositoryFailure() {
+        when(activityValidator.validateCreate(validCommand)).thenReturn(
+            ValidationResult.valid(validCommand)
+        );
 
-    assertTrue(result.isLeft());
-    assertSame(dbError, result.getLeft());
-  }
+        User user = User.builder()
+            .userId(actorId)
+            .email("user@example.com")
+            .hashedPassword("hashed")
+            .userProfile(new UserProfile("First", "Last"))
+            .isActive(true)
+            .createdAt(Instant.now())
+            .updatedAt(Instant.now())
+            .build();
+        when(userFinder.findUserOrThrow(actorId)).thenReturn(user);
+
+        Failure dbError = Failure.ofInternalServerError("db error");
+        when(activityRepository.save(any(Activity.class))).thenReturn(
+            Either.left(dbError)
+        );
+
+        Either<Failure, Activity> result = service.createActivity(validCommand);
+
+        assertTrue(result.isLeft());
+        assertSame(dbError, result.getLeft());
+    }
 }

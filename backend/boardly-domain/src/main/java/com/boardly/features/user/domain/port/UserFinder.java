@@ -13,5 +13,5 @@ public interface UserFinder {
 
     Optional<User> findUserByEmail(String email);
 
-    record UserNameDto(String firstName, String LastName) {}
+    record UserNameDto(String firstName, String lastName) {}
 }

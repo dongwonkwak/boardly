@@ -37,7 +37,9 @@ public class ActivityReadService implements GetActivityUseCase {
 
             // 쿼리 검증
             Either<Failure, Void> validationResult = validateQuery(query);
-            if (validationResult.isLeft()) return Either.left(validationResult.getLeft());
+            if (validationResult.isLeft()) return Either.left(
+                validationResult.getLeft()
+            );
 
             // 활동 조회 및 응답 생성
             List<Activity> activities = fetchActivities(query);
@@ -222,7 +224,10 @@ public class ActivityReadService implements GetActivityUseCase {
     }
 
     private boolean isPagingRequested(GetActivityQuery query) {
-        return query.getPageOrDefault() > 0 || query.getSizeOrDefault() != DEFAULT_PAGE_SIZE;
+        return (
+            query.getPageOrDefault() > 0 ||
+            query.getSizeOrDefault() != DEFAULT_PAGE_SIZE
+        );
     }
 
     /**

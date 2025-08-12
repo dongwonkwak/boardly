@@ -2,7 +2,6 @@ package com.boardly.infrastructure.message;
 
 import com.boardly.shared.validation.MessageResolver;
 import io.vavr.control.Try;
-import jakarta.validation.OverridesAttribute;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;

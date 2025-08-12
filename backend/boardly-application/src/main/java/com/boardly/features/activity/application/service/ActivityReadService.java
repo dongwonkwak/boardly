@@ -26,6 +26,8 @@ public class ActivityReadService implements GetActivityUseCase {
     private final BoardRepository boardRepository;
     private final MessageResolver messageResolver;
 
+    private static final int DEFAULT_PAGE_SIZE = 50;
+
     @Override
     public Either<Failure, ActivityListResponse> getActivities(
         GetActivityQuery query
@@ -35,14 +37,10 @@ public class ActivityReadService implements GetActivityUseCase {
 
             // 쿼리 검증
             Either<Failure, Void> validationResult = validateQuery(query);
-            if (validationResult.isLeft()) {
-                return Either.left(validationResult.getLeft());
-            }
+            if (validationResult.isLeft()) return Either.left(validationResult.getLeft());
 
-            // 활동 조회
+            // 활동 조회 및 응답 생성
             List<Activity> activities = fetchActivities(query);
-
-            // 응답 생성
             ActivityListResponse response = createResponse(activities, query);
 
             log.debug("활동 목록 조회 완료: 총 {}개", activities.size());
@@ -115,7 +113,7 @@ public class ActivityReadService implements GetActivityUseCase {
     ) {
         int page = query.getPageOrDefault();
         int size = query.getSizeOrDefault();
-        boolean hasPaging = page > 0 || size != 50;
+        boolean hasPaging = isPagingRequested(query);
 
         if (hasPaging) {
             return activityRepository.findByBoardIdAndTimestampAfter(
@@ -140,7 +138,7 @@ public class ActivityReadService implements GetActivityUseCase {
     ) {
         int page = query.getPageOrDefault();
         int size = query.getSizeOrDefault();
-        boolean hasPaging = page > 0 || size != 50;
+        boolean hasPaging = isPagingRequested(query);
 
         if (hasPaging) {
             return activityRepository.findByBoardIdOrderByTimestampDesc(
@@ -161,7 +159,7 @@ public class ActivityReadService implements GetActivityUseCase {
     private List<Activity> fetchUserActivities(GetActivityQuery query) {
         int page = query.getPageOrDefault();
         int size = query.getSizeOrDefault();
-        boolean hasPaging = page > 0 || size != 50;
+        boolean hasPaging = isPagingRequested(query);
 
         if (hasPaging) {
             return activityRepository.findByActorIdOrderByTimestampDesc(
@@ -190,7 +188,7 @@ public class ActivityReadService implements GetActivityUseCase {
 
         int page = query.getPageOrDefault();
         int size = query.getSizeOrDefault();
-        boolean hasPaging = page > 0 || size != 50;
+        boolean hasPaging = isPagingRequested(query);
 
         if (hasPaging) {
             long totalCount = getTotalCount(query);
@@ -221,6 +219,10 @@ public class ActivityReadService implements GetActivityUseCase {
         } else {
             return activityRepository.countByActorId(query.userId());
         }
+    }
+
+    private boolean isPagingRequested(GetActivityQuery query) {
+        return query.getPageOrDefault() > 0 || query.getSizeOrDefault() != DEFAULT_PAGE_SIZE;
     }
 
     /**

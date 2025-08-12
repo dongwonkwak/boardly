@@ -18,7 +18,12 @@ dependencies {
   implementation project(':boardly-infrastructure')
 
   implementation libs.bundles.spring.boot.dependencies
-  testImplementation libs.spring.boot.starter.test
+  // Gradle가 자체 JUnit Platform 런처를 사용하도록 강제하기 위해 launcher 제외
+  testImplementation(libs.spring.boot.starter.test) {
+    exclude group: 'org.junit.platform', module: 'junit-platform-launcher'
+  }
+  // 엔진(1.12.x)과 런처 정렬
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.2'
 
   compileOnly libs.lombok
   annotationProcessor libs.lombok

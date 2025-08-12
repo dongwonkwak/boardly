@@ -17,14 +17,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 
-import com.boardly.features.comment.application.port.input.CreateCommentCommand;
-import com.boardly.features.comment.application.port.input.UpdateCommentCommand;
-import com.boardly.features.comment.application.port.input.DeleteCommentCommand;
+import com.boardly.features.comment.application.command.CreateCommentCommand;
+import com.boardly.features.comment.application.command.UpdateCommentCommand;
+import com.boardly.features.comment.application.command.DeleteCommentCommand;
 import com.boardly.features.comment.domain.model.CommentId;
 import com.boardly.features.card.domain.model.CardId;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.application.validation.CommonValidationRules;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
+import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.application.validation.ValidationResult;
 
 @ExtendWith(MockitoExtension.class)

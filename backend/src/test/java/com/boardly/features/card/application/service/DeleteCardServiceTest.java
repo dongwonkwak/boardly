@@ -21,23 +21,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.boardly.features.activity.application.helper.ActivityHelper;
-import com.boardly.features.activity.domain.model.ActivityType;
-import com.boardly.features.board.domain.model.Board;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.card.application.port.input.DeleteCardCommand;
+import com.boardly.features.activity.domain.ActivityType;
+import com.boardly.features.board.domain.Board;
+import com.boardly.features.board.domain.BoardId;
+import com.boardly.features.board.domain.port.BoardRepository;
+import com.boardly.features.boardlist.domain.BoardList;
+import com.boardly.shared.common.value.ListId;
+import com.boardly.features.boardlist.domain.port.BoardListRepository;
+import com.boardly.features.card.application.command.DeleteCardCommand;
 import com.boardly.features.card.application.validation.CardValidator;
-import com.boardly.features.card.domain.model.Card;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.card.domain.repository.CardRepository;
-import com.boardly.features.comment.domain.repository.CommentRepository;
+import com.boardly.features.card.domain.Card;
+import com.boardly.features.card.domain.CardId;
+import com.boardly.features.card.domain.port.CardRepository;
+import com.boardly.features.comment.domain.port.CommentRepository;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 

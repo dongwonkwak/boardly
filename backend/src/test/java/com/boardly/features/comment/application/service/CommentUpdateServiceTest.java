@@ -19,16 +19,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.comment.application.port.input.UpdateCommentCommand;
+import com.boardly.shared.common.value.CardId;
+import com.boardly.features.comment.application.command.UpdateCommentCommand;
 import com.boardly.features.comment.application.validation.CommentValidator;
-import com.boardly.features.comment.domain.model.Comment;
-import com.boardly.features.comment.domain.model.CommentId;
-import com.boardly.features.comment.domain.repository.CommentRepository;
+import com.boardly.features.comment.domain.Comment;
+import com.boardly.shared.common.value.CommentId;
+import com.boardly.features.comment.domain.port.CommentRepository;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 
@@ -40,7 +40,7 @@ class CommentUpdateServiceTest {
         private CommentValidator commentValidator;
 
         @Mock
-        private ValidationMessageResolver validationMessageResolver;
+        private MessageResolver validationMessageResolver;
 
         @Mock
         private CommentRepository commentRepository;

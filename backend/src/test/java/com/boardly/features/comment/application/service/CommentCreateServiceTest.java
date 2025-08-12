@@ -20,24 +20,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.boardly.features.activity.application.helper.ActivityHelper;
-import com.boardly.features.activity.domain.model.ActivityType;
-import com.boardly.features.board.domain.model.Board;
-import com.boardly.features.board.domain.model.BoardId;
-import com.boardly.features.board.domain.repository.BoardRepository;
-import com.boardly.features.boardlist.domain.model.BoardList;
-import com.boardly.features.boardlist.domain.model.ListId;
-import com.boardly.features.boardlist.domain.repository.BoardListRepository;
-import com.boardly.features.card.domain.model.Card;
-import com.boardly.features.card.domain.model.CardId;
-import com.boardly.features.card.domain.repository.CardRepository;
-import com.boardly.features.comment.application.port.input.CreateCommentCommand;
+import com.boardly.features.activity.domain.ActivityType;
+import com.boardly.features.board.domain.Board;
+import com.boardly.features.board.domain.port.BoardRepository;
+import com.boardly.features.boardlist.domain.BoardList;
+import com.boardly.shared.common.value.ListId;
+import com.boardly.features.boardlist.domain.port.BoardListRepository;
+import com.boardly.features.card.domain.Card;
+import com.boardly.shared.common.value.CardId;
+import com.boardly.features.card.domain.port.CardRepository;
+import com.boardly.features.comment.application.command.CreateCommentCommand;
 import com.boardly.features.comment.application.validation.CommentValidator;
-import com.boardly.features.comment.domain.model.Comment;
-import com.boardly.features.comment.domain.repository.CommentRepository;
+import com.boardly.features.comment.domain.Comment;
+import com.boardly.features.comment.domain.port.CommentRepository;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 
@@ -49,7 +48,7 @@ class CommentCreateServiceTest {
         private CommentValidator commentValidator;
 
         @Mock
-        private ValidationMessageResolver validationMessageResolver;
+        private MessageResolver validationMessageResolver;
 
         @Mock
         private CommentRepository commentRepository;
@@ -115,7 +114,7 @@ class CommentCreateServiceTest {
                         authorId = new UserId("user-123");
                         cardId = new CardId("card-123");
                         listId = new ListId("list-123");
-                        boardId = new BoardId("board-123");
+                        boardId = new com.boardly.shared.common.value.BoardId("board-123");
                         commentContent = "테스트 댓글 내용입니다.";
 
                         validCommand = new CreateCommentCommand(cardId, authorId, commentContent);

@@ -1,0 +1,55 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+}
+
+group = 'com.boardly'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
+    }
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    implementation project(':boardly-shared')
+    implementation project(':boardly-api')
+    implementation project(':boardly-infrastructure')
+    implementation project(':boardly-domain')
+    implementation project(':boardly-application')
+
+    implementation libs.bundles.spring.boot.dependencies
+    implementation libs.bundles.common.dependencies
+
+    // springdoc
+    implementation(libs.bundles.springdoc.dependencies)
+
+    // flyway
+    implementation(libs.bundles.flyway.dependencies)
+
+    // Lombok / MapStruct
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    annotationProcessor(libs.lombok.mapstruct.binding)
+    implementation(libs.mapstruct)
+    annotationProcessor(libs.mapstruct.processor)
+
+    testCompileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
+    testAnnotationProcessor(libs.lombok.mapstruct.binding)
+
+    // DB drivers
+    runtimeOnly(libs.h2)
+    runtimeOnly(libs.postgres)
+
+    testImplementation libs.bundles.spring.test.dependencies
+}
+
+tasks.named('test') { useJUnitPlatform() }
+
+jacoco { toolVersion = '0.8.12' }

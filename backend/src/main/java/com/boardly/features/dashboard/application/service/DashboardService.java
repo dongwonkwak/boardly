@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boardly.features.activity.application.port.input.GetActivityQuery;
+import com.boardly.features.activity.application.query.GetActivityQuery;
 import com.boardly.features.activity.application.port.output.ActivityResponse;
 import com.boardly.features.activity.application.service.ActivityReadService;
 import com.boardly.features.board.application.dto.BoardSummaryDto;
@@ -29,8 +29,8 @@ import com.boardly.features.dashboard.application.dto.DashboardStatisticsDto;
 import com.boardly.features.dashboard.application.port.input.GetDashboardCommand;
 import com.boardly.features.dashboard.application.usecase.GetDashboardUseCase;
 import com.boardly.features.user.application.service.UserFinder;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 import io.vavr.control.Try;
@@ -54,7 +54,7 @@ public class DashboardService implements GetDashboardUseCase {
     private final BoardQueryService boardQueryService;
     private final ActivityReadService activityReadService;
     private final UserFinder userFinder;
-    private final ValidationMessageResolver validationMessageResolver;
+    private final MessageResolver validationMessageResolver;
     private final BoardListRepository boardListRepository;
     private final CardRepository cardRepository;
     private final BoardPermissionService boardPermissionService;

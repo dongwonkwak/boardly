@@ -2,6 +2,7 @@ package com.boardly.infrastructure.message;
 
 import com.boardly.shared.validation.MessageResolver;
 import io.vavr.control.Try;
+import jakarta.validation.OverridesAttribute;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -142,6 +143,7 @@ public class MessageResolverImpl implements MessageResolver {
      * @param args   메시지 파라미터
      * @return 국제화된 도메인별 검증 메시지
      */
+    @Override
     public String getDomainValidationMessage(
         String domain,
         String field,
@@ -162,6 +164,7 @@ public class MessageResolverImpl implements MessageResolver {
      * @param args           메시지 파라미터
      * @return 국제화된 도메인별 검증 메시지 또는 기본 메시지
      */
+    @Override
     public String getDomainValidationMessageWithDefault(
         String domain,
         String field,

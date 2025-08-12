@@ -3,17 +3,17 @@ package com.boardly.features.activity.application.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.boardly.features.activity.domain.model.Activity;
-import com.boardly.features.activity.domain.model.Actor;
-import com.boardly.features.activity.domain.model.Payload;
-import com.boardly.features.activity.domain.repository.ActivityRepository;
-import com.boardly.features.user.application.service.UserFinder;
+import com.boardly.features.activity.domain.Activity;
+import com.boardly.features.activity.domain.Actor;
+import com.boardly.features.activity.domain.Payload;
+import com.boardly.features.activity.domain.port.ActivityRepository;
+import com.boardly.features.user.domain.port.UserFinder;
 import com.boardly.features.user.domain.User;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.features.activity.application.port.input.CreateActivityCommand;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.features.activity.application.command.CreateActivityCommand;
 import com.boardly.features.activity.application.usecase.CreateActivityUseCase;
 import com.boardly.features.activity.application.validation.ActivityValidator;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class ActivityCreateService implements CreateActivityUseCase {
     private final ActivityRepository activityRepository;
     private final UserFinder userFinder;
     private final ActivityValidator activityValidator;
-    private final ValidationMessageResolver messageResolver;
+    private final MessageResolver messageResolver;
 
     @Override
     public Either<Failure, Activity> createActivity(CreateActivityCommand command) {

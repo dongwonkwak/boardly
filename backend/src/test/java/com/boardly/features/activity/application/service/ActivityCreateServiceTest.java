@@ -20,11 +20,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.MessageSource;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import com.boardly.features.activity.application.port.input.CreateActivityCommand;
+import com.boardly.features.activity.application.command.CreateActivityCommand;
 import com.boardly.features.activity.application.validation.ActivityValidator;
-import com.boardly.features.activity.domain.model.Activity;
-import com.boardly.features.activity.domain.model.ActivityType;
-import com.boardly.features.activity.domain.repository.ActivityRepository;
+import com.boardly.features.activity.domain.Activity;
+import com.boardly.features.activity.domain.ActivityType;
+import com.boardly.features.activity.domain.port.ActivityRepository;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.features.boardlist.domain.model.ListId;
 import com.boardly.features.card.domain.model.CardId;
@@ -32,9 +32,9 @@ import com.boardly.features.user.application.service.UserFinder;
 import com.boardly.features.user.domain.User;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.features.user.domain.model.UserProfile;
-import com.boardly.shared.application.validation.ValidationMessageResolver;
-import com.boardly.shared.application.validation.ValidationResult;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.validation.MessageResolver;
+import com.boardly.shared.validation.ValidationResult;
+import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;
 
@@ -55,7 +55,7 @@ class ActivityCreateServiceTest {
         private MessageSource messageSource;
 
         private ActivityCreateService activityCreateService;
-        private ValidationMessageResolver messageResolver;
+        private MessageResolver messageResolver;
 
         @BeforeEach
         void setUp() {
@@ -73,7 +73,7 @@ class ActivityCreateServiceTest {
                                         return message.toString();
                                 });
 
-                messageResolver = new ValidationMessageResolver(messageSource);
+                messageResolver = new com.boardly.infrastructure.message.MessageResolverImpl(messageSource);
                 activityCreateService = new ActivityCreateService(
                                 activityRepository, userFinder, activityValidator, messageResolver);
         }

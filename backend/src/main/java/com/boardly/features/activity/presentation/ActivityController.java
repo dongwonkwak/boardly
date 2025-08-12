@@ -12,12 +12,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 
-import com.boardly.features.activity.application.port.input.GetActivityQuery;
+import com.boardly.features.activity.application.query.GetActivityQuery;
 import com.boardly.features.activity.application.port.output.ActivityListResponse;
 import com.boardly.features.activity.application.usecase.GetActivityUseCase;
 import com.boardly.features.board.domain.model.BoardId;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.shared.domain.common.Failure;
+import com.boardly.shared.common.error.Failure;
 import com.boardly.shared.presentation.ApiFailureHandler;
 import com.boardly.shared.presentation.Path;
 import com.boardly.shared.presentation.response.ErrorResponse;

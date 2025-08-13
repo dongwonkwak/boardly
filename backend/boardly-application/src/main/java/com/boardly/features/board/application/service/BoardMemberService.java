@@ -59,7 +59,7 @@ public class BoardMemberService
     /**
      * 사용자 이름 정보를 캐시하여 조회
      */
-    @Cacheable(value = "userNames", key = "#userId.id")
+    @Cacheable(value = "userNames", key = "#p0.id")
     private UserNameDto getUserName(UserId userId) {
         return userFinder
             .findUserNameById(userId)

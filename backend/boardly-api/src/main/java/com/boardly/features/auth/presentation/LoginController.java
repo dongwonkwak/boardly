@@ -22,13 +22,13 @@ public class LoginController {
     private String frontendUrl;
 
     @GetMapping("/login")
-    public String loginPage(@RequestParam(required = false) String errorMessage,
+    public String loginPage(@RequestParam(name = "errorMessage", required = false) String errorMessage,
                             Model model,
                             Locale locale) {
         model.addAttribute("frontendUrl", frontendUrl);
 
         if (errorMessage != null) {
-            model.addAttribute("error", messageSource.getMessage(errorMessage, null, locale));
+            model.addAttribute("error", messageSource.getMessage(errorMessage, null, errorMessage, locale));
         }
 
         return "login";

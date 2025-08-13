@@ -56,7 +56,9 @@ public class OidcUserInfoMapper
                 authentication.getPrincipal().getClass().getSimpleName()
             );
         }
-        return jwtToken.getToken().getSubject();
+        String userId = jwtToken.getToken().getSubject();
+        log.info("Extracted user ID: {}", userId);
+        return userId;
     }
 
     private OidcUserInfo createMinimalUserInfo(String subject) {

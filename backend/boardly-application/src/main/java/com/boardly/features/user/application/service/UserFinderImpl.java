@@ -1,29 +1,28 @@
 package com.boardly.features.user.application.service;
 
+import com.boardly.features.user.domain.User;
+import com.boardly.shared.common.value.UserId;
 import java.util.Optional;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
-import com.boardly.features.user.domain.User;
-import com.boardly.shared.common.value.UserId;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Component("userFinder")
 @RequiredArgsConstructor
-public class UserFinderImpl implements com.boardly.features.user.domain.port.UserFinder {
+public class UserFinderImpl
+    implements com.boardly.features.user.domain.port.UserFinder {
 
     private final com.boardly.features.user.domain.port.UserRepository userRepository;
 
     @Override
-    @Cacheable(value = "users", key = "#userId.id", unless = "#result == null")
+    @Cacheable(value = "users", key = "#p0.id", unless = "#result == null")
     public User findUserOrThrow(UserId userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException(userId.getId()));
+        return userRepository
+            .findById(userId)
+            .orElseThrow(() -> new UsernameNotFoundException(userId.getId()));
     }
 
     @Override
@@ -38,10 +37,18 @@ public class UserFinderImpl implements com.boardly.features.user.domain.port.Use
     }
 
     @Override
-    @Cacheable(value = "userNames", key = "#userId.id")
-    public Optional<com.boardly.features.user.domain.port.UserFinder.UserNameDto> findUserNameById(UserId userId) {
-        return userRepository.findById(userId)
-            .map(u -> new com.boardly.features.user.domain.port.UserFinder.UserNameDto(u.getFirstName(), u.getLastName()));
+    @Cacheable(value = "userNames", key = "#p0.id")
+    public Optional<
+        com.boardly.features.user.domain.port.UserFinder.UserNameDto
+    > findUserNameById(UserId userId) {
+        return userRepository
+            .findById(userId)
+            .map(u ->
+                new com.boardly.features.user.domain.port.UserFinder.UserNameDto(
+                    u.getFirstName(),
+                    u.getLastName()
+                )
+            );
     }
 
     @Override

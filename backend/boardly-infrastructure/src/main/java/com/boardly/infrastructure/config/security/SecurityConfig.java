@@ -1,7 +1,7 @@
 package com.boardly.infrastructure.config.security;
 
-import com.boardly.shared.presentation.Path;
 import com.boardly.infrastructure.config.security.handler.CustomAuthenticationFailureHandler;
+import com.boardly.shared.presentation.Path;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,35 +1,26 @@
 package com.boardly.infrastructure.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.boardly.infrastructure.config.properties.AppProperties;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
-public class CorsConfig {
+public class CorsConfig implements WebMvcConfigurer {
 
   private final AppProperties appProperties;
 
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    var configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(appProperties.getCors().getAllowedOrigins());
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-    configuration.setAllowCredentials(true);
-    configuration.setMaxAge(3600L);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-
-    return source;
+  @Override
+  public void addCorsMappings(CorsRegistry registry) {
+    registry.addMapping("/**")
+      .allowedOrigins(appProperties.getCors().getAllowedOrigins().toArray(new String[0]))
+      .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+      .allowedHeaders("Authorization", "Content-Type")
+      .allowCredentials(true)
+      .maxAge(3600);
   }
 }

@@ -13,8 +13,11 @@ repositories { mavenCentral() }
 
 dependencies {
   api project(':boardly-shared')
+  implementation project(':boardly-domain')
+  implementation project(':boardly-application')
   implementation libs.spring.boot.starter.web
   implementation libs.spring.boot.starter.security
+  implementation libs.spring.boot.starter.oauth2.authorization.server
   implementation libs.bundles.springdoc.dependencies
   // MapStruct for API DTO <-> Domain mapping
   implementation libs.mapstruct

@@ -15,7 +15,6 @@ repositories { mavenCentral() }
 dependencies {
   api project(':boardly-shared')
   implementation project(':boardly-domain')
-  implementation project(':boardly-api')
   implementation project(':boardly-infrastructure')
 
   implementation libs.bundles.spring.boot.dependencies

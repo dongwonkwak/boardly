@@ -16,12 +16,17 @@ import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class BoardValidatorTest {
 
     @Mock private CommonValidationRules commonValidationRules;
@@ -31,7 +36,6 @@ class BoardValidatorTest {
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
         validator = new BoardValidator(commonValidationRules);
 
         // 기본적으로 모든 Validator 조합이 valid를 반환하도록 설정

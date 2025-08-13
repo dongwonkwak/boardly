@@ -24,10 +24,14 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class BoardQueryServiceTest {
 
     @Mock
@@ -51,12 +55,12 @@ class BoardQueryServiceTest {
     @Mock
     private AttachmentRepository attachmentRepository;
 
-    @InjectMocks
+    @org.mockito.InjectMocks
     private BoardQueryService service;
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
+        // No-op: MockitoExtension initializes mocks
     }
 
     @Test

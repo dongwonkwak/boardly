@@ -109,10 +109,44 @@ graph TD
 - **Domain**: 핵심 비즈니스 로직, 도메인 규칙
 - **Infrastructure**: 외부 시스템 연동, 데이터 저장소
 
+## 🧩 모듈 구성
+
+멀티 모듈 Gradle 프로젝트로 전환되었습니다. 루트(`backend`)는 집계 전용이며 실행 가능한 애플리케이션은 `boardly-app` 모듈입니다.
+
+- `boardly-shared`: 공통 유틸리티/값 객체/공유 타입 모음
+- `boardly-domain`: 순수 도메인 모델(Vavr, 공통 유틸 의존). 비즈니스 규칙과 엔티티
+- `boardly-infrastructure`: 영속성, 설정, 외부 연동(Flyway, Spring Data 등)
+- `boardly-application`: 유스케이스/서비스 계층. 도메인 오케스트레이션
+- `boardly-api`: API 레이어(Controller, DTO, 보안, Swagger)
+- `boardly-app`: 실행 모듈(Spring Boot 애플리케이션). 상기 모듈을 조합하여 실행
+
+주요 의존 관계(요약):
+- `boardly-app` → `boardly-api`, `boardly-infrastructure`, `boardly-domain`, `boardly-application`, `boardly-shared`
+- `boardly-api` → `boardly-application`, `boardly-domain`, `boardly-shared`
+- `boardly-application` → `boardly-infrastructure`, `boardly-domain`, `boardly-shared`
+- `boardly-infrastructure` → `boardly-domain`, `boardly-shared`
+- `boardly-domain` → `boardly-shared`
+
 ## 📁 프로젝트 구조
 
 ```
-src/main/java/com/boardly/
+backend/
+├── settings.gradle                  # 루트 설정(멀티 모듈 include)
+├── build.gradle                     # 루트 집계/공통 설정, JaCoCo 루트 리포트
+├── boardly-shared/                  # 공통 코드
+│   └── src/main/java/...
+├── boardly-domain/                  # 도메인 모델
+│   └── src/main/java/...
+├── boardly-infrastructure/          # 인프라(Flyway, Repository 등)
+│   └── src/main/resources/db/migration/{common,dev,local}
+├── boardly-application/             # 유스케이스/서비스
+│   └── src/main/java/...
+├── boardly-api/                     # API 레이어(Controller, DTO, 보안)
+│   └── src/main/java/...
+├── boardly-app/                     # 실행 모듈(Spring Boot App)
+│   └── src/main/resources/          # application-*.yml 위치
+└── gradle/                          # Wrapper 및 버전 카탈로그
+    └── libs.versions.toml
 ├── features/                           # 기능별 모듈
 │   ├── activity/                      # 활동 로그 관리
 │   │   ├── application/               # 애플리케이션 계층
@@ -248,55 +282,7 @@ src/main/java/com/boardly/
 │   │   └── validation/               # 공통 검증
 │   └── util/                         # 유틸리티
 │
-└── BoardlyApplication.java           # 메인 애플리케이션 클래스
-
-# 리소스 파일
-src/main/resources/
-├── application.yml                   # 메인 설정 파일
-├── application-dev.yml               # 개발 환경 설정
-├── application-docker.yml            # Docker 환경 설정
-├── application-local.yml             # 로컬 환경 설정
-├── db/                              # 데이터베이스 관련
-│   └── migration/                   # 마이그레이션 스크립트
-│       ├── common/                  # 공통 스키마
-│       ├── dev/                     # 개발 환경 데이터
-│       └── local/                   # 로컬 환경 데이터
-├── messages/                        # 다국어 메시지
-│   ├── messages.properties          # 기본 메시지
-│   ├── messages_ko.properties       # 한국어 메시지
-│   ├── ValidationMessages.properties # 검증 메시지
-│   └── ValidationMessages_ko.properties # 한국어 검증 메시지
-├── META-INF/                        # 메타 정보
-├── static/                          # 정적 리소스
-│   └── docs/                        # API 문서
-│       └── openapi.json             # OpenAPI 스펙
-└── templates/                       # 템플릿 파일
-
-# 테스트 파일
-src/test/java/com/boardly/
-├── features/                        # 기능별 테스트
-│   ├── activity/                    # 활동 테스트
-│   ├── attachment/                  # 첨부파일 테스트
-│   ├── auth/                        # 인증 테스트
-│   ├── board/                       # 보드 테스트
-│   ├── boardlist/                   # 리스트 테스트
-│   ├── card/                        # 카드 테스트
-│   ├── comment/                     # 댓글 테스트
-│   ├── dashboard/                   # 대시보드 테스트
-│   ├── label/                       # 라벨 테스트
-│   └── user/                        # 사용자 테스트
-└── shared/                          # 공통 모듈 테스트
-
-# 설정 파일
-├── build.gradle                     # Gradle 빌드 설정
-├── gradle/                          # Gradle Wrapper
-│   └── libs.versions.toml           # 라이브러리 버전 관리
-├── gradlew                          # Gradle Wrapper 실행 스크립트 (Unix)
-├── gradlew.bat                      # Gradle Wrapper 실행 스크립트 (Windows)
-├── settings.gradle                  # Gradle 프로젝트 설정
-├── Dockerfile                       # Docker 이미지 빌드 설정
-├── .gitignore                      # Git 무시 파일
-└── README.md                       # 백엔드 문서 (현재 파일)
+# 테스트/설정 파일과 기타 세부 구조는 각 모듈의 `src/` 하위에 위치합니다.
 ```
 
 ## 🚀 빠른 시작
@@ -312,9 +298,8 @@ src/test/java/com/boardly/
 git clone https://github.com/dongwonkwak/boardly.git
 cd boardly/backend
 
-# 환경 변수 설정
-cp application-dev.yml.example application-dev.yml
-vim src/main/resources/application-dev.yml
+# 실행 모듈 환경 설정 파일 수정
+vim boardly-app/src/main/resources/application-dev.yml
 ```
 
 ### 2. 데이터베이스 설정
@@ -335,12 +320,14 @@ docker exec -it boardly-postgres psql -U boardly -d boardly
 
 ### 3. 애플리케이션 실행
 ```bash
-# 개발 모드로 실행
-./gradlew bootRun --args='--spring.profiles.active=dev'
+# 개발 모드로 실행(실행 모듈 지정)
+./gradlew :boardly-app:bootRun --args='--spring.profiles.active=dev'
 
-# 또는 직접 실행
-./gradlew build
-java -jar build/libs/boardly-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
+# 전체 빌드(모든 모듈)
+./gradlew clean build
+
+# JAR 실행(실행 모듈 산출물)
+java -jar boardly-app/build/libs/boardly-app-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
 ```
 
 ### 4. 실행 확인
@@ -402,7 +389,7 @@ logging:
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
 
-# OpenAPI 문서 설정
+# OpenAPI 문서 설정(실행 시 Swagger UI 제공)
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -457,26 +444,22 @@ logging:
 ### 사용 가능한 Gradle 태스크
 
 ```bash
-# 개발 서버 실행
-./gradlew bootRun
+# 개발 서버 실행(실행 모듈 지정)
+./gradlew :boardly-app:bootRun
 
-# 빌드
-./gradlew build                    # 전체 빌드
+# 전체 빌드 / 컴파일만
+./gradlew clean build             # 모든 모듈 빌드
 ./gradlew assemble                # 컴파일만 (테스트 제외)
 
 # 테스트
-./gradlew test                    # 단위 테스트
-./gradlew integrationTest         # 통합 테스트
+./gradlew test                    # 전체 모듈 테스트
+./gradlew :boardly-api:test       # 특정 모듈 테스트 예시
 
-# 코드 품질
+# 커버리지(루트 집계 리포트)
+./gradlew jacocoRootReport        # 전체 모듈 커버리지 집계
+
+# 코드 품질(예시)
 ./gradlew check                   # 모든 검증 실행
-./gradlew spotlessCheck          # 코드 포맷 검사
-./gradlew spotlessApply          # 코드 포맷 적용
-
-# 문서화
-./gradlew generateOpenApiDocs     # OpenAPI 문서 생성
-./gradlew copyOpenApiToStatic     # Static 리소스로 복사
-./gradlew copyOpenApiToProjectRoot # 프로젝트 루트로 복사
 
 # 정리
 ./gradlew clean                   # 빌드 파일 정리
@@ -722,9 +705,8 @@ public class BoardController {
 ## 📚 API 문서
 
 ### OpenAPI 3.0 문서
-- **개발 환경**: http://localhost:8080/swagger-ui.html
-- **API JSON**: http://localhost:8080/api-docs
-- **정적 문서**: `src/main/resources/static/docs/openapi.json`
+- 개발 환경: http://localhost:8080/swagger-ui.html
+- API JSON: http://localhost:8080/api-docs
 
 ### 주요 API 엔드포인트
 
@@ -867,14 +849,15 @@ erDiagram
 ### 데이터베이스 초기화
 ```bash
 # 스키마 생성 (자동)
-./gradlew bootRun  # hibernate.ddl-auto=update
+./gradlew :boardly-app:bootRun  # hibernate.ddl-auto=update
 
 # 초기 데이터 로드
-# data.sql 파일이 자동으로 실행됩니다.
+# Flyway 마이그레이션이 자동 실행됩니다.
+# 경로: boardly-infrastructure/src/main/resources/db/migration/{common,dev,local}
 ```
 
 ### 테스트 데이터
-개발 환경에서는 `data.sql`을 통해 테스트 데이터가 자동으로 로드됩니다:
+개발 환경에서는 Flyway로 기본/샘플 데이터가 적용됩니다:
 - 테스트 사용자: `test@example.com`
 - 비밀 번호: `Password1!`
 - 샘플 카드 및 활동 로그
@@ -1032,7 +1015,7 @@ volumes:
 #### 개발 환경
 ```bash
 # 로컬 개발
-./gradlew bootRun --args='--spring.profiles.active=dev'
+./gradlew :boardly-app:bootRun --args='--spring.profiles.active=dev'
 
 # Docker 개발 환경
 docker-compose -f docker-compose.dev.yml up

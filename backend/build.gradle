@@ -3,7 +3,6 @@ plugins {
     id 'jacoco'
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
-    alias(libs.plugins.openapi.gradle.plugin)
     alias(libs.plugins.version.catalog.update)
 }
 
@@ -16,50 +15,23 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation project(':boardly-shared')
-    implementation project(':boardly-infrastructure')
-    implementation libs.bundles.spring.boot.dependencies
-    implementation libs.bundles.common.dependencies
-    testImplementation libs.bundles.spring.test.dependencies
-
-    // h2
-    runtimeOnly(libs.h2)
-
-    // postgres
-    runtimeOnly(libs.postgres)
-
-    // springdoc
-    implementation(libs.bundles.springdoc.dependencies)
-
-    // flyway
-    implementation(libs.bundles.flyway.dependencies)
-
-    // lombok
-    compileOnly(libs.lombok)
-    annotationProcessor(libs.lombok)
-    annotationProcessor(libs.lombok.mapstruct.binding)
-
-    testCompileOnly(libs.lombok)
-    testAnnotationProcessor(libs.lombok)
-    testAnnotationProcessor(libs.lombok.mapstruct.binding)
-
-    // mapstruct
-    implementation(libs.mapstruct)
-    annotationProcessor(libs.mapstruct.processor)
-    testAnnotationProcessor(libs.mapstruct.processor)
-}
+repositories { mavenCentral() }
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
+// Root project is not an executable Boot app; disable bootJar
+tasks.named('bootJar') { enabled = false }
+tasks.named('jar') { enabled = true }
+
+// Root project has no Boot main class; disable bootRun
+tasks.matching { it.name == 'bootRun' || it.name == 'forkedSpringBootRun' || it.name == 'bootRunMainClassName' }.configureEach {
+    enabled = false
+}
+
 // JaCoCo aggregate coverage across subprojects
-jacoco { toolVersion = '0.8.12' }
+jacoco { toolVersion = libs.versions.jacoco.get() }
 
 subprojects { p ->
     plugins.withId('jacoco') {
@@ -91,177 +63,4 @@ tasks.register('jacocoRootReport', JacocoReport) {
     }
 }
 
-// OpenAPI 문서 생성 설정
-openApi {
-    apiDocsUrl.set("http://localhost:8080/api-docs")
-    outputDir.set(project.layout.buildDirectory.dir("docs"))
-    outputFileName.set("openapi.json")
-    waitTimeInSeconds.set(30)
-    customBootRun.args.add("--spring.profiles.active=dev")
-}
 
-// Static resources 디렉터리에 OpenAPI 문서 복사
-tasks.register('copyOpenApiToStatic') {
-    group = 'documentation'
-    description = 'Copies OpenAPI documentation to static resources'
-    dependsOn 'generateOpenApiDocs'
-
-    doLast {
-        def staticDir = file("src/main/resources/static/docs")
-        staticDir.mkdirs()
-
-        def sourceFile = file("build/docs/openapi.json")
-        def targetFile = file("${staticDir}/openapi.json")
-
-        if (sourceFile.exists()) {
-            targetFile.text = sourceFile.text
-            println "OpenAPI 문서가 static resources에 복사되었습니다: ${targetFile}"
-        }
-    }
-}
-
-// 프로젝트 루트의 docs 디렉터리에 OpenAPI 문서 복사 (프론트엔드 팀 용)
-tasks.register('copyOpenApiToProjectRoot') {
-    group = 'documentation'
-    description = 'Copies OpenAPI documentation to project root docs directory for frontend team'
-    dependsOn 'generateOpenApiDocs'
-
-    doLast {
-        def projectDocsDir = file("../docs/api")
-        projectDocsDir.mkdirs()
-
-        def sourceFile = file("build/docs/openapi.json")
-        def targetFile = file("${projectDocsDir}/openapi.json")
-        def readmeFile = file("${projectDocsDir}/README.md")
-
-        if (sourceFile.exists()) {
-            // 기존 파일과 새 파일의 내용을 비교
-            def contentChanged = false
-            if (targetFile.exists()) {
-                def existingContent = targetFile.text
-                def newContent = sourceFile.text
-                contentChanged = existingContent != newContent
-            } else {
-                contentChanged = true
-            }
-
-            // openapi.json 파일 복사
-            targetFile.text = sourceFile.text
-
-            // README 파일 생성 또는 업데이트
-            def lastUpdateDate = contentChanged ? new Date().toString() : getLastUpdateDateFromReadme(readmeFile)
-
-            readmeFile.text = """# Boardly API Documentation
-
-## OpenAPI 사양서
-
-- **JSON 형식**: `openapi.json`
-- **YAML 형식**: `openapi.yml` (곧 제공 예정)
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
-- **API Docs**: http://localhost:8080/api-docs
-
-## 클라이언트 코드 생성
-
-다음 도구들을 사용하여 클라이언트 코드를 생성할 수 있습니다:
-
-### OpenAPI Generator
-```bash
-# TypeScript 클라이언트 생성
-npx @openapitools/openapi-generator-cli generate \\
-  -i openapi.json \\
-  -g typescript-axios \\
-  -o ./generated-client
-
-# JavaScript 클라이언트 생성
-npx @openapitools/openapi-generator-cli generate \\
-  -i openapi.json \\
-  -g javascript \\
-  -o ./generated-client
-```
-
-### Swagger Codegen
-```bash
-# React Query 클라이언트 생성
-npx swagger-codegen-cli generate \\
-  -i openapi.json \\
-  -l typescript-fetch \\
-  -o ./generated-client
-```
-
-## 업데이트 주기
-
-이 문서는 백엔드 빌드 시마다 자동으로 업데이트됩니다.
-최신 버전을 사용하고 있는지 확인하세요.
-
-마지막 업데이트: ${lastUpdateDate}
-"""
-
-            def statusMessage = contentChanged ? "✅ OpenAPI 문서가 업데이트되어 프로젝트 루트에 복사되었습니다:" : "ℹ️ OpenAPI 문서가 변경되지 않아 기존 날짜를 유지합니다:"
-            println statusMessage
-            println "   📄 JSON: ${targetFile}"
-            println "   📋 README: ${readmeFile}"
-            println "   🌐 접근 URL: http://localhost:8080/docs/openapi.json"
-        }
-    }
-}
-
-// README 파일에서 마지막 업데이트 날짜를 추출하는 헬퍼 함수
-def getLastUpdateDateFromReadme(readmeFile) {
-    if (!readmeFile.exists()) {
-        return new Date().toString()
-    }
-
-    def content = readmeFile.text
-    def pattern = /마지막 업데이트: (.+)/
-    def matcher = content =~ pattern
-
-    if (matcher.find()) {
-        return matcher.group(1)
-    }
-
-    return new Date().toString()
-}
-
-// YAML 형식 OpenAPI 문서를 위한 커스텀 태스크
-tasks.register('generateOpenApiYaml') {
-    group = 'documentation'
-    description = 'Generates OpenAPI documentation in YAML format'
-
-    doLast {
-        def docsDir = project.layout.buildDirectory.dir("docs").get().asFile
-        docsDir.mkdirs()
-
-        // 서버 시작
-        def bootRun = project.tasks.named('bootRun')
-        def process = new ProcessBuilder()
-                .command('./gradlew', 'bootRun', '--args=--spring.profiles.active=dev')
-                .directory(project.projectDir)
-                .redirectErrorStream(true)
-                .start()
-
-        // 서버 시작 대기
-        Thread.sleep(15000)
-
-        try {
-            // YAML 문서 다운로드
-            def yamlContent = new URL("http://localhost:8080/api-docs.yaml").text
-            new File(docsDir, "openapi.yml").text = yamlContent
-            println "OpenAPI YAML 문서가 생성되었습니다: ${docsDir}/openapi.yml"
-        } catch (Exception e) {
-            println "OpenAPI YAML 문서 생성 중 오류 발생: ${e.message}"
-        } finally {
-            // 서버 종료
-            process.destroy()
-        }
-    }
-}
-
-// 빌드 완료 후 자동으로 OpenAPI 문서 생성
-tasks.named('build').configure {
-    finalizedBy 'generateOpenApiDocs', 'copyOpenApiToStatic', 'copyOpenApiToProjectRoot'
-}
-
-// assemble 태스크에도 의존성 추가 (jar 생성 후)
-tasks.named('assemble').configure {
-    finalizedBy 'generateOpenApiDocs', 'copyOpenApiToStatic', 'copyOpenApiToProjectRoot'
-}

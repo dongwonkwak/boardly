@@ -23,6 +23,7 @@ flyway = "11.10.5"
 mapstruct = "1.6.3"
 jackson = "2.17.2"
 micrometer = "1.14.3"
+jacoco = "0.8.12"
 
 [libraries]
 # Spring Boot Starters

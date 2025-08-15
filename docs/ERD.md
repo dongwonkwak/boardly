@@ -55,11 +55,12 @@ erDiagram
         text description "카드 설명 (마크다운 지원)"
         int position "NOT NULL, 카드 순서 (0부터 시작)"
         datetime due_date "마감일시"
+        datetime start_date "시작일시"
         boolean archived "DEFAULT false, 카드 아카이브 상태"
+        varchar priority "우선순위 (선택사항)"
+        boolean is_completed "DEFAULT false, 완료 여부"
         varchar list_id FK "NOT NULL, 소속 리스트"
-        int comments_count "DEFAULT 0, 댓글 수"
-        int attachments_count "DEFAULT 0, 첨부파일 수"
-        int labels_count "DEFAULT 0, 라벨 수"
+        varchar created_by FK "NOT NULL, 생성자 사용자 ID"
         datetime created_at "NOT NULL, 생성일시"
         datetime updated_at "NOT NULL, 수정일시"
         bigint version "DEFAULT 0, 낙관적 락 버전"
@@ -134,6 +135,7 @@ erDiagram
     BOARDS ||--o{ BOARD_MEMBERS : "includes"
     BOARDS ||--o{ BOARD_LISTS : "contains"
     BOARD_LISTS ||--o{ CARDS : "contains"
+    USERS ||--o{ CARDS : "creates"
     CARDS ||--o{ CARD_MEMBERS : "assigned_to"
     USERS ||--o{ CARD_MEMBERS : "assigned_to"
     BOARDS ||--o{ LABELS : "defines"
@@ -235,11 +237,15 @@ CREATE INDEX idx_board_members_active ON board_members(is_active);
 CREATE INDEX idx_board_lists_board_id ON board_lists(board_id);
 CREATE INDEX idx_board_lists_position ON board_lists(board_id, position);
 
--- 카드 관련 인덱스
-CREATE INDEX idx_cards_list_id ON cards(list_id);
-CREATE INDEX idx_cards_position ON cards(list_id, position);
-CREATE INDEX idx_cards_due_date ON cards(due_date);
-CREATE INDEX idx_cards_archived ON cards(archived);
+    -- 카드 관련 인덱스
+    CREATE INDEX idx_cards_list_id ON cards(list_id);
+    CREATE INDEX idx_cards_position ON cards(list_id, position);
+    CREATE INDEX idx_cards_due_date ON cards(due_date);
+    CREATE INDEX idx_cards_start_date ON cards(start_date);
+    CREATE INDEX idx_cards_archived ON cards(archived);
+    CREATE INDEX idx_cards_priority ON cards(priority);
+    CREATE INDEX idx_cards_completed ON cards(is_completed);
+    CREATE INDEX idx_cards_created_by ON cards(created_by);
 
 -- 카드 멤버 관련 인덱스
 CREATE INDEX idx_card_members_card_id ON card_members(card_id);
@@ -296,6 +302,6 @@ CREATE INDEX idx_activity_type ON user_activity(activity_type);
 
 ---
 
-**문서 버전**: v2.0  
-**최종 수정일**: 2025년 1월 17일  
+**문서 버전**: v2.1  
+**최종 수정일**: 2025년 8월 13일  
 **기반 스키마**: schema.sql

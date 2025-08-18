@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class BoardEntity {
 
     @Id
-    @Column(name = "board_id", nullable = false)
+    @Column(name = "board_id", nullable = false, length = 50)
     private String boardId;
 
     @Column(name = "title", nullable = false, length = 100)
@@ -29,7 +29,7 @@ public class BoardEntity {
     @Column(name = "is_archived", nullable = false)
     private boolean isArchived;
 
-    @Column(name = "owner_id", nullable = false)
+    @Column(name = "owner_id", nullable = false, length = 50)
     private String ownerId;
 
     @Column(name = "is_starred", nullable = false)

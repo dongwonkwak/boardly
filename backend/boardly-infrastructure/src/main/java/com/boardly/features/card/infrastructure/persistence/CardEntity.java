@@ -38,7 +38,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CardEntity {
     @Id
-    @Column(name = "card_id", nullable = false, length = 36)
+    @Column(name = "card_id", nullable = false, length = 50)
     private String cardId;
 
     @Column(name = "title", nullable = false, length = 200)

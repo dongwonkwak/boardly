@@ -27,13 +27,13 @@ import java.time.Instant;
 public class AttachmentEntity {
 
     @Id
-    @Column(name = "attachment_id", nullable = false, length = 36)
+    @Column(name = "attachment_id", nullable = false, length = 50)
     private String attachmentId;
 
-    @Column(name = "card_id", nullable = false, length = 36)
+    @Column(name = "card_id", nullable = false, length = 50)
     private String cardId;
 
-    @Column(name = "uploader_id", nullable = false, length = 36)
+    @Column(name = "uploader_id", nullable = false, length = 50)
     private String uploaderId;
 
     @Column(name = "file_name", nullable = false, length = 255)

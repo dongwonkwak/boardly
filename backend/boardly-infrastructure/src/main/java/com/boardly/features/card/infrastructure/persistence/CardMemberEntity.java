@@ -27,10 +27,10 @@ public class CardMemberEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "card_id", nullable = false, length = 36)
+    @Column(name = "card_id", nullable = false, length = 50)
     private String cardId;
 
-    @Column(name = "user_id", nullable = false, length = 36)
+    @Column(name = "user_id", nullable = false, length = 50)
     private String userId;
 
     @Column(name = "assigned_at", nullable = false)

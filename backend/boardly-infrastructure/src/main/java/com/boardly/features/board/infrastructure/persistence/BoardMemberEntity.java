@@ -20,13 +20,13 @@ import lombok.NoArgsConstructor;
 public class BoardMemberEntity {
 
     @Id
-    @Column(name = "member_id", nullable = false)
+    @Column(name = "member_id", nullable = false, length = 50)
     private String memberId;
 
-    @Column(name = "board_id", nullable = false)
+    @Column(name = "board_id", nullable = false, length = 50)
     private String boardId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = false, length = 50)
     private String userId;
 
     @Enumerated(EnumType.STRING)

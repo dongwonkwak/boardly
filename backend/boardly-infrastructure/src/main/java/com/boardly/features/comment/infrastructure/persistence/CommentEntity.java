@@ -26,13 +26,13 @@ import jakarta.persistence.Version;
 public class CommentEntity {
 
     @Id
-    @Column(name = "comment_id", nullable = false)
+    @Column(name = "comment_id", nullable = false, length = 50)
     private String commentId;
 
-    @Column(name = "card_id", nullable = false)
+    @Column(name = "card_id", nullable = false, length = 50)
     private String cardId;
 
-    @Column(name = "author_id", nullable = false)
+    @Column(name = "author_id", nullable = false, length = 50)
     private String authorId;
 
     @Column(name = "content", nullable = false, length = 1000)

@@ -1,104 +1,38 @@
-# Boardly User Stories
+# User Stories (GPT Generated)
 
-Boardly 프로젝트의 사용자 스토리를 Epic별로 체계적으로 정리한 문서입니다.
+Boardly의 사용자 스토리를 `story_map.md` 기반으로 정리했습니다. P0는 MVP, P1은 차기 릴리즈 범위를 의미합니다.
 
-## 📁 폴더 구조
+## Index
 
-### Phase 0: MVP 필수 기능
+### P0 (MVP)
+1. [US-001 온보딩·계정 관리 (F-101)](US-001_onboarding_account_management.md)
+2. [US-002 워크스페이스 구성 (F-150)](US-002_workspace_management.md)
+3. [US-003 보드 생성·설정 (F-201)](US-003_board_creation_and_settings.md)
+4. [US-004 리스트 워크플로 (F-202)](US-004_list_workflow.md)
+5. [US-005 카드 관리 (F-203)](US-005_card_management.md)
+6. [US-006 카드 상세: 설명/댓글/라벨/마감일 (F-301)](US-006_card_detail_core.md)
+7. [US-007 드래그 앤 드롭 (F-401)](US-007_drag_and_drop.md)
+8. [US-008 활동 내역(보드) (F-601)](US-008_activity_feed_board.md)
+9. [US-009 다국어(i18n) (F-701)](US-009_internationalization.md)
 
-#### [Epic 1: 사용자 관리](./epic1-user-management/)
-- **US-101-001**: [회원가입](./epic1-user-management/US-101-001-signup.md)
-- **US-101-002**: [로그인](./epic1-user-management/US-101-002-login.md)
-- **US-101-003**: [로그아웃](./epic1-user-management/US-101-003-logout.md)
-- **US-101-004**: [프로필 조회](./epic1-user-management/US-101-004-profile-view.md)
-- **US-101-005**: [프로필 수정](./epic1-user-management/US-101-005-profile-edit.md)
-- **US-101-006**: [비밀번호 변경](./epic1-user-management/US-101-006-password-change.md)
+### P1 (Next)
+10. [US-010 협업: 초대·역할·권한(RBAC) (F-402)](US-010_collaboration_invites_and_rbac.md)
+11. [US-011 알림: 인앱·개인 알림 센터 (F-501, F-603)](US-011_notifications_in_app_and_center.md)
+12. [US-012 워크스페이스 활동 통합 (F-602)](US-012_workspace_activity_feed.md)
+13. [US-013 체크리스트 (F-702)](US-013_checklists.md)
+14. [US-014 첨부파일 (F-703)](US-014_attachments.md)
+15. [US-015 검색 및 필터링 (F-704)](US-015_search_and_filter.md)
+16. [US-016 담당자 할당 (F-301 확장)](US-016_assignees.md)
+17. [US-017 실시간 동기화·협업 상태](US-017_realtime_collaboration.md)
+18. [US-018 데이터 백업/내보내기](US-018_data_backup_and_export.md)
 
-#### [Epic 2: 워크스페이스 관리](./epic2-workspace-management/)
-- **US-150-001**: [워크스페이스 생성](./epic2-workspace-management/US-150-001-workspace-creation.md)
-- **US-150-002**: [워크스페이스 관리](./epic2-workspace-management/US-150-002-workspace-management.md)
+### 백로그/확장 (P1+)
+- 공개 API(써드파티 연동): `story_map.md` 12절 참조
+- 다국어 확장: 추가 언어(일/중 등)
+- 고급 알림 채널: 이메일/푸시 알림
+- 데이터 관리 확장: 관리자 삭제 정책(승인 워크플로), 데이터 복구 서비스
 
-#### [Epic 3: 보드 관리](./epic3-board-management/)
-- **US-201-001**: [보드 생성](./epic3-board-management/US-201-001-board-creation.md)
-- **US-201-002**: [보드 목록 조회](./epic3-board-management/US-201-002-board-list.md)
-- **US-201-003**: [보드 수정/삭제](./epic3-board-management/US-201-003-board-edit-delete.md)
-
-#### [Epic 4: 리스트 관리](./epic4-list-management/)
-- **US-202-001**: [리스트 생성](./epic4-list-management/US-202-001-list-creation.md)
-- **US-202-002**: [리스트 편집](./epic4-list-management/US-202-002-list-edit.md)
-- **US-202-003**: [리스트 순서 변경](./epic4-list-management/US-202-003-list-reorder.md)
-
-#### [Epic 5: 카드 관리](./epic5-card-management/)
-- **US-203-001**: [카드 생성](./epic5-card-management/US-203-001-card-creation.md)
-- **US-203-002**: [카드 편집](./epic5-card-management/US-203-002-card-edit.md)
-- **US-203-003**: [카드 이동](./epic5-card-management/US-203-003-card-move.md)
-- **US-203-004**: [카드 복제](./epic5-card-management/US-203-004-card-duplicate.md)
-
-#### [Epic 6: 카드 상세 기능](./epic6-card-detail-features/)
-- **US-301-001**: [카드 상세 조회](./epic6-card-detail-features/US-301-001-card-detail-view.md)
-- **US-301-002**: [댓글 시스템](./epic6-card-detail-features/US-301-002-comment-system.md)
-- **US-301-003**: [라벨 관리](./epic6-card-detail-features/US-301-003-label-management.md)
-- **US-301-004**: [마감일 관리](./epic6-card-detail-features/US-301-004-due-date-management.md)
-- **US-301-005**: [담당자 할당](./epic6-card-detail-features/US-301-005-assignee-management.md)
-
-#### [Epic 7: 활동 추적](./epic7-activity-tracking/)
-- **US-601-001**: [활동 내역 기록](./epic7-activity-tracking/US-601-001-activity-logging.md)
-- **US-601-002**: [활동 피드 표시](./epic7-activity-tracking/US-601-002-activity-feed.md)
-
-#### [Epic 8: 다국어 지원](./epic8-multilingual-support/)
-- **US-701-001**: [언어 감지 및 설정](./epic8-multilingual-support/US-701-001-language-detection.md)
-- **US-701-002**: [다국어 메시지](./epic8-multilingual-support/US-701-002-multilingual-messages.md)
-
-### Phase 1: 다음 릴리즈 고려
-
-#### [Epic 9: 협업 기능](./epic9-collaboration-features/)
-- **US-402-001**: [멤버 초대](./epic9-collaboration-features/US-402-001-member-invitation.md)
-- **US-402-002**: [역할 기반 권한 관리](./epic9-collaboration-features/US-402-002-role-based-permissions.md)
-- **US-402-003**: [실시간 동기화](./epic9-collaboration-features/US-402-003-real-time-sync.md)
-
-#### [Epic 10: 알림 시스템](./epic10-notification-system/)
-- **US-501-001**: [인앱 알림](./epic10-notification-system/US-501-001-in-app-notifications.md)
-- **US-603-001**: [개인 알림 센터](./epic10-notification-system/US-603-001-personal-notification-center.md)
-- **US-602-001**: [워크스페이스 활동 내역](./epic10-notification-system/US-602-001-workspace-activity-history.md)
-
-#### [Epic 11: 고급 카드 기능](./epic11-advanced-card-features/)
-- **US-702-001**: [체크리스트](./epic11-advanced-card-features/US-702-001-checklist.md)
-- **US-703-001**: [첨부파일](./epic11-advanced-card-features/US-703-001-file-attachments.md)
-- **US-704-001**: [검색 및 필터링](./epic11-advanced-card-features/US-704-001-search-filtering.md)
-
-## 📊 스토리 포인트 요약
-
-### Phase 0 (MVP) - 총 114 포인트
-- **Epic 1 (사용자 관리)**: 19 포인트
-- **Epic 2 (워크스페이스 관리)**: 9 포인트  
-- **Epic 3 (보드 관리)**: 14 포인트
-- **Epic 4 (리스트 관리)**: 12 포인트
-- **Epic 5 (카드 관리)**: 17 포인트
-- **Epic 6 (카드 상세 기능)**: 21 포인트
-- **Epic 7 (활동 추적)**: 11 포인트
-- **Epic 8 (다국어 지원)**: 7 포인트
-
-### Phase 1 (확장 기능) - 총 67 포인트
-- **Epic 9 (협업 기능)**: 24 포인트
-- **Epic 10 (알림 시스템)**: 15 포인트
-- **Epic 11 (고급 카드 기능)**: 21 포인트
-
-## 📝 작성 가이드라인
-
-### Story Points 기준
-- **1-2점**: 매우 간단한 기능 (1-2일)
-- **3-4점**: 단순한 기능 (3-5일)  
-- **5-6점**: 중간 복잡도 기능 (1주)
-- **7-8점**: 복잡한 기능 (1.5-2주)
-- **9-10점**: 매우 복잡한 기능 (2-3주)
-
-### Priority 기준
-- **High**: MVP 핵심 기능, 반드시 구현 필요
-- **Medium**: 사용자 경험 개선, 우선 구현 권장
-- **Low**: 부가 기능, 여유 있을 때 구현
-
-### Acceptance Criteria 작성 원칙
-- Given-When-Then 형식 사용
-- 성공 케이스와 실패 케이스 모두 포함
-- 테스트 가능하고 측정 가능한 조건 명시
-- 사용자 관점에서 가치 있는 결과 정의
+## 참고
+- 근거 문서: `../story_map.md`, `../PRD.md`, `../SRS.md`, `../errors.md`
+- 제약: 데이터/성능/보안 요구는 각 스토리의 NFR 및 수용 기준에 요약됨
+- 오류 표준: 에러 상태 코드/응답 구조는 각 스토리의 "오류 응답(표준)" 섹션과 `../errors.md`를 참조

@@ -1,139 +1,48 @@
-# Errors
+# Errors (Backend Internal Guide)
 ---
-## 1. HTTP 상태 코드 재분류
 
-* 400 Bad Request: 입력 형식/데이터 오류 (이메일 형식, 필수값 누락)
-* 403 Forbidden: 권한 기반 비즈니스 룰 위반 (다른 사용자 카드 수정, 읽기 전용)
-* 404 Not Found: 리소스 미발견
-* 409 Conflict: 리소스 충돌 (이메일 중복, 동시 수정 충돌)
-* 412 Precondition Failed: 전제 조건 실패 (필수 설정 누락, 종속성 미충족)
-* 422 Unprocessable Entity: 비즈니스 룰 위반 (카드 개수 제한, 아카이브된 카드 수정)
-* 500 Internal Server Error: 내부 서버 오류
+이 문서는 백엔드 내부의 에러 분류 원칙과 구현 가이드를 제공합니다. 외부 API 응답 형식과 코드 표준은 `api/error_catalog.md`를 단일 기준으로 사용합니다.
 
-## 2. Failure 클래스 구조
+## 1. HTTP 상태 코드 사용 원칙 (요약)
+
+- 400 Bad Request: 입력 형식/데이터 오류
+- 401 Unauthorized: 인증 필요/무효 토큰
+- 403 Forbidden: 권한/정책 위반
+- 404 Not Found: 리소스 미발견
+- 409 Conflict: 리소스 충돌(중복, 경쟁 상태)
+- 412 Precondition Failed: 전제 조건 실패(선행 단계 미완료 등)
+- 422 Unprocessable Entity: 비즈니스 규칙 위반
+- 429 Too Many Requests: 레이트 리밋 초과
+- 500 Internal Server Error: 내부 서버 오류
+
+상세 매핑과 예시는 `api/error_catalog.md`를 참고하세요.
+
+## 2. Failure/Exception 분류 가이드
+
+도메인 서비스/애플리케이션 계층에서 다음 분류를 사용하여 컨트롤러 어드바이스로 매핑합니다.
 
 ```
-// 기존 (422로 모든 비즈니스 룰 처리)
-Failure.ValidationFailure  // 422
-Failure.ConflictFailure    // 409
-Failure.NotFoundFailure    // 404
-Failure.ForbiddenFailure   // 403
-
-// 개선 (세분화된 분류)
-Failure.InputError           // 400 - 입력 형식 오류
-Failure.PermissionDenied     // 403 - 권한 거부
-Failure.NotFound            // 404 - 리소스 미발견
-Failure.ResourceConflict    // 409 - 리소스 충돌
-Failure.PreconditionFailed  // 412 - 전제 조건 실패
-Failure.BusinessRuleViolation // 422 - 비즈니스 룰 위반
-Failure.InternalError       // 500 - 내부 서버 오류
+Failure.InputError             -> HTTP 400 (code: COMMON-VALIDATION)
+Failure.PermissionDenied       -> HTTP 403
+Failure.NotFound               -> HTTP 404
+Failure.ResourceConflict       -> HTTP 409
+Failure.PreconditionFailed     -> HTTP 412
+Failure.BusinessRuleViolation  -> HTTP 422
+Failure.InternalError          -> HTTP 500
 ```
 
-## 3. 에러 응답 구조
+각 Failure에는 다음 정보를 포함하도록 합니다.
+- `code`: 카탈로그에 등록된 표준 코드 (예: `BOARD-ARCHIVED`)
+- `messageKey`: 번역 키(가능하면 제공)
+- `message`: 기본 로케일 메시지(폴백)
+- `context`/`details`: 디버깅 및 UX 보조 정보
 
-```json
-{
-  "code": "CARD_LIMIT_EXCEEDED",
-  "message": "리스트당 최대 100개의 카드만 생성할 수 있습니다",
-  "timestamp": "2025-07-20T10:30:00Z",
-  "path": "/api/v1/cards",
-  "details": [...],  // 400일 때만 검증 상세 정보
-  "context": {...}   // 추가 컨텍스트 정보
-}
-```
+## 3. 응답 포맷
 
-## 4. 에러 응답 예시
+외부로 반환되는 모든 에러는 평면 스키마(Flat ErrorResponse)를 사용합니다. 스키마는 `api/error_catalog.md`의 “표준 에러 응답 스키마”를 따릅니다.
 
-400 Bad Request - 입력 형식 오류:
-```json
-{
-  "code": "INVALID_EMAIL_FORMAT",
-  "message": "입력 데이터가 올바르지 않습니다",
-  "timestamp": "2025-07-20T10:30:00Z",
-  "details": [
-    {
-      "field": "email",
-      "message": "유효한 이메일 형식이 아닙니다",
-      "rejectedValue": "invalid-email"
-    }
-  ]
-}
-```
+## 4. 운영 가이드
 
-403 Forbidden - 권한 거부:
-```json
-
-{
-  "code": "UNAUTHORIZED_CARD_MODIFICATION",
-  "message": "다른 사용자의 카드를 수정할 권한이 없습니다",
-  "timestamp": "2025-07-20T10:30:00Z",
-  "context": {
-    "cardId": "card-123",
-    "cardOwnerId": "user-456",
-    "requesterId": "user-789"
-  }
-}
-```
-
-404 Not Found - 리소스 미발견:
-```json
-{
-  "code": "CARD_NOT_FOUND",
-  "message": "요청한 카드를 찾을 수 없습니다",
-  "timestamp": "2025-07-20T10:30:00Z",
-  "context": {
-    "cardId": "card-123"
-  }
-}
-```
-
-409 Conflict - 리소스 충돌:
-```json
-{
-  "code": "EMAIL_ALREADY_EXISTS",
-  "message": "이미 사용 중인 이메일입니다",
-  "timestamp": "2025-07-20T10:30:00Z",
-  "context": {
-    "email": "user@example.com",
-    "conflictType": "EMAIL_DUPLICATE"
-  }
-}
-```
-
-412 Precondition Failed - 전제 조건 실패:
-```json
-{
-  "code": "ONBOARDING_INCOMPLETE",
-  "message": "온보딩을 완료한 후 보드를 생성할 수 있습니다",
-  "timestamp": "2025-07-20T10:30:00Z",
-  "context": {
-    "userId": "user-123",
-    "onboardingStatus": "PROFILE_INCOMPLETE",
-    "requiredSteps": ["profile", "preferences"]
-  }
-}
-```
-
-422 Unprocessable Entity - 비즈니스 룰 위반:
-```json
-{
-  "code": "CARD_LIMIT_EXCEEDED",
-  "message": "리스트당 최대 100개의 카드만 생성할 수 있습니다. (현재: 100개)",
-  "timestamp": "2025-07-20T10:30:00Z",
-  "context": {
-    "listId": "list-123",
-    "currentCount": 100,
-    "maxCount": 100,
-    "availableSlots": 0
-  }
-}
-```
-
-500 Internal Server Error - 내부 서버 오류:
-```json
-{
-  "code": "INTERNAL_ERROR",
-  "message": "내부 서버 오류가 발생했습니다",
-  "timestamp": "2025-07-20T10:30:00Z"
-}
-```
+- 모든 요청에 `requestId`를 생성/전파하고, 로그와 응답에 포함합니다.
+- 스택트레이스는 서버 로그에만 남기고, 응답에는 요약 메시지만 표출합니다.
+- `messageKey`는 서버의 i18n 리소스와 동기화하며, 프론트엔드는 키가 없을 때 `message`를 사용합니다.

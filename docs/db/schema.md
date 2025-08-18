@@ -337,7 +337,6 @@ erDiagram
     text first_name
     text last_name
     text password_hash
-    text language
     bool is_active
     timestamp created_at
     timestamp updated_at

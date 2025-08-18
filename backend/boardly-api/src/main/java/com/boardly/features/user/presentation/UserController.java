@@ -1,4 +1,4 @@
-package com.boardly.features.user.presentation;
+package com.boardly.api.adapters.in.rest.user;
 
 import com.boardly.features.user.application.command.RegisterUserCommand;
 import com.boardly.features.user.application.command.UpdateUserCommand;
@@ -6,9 +6,9 @@ import com.boardly.features.user.application.usecase.RegisterUserUseCase;
 import com.boardly.features.user.application.usecase.UpdateUserUseCase;
 import com.boardly.features.user.domain.User;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.features.user.presentation.request.RegisterUserRequest;
-import com.boardly.features.user.presentation.request.UpdateUserRequest;
-import com.boardly.features.user.presentation.response.UserResponse;
+import com.boardly.api.adapters.in.rest.user.request.RegisterUserRequest;
+import com.boardly.api.adapters.in.rest.user.request.UpdateUserRequest;
+import com.boardly.api.adapters.in.rest.user.response.UserResponse;
 import com.boardly.shared.common.error.Failure;
 import com.boardly.api.common.handler.ApiFailureHandler;
 import com.boardly.shared.presentation.Path;

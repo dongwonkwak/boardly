@@ -1,4 +1,4 @@
-package com.boardly.features.user.presentation.response;
+package com.boardly.api.adapters.in.rest.user.response;
 
 import com.boardly.features.user.domain.User;
 

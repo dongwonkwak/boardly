@@ -13,7 +13,7 @@ import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.value.ListId;
 import com.boardly.features.boardlist.domain.port.BoardListRepository;
 import com.boardly.features.board.domain.port.BoardRepository;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import com.boardly.shared.validation.Validator;

@@ -1,4 +1,4 @@
-package com.boardly.features.label.presentation.request;
+package com.boardly.api.adapters.in.rest.label.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

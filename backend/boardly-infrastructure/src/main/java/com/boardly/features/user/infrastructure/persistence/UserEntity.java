@@ -1,4 +1,4 @@
-package com.boardly.features.user.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.user;
 
 import com.boardly.features.user.domain.User;
 import com.boardly.features.user.domain.UserProfile;

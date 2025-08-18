@@ -1,11 +1,11 @@
-package com.boardly.features.card.presentation.response;
+package com.boardly.api.adapters.in.rest.card.response;
 
 import java.time.Instant;
 import java.util.List;
 
 import com.boardly.features.card.domain.aggregate.CardDetail;
-import com.boardly.features.label.presentation.response.LabelResponse;
-import com.boardly.features.user.presentation.response.UserResponse;
+import com.boardly.api.adapters.in.rest.label.response.LabelResponse;
+import com.boardly.api.adapters.in.rest.user.response.UserResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

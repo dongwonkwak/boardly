@@ -1,4 +1,4 @@
-package com.boardly.features.activity.presentation;
+package com.boardly.api.adapters.in.rest.activity;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 

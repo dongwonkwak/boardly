@@ -1,4 +1,4 @@
-package com.boardly.features.attachment.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.attachment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

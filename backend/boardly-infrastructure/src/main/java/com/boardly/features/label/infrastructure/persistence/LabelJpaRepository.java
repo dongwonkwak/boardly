@@ -1,4 +1,4 @@
-package com.boardly.features.label.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.label;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

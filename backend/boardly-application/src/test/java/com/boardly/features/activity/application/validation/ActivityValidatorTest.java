@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.boardly.features.activity.application.command.CreateActivityCommand;
 import com.boardly.features.activity.application.query.GetActivityQuery;
 import com.boardly.features.activity.domain.ActivityType;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.common.value.*;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;

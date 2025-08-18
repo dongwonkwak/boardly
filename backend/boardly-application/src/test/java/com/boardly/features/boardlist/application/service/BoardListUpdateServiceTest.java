@@ -14,7 +14,7 @@ import com.boardly.features.boardlist.application.validation.BoardListValidator;
 import com.boardly.features.boardlist.domain.BoardList;
 import com.boardly.features.boardlist.domain.config.BoardListPolicyConfig;
 import com.boardly.features.boardlist.domain.port.BoardListRepository;
-import com.boardly.features.boardlist.infrastructure.policy.BoardListMovePolicy;
+import com.boardly.features.boardlist.application.policy.BoardListMovePolicy;
 import com.boardly.shared.common.error.Failure;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.ListColor;

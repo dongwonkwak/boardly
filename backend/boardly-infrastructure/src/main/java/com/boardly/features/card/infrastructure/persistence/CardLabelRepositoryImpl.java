@@ -1,4 +1,4 @@
-package com.boardly.features.card.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.card;
 
 import java.util.List;
 
@@ -9,8 +9,8 @@ import com.boardly.shared.common.value.CardId;
 import com.boardly.features.card.domain.port.CardLabelRepository;
 import com.boardly.features.label.domain.Label;
 import com.boardly.shared.common.value.LabelId;
-import com.boardly.features.label.infrastructure.persistence.LabelEntity;
-import com.boardly.features.label.infrastructure.persistence.LabelMapper;
+import com.boardly.infrastructure.adapters.out.persistence.label.LabelEntity;
+import com.boardly.infrastructure.adapters.out.persistence.label.LabelMapper;
 import com.boardly.shared.common.error.Failure;
 
 import io.vavr.control.Either;

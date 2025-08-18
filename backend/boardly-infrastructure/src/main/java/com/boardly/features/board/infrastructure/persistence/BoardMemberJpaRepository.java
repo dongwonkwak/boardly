@@ -1,4 +1,4 @@
-package com.boardly.features.board.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.board;
 
 import com.boardly.shared.common.value.BoardRole;
 import java.util.List;

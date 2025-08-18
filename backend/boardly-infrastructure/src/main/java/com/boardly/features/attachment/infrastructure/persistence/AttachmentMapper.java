@@ -1,4 +1,4 @@
-package com.boardly.features.attachment.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.attachment;
 
 import com.boardly.features.attachment.domain.Attachment;
 import com.boardly.shared.common.value.AttachmentId;

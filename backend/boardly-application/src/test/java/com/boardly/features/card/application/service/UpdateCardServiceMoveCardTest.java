@@ -34,7 +34,7 @@ import com.boardly.features.card.application.command.MoveCardCommand;
 import com.boardly.features.card.application.validation.CardValidator;
 import com.boardly.features.card.domain.Card;
 import com.boardly.shared.common.value.CardId;
-import com.boardly.features.card.infrastructure.policy.CardMovePolicy;
+import com.boardly.features.card.application.policy.CardMovePolicy;
 import com.boardly.features.card.domain.port.CardRepository;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.validation.MessageResolver;

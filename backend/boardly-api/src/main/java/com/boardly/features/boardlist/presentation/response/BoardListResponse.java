@@ -1,4 +1,4 @@
-package com.boardly.features.boardlist.presentation.response;
+package com.boardly.api.adapters.in.rest.boardlist.response;
 
 import com.boardly.features.boardlist.domain.BoardList;
 import com.fasterxml.jackson.annotation.JsonFormat;

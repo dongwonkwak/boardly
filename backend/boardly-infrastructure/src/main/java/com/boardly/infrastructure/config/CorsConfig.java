@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import com.boardly.infrastructure.config.properties.AppProperties;
+import com.boardly.infrastructure.adapters.out.config.properties.AppProperties;
 
 import lombok.RequiredArgsConstructor;
 

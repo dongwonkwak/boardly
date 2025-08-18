@@ -7,7 +7,7 @@ import com.boardly.features.card.application.command.UpdateCardCommand;
 import com.boardly.features.card.application.command.DeleteCardCommand;
 import com.boardly.features.card.application.command.MoveCardCommand;
 import com.boardly.features.card.application.command.CloneCardCommand;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import com.boardly.shared.validation.Validator;

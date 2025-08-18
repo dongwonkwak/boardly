@@ -3,7 +3,7 @@ package com.boardly.features.attachment.application.validation;
 import com.boardly.features.attachment.application.command.DeleteAttachmentCommand;
 import com.boardly.features.attachment.application.command.UpdateAttachmentCommand;
 import com.boardly.features.attachment.application.command.UploadAttachmentCommand;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import com.boardly.shared.validation.Validator;

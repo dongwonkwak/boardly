@@ -1,4 +1,4 @@
-package com.boardly.features.card.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.card;
 
 import java.time.Instant;
 import java.util.HashSet;

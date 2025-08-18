@@ -1,4 +1,4 @@
-package com.boardly.features.dashboard.presentation;
+package com.boardly.api.adapters.in.rest.dashboard;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

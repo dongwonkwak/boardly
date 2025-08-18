@@ -1,4 +1,4 @@
-package com.boardly.features.activity.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.activity;
 
 import com.boardly.features.activity.domain.Activity;
 import com.boardly.features.activity.domain.ActivityType;

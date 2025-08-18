@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import com.boardly.features.label.application.port.input.CreateLabelCommand;
 import com.boardly.features.label.application.port.input.DeleteLabelCommand;
 import com.boardly.features.label.application.port.input.UpdateLabelCommand;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import com.boardly.shared.validation.Validator;

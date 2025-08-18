@@ -1,4 +1,4 @@
-package com.boardly.features.board.presentation.response;
+package com.boardly.api.adapters.in.rest.board.response;
 
 /**
  * 카드 사용자 응답 DTO

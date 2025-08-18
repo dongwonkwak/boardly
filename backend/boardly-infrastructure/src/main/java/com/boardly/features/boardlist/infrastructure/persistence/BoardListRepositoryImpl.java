@@ -1,4 +1,4 @@
-package com.boardly.features.boardlist.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.boardlist;
 
 import com.boardly.features.boardlist.domain.BoardList;
 import com.boardly.features.boardlist.domain.port.BoardListRepository;

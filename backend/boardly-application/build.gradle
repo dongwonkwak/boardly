@@ -15,7 +15,6 @@ repositories { mavenCentral() }
 dependencies {
   api project(':boardly-shared')
   implementation project(':boardly-domain')
-  implementation project(':boardly-infrastructure')
 
   implementation libs.bundles.spring.boot.dependencies
   // Gradle가 자체 JUnit Platform 런처를 사용하도록 강제하기 위해 launcher 제외

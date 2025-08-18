@@ -1,4 +1,4 @@
-package com.boardly.features.board.presentation.response;
+package com.boardly.api.adapters.in.rest.board.response;
 
 import com.boardly.features.boardlist.domain.BoardList;
 import java.util.List;

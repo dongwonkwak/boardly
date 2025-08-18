@@ -64,6 +64,8 @@ export type CardResponse = {
     description?: string;
     position?: number;
     listId?: string;
+    priority?: string;
+    createdBy?: string;
     createdAt?: string;
     updatedAt?: string;
 };
@@ -98,11 +100,6 @@ export type CardAssigneeResponse = {
     lastName?: string;
     email?: string;
 };
-export type CardUserResponse = {
-    userId?: string;
-    firstName?: string;
-    lastName?: string;
-};
 export type BoardCardResponse = {
     cardId?: string;
     title?: string;
@@ -118,11 +115,8 @@ export type BoardCardResponse = {
     attachmentCount?: number;
     commentCount?: number;
     lastCommentAt?: string;
-    createdBy?: CardUserResponse;
     createdAt?: string;
     updatedAt?: string;
-    completedAt?: string;
-    completedBy?: CardUserResponse;
 };
 export type BoardColumnResponse = {
     columnId?: string;
@@ -225,7 +219,6 @@ export type UserId = {
 };
 export type CardMember = {
     userId?: UserId;
-    assignedAt?: string;
 };
 export type AssignCardMemberRequest = {
     memberId: string;
@@ -235,6 +228,22 @@ export type UnassignCardMemberRequest = {
 };
 export type LabelId = {
     id?: string;
+};
+export type BoardId = {
+    id?: string;
+};
+export type Label = {
+    createdAt?: string;
+    updatedAt?: string;
+    version?: number;
+    labelId?: LabelId;
+    boardId?: BoardId;
+    name?: string;
+    color?: string;
+    minutesSinceLastUpdate?: number;
+    auditInfo?: string;
+    "new"?: boolean;
+    ageInMinutes?: number;
 };
 export type AddCardLabelRequest = {
     labelId: string;
@@ -266,9 +275,9 @@ export type BoardSummaryDto = {
     createdAt?: string;
     listCount?: number;
     cardCount?: number;
-    isStarred?: boolean;
     color?: string;
     role?: string;
+    starred?: boolean;
 };
 export type ActorResponse = {
     id?: string;
@@ -297,6 +306,92 @@ export type DashboardResponse = {
     boards?: BoardSummaryDto[];
     recentActivity?: ActivityResponse[];
     statistics?: DashboardStatisticsDto;
+};
+export type AssigneeResponse = {
+    /** 사용자 ID */
+    userId?: string;
+    /** 이름 */
+    firstName?: string;
+    /** 성 */
+    lastName?: string;
+    /** 이메일 */
+    email?: string;
+    /** 할당일 */
+    assignedAt?: string;
+};
+export type AttachmentResponse = {
+    /** 첨부파일 ID */
+    attachmentId?: string;
+    /** 파일명 */
+    fileName?: string;
+    /** 파일 크기 */
+    fileSize?: number;
+    /** MIME 타입 */
+    mimeType?: string;
+    /** 업로드일 */
+    uploadedAt?: string;
+    /** 업로드자 정보 */
+    uploadedBy?: UserResponse;
+    /** 다운로드 URL */
+    downloadUrl?: string;
+};
+export type CommentResponse = {
+    /** 댓글 ID */
+    commentId?: string;
+    /** 댓글 내용 */
+    content?: string;
+    /** 생성일 */
+    createdAt?: string;
+    /** 작성자 정보 */
+    createdBy?: UserResponse;
+    /** 수정일 */
+    updatedAt?: string;
+    /** 수정 여부 */
+    isEdited?: boolean;
+};
+export type CardDetailResponse = {
+    /** 카드 ID */
+    cardId?: string;
+    /** 카드 제목 */
+    title?: string;
+    /** 카드 설명 */
+    description?: string;
+    /** 카드 위치 */
+    position?: number;
+    /** 우선순위 */
+    priority?: string;
+    /** 완료 여부 */
+    isCompleted?: boolean;
+    /** 아카이브 여부 */
+    isArchived?: boolean;
+    /** 마감일 */
+    dueDate?: string;
+    /** 시작일 */
+    startDate?: string;
+    /** 완료일 */
+    completedAt?: string;
+    /** 완료자 정보 */
+    completedBy?: UserResponse;
+    /** 라벨 목록 */
+    labels?: LabelResponse[];
+    /** 담당자 목록 */
+    assignees?: AssigneeResponse[];
+    /** 첨부파일 목록 */
+    attachments?: AttachmentResponse[];
+    /** 댓글 목록 */
+    comments?: CommentResponse[];
+    /** 보드 멤버 목록 */
+    boardMembers?: BoardMemberResponse[];
+    /** 보드 라벨 목록 */
+    boardLabels?: LabelResponse[];
+    /** 활동 내역 목록 */
+    activities?: ActivityResponse[];
+    /** 생성자 정보 */
+    createdBy?: UserResponse;
+    /** 생성일 */
+    createdAt?: string;
+    /** 수정일 */
+    updatedAt?: string;
 };
 export type ActivityListResponse = {
     activities?: ActivityResponse[];
@@ -920,7 +1015,7 @@ export function unassignCardMember(cardId: string, unassignCardMemberRequest: Un
 export function getCardLabels(cardId: string, opts?: Oazapfts.RequestOpts) {
     return oazapfts.fetchJson<{
         status: 200;
-        data: LabelId[];
+        data: Label[];
     } | {
         status: 403;
         data: ErrorResponse;
@@ -1254,6 +1349,29 @@ export function getDashboard(opts?: Oazapfts.RequestOpts) {
         status: 500;
         data: ErrorResponse;
     }>("/api/dashboard", {
+        ...opts
+    });
+}
+/**
+ * 카드 상세 정보 조회
+ */
+export function getCardDetail(cardId: string, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.fetchJson<{
+        status: 200;
+        data: CardDetailResponse;
+    } | {
+        status: 403;
+        data: ErrorResponse;
+    } | {
+        status: 404;
+        data: ErrorResponse;
+    } | {
+        status: 422;
+        data: ErrorResponse;
+    } | {
+        status: 500;
+        data: ErrorResponse;
+    }>(`/api/cards/${encodeURIComponent(cardId)}/detail`, {
         ...opts
     });
 }

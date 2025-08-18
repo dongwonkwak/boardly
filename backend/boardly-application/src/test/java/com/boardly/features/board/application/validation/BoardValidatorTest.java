@@ -8,7 +8,7 @@ import com.boardly.features.board.application.command.ToggleStarBoardCommand;
 import com.boardly.features.board.application.command.UpdateBoardCommand;
 import com.boardly.features.board.application.command.UpdateBoardMemberRoleCommand;
 import com.boardly.features.board.application.query.GetBoardDetailQuery;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.value.BoardRole;

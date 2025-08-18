@@ -1,4 +1,4 @@
-package com.boardly.features.card.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.card;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.boardly.features.label.infrastructure.persistence.LabelEntity;
+import com.boardly.infrastructure.adapters.out.persistence.label.LabelEntity;
 
 @Repository
 public interface CardLabelJpaRepository extends JpaRepository<CardLabelEntity, Long> {

@@ -1,4 +1,4 @@
-package com.boardly.infrastructure.config.properties;
+package com.boardly.infrastructure.adapters.out.config.properties;
 
 import java.util.List;
 

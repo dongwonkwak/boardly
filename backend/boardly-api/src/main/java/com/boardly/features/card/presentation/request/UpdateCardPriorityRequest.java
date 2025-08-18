@@ -1,4 +1,4 @@
-package com.boardly.features.card.presentation.request;
+package com.boardly.api.adapters.in.rest.card.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

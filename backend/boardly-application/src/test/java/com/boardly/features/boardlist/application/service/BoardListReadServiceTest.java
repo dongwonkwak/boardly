@@ -9,7 +9,7 @@ import com.boardly.features.boardlist.application.query.GetBoardListsQuery;
 import com.boardly.features.boardlist.application.validation.BoardListValidator;
 import com.boardly.features.boardlist.domain.BoardList;
 import com.boardly.features.boardlist.domain.port.BoardListRepository;
-import com.boardly.features.boardlist.infrastructure.policy.BoardListCreationPolicy;
+import com.boardly.features.boardlist.application.policy.BoardListCreationPolicy;
 import com.boardly.shared.common.error.Failure;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.ListColor;
@@ -101,7 +101,7 @@ class BoardListReadServiceTest {
             when(boardRepository.findById(testBoardId)).thenReturn(Optional.of(testBoard));
             when(boardListRepository.findByBoardIdOrderByPosition(testBoardId)).thenReturn(testBoardLists);
             when(boardListCreationPolicy.getStatus(testBoardId)).thenReturn(
-                com.boardly.features.boardlist.infrastructure.policy.BoardListCreationPolicy.ListCountStatus.NORMAL);
+                com.boardly.features.boardlist.application.policy.BoardListCreationPolicy.ListCountStatus.NORMAL);
 
             Either<Failure, List<BoardList>> result = boardListReadService.getBoardLists(validQuery);
 

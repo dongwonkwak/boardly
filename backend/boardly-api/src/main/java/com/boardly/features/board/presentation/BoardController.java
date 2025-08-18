@@ -1,4 +1,4 @@
-package com.boardly.features.board.presentation;
+package com.boardly.api.adapters.in.rest.board;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -34,10 +34,10 @@ import com.boardly.features.board.application.service.BoardMemberService;
 import com.boardly.features.board.application.service.BoardQueryService;
 import com.boardly.features.board.domain.Board;
 import com.boardly.shared.common.value.BoardId;
-import com.boardly.features.board.presentation.request.CreateBoardRequest;
-import com.boardly.features.board.presentation.request.UpdateBoardRequest;
-import com.boardly.features.board.presentation.response.BoardDetailResponse;
-import com.boardly.features.board.presentation.response.BoardResponse;
+import com.boardly.api.adapters.in.rest.board.request.CreateBoardRequest;
+import com.boardly.api.adapters.in.rest.board.request.UpdateBoardRequest;
+import com.boardly.api.adapters.in.rest.board.response.BoardDetailResponse;
+import com.boardly.api.adapters.in.rest.board.response.BoardResponse;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.error.Failure;
 import com.boardly.api.common.handler.ApiFailureHandler;

@@ -1,4 +1,4 @@
-package com.boardly.infrastructure.message;
+package com.boardly.infrastructure.adapters.out.message;
 
 import com.boardly.shared.validation.MessageResolver;
 import io.vavr.control.Try;

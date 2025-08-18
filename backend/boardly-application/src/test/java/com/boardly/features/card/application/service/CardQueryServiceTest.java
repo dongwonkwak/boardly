@@ -30,7 +30,7 @@ import com.boardly.features.card.domain.Card;
 import com.boardly.shared.common.value.CardId;
 import com.boardly.features.card.domain.port.CardRepository;
 import com.boardly.shared.common.value.UserId;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import com.boardly.shared.common.error.Failure;

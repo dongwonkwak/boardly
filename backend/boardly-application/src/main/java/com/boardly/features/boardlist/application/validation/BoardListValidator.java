@@ -5,7 +5,7 @@ import com.boardly.features.boardlist.application.command.DeleteBoardListCommand
 import com.boardly.features.boardlist.application.query.GetBoardListsQuery;
 import com.boardly.features.boardlist.application.command.UpdateBoardListCommand;
 import com.boardly.features.boardlist.application.command.UpdateBoardListPositionCommand;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.common.value.ListColor;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;

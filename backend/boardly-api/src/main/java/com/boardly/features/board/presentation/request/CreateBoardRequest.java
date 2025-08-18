@@ -1,4 +1,4 @@
-package com.boardly.features.board.presentation.request;
+package com.boardly.api.adapters.in.rest.board.request;
 
 /**
  * 보드 생성 요청 DTO

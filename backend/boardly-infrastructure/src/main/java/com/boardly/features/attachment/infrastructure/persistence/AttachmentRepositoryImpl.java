@@ -1,4 +1,4 @@
-package com.boardly.features.attachment.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.attachment;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.boardly.features.card.presentation.response;
+package com.boardly.api.adapters.in.rest.card.response;
 
 import java.time.Instant;
 

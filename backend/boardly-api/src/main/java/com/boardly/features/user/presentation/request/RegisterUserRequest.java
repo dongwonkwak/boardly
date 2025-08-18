@@ -1,4 +1,4 @@
-package com.boardly.features.user.presentation.request;
+package com.boardly.api.adapters.in.rest.user.request;
 
 /**
  * 사용자 등록 요청 DTO

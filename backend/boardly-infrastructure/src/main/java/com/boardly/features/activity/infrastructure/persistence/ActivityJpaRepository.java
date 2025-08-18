@@ -1,4 +1,4 @@
-package com.boardly.features.activity.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.activity;
 
 import java.time.Instant;
 import java.util.List;

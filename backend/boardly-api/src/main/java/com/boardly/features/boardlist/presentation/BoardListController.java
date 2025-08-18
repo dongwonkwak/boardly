@@ -1,4 +1,4 @@
-package com.boardly.features.boardlist.presentation;
+package com.boardly.api.adapters.in.rest.boardlist;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,10 +26,10 @@ import com.boardly.features.boardlist.application.usecase.UpdateBoardListPositio
 import com.boardly.features.boardlist.domain.BoardList;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.ListId;
-import com.boardly.features.boardlist.presentation.response.BoardListResponse;
-import com.boardly.features.boardlist.presentation.request.CreateBoardListRequest;
-import com.boardly.features.boardlist.presentation.request.UpdateBoardListRequest;
-import com.boardly.features.boardlist.presentation.request.UpdateBoardListPositionRequest;
+import com.boardly.api.adapters.in.rest.boardlist.response.BoardListResponse;
+import com.boardly.api.adapters.in.rest.boardlist.request.CreateBoardListRequest;
+import com.boardly.api.adapters.in.rest.boardlist.request.UpdateBoardListRequest;
+import com.boardly.api.adapters.in.rest.boardlist.request.UpdateBoardListPositionRequest;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.error.Failure;
 import com.boardly.api.common.handler.ApiFailureHandler;

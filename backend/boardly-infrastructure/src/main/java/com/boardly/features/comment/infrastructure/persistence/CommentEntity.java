@@ -1,4 +1,4 @@
-package com.boardly.features.comment.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.comment;
 
 import java.time.Instant;
 

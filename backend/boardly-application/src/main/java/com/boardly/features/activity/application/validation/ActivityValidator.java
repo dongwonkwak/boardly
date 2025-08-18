@@ -3,7 +3,7 @@ package com.boardly.features.activity.application.validation;
 import com.boardly.features.activity.application.command.*;
 import com.boardly.features.activity.application.query.*;
 import com.boardly.features.activity.domain.ActivityType;
-import com.boardly.infrastructure.validation.*;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import com.boardly.shared.validation.Validator;

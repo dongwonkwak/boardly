@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import com.boardly.features.attachment.infrastructure.config.properties.AttachmentPolicyProperties;
 import com.boardly.features.boardlist.infrastructure.config.BoardListPolicyConfigImpl;
 import com.boardly.features.card.infrastructure.config.properties.CardPolicyProperties;
-import com.boardly.infrastructure.config.properties.AppProperties;
+import com.boardly.infrastructure.adapters.out.config.properties.AppProperties;
 
 @SpringBootApplication
 @EnableConfigurationProperties({

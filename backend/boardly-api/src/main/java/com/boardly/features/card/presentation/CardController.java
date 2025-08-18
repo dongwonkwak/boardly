@@ -1,4 +1,4 @@
-package com.boardly.features.card.presentation;
+package com.boardly.api.adapters.in.rest.card;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -41,19 +41,19 @@ import com.boardly.features.card.application.usecase.UpdateCardUseCase;
 import com.boardly.features.card.domain.Card;
 import com.boardly.shared.common.value.CardId;
 import com.boardly.features.card.domain.CardMember;
-import com.boardly.features.card.presentation.request.AddCardLabelRequest;
-import com.boardly.features.card.presentation.request.AssignCardMemberRequest;
-import com.boardly.features.card.presentation.request.CloneCardRequest;
-import com.boardly.features.card.presentation.request.CreateCardRequest;
-import com.boardly.features.card.presentation.request.MoveCardRequest;
-import com.boardly.features.card.presentation.request.RemoveCardLabelRequest;
-import com.boardly.features.card.presentation.request.UnassignCardMemberRequest;
-import com.boardly.features.card.presentation.request.UpdateCardCompletedRequest;
-import com.boardly.features.card.presentation.request.UpdateCardPriorityRequest;
-import com.boardly.features.card.presentation.request.UpdateCardRequest;
-import com.boardly.features.card.presentation.request.UpdateCardStartDateRequest;
-import com.boardly.features.card.presentation.response.CardDetailResponse;
-import com.boardly.features.card.presentation.response.CardResponse;
+import com.boardly.api.adapters.in.rest.card.request.AddCardLabelRequest;
+import com.boardly.api.adapters.in.rest.card.request.AssignCardMemberRequest;
+import com.boardly.api.adapters.in.rest.card.request.CloneCardRequest;
+import com.boardly.api.adapters.in.rest.card.request.CreateCardRequest;
+import com.boardly.api.adapters.in.rest.card.request.MoveCardRequest;
+import com.boardly.api.adapters.in.rest.card.request.RemoveCardLabelRequest;
+import com.boardly.api.adapters.in.rest.card.request.UnassignCardMemberRequest;
+import com.boardly.api.adapters.in.rest.card.request.UpdateCardCompletedRequest;
+import com.boardly.api.adapters.in.rest.card.request.UpdateCardPriorityRequest;
+import com.boardly.api.adapters.in.rest.card.request.UpdateCardRequest;
+import com.boardly.api.adapters.in.rest.card.request.UpdateCardStartDateRequest;
+import com.boardly.api.adapters.in.rest.card.response.CardDetailResponse;
+import com.boardly.api.adapters.in.rest.card.response.CardResponse;
 import com.boardly.features.label.domain.Label;
 import com.boardly.shared.common.value.LabelId;
 import com.boardly.shared.common.value.UserId;

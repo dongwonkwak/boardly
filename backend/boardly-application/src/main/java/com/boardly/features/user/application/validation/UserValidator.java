@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.boardly.features.user.application.command.RegisterUserCommand;
 import com.boardly.features.user.application.command.UpdateUserCommand;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.ValidationResult;
 import com.boardly.shared.validation.Validator;
 

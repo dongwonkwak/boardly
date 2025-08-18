@@ -2,7 +2,7 @@ package com.boardly.features.user.application.validation;
 
 import com.boardly.features.user.application.command.RegisterUserCommand;
 import com.boardly.features.user.application.command.UpdateUserCommand;
-import com.boardly.infrastructure.validation.CommonValidationRules;
+import com.boardly.application.validation.CommonValidationRules;
 import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.validation.ValidationResult;
 import org.junit.jupiter.api.BeforeEach;

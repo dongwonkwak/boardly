@@ -1,4 +1,4 @@
-package com.boardly.features.auth.presentation;
+package com.boardly.api.adapters.in.web.auth;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

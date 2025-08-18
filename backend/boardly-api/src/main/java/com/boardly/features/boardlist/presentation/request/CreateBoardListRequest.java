@@ -1,4 +1,4 @@
-package com.boardly.features.boardlist.presentation.request;
+package com.boardly.api.adapters.in.rest.boardlist.request;
 
 import com.boardly.shared.common.value.ListColor;
 import io.swagger.v3.oas.annotations.media.Schema;

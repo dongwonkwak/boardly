@@ -1,4 +1,4 @@
-package com.boardly.features.comment.infrastructure.persistence;
+package com.boardly.infrastructure.adapters.out.persistence.comment;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

@@ -1,4 +1,4 @@
-package com.boardly.infrastructure.validation;
+package com.boardly.application.validation;
 
 import com.boardly.shared.common.value.ListColor;
 import com.boardly.shared.validation.MessageResolver;

@@ -1,4 +1,4 @@
-package com.boardly.features.label.presentation;
+package com.boardly.api.adapters.in.rest.label;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,9 +17,9 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import com.boardly.features.label.application.port.input.CreateLabelCommand;
 import com.boardly.features.label.application.port.input.UpdateLabelCommand;
 import com.boardly.features.label.application.port.input.DeleteLabelCommand;
-import com.boardly.features.label.presentation.request.CreateLabelRequest;
-import com.boardly.features.label.presentation.request.UpdateLabelRequest;
-import com.boardly.features.label.presentation.response.LabelResponse;
+import com.boardly.api.adapters.in.rest.label.request.CreateLabelRequest;
+import com.boardly.api.adapters.in.rest.label.request.UpdateLabelRequest;
+import com.boardly.api.adapters.in.rest.label.response.LabelResponse;
 import com.boardly.features.label.application.usecase.CreateLabelUseCase;
 import com.boardly.features.label.application.usecase.GetLabelUseCase;
 import com.boardly.features.label.application.usecase.UpdateLabelUseCase;

@@ -52,11 +52,25 @@
 | AUTH-INSUFFICIENT_SCOPE | error.auth.insufficientScope | 403 | 권한 부족 |
 | WS-NOT_MEMBER | error.workspace.notMember | 403 | 워크스페이스 멤버가 아님 |
 | WS-NOT_FOUND | error.workspace.notFound | 404 | 워크스페이스 없음 |
+| WS-NOT_OWNER | error.workspace.notOwner | 403 | 워크스페이스 소유자가 아님 |
+| WS-HAS_BOARDS | error.workspace.hasBoards | 409 | 워크스페이스에 보드가 있어 삭제 불가 |
+| WS-LIMIT_EXCEEDED | error.workspace.limitExceeded | 422 | 워크스페이스 개수 제한 초과 |
+| WS-PERSONAL_NO_INVITE | error.workspace.personalNoInvite | 422 | Personal 워크스페이스는 멤버 초대 불가 |
 | BOARD-NOT_FOUND | error.board.notFound | 404 | 보드 없음 |
 | BOARD-ARCHIVED | error.board.archived | 409 | 아카이브된 보드 |
 | LIST-NOT_FOUND | error.list.notFound | 404 | 리스트 없음 |
 | CARD-NOT_FOUND | error.card.notFound | 404 | 카드 없음 |
 | CARD-POSITION_CONFLICT | error.card.positionConflict | 409 | 카드 정렬 충돌 |
+| CARD-LIMIT_EXCEEDED | error.card.limitExceeded | 422 | 카드 개수 제한 초과 |
+| LIST-NOT_FOUND | error.list.notFound | 404 | 리스트 없음 |
+| LIST-POSITION_CONFLICT | error.list.positionConflict | 409 | 리스트 정렬 충돌 |
+| LABEL-NOT_FOUND | error.label.notFound | 404 | 라벨 없음 |
+| LABEL-NAME_DUPLICATE | error.label.nameDuplicate | 409 | 라벨 이름 중복 |
+| COMMENT-NOT_FOUND | error.comment.notFound | 404 | 댓글 없음 |
+| COMMENT-UNAUTHORIZED | error.comment.unauthorized | 403 | 댓글 수정/삭제 권한 없음 |
+| USER-EMAIL_DUPLICATE | error.user.emailDuplicate | 409 | 이메일 중복 |
+| USER-PASSWORD_MISMATCH | error.user.passwordMismatch | 401 | 비밀번호 불일치 |
+| USER-INVALID_PASSWORD | error.user.invalidPassword | 422 | 비밀번호 규칙 위반 |
 
 필요 시 도메인별 코드를 위 표에 추가하고, 각 코드에 대한 `HTTP`와 `messageKey`를 함께 등록합니다.
 

@@ -20,27 +20,32 @@ relatedDocs:
 ## 배경
 팀 협업을 위해 보드/워크스페이스 단위로 멤버를 초대하고 역할(OWNER/EDITOR/VIEWER 등)에 따른 권한을 부여한다.
 
-참조: `PRD.md` F-402, `SRS.md` 3.3~3.4, `workspace-board-permissions.md`, 권한 매트릭스/우선순위, 초대 프로세스
+참조: `PRD.md` F-402, `SRS.md` 3.4, `workspace.md`, 권한 매트릭스/우선순위, 초대 프로세스
 
 ## 사용자 스토리
-- (초대) 나는 워크스페이스 OWNER/ADMIN 또는 보드 BOARD_ADMIN로서, 이메일 또는 링크로 멤버를 초대하고 싶다.
-- (역할) 나는 워크스페이스 OWNER/ADMIN 또는 보드 BOARD_ADMIN로서, 멤버의 역할을 설정/변경하고 싶다.
+- (초대) 나는 워크스페이스 OWNER 또는 보드 OWNER로서, 이메일 또는 링크로 멤버를 초대하고 싶다.
+- (역할) 나는 워크스페이스 OWNER 또는 보드 OWNER로서, 멤버의 역할을 설정/변경하고 싶다.
 - (접근 제어) 나는 사용자로서, 내 역할에 맞는 범위에서만 리소스에 접근하고 싶다.
-- (권한 우선순위) 나는 워크스페이스 OWNER/ADMIN로서, 모든 보드에 대해 모든 권한을 가져야 한다.
+- (권한 우선순위) 나는 워크스페이스 OWNER로서, 모든 보드에 대해 절대 권한을 가져야 한다.
+- (보드 공개 설정) 나는 보드 OWNER로서, 보드를 공개/비공개로 설정하여 워크스페이스 멤버의 자동 접근을 제어하고 싶다.
 
 ## 수용 기준 (Acceptance Criteria)
 1. 초대
    - 초대 방식: 이메일/링크, 상태: PENDING/ACCEPTED/DECLINED/EXPIRED(7일).
-   - 워크스페이스 초대: OWNER/ADMIN만 가능, 기본 역할 MEMBER 부여.
-   - 보드 초대: BOARD_ADMIN만 가능, 기본 역할 BOARD_VIEWER 부여.
+   - 워크스페이스 초대: OWNER만 가능, 기본 역할 MEMBER 부여.
+   - 보드 초대: OWNER만 가능, 기본 역할 VIEWER 부여.
 2. 역할/권한
-   - 워크스페이스 역할: OWNER, ADMIN, MEMBER
-   - 보드 역할: BOARD_ADMIN, BOARD_EDITOR, BOARD_VIEWER
+   - 워크스페이스 역할: OWNER, MEMBER, BOARD_ONLY
+   - 보드 역할: OWNER, EDITOR, VIEWER
    - 권한 매트릭스에 따라 API 접근 제어(`workspace:*`, `board:*`, `content:*` 등).
-   - 워크스페이스 권한 > 보드 권한 우선순위 적용.
+   - 워크스페이스 OWNER > MEMBER > BOARD_ONLY 순서로 권한 우선순위 적용.
 3. 접근 제어
    - JWT 인증 후, 워크스페이스 멤버십 → 워크스페이스 역할 → 보드 멤버십 → 보드 역할 순서로 권한 검증.
    - 권한 충돌 시 워크스페이스 권한이 우선 적용.
+4. 보드 공개 설정
+   - 공개 보드: 워크스페이스 멤버에게 자동 Editor 권한 부여
+   - 비공개 보드: 개별 초대를 통해서만 접근 가능
+   - BOARD_ONLY 사용자: 워크스페이스에 속하지 않고 보드에만 초대받은 사용자
 
 ## 비기능 (NFR)
 - 보안: 최소 권한 원칙, 멀티테넌시 데이터 격리, 감사 로그
@@ -48,9 +53,11 @@ relatedDocs:
 
 ## 테스트 시나리오 (샘플)
 - 워크스페이스 OWNER가 멤버 초대 → 수락 후 MEMBER 역할 부여
-- 보드 BOARD_ADMIN이 게스트 초대 → 수락 후 BOARD_VIEWER 역할 부여
-- BOARD_VIEWER가 카드 수정 시도 → 403
-- 워크스페이스 OWNER가 보드 BOARD_ADMIN의 보드 삭제 → 성공 (워크스페이스 권한 우선)
+- 보드 OWNER가 게스트 초대 → 수락 후 VIEWER 역할 부여
+- VIEWER가 카드 수정 시도 → 403
+- 워크스페이스 OWNER가 보드 OWNER의 보드 삭제 → 성공 (워크스페이스 권한 우선)
+- 공개 보드 생성 시 워크스페이스 멤버에게 자동 Editor 권한 부여
+- BOARD_ONLY 사용자가 워크스페이스 정보 접근 시도 → 403
 - 초대 만료 후 수락 시도 → 410/400
 
 ## 범위
@@ -58,7 +65,7 @@ relatedDocs:
 - 제외: 실시간 협업 상태 표시(별도), 개인 알림 센터
 
 ## 추적
-- Feature: F-402, SRS 3.3, 3.4, workspace-board-permissions.md
+- Feature: F-402, SRS 3.4, workspace.md
 
 ## 오류 응답(표준)
 - 참고: `../errors.md`

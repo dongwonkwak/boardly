@@ -8,8 +8,9 @@
 - 모든 조회는 `workspace_id` 기준으로 필터링.
 
 ## 권한 관리 전략
-- **워크스페이스 권한 우선**: 워크스페이스 권한이 보드 권한보다 우선 적용
-- **역할 기반 접근 제어(RBAC)**: 워크스페이스 역할(OWNER, ADMIN, MEMBER)과 보드 역할(BOARD_ADMIN, BOARD_EDITOR, BOARD_VIEWER) 분리
+- **워크스페이스 권한 우선**: 워크스페이스 OWNER > MEMBER > BOARD_ONLY 순서로 권한 우선순위 적용
+- **역할 기반 접근 제어(RBAC)**: 워크스페이스 역할(OWNER, MEMBER, BOARD_ONLY)과 보드 역할(OWNER, EDITOR, VIEWER) 분리
+- **보드 공개/비공개 설정**: 공개 보드는 워크스페이스 멤버에게 자동 Editor 권한, 비공개 보드는 개별 초대 필요
 - **초대 상태 관리**: PENDING, ACCEPTED, DECLINED, EXPIRED 상태 추적
 
 ## 주요 테이블
@@ -39,17 +40,20 @@
 ### 워크스페이스 권한
 ```sql
 -- 워크스페이스 역할 enum
-CREATE TYPE workspace_role AS ENUM ('OWNER', 'ADMIN', 'MEMBER');
+CREATE TYPE workspace_role AS ENUM ('OWNER', 'MEMBER');
+
+-- 워크스페이스 멤버 타입 enum
+CREATE TYPE member_type AS ENUM ('MEMBER', 'BOARD_ONLY');
 
 -- 워크스페이스 멤버 테이블
 CREATE TABLE workspace_members (
     workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     role workspace_role NOT NULL DEFAULT 'MEMBER',
-    invite_status invite_status_type NOT NULL DEFAULT 'ACCEPTED',
+    type member_type NOT NULL DEFAULT 'MEMBER',
     invited_by UUID REFERENCES users(id),
-    invited_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    joined_at TIMESTAMP,
+    invited_at TIMESTAMP,
+    joined_at TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (workspace_id, user_id)
 );
 ```
@@ -57,17 +61,20 @@ CREATE TABLE workspace_members (
 ### 보드 권한
 ```sql
 -- 보드 역할 enum
-CREATE TYPE board_role AS ENUM ('BOARD_ADMIN', 'BOARD_EDITOR', 'BOARD_VIEWER');
+CREATE TYPE board_role AS ENUM ('OWNER', 'EDITOR', 'VIEWER');
+
+-- 초대 타입 enum
+CREATE TYPE invitation_type AS ENUM ('WORKSPACE_AUTO', 'INDIVIDUAL');
 
 -- 보드 멤버 테이블
 CREATE TABLE board_members (
     board_id UUID REFERENCES boards(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    role board_role NOT NULL DEFAULT 'BOARD_VIEWER',
-    invite_status invite_status_type NOT NULL DEFAULT 'ACCEPTED',
+    role board_role NOT NULL DEFAULT 'VIEWER',
     invited_by UUID REFERENCES users(id),
-    invited_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    joined_at TIMESTAMP,
+    invited_at TIMESTAMP,
+    joined_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    invitation_type invitation_type NOT NULL DEFAULT 'INDIVIDUAL',
     PRIMARY KEY (board_id, user_id)
 );
 ```
@@ -77,37 +84,51 @@ CREATE TABLE board_members (
 -- 초대 상태 enum
 CREATE TYPE invite_status_type AS ENUM ('PENDING', 'ACCEPTED', 'DECLINED', 'EXPIRED');
 
--- 워크스페이스 초대 테이블
-CREATE TABLE workspace_invitations (
+-- 초대 테이블 (워크스페이스 및 보드 통합)
+CREATE TABLE invitations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
-    email VARCHAR(255) NOT NULL,
-    role workspace_role NOT NULL DEFAULT 'MEMBER',
+    type VARCHAR(20) NOT NULL CHECK (type IN ('WORKSPACE', 'BOARD')),
+    target_id UUID NOT NULL,
+    email VARCHAR(255),
+    invite_code VARCHAR(255) UNIQUE,
+    role VARCHAR(50) NOT NULL,
     status invite_status_type NOT NULL DEFAULT 'PENDING',
     invited_by UUID REFERENCES users(id),
-    invited_at TIMESTAMP NOT NULL DEFAULT NOW(),
     expires_at TIMESTAMP NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     accepted_at TIMESTAMP,
-    UNIQUE(workspace_id, email, status)
-);
-
--- 보드 초대 테이블
-CREATE TABLE board_invitations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    board_id UUID REFERENCES boards(id) ON DELETE CASCADE,
-    email VARCHAR(255) NOT NULL,
-    role board_role NOT NULL DEFAULT 'BOARD_VIEWER',
-    status invite_status_type NOT NULL DEFAULT 'PENDING',
-    invited_by UUID REFERENCES users(id),
-    invited_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    expires_at TIMESTAMP NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
-    accepted_at TIMESTAMP,
-    UNIQUE(board_id, email, status)
+    CHECK ((email IS NOT NULL AND invite_code IS NULL) OR (email IS NULL AND invite_code IS NOT NULL))
 );
 ```
 
 ### 핵심 엔티티 테이블
 ```sql
+-- 워크스페이스 테이블
+CREATE TABLE workspaces (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('PERSONAL', 'TEAM')),
+    owner_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE(owner_user_id, name)
+);
+
+-- 보드 테이블
+CREATE TABLE boards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workspace_id UUID REFERENCES workspaces(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,
+    is_starred BOOLEAN NOT NULL DEFAULT FALSE,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- 리스트 테이블
 CREATE TABLE lists (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -189,13 +210,13 @@ CREATE TABLE activities (
 ```mermaid
 erDiagram
   WORKSPACES ||--o{ WORKSPACE_MEMBERS : has
-  WORKSPACES ||--o{ WORKSPACE_INVITATIONS : sends
+  WORKSPACES ||--o{ INVITATIONS : sends
   WORKSPACES ||--o{ BOARDS : contains
   WORKSPACES ||--o{ LABELS : has
   WORKSPACES ||--o{ ACTIVITIES : logs
   
   BOARDS ||--o{ BOARD_MEMBERS : has
-  BOARDS ||--o{ BOARD_INVITATIONS : sends
+  BOARDS ||--o{ INVITATIONS : sends
   BOARDS ||--o{ LISTS : contains
   BOARDS ||--o{ ACTIVITIES : logs
   
@@ -222,21 +243,23 @@ erDiagram
     uuid workspace_id FK
     uuid user_id FK
     workspace_role role
-    invite_status_type invite_status
+    member_type type
     uuid invited_by FK
     timestamp invited_at
     timestamp joined_at
   }
   
-  WORKSPACE_INVITATIONS {
+  INVITATIONS {
     uuid id PK
-    uuid workspace_id FK
+    text type
+    uuid target_id FK
     text email
-    workspace_role role
+    text invite_code
+    text role
     invite_status_type status
     uuid invited_by FK
-    timestamp invited_at
     timestamp expires_at
+    timestamp created_at
     timestamp accepted_at
   }
   
@@ -246,7 +269,7 @@ erDiagram
     text title
     text description
     bool is_public
-    bool is_archived
+    bool is_starred
     timestamp created_at
     timestamp updated_at
   }
@@ -255,22 +278,10 @@ erDiagram
     uuid board_id FK
     uuid user_id FK
     board_role role
-    invite_status_type invite_status
     uuid invited_by FK
     timestamp invited_at
     timestamp joined_at
-  }
-  
-  BOARD_INVITATIONS {
-    uuid id PK
-    uuid board_id FK
-    text email
-    board_role role
-    invite_status_type status
-    uuid invited_by FK
-    timestamp invited_at
-    timestamp expires_at
-    timestamp accepted_at
+    invitation_type invitation_type
   }
   
   LISTS {
@@ -356,9 +367,10 @@ CREATE INDEX idx_board_members_user_board ON board_members(user_id, board_id);
 CREATE INDEX idx_board_members_status ON board_members(invite_status);
 
 -- 초대 조회 최적화
-CREATE INDEX idx_workspace_invitations_email_status ON workspace_invitations(email, status);
-CREATE INDEX idx_board_invitations_email_status ON board_invitations(email, status);
-CREATE INDEX idx_invitations_expires_at ON workspace_invitations(expires_at), board_invitations(expires_at);
+CREATE INDEX idx_invitations_email_status ON invitations(email, status);
+CREATE INDEX idx_invitations_invite_code ON invitations(invite_code);
+CREATE INDEX idx_invitations_expires_at ON invitations(expires_at);
+CREATE INDEX idx_invitations_type_target ON invitations(type, target_id);
 ```
 
 ### 콘텐츠 조회 최적화

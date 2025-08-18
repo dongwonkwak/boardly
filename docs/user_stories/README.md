@@ -22,7 +22,7 @@ Boardly의 사용자 스토리를 `story_map.md` 기반으로 정리했습니다
 13. [US-013 체크리스트 (F-702)](US-013_checklists.md)
 14. [US-014 첨부파일 (F-703)](US-014_attachments.md)
 15. [US-015 검색 및 필터링 (F-704)](US-015_search_and_filter.md)
-16. [US-016 담당자 할당 (F-301 확장)](US-016_assignees.md)
+16. [US-016 담당자 할당 (F-301 확장)](US-016_assignees.md) - MVP에서 기본 기능 제공
 17. [US-017 실시간 동기화·협업 상태](US-017_realtime_collaboration.md)
 18. [US-018 데이터 백업/내보내기](US-018_data_backup_and_export.md)
 

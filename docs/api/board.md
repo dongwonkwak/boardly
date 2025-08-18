@@ -62,11 +62,13 @@
   "boardDescription": "React와 Spring Boot를 사용한 칸반 보드 애플리케이션",
   "isStarred": true,
   "boardColor": "#3B82F6",
-  "columns": [
+  "workspaceId": "workspace_456",
+  "workspaceName": "개발팀",
+  "lists": [
     {
-      "columnId": "col_1",
-      "columnName": "할 일",
-      "columnColor": "#EF4444",
+      "listId": "list_1",
+      "listName": "할 일",
+      "listColor": "#EF4444",
       "position": 1,
       "cardCount": 3,
       "cards": [
@@ -169,7 +171,8 @@
 ```json
 {
   "title": "새로운 보드",
-  "description": "보드 설명"
+  "description": "보드 설명",
+  "workspaceId": "workspace_456"
 }
 ```
 
@@ -330,20 +333,22 @@
 | `boardDescription` | string | N | 보드 설명 |
 | `isStarred` | boolean | Y | 즐겨찾기 상태 |
 | `boardColor` | string | N | 보드 색상 |
-| `columns` | array | Y | 보드 컬럼 목록 |
+| `workspaceId` | string | Y | 워크스페이스 ID |
+| `workspaceName` | string | Y | 워크스페이스 이름 |
+| `lists` | array | Y | 보드 리스트 목록 |
 | `boardMembers` | array | Y | 보드 멤버 목록 |
 | `labels` | array | Y | 보드 라벨 목록 |
 | `createdAt` | string | Y | 생성 시간 (ISO 8601 형식) |
 | `updatedAt` | string | Y | 수정 시간 (ISO 8601 형식) |
 
-### BoardColumnResponse 객체
+### BoardListResponse 객체
 
 | 필드 | 타입 | 필수 | 설명 |
 |------|------|------|------|
-| `columnId` | string | Y | 컬럼 고유 식별자 |
-| `columnName` | string | Y | 컬럼 이름 |
-| `columnColor` | string | N | 컬럼 색상 |
-| `position` | integer | Y | 컬럼 위치 |
+| `listId` | string | Y | 리스트 고유 식별자 |
+| `listName` | string | Y | 리스트 이름 |
+| `listColor` | string | N | 리스트 색상 |
+| `position` | integer | Y | 리스트 위치 |
 | `cardCount` | integer | Y | 카드 개수 |
 | `cards` | array | Y | 카드 목록 |
 
@@ -426,6 +431,7 @@
 |------|------|------|------|
 | `title` | string | Y | 보드 제목 |
 | `description` | string | N | 보드 설명 |
+| `workspaceId` | string | Y | 워크스페이스 ID |
 
 ### UpdateBoardRequest 객체
 
@@ -543,7 +549,8 @@ curl -X POST "https://api.boardly.com/api/boards" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "새로운 보드",
-    "description": "보드 설명"
+    "description": "보드 설명",
+    "workspaceId": "workspace_456"
   }'
 ```
 

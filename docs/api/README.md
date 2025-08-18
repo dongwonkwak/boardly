@@ -1,11 +1,22 @@
 # Boardly API Documentation
 
-## OpenAPI 사양서
+## API 문서
 
+### OpenAPI 사양서
 - **JSON 형식**: `openapi.json`
 - **YAML 형식**: `openapi.yml` (곧 제공 예정)
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **API Docs**: http://localhost:8080/api-docs
+
+### 상세 API 문서
+- [워크스페이스 API](workspace.md) - 워크스페이스 관리
+- [보드 API](board.md) - 보드 관리
+- [리스트 API](boardlist.md) - 리스트 관리
+- [카드 API](cards.md) - 카드 관리
+- [사용자 API](user.md) - 사용자 관리
+- [활동 API](activities.md) - 활동 내역
+- [라벨 API](label.md) - 라벨 관리
+- [에러 코드 카탈로그](error_catalog.md) - 에러 응답 규약
 
 ## 클라이언트 코드 생성
 

@@ -1,5 +1,6 @@
 package com.boardly.shared.common.value;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -12,6 +13,6 @@ public class CardId extends EntityId {
     }
 
     public CardId() {
-        super();
+        super("card_" + UlidCreator.getUlid().toString());
     }
 }

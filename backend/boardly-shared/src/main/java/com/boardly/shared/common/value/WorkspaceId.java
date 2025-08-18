@@ -1,5 +1,6 @@
 package com.boardly.shared.common.value;
 
+import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -12,6 +13,6 @@ public class WorkspaceId extends EntityId {
     }
 
     public WorkspaceId() {
-        super();
+        super("wsp_" + UlidCreator.getUlid().toString());
     }
 }

@@ -36,6 +36,10 @@ public class BoardListEntity {
     @Column(name = "board_id", nullable = false)
     private String boardId;
 
+    // 멀티테넌시를 위한 워크스페이스 식별자 (schema.md 반영)
+    @Column(name = "workspace_id")
+    private String workspaceId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

@@ -26,6 +26,14 @@ public class BoardEntity {
     @Column(name = "description", length = 500)
     private String description;
 
+    // 멀티테넌시를 위한 워크스페이스 식별자 (schema.md 반영)
+    @Column(name = "workspace_id")
+    private String workspaceId;
+
+    // 공개 여부 (schema.md 반영)
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic;
+
     @Column(name = "is_archived", nullable = false)
     private boolean isArchived;
 
@@ -50,6 +58,8 @@ public class BoardEntity {
         String boardId,
         String title,
         String description,
+        String workspaceId,
+        boolean isPublic,
         boolean isArchived,
         String ownerId,
         boolean isStarred,
@@ -59,6 +69,8 @@ public class BoardEntity {
         this.boardId = boardId;
         this.title = title;
         this.description = description;
+        this.workspaceId = workspaceId;
+        this.isPublic = isPublic;
         this.isArchived = isArchived;
         this.ownerId = ownerId;
         this.isStarred = isStarred;
@@ -74,6 +86,7 @@ public class BoardEntity {
             .boardId(new BoardId(this.boardId))
             .title(this.title)
             .description(this.description)
+            .isPublic(this.isPublic)
             .isArchived(this.isArchived)
             .ownerId(new UserId(this.ownerId))
             .isStarred(this.isStarred)
@@ -90,6 +103,8 @@ public class BoardEntity {
             .boardId(board.getBoardId().getId())
             .title(board.getTitle())
             .description(board.getDescription())
+            .workspaceId(board.getWorkspaceId() != null ? board.getWorkspaceId().getId() : null)
+            .isPublic(board.isPublic())
             .isArchived(board.isArchived())
             .ownerId(board.getOwnerId().getId())
             .isStarred(board.isStarred())
@@ -104,6 +119,8 @@ public class BoardEntity {
     public void updateFromDomainEntity(Board board) {
         this.title = board.getTitle();
         this.description = board.getDescription();
+        this.workspaceId = board.getWorkspaceId() != null ? board.getWorkspaceId().getId() : this.workspaceId;
+        this.isPublic = board.isPublic();
         this.isArchived = board.isArchived();
         this.ownerId = board.getOwnerId().getId();
         this.isStarred = board.isStarred();

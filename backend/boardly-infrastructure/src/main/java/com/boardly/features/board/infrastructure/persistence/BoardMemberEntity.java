@@ -4,6 +4,7 @@ import com.boardly.features.board.domain.BoardMember;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.BoardMemberId;
 import com.boardly.shared.common.value.BoardRole;
+import com.boardly.shared.common.value.InviteStatus;
 import com.boardly.shared.common.value.UserId;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -36,6 +37,20 @@ public class BoardMemberEntity {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
+    // 초대/멤버십 관리 (schema.md 반영)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "invite_status")
+    private InviteStatus inviteStatus;
+
+    @Column(name = "invited_by", length = 50)
+    private String invitedBy;
+
+    @Column(name = "invited_at")
+    private Instant invitedAt;
+
+    @Column(name = "joined_at")
+    private Instant joinedAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -53,6 +68,10 @@ public class BoardMemberEntity {
         String userId,
         BoardRole role,
         boolean isActive,
+        InviteStatus inviteStatus,
+        String invitedBy,
+        Instant invitedAt,
+        Instant joinedAt,
         Instant createdAt,
         Instant updatedAt
     ) {
@@ -61,6 +80,10 @@ public class BoardMemberEntity {
         this.userId = userId;
         this.role = role;
         this.isActive = isActive;
+        this.inviteStatus = inviteStatus;
+        this.invitedBy = invitedBy;
+        this.invitedAt = invitedAt;
+        this.joinedAt = joinedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

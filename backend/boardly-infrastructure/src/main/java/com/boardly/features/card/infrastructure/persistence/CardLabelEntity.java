@@ -31,6 +31,10 @@ public class CardLabelEntity {
     @Column(name = "label_id", nullable = false, length = 50)
     private String labelId;
 
+    // 멀티테넌시를 위한 워크스페이스 식별자 (schema.md 반영)
+    @Column(name = "workspace_id")
+    private String workspaceId;
+
     @Column(name = "applied_at", nullable = false)
     private Instant appliedAt;
 

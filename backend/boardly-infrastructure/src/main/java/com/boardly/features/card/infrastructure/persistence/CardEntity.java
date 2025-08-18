@@ -50,6 +50,10 @@ public class CardEntity {
     @Column(name = "position", nullable = false)
     private int position;
 
+    // 멀티테넌시를 위한 워크스페이스 식별자 (schema.md 반영)
+    @Column(name = "workspace_id")
+    private String workspaceId;
+
     @Column(name = "due_date")
     private Instant dueDate;
 

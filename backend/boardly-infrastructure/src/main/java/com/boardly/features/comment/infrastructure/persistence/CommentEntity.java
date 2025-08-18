@@ -38,6 +38,10 @@ public class CommentEntity {
     @Column(name = "content", nullable = false, length = 1000)
     private String content;
 
+    // 멀티테넌시를 위한 워크스페이스 식별자 (schema.md 반영)
+    @Column(name = "workspace_id")
+    private String workspaceId;
+
     @Column(name = "edited", nullable = false, columnDefinition = "boolean default false")
     private boolean edited = false;
 

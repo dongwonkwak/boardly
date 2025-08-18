@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 import com.boardly.shared.domain.BaseEntity;
+import com.boardly.shared.common.value.WorkspaceId;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.value.BoardRole;
@@ -20,12 +21,15 @@ public class Board extends BaseEntity {
     private BoardId boardId;
     private String title;
     private String description;
+    private WorkspaceId workspaceId;
+    private boolean isPublic;
     private boolean isArchived;
     private UserId ownerId;
     private boolean isStarred;
 
     @Builder
     private Board(BoardId boardId, String title, String description,
+            WorkspaceId workspaceId, boolean isPublic,
             boolean isArchived, UserId ownerId, boolean isStarred,
             Instant createdAt, Instant updatedAt) {
 
@@ -33,6 +37,8 @@ public class Board extends BaseEntity {
         this.boardId = boardId;
         this.title = title;
         this.description = description;
+        this.workspaceId = workspaceId;
+        this.isPublic = isPublic;
         this.isArchived = isArchived;
         this.ownerId = ownerId;
         this.isStarred = isStarred;
@@ -47,6 +53,7 @@ public class Board extends BaseEntity {
                 .boardId(new BoardId())
                 .title(title)
                 .description(description)
+                .isPublic(false)
                 .isArchived(false)
                 .ownerId(ownerId)
                 .isStarred(false)

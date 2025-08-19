@@ -1,0 +1,13 @@
+# PostgreSQL connection properties for boardly-schema validation
+# Copy this file to gradle.properties and adjust for your environment.
+# Do NOT commit gradle.properties; it is gitignored.
+
+# JDBC URL to your PostgreSQL instance
+pgUrl=jdbc:postgresql://localhost:5432/boardly
+
+# Database user and password for validation schema operations
+pgUser=boardly
+pgPassword=password
+
+# Schema name used only for validation tasks (will be created/dropped)
+pgSchema=schema_validation

@@ -3,16 +3,16 @@ package com.boardly.features.board.domain;
 import java.time.Instant;
 import java.util.Objects;
 
-import com.boardly.shared.domain.BaseEntity;
-import com.boardly.shared.common.value.WorkspaceId;
 import com.boardly.shared.common.value.BoardId;
-import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.value.BoardRole;
+import com.boardly.shared.common.value.UserId;
+import com.boardly.shared.common.value.WorkspaceId;
+import com.boardly.shared.domain.BaseEntity;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -47,12 +47,13 @@ public class Board extends BaseEntity {
     /**
      * 새로운 보드를 생성합니다. (UTC 기준)
      */
-    public static Board create(String title, String description, UserId ownerId) {
+    public static Board create(String title, String description, WorkspaceId workspaceId, UserId ownerId) {
         Instant now = Instant.now();
         return Board.builder()
                 .boardId(new BoardId())
                 .title(title)
                 .description(description)
+                .workspaceId(workspaceId)
                 .isPublic(false)
                 .isArchived(false)
                 .ownerId(ownerId)

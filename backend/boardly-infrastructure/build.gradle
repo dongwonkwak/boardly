@@ -15,7 +15,7 @@ dependencies {
   api project(':boardly-shared')
   implementation project(':boardly-domain')
   implementation libs.bundles.spring.boot.dependencies
-  implementation libs.bundles.flyway.dependencies
+  // Flyway dependencies removed; migrations now live in :boardly-schema
   implementation libs.bundles.springdoc.dependencies
   // MapStruct for mapping between domain <-> entity and domain <-> dto
   implementation libs.mapstruct

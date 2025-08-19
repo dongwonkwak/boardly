@@ -1,14 +1,16 @@
 package com.boardly.features.label.domain;
 
-import com.boardly.shared.domain.BaseEntity;
-import com.boardly.shared.common.value.LabelId;
+import java.time.Instant;
+
 import com.boardly.shared.common.value.BoardId;
+import com.boardly.shared.common.value.LabelId;
+import com.boardly.shared.common.value.WorkspaceId;
+import com.boardly.shared.domain.BaseEntity;
+
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -16,15 +18,17 @@ public class Label extends BaseEntity {
 
     private LabelId labelId;
     private BoardId boardId;
+    private WorkspaceId workspaceId;
     private String name;
     private String color;
 
     @Builder
-    private Label(LabelId labelId, BoardId boardId, String name, String color,
+    private Label(LabelId labelId, BoardId boardId, WorkspaceId workspaceId, String name, String color,
             Instant createdAt, Instant updatedAt) {
         super(createdAt, updatedAt);
         this.labelId = labelId;
         this.boardId = boardId;
+        this.workspaceId = workspaceId;
         this.name = name.trim();
         this.color = color.toUpperCase();
     }
@@ -32,10 +36,11 @@ public class Label extends BaseEntity {
     /**
      * 새 라벨 생성 (팩토리 메서드)
      */
-    public static Label create(BoardId boardId, String name, String color) {
+    public static Label create(BoardId boardId, WorkspaceId workspaceId, String name, String color) {
         return Label.builder()
                 .labelId(new LabelId())
                 .boardId(boardId)
+                .workspaceId(workspaceId)
                 .name(name)
                 .color(color)
                 .build();
@@ -44,11 +49,12 @@ public class Label extends BaseEntity {
     /**
      * 기존 라벨 복원 (리포지토리용)
      */
-    public static Label restore(LabelId labelId, BoardId boardId, String name, String color,
+    public static Label restore(LabelId labelId, BoardId boardId, WorkspaceId workspaceId, String name, String color,
             Instant createdAt, Instant updatedAt) {
         return Label.builder()
                 .labelId(labelId)
                 .boardId(boardId)
+                .workspaceId(workspaceId)
                 .name(name)
                 .color(color)
                 .createdAt(createdAt)

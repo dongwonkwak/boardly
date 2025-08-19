@@ -1,4 +1,4 @@
-package com.boardly.features.attachment.infrastructure.config.properties;
+package com.boardly.infrastructure.adapters.out.config.properties;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;

@@ -5,15 +5,16 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import com.boardly.shared.domain.BaseEntity;
 import com.boardly.shared.common.value.CardId;
-import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.value.ListId;
+import com.boardly.shared.common.value.UserId;
+import com.boardly.shared.common.value.WorkspaceId;
+import com.boardly.shared.domain.BaseEntity;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -24,6 +25,7 @@ public class Card extends BaseEntity {
     private String description;
     private int position;
     private ListId listId;
+    private WorkspaceId workspaceId;
     private Instant dueDate;
     private Instant startDate;
     private boolean isArchived;
@@ -35,7 +37,8 @@ public class Card extends BaseEntity {
     private Set<CardMember> assignedMembers;
 
     @Builder
-    private Card(CardId cardId, String title, String description, int position, ListId listId, Instant createdAt,
+    private Card(CardId cardId, String title, String description, int position, ListId listId, WorkspaceId workspaceId,
+            Instant createdAt,
             Instant updatedAt, Instant dueDate, Instant startDate, boolean isArchived, CardPriority priority,
             boolean isCompleted, UserId createdBy,
             Set<CardMember> assignedMembers) {
@@ -45,6 +48,7 @@ public class Card extends BaseEntity {
         this.description = description;
         this.position = position;
         this.listId = listId;
+        this.workspaceId = workspaceId;
         this.dueDate = dueDate;
         this.startDate = startDate;
         this.isArchived = isArchived;
@@ -57,13 +61,15 @@ public class Card extends BaseEntity {
     /**
      * 새 카드 생성 (팩토리 메서드)
      */
-    public static Card create(String title, String description, int position, ListId listId, UserId createdBy) {
+    public static Card create(String title, String description, int position, ListId listId, WorkspaceId workspaceId,
+            UserId createdBy) {
         return Card.builder()
                 .cardId(new CardId())
                 .title(title.trim())
                 .description(description != null ? description.trim() : null)
                 .position(position)
                 .listId(listId)
+                .workspaceId(workspaceId)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .dueDate(null)
@@ -80,7 +86,8 @@ public class Card extends BaseEntity {
      * 기존 카드 복원 (리포지토리용)
      */
     public static Card restore(CardId cardId, String title, String description, int position,
-            Instant dueDate, Instant startDate, boolean archived, ListId listId, CardPriority priority,
+            Instant dueDate, Instant startDate, boolean archived, ListId listId, WorkspaceId workspaceId,
+            CardPriority priority,
             boolean isCompleted, UserId createdBy,
             Set<CardMember> assignedMembers,
             Instant createdAt, Instant updatedAt) {
@@ -91,6 +98,7 @@ public class Card extends BaseEntity {
                 .description(description)
                 .position(position)
                 .listId(listId)
+                .workspaceId(workspaceId)
                 .dueDate(dueDate)
                 .startDate(startDate)
                 .isArchived(archived)
@@ -269,6 +277,7 @@ public class Card extends BaseEntity {
                 .description(description != null ? description.trim() : null)
                 .position(newPosition)
                 .listId(listId)
+                .workspaceId(workspaceId)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .dueDate(dueDate)
@@ -300,6 +309,7 @@ public class Card extends BaseEntity {
                 .description(description != null ? description.trim() : null)
                 .position(newPosition)
                 .listId(newListId)
+                .workspaceId(workspaceId)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .dueDate(dueDate)

@@ -4,16 +4,17 @@ import java.time.Instant;
 import java.util.Objects;
 
 import com.boardly.features.board.domain.Board;
-import com.boardly.shared.domain.BaseEntity;
 import com.boardly.shared.common.value.BoardId;
 import com.boardly.shared.common.value.ListColor;
 import com.boardly.shared.common.value.ListId;
 import com.boardly.shared.common.value.UserId;
+import com.boardly.shared.common.value.WorkspaceId;
+import com.boardly.shared.domain.BaseEntity;
 
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AccessLevel;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,10 +26,11 @@ public class BoardList extends BaseEntity {
     private int position;
     private ListColor color;
     private BoardId boardId;
+    private WorkspaceId workspaceId;
 
     @Builder
     private BoardList(ListId listId, String title, String description,
-            int position, ListColor color, BoardId boardId,
+            int position, ListColor color, BoardId boardId, WorkspaceId workspaceId,
             Instant createdAt, Instant updatedAt) {
 
         super(createdAt, updatedAt);
@@ -38,13 +40,14 @@ public class BoardList extends BaseEntity {
         this.position = position;
         this.color = color;
         this.boardId = boardId;
+        this.workspaceId = workspaceId;
     }
 
     /**
      * 새로운 보드 리스트를 생성합니다. (UTC 기준)
      */
     public static BoardList create(String title, String description,
-            int position, ListColor color, BoardId boardId) {
+            int position, ListColor color, BoardId boardId, WorkspaceId workspaceId) {
         Instant now = Instant.now();
         return BoardList.builder()
                 .listId(new ListId())
@@ -53,6 +56,7 @@ public class BoardList extends BaseEntity {
                 .position(position)
                 .color(color)
                 .boardId(boardId)
+                .workspaceId(workspaceId)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -61,7 +65,7 @@ public class BoardList extends BaseEntity {
     /**
      * 기본 색상으로 새로운 보드 리스트를 생성합니다. (UTC 기준)
      */
-    public static BoardList create(String title, int position, BoardId boardId) {
+    public static BoardList create(String title, int position, BoardId boardId, WorkspaceId workspaceId) {
         Instant now = Instant.now();
         return BoardList.builder()
                 .listId(new ListId())
@@ -70,6 +74,7 @@ public class BoardList extends BaseEntity {
                 .position(position)
                 .color(ListColor.defaultColor())
                 .boardId(boardId)
+                .workspaceId(workspaceId)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

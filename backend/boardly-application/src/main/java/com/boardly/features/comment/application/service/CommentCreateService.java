@@ -10,18 +10,18 @@ import com.boardly.features.activity.application.helper.ActivityHelper;
 import com.boardly.features.activity.domain.ActivityType;
 import com.boardly.features.board.domain.port.BoardRepository;
 import com.boardly.features.boardlist.domain.BoardList;
-import com.boardly.shared.common.value.ListId;
 import com.boardly.features.boardlist.domain.port.BoardListRepository;
 import com.boardly.features.card.domain.Card;
-import com.boardly.shared.common.value.CardId;
 import com.boardly.features.card.domain.port.CardRepository;
 import com.boardly.features.comment.application.command.CreateCommentCommand;
 import com.boardly.features.comment.application.usecase.CreateCommentUseCase;
 import com.boardly.features.comment.application.validation.CommentValidator;
 import com.boardly.features.comment.domain.Comment;
 import com.boardly.features.comment.domain.port.CommentRepository;
-import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.common.error.Failure;
+import com.boardly.shared.common.value.CardId;
+import com.boardly.shared.common.value.ListId;
+import com.boardly.shared.validation.MessageResolver;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -123,7 +123,7 @@ public class CommentCreateService implements CreateCommentUseCase {
 
     /** 댓글을 생성하고 저장합니다. */
     private Either<Failure, Comment> createAndSaveComment(CreateCommentCommand command, Card card) {
-        var comment = Comment.create(command.cardId(), command.authorId(), command.content());
+        var comment = Comment.create(command.cardId(), command.workspaceId(), command.authorId(), command.content());
 
         var saveResult = commentRepository.save(comment);
         if (saveResult.isLeft()) {

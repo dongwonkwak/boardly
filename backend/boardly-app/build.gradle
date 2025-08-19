@@ -23,6 +23,7 @@ dependencies {
     implementation project(':boardly-infrastructure')
     implementation project(':boardly-domain')
     implementation project(':boardly-application')
+  implementation project(':boardly-schema')
 
     implementation libs.bundles.spring.boot.dependencies
     implementation libs.bundles.common.dependencies
@@ -30,8 +31,8 @@ dependencies {
     // springdoc
     implementation(libs.bundles.springdoc.dependencies)
 
-    // flyway
-    implementation(libs.bundles.flyway.dependencies)
+  // flyway
+  implementation(libs.bundles.flyway.dependencies)
 
     // Lombok / MapStruct
     compileOnly(libs.lombok)

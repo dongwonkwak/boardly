@@ -9,9 +9,10 @@ import com.boardly.features.activity.application.command.CreateActivityCommand;
 import com.boardly.features.activity.application.usecase.CreateActivityUseCase;
 import com.boardly.features.activity.domain.ActivityType;
 import com.boardly.shared.common.value.BoardId;
-import com.boardly.shared.common.value.ListId;
 import com.boardly.shared.common.value.CardId;
+import com.boardly.shared.common.value.ListId;
 import com.boardly.shared.common.value.UserId;
+import com.boardly.shared.common.value.WorkspaceId;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +29,11 @@ public class ActivityHelper {
      */
     @Async
     public void logActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
-            String boardName, BoardId boardId, ListId listId, CardId cardId) {
+            WorkspaceId workspaceId, String boardName, BoardId boardId, ListId listId, CardId cardId) {
 
         try {
-            var command = CreateActivityCommand.of(type, actorId, payload, boardName, boardId, listId, cardId);
+            var command = CreateActivityCommand.of(type, actorId, payload, workspaceId, boardName, boardId, listId,
+                    cardId);
             createActivityUseCase.createActivity(command)
                     .peek(activity -> log.debug("Activity log created: {}", activity.getId()))
                     .peekLeft(failure -> log.error("Failed to create activity log: {}", failure.getMessage()));
@@ -44,9 +46,10 @@ public class ActivityHelper {
      * 활동 로그 동기 생성
      */
     public void logActivitySync(ActivityType type, UserId actorId, Map<String, Object> payload,
-            String boardName, BoardId boardId, ListId listId, CardId cardId) {
+            WorkspaceId workspaceId, String boardName, BoardId boardId, ListId listId, CardId cardId) {
         try {
-            var command = CreateActivityCommand.of(type, actorId, payload, boardName, boardId, listId, cardId);
+            var command = CreateActivityCommand.of(type, actorId, payload, workspaceId, boardName, boardId, listId,
+                    cardId);
             createActivityUseCase.createActivity(command)
                     .peek(activity -> log.debug("Activity log created: {}", activity.getId()))
                     .peekLeft(failure -> log.error("Failed to create activity log: {}", failure.getMessage()));
@@ -69,7 +72,7 @@ public class ActivityHelper {
                 "listId", listId.getId(),
                 "cardId", cardId.getId());
 
-        logActivity(ActivityType.CARD_CREATE, actorId, payload, boardName, boardId, listId, cardId);
+        logActivity(ActivityType.CARD_CREATE, actorId, payload, null, boardName, boardId, listId, cardId);
     }
 
     /**
@@ -86,7 +89,7 @@ public class ActivityHelper {
                 "sourceListId", sourceListId.getId(),
                 "destListId", destListId.getId());
 
-        logActivity(ActivityType.CARD_MOVE, actorId, payload, boardName, boardId, destListId, cardId);
+        logActivity(ActivityType.CARD_MOVE, actorId, payload, null, boardName, boardId, destListId, cardId);
     }
 
     /**
@@ -100,7 +103,7 @@ public class ActivityHelper {
                 "listId", listId.getId(),
                 "boardName", boardName);
 
-        logActivity(ActivityType.LIST_CREATE, actorId, payload, boardName, boardId, listId, null);
+        logActivity(ActivityType.LIST_CREATE, actorId, payload, null, boardName, boardId, listId, null);
     }
 
     /**
@@ -112,7 +115,7 @@ public class ActivityHelper {
                 "boardName", boardName,
                 "boardId", boardId.getId());
 
-        logActivity(ActivityType.BOARD_CREATE, actorId, payload, boardName, boardId, null, null);
+        logActivity(ActivityType.BOARD_CREATE, actorId, payload, null, boardName, boardId, null, null);
     }
 
     /**
@@ -121,7 +124,7 @@ public class ActivityHelper {
     @Async
     public void logCardActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
             String boardName, BoardId boardId, ListId listId, CardId cardId) {
-        logActivity(type, actorId, payload, boardName, boardId, listId, cardId);
+        logActivity(type, actorId, payload, null, boardName, boardId, listId, cardId);
     }
 
     /**
@@ -130,7 +133,7 @@ public class ActivityHelper {
     @Async
     public void logListActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
             String boardName, BoardId boardId, ListId listId) {
-        logActivity(type, actorId, payload, boardName, boardId, listId, null);
+        logActivity(type, actorId, payload, null, boardName, boardId, listId, null);
     }
 
     /**
@@ -139,7 +142,7 @@ public class ActivityHelper {
     @Async
     public void logBoardActivity(ActivityType type, UserId actorId, Map<String, Object> payload,
             String boardName, BoardId boardId) {
-        logActivity(type, actorId, payload, boardName, boardId, null, null);
+        logActivity(type, actorId, payload, null, boardName, boardId, null, null);
     }
 
     /**
@@ -147,7 +150,7 @@ public class ActivityHelper {
      */
     @Async
     public void logUserActivity(ActivityType type, UserId actorId, Map<String, Object> payload, String boardName) {
-        logActivity(type, actorId, payload, boardName, null, null, null);
+        logActivity(type, actorId, payload, null, boardName, null, null, null);
     }
 
     // =================================================================

@@ -1,7 +1,7 @@
-package com.boardly.features.attachment.infrastructure.config;
+package com.boardly.infrastructure.adapters.out.config;
 
 import com.boardly.features.attachment.domain.config.AttachmentPolicyConfig;
-import com.boardly.features.attachment.infrastructure.config.properties.AttachmentPolicyProperties;
+import com.boardly.infrastructure.adapters.out.config.properties.AttachmentPolicyProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

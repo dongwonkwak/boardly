@@ -3,6 +3,7 @@ package com.boardly.features.comment.domain;
 import com.boardly.shared.common.value.CardId;
 import com.boardly.shared.common.value.CommentId;
 import com.boardly.shared.common.value.UserId;
+import com.boardly.shared.common.value.WorkspaceId;
 import com.boardly.shared.domain.BaseEntity;
 import java.time.Instant;
 import lombok.AccessLevel;
@@ -16,23 +17,25 @@ public class Comment extends BaseEntity {
 
     private CommentId commentId;
     private CardId cardId;
+    private WorkspaceId workspaceId;
     private UserId authorId;
     private String content;
     private boolean edited;
 
     @Builder
     private Comment(
-        CommentId commentId,
-        CardId cardId,
-        UserId authorId,
-        String content,
-        boolean edited,
-        Instant createdAt,
-        Instant updatedAt
-    ) {
+            CommentId commentId,
+            CardId cardId,
+            WorkspaceId workspaceId,
+            UserId authorId,
+            String content,
+            boolean edited,
+            Instant createdAt,
+            Instant updatedAt) {
         super(createdAt, updatedAt);
         this.commentId = commentId;
         this.cardId = cardId;
+        this.workspaceId = workspaceId;
         this.authorId = authorId;
         this.content = content.trim();
         this.edited = edited;
@@ -42,40 +45,42 @@ public class Comment extends BaseEntity {
      * 새 댓글 생성 (팩토리 메서드)
      */
     public static Comment create(
-        CardId cardId,
-        UserId authorId,
-        String content
-    ) {
+            CardId cardId,
+            WorkspaceId workspaceId,
+            UserId authorId,
+            String content) {
         return Comment.builder()
-            .commentId(new CommentId())
-            .cardId(cardId)
-            .authorId(authorId)
-            .content(content)
-            .edited(false)
-            .build();
+                .commentId(new CommentId())
+                .cardId(cardId)
+                .workspaceId(workspaceId)
+                .authorId(authorId)
+                .content(content)
+                .edited(false)
+                .build();
     }
 
     /**
      * 기존 댓글 복원 (리포지토리용)
      */
     public static Comment restore(
-        CommentId commentId,
-        CardId cardId,
-        UserId authorId,
-        String content,
-        boolean edited,
-        Instant createdAt,
-        Instant updatedAt
-    ) {
+            CommentId commentId,
+            CardId cardId,
+            WorkspaceId workspaceId,
+            UserId authorId,
+            String content,
+            boolean edited,
+            Instant createdAt,
+            Instant updatedAt) {
         return Comment.builder()
-            .commentId(commentId)
-            .cardId(cardId)
-            .authorId(authorId)
-            .content(content)
-            .edited(edited)
-            .createdAt(createdAt)
-            .updatedAt(updatedAt)
-            .build();
+                .commentId(commentId)
+                .cardId(cardId)
+                .workspaceId(workspaceId)
+                .authorId(authorId)
+                .content(content)
+                .edited(edited)
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
+                .build();
     }
 
     /**
@@ -96,8 +101,10 @@ public class Comment extends BaseEntity {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         Comment other = (Comment) obj;
         return commentId != null && commentId.equals(other.commentId);
     }
@@ -110,11 +117,10 @@ public class Comment extends BaseEntity {
     @Override
     public String toString() {
         return String.format(
-            "Comment{commentId='%s', cardId='%s', authorId='%s', edited=%s}",
-            commentId,
-            cardId,
-            authorId,
-            edited
-        );
+                "Comment{commentId='%s', cardId='%s', authorId='%s', edited=%s}",
+                commentId,
+                cardId,
+                authorId,
+                edited);
     }
 }

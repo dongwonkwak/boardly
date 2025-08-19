@@ -9,8 +9,8 @@ import com.boardly.features.label.application.usecase.CreateLabelUseCase;
 import com.boardly.features.label.application.validation.LabelValidator;
 import com.boardly.features.label.domain.Label;
 import com.boardly.features.label.domain.port.LabelRepository;
-import com.boardly.shared.validation.MessageResolver;
 import com.boardly.shared.common.error.Failure;
+import com.boardly.shared.validation.MessageResolver;
 
 import io.vavr.control.Either;
 import lombok.RequiredArgsConstructor;
@@ -95,7 +95,7 @@ public class LabelCreateService implements CreateLabelUseCase {
      */
     private Either<Failure, Label> createLabelEntity(CreateLabelCommand command) {
         try {
-            var label = Label.create(command.boardId(), command.name(), command.color());
+            var label = Label.create(command.boardId(), command.workspaceId(), command.name(), command.color());
             log.debug("라벨 생성 완료: labelId={}, name={}, color={}",
                     label.getLabelId().getId(), label.getName(), label.getColor());
             return Either.right(label);

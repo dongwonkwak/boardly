@@ -57,6 +57,7 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
 openapi-gradle-plugin = { id = "org.springdoc.openapi-gradle-plugin", version.ref = "openapi-gradle-plugin" }
 version-catalog-update = { id = "com.github.ben-manes.versions", version.ref = "version-catalog-update" }
+flyway = { id = "org.flywaydb.flyway", version.ref = "flyway" }
 
 [bundles]
 spring-boot-dependencies = [

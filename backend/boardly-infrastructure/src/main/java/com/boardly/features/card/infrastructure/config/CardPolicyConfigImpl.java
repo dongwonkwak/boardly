@@ -1,7 +1,7 @@
-package com.boardly.features.card.infrastructure.config;
+package com.boardly.infrastructure.adapters.out.config;
 
 import com.boardly.features.card.domain.config.CardPolicyConfig;
-import com.boardly.features.card.infrastructure.config.properties.CardPolicyProperties;
+import com.boardly.infrastructure.adapters.out.config.properties.CardPolicyProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

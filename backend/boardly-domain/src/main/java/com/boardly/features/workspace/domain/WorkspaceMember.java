@@ -1,92 +1,142 @@
 package com.boardly.features.workspace.domain;
 
-import java.time.Instant;
-import java.util.Objects;
-
 import com.boardly.shared.common.value.UserId;
 import com.boardly.shared.common.value.WorkspaceId;
-import com.boardly.shared.common.value.WorkspaceMemberId;
-import com.boardly.shared.common.value.WorkspaceRole;
-import com.boardly.shared.domain.BaseEntity;
-
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
+import java.util.Objects;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class WorkspaceMember extends BaseEntity {
+public class WorkspaceMember {
 
-    private WorkspaceMemberId memberId;
+    public enum Role {
+        OWNER, ADMIN, MEMBER;
+
+        public boolean hasAdminPermission() {
+            return this == OWNER || this == ADMIN;
+        }
+
+        public boolean hasWritePermission() {
+            return this == OWNER || this == ADMIN || this == MEMBER;
+        }
+
+        public boolean hasReadPermission() {
+            return true; // 모든 역할이 읽기 권한을 가짐
+        }
+    }
+
+    public enum InviteStatus {
+        PENDING, ACCEPTED, DECLINED, EXPIRED
+    }
+
     private WorkspaceId workspaceId;
     private UserId userId;
-    private WorkspaceRole role;
-    private boolean isActive;
+    private Role role;
+    private InviteStatus inviteStatus;
+    private UserId invitedBy;
+    private Instant invitedAt;
+    private Instant joinedAt;
 
     @Builder
     private WorkspaceMember(
-        WorkspaceMemberId memberId,
-        WorkspaceId workspaceId,
-        UserId userId,
-        WorkspaceRole role,
-        boolean isActive,
-        Instant createdAt,
-        Instant updatedAt
-    ) {
-        super(createdAt, updatedAt);
-        this.memberId = memberId;
+            WorkspaceId workspaceId,
+            UserId userId,
+            Role role,
+            InviteStatus inviteStatus,
+            UserId invitedBy,
+            Instant invitedAt,
+            Instant joinedAt) {
         this.workspaceId = workspaceId;
         this.userId = userId;
         this.role = role;
-        this.isActive = isActive;
+        this.inviteStatus = inviteStatus;
+        this.invitedBy = invitedBy;
+        this.invitedAt = invitedAt;
+        this.joinedAt = joinedAt;
     }
 
-    public static WorkspaceMember create(WorkspaceId workspaceId, UserId userId, WorkspaceRole role) {
-        Instant now = Instant.now();
+    public static WorkspaceMember createOwner(WorkspaceId workspaceId, UserId userId) {
         return WorkspaceMember.builder()
-            .memberId(new WorkspaceMemberId())
-            .workspaceId(workspaceId)
-            .userId(userId)
-            .role(role)
-            .isActive(true)
-            .createdAt(now)
-            .updatedAt(now)
-            .build();
+                .workspaceId(workspaceId)
+                .userId(userId)
+                .role(Role.OWNER)
+                .inviteStatus(InviteStatus.ACCEPTED)
+                .invitedAt(Instant.now())
+                .joinedAt(Instant.now())
+                .build();
     }
 
-    public void changeRole(WorkspaceRole newRole) {
+    public static WorkspaceMember createInvitation(
+            WorkspaceId workspaceId,
+            UserId userId,
+            Role role,
+            UserId invitedBy) {
+        return WorkspaceMember.builder()
+                .workspaceId(workspaceId)
+                .userId(userId)
+                .role(role)
+                .inviteStatus(InviteStatus.PENDING)
+                .invitedBy(invitedBy)
+                .invitedAt(Instant.now())
+                .build();
+    }
+
+    public void acceptInvitation() {
+        this.inviteStatus = InviteStatus.ACCEPTED;
+        this.joinedAt = Instant.now();
+    }
+
+    public void declineInvitation() {
+        this.inviteStatus = InviteStatus.DECLINED;
+    }
+
+    public void expireInvitation() {
+        this.inviteStatus = InviteStatus.EXPIRED;
+    }
+
+    public void changeRole(Role newRole) {
         this.role = newRole;
-        markAsUpdated();
     }
 
-    public void deactivate() {
-        this.isActive = false;
-        markAsUpdated();
+    public boolean isActive() {
+        return inviteStatus == InviteStatus.ACCEPTED;
     }
 
-    public boolean canRead() { return isActive && role.canReadWorkspace(); }
-    public boolean canWrite() { return isActive && role.canWriteWorkspace(); }
-    public boolean canManage() { return isActive && role.canManageWorkspace(); }
+    public boolean isPending() {
+        return inviteStatus == InviteStatus.PENDING;
+    }
+
+    public boolean canManageWorkspace() {
+        return role.hasAdminPermission() && isActive();
+    }
+
+    public boolean canInviteMembers() {
+        return role.hasAdminPermission() && isActive();
+    }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
         WorkspaceMember that = (WorkspaceMember) obj;
-        return Objects.equals(memberId, that.memberId);
+        return Objects.equals(workspaceId, that.workspaceId) && Objects.equals(userId, that.userId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(memberId);
+        return Objects.hash(workspaceId, userId);
     }
 
     @Override
     public String toString() {
-        return String.format("WorkspaceMember{memberId=%s, workspaceId=%s, userId=%s, role=%s, isActive=%s, createdAt=%s, updatedAt=%s}",
-            memberId, workspaceId, userId, role, isActive, getCreatedAt(), getUpdatedAt());
+        return String.format("WorkspaceMember{workspaceId=%s, userId=%s, role=%s, status=%s}",
+                workspaceId, userId, role, inviteStatus);
     }
 }

@@ -7,3 +7,5 @@ include(':boardly-domain')
 include(':boardly-application')
 include(':boardly-app')
 include(':boardly-schema')
+
+includeBuild 'build-logic'

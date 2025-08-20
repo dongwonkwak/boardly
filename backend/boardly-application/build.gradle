@@ -1,16 +1,7 @@
 plugins {
-  id 'java-library'
+  id 'boardly.spring-boot-conventions'
   id 'jacoco'
 }
-
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
-
-java {
-  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
-}
-
-repositories { mavenCentral() }
 
 dependencies {
   api project(':boardly-shared')
@@ -23,12 +14,7 @@ dependencies {
   }
   // 엔진(1.12.x)과 런처 정렬
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.2'
-
-  compileOnly libs.lombok
-  annotationProcessor libs.lombok
 }
-
-tasks.named('test') { useJUnitPlatform() }
 
 // JaCoCo coverage configuration
 jacoco { toolVersion = '0.8.12' }

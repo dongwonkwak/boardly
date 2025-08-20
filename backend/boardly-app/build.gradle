@@ -1,21 +1,8 @@
 plugins {
-    id 'java'
+    id 'boardly.spring-boot-application-conventions'
     id 'jacoco'
-    alias(libs.plugins.spring.boot)
-    alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.openapi.gradle.plugin)
 }
-
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
-    }
-}
-
-repositories { mavenCentral() }
 
 dependencies {
     implementation project(':boardly-shared')
@@ -35,8 +22,6 @@ dependencies {
   implementation(libs.bundles.flyway.dependencies)
 
     // Lombok / MapStruct
-    compileOnly(libs.lombok)
-    annotationProcessor(libs.lombok)
     annotationProcessor(libs.lombok.mapstruct.binding)
     implementation(libs.mapstruct)
     annotationProcessor(libs.mapstruct.processor)
@@ -51,8 +36,6 @@ dependencies {
 
     testImplementation libs.bundles.spring.test.dependencies
 }
-
-tasks.named('test') { useJUnitPlatform() }
 
 jacoco { toolVersion = libs.versions.jacoco.get() }
 

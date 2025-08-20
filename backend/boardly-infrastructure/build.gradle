@@ -1,15 +1,6 @@
 plugins {
-  id 'java-library'
+  id 'boardly.spring-boot-conventions'
 }
-
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
-
-java {
-  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
-}
-
-repositories { mavenCentral() }
 
 dependencies {
   api project(':boardly-shared')
@@ -21,11 +12,4 @@ dependencies {
   implementation libs.mapstruct
   annotationProcessor libs.mapstruct.processor
   runtimeOnly libs.postgres
-
-  compileOnly libs.lombok
-  annotationProcessor libs.lombok
-
-  testImplementation libs.spring.boot.starter.test
 }
-
-tasks.named('test') { useJUnitPlatform() }

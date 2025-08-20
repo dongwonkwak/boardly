@@ -1,0 +1,4 @@
+plugins {
+  id 'boardly.java-library-conventions'
+  id 'io.spring.dependency-management'
+}

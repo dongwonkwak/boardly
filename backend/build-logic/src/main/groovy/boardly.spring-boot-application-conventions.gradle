@@ -1,0 +1,4 @@
+plugins {
+  id 'boardly.spring-boot-conventions'
+  id 'org.springframework.boot'
+}

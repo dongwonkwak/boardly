@@ -1,33 +1,6 @@
 plugins {
-    id 'java'
-    id 'jacoco'
-    alias(libs.plugins.spring.boot)
-    alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.version.catalog.update)
-}
-
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
-    }
-}
-
-repositories { mavenCentral() }
-
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
-// Root project is not an executable Boot app; disable bootJar
-tasks.named('bootJar') { enabled = false }
-tasks.named('jar') { enabled = true }
-
-// Root project has no Boot main class; disable bootRun
-tasks.matching { it.name == 'bootRun' || it.name == 'forkedSpringBootRun' || it.name == 'bootRunMainClassName' }.configureEach {
-    enabled = false
+    id 'jacoco'
 }
 
 // JaCoCo aggregate coverage across subprojects

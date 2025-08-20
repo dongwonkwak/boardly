@@ -18,7 +18,7 @@
     "lastName": "홍",
     "profileImageUrl": "https://placehold.co/40x40/0284C7/FFFFFF?text=홍"
   },
-  "timestamp": "2025-01-17T13:56:00.123Z",
+  "timestamp": "2025-01-20T13:56:00.123Z",
   "payload": {
     "listName": "To Do",
     "cardTitle": "새 기능 기획",
@@ -54,7 +54,7 @@
 - 영어: `{{actorFirstName}} {{actorLastName}}`
 
 **Timestamp 형식**: Spring Boot 3의 `Instant` 객체는 ISO 8601 형식으로 직렬화됩니다.
-- 예시: `"2025-01-17T13:56:00.123Z"`
+- 예시: `"2025-01-20T13:56:00.123Z"`
 - 밀리초 단위까지 포함된 정확한 시간 정보
 - UTC 시간대 기준 (Z 접미사)
 

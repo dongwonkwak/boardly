@@ -1,8 +1,18 @@
 plugins {
-    id 'java'
+    id 'java-library'
 }
 
+java {
+  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
+}
+
+repositories { mavenCentral() }
+
 dependencies {
+    // Lombok
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+    
     // Validation
     implementation libs.validation.api
     

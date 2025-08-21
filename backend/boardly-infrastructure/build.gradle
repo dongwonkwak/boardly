@@ -12,8 +12,7 @@ dependencies {
     
     // Database
     implementation libs.h2
-    implementation libs.mysql
-    implementation libs.postgresql
+    implementation libs.postgres
     
     // JPA & QueryDSL
     implementation libs.querydsl.jpa

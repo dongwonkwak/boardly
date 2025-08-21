@@ -5,10 +5,8 @@ plugins {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
 }
-
 // Disable bootJar task to avoid compatibility issues
 bootJar {
     enabled = false

@@ -6,7 +6,7 @@ plugins {
 dependencies {
     // Flyway for database migration
     implementation libs.flyway.core
-    implementation libs.flyway.mysql
+    implementation libs.flyway.database.postgresql
     
     // Test
     testImplementation libs.spring.boot.starter.test

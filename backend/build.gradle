@@ -1,7 +1,12 @@
 plugins {
-    alias(libs.plugins.spring.boot) apply false
-    alias(libs.plugins.spring.dependency.management) apply false
+    id 'java'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
 }
+
+// Root project is not an executable Boot app; disable bootJar
+tasks.named('bootJar') { enabled = false }
+tasks.named('jar') { enabled = true }
 
 allprojects {
     group = 'com.boardly'
@@ -9,10 +14,5 @@ allprojects {
     
     repositories {
         mavenCentral()
-    }
-    
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
     }
 }

@@ -1,0 +1,630 @@
+# ULID 사용 규칙
+
+## 1. ULID 기본 원칙
+
+### 1.1 ULID란?
+- **U**niversally **U**nique **L**exicographically **S**ortable **ID**entifier
+- 시간순 정렬 가능한 고유 식별자
+- 26자리 Base32 인코딩
+- UUID의 대안으로 더 나은 성능과 가독성 제공
+
+### 1.2 ULID 특징
+- **시간순 정렬**: 생성 시간 순으로 자동 정렬
+- **URL 안전**: Base32 인코딩으로 URL에서 안전하게 사용
+- **대소문자 구분 없음**: 대소문자 혼용 방지
+- **고성능**: UUID보다 빠른 생성 속도
+- **짧은 길이**: UUID(36자)보다 짧은 26자
+
+## 2. ULID 사용 규칙
+
+### 규칙 1: 모든 엔티티 ID는 ULID를 사용하라
+```java
+// 좋은 예시
+public class User {
+    private final UserId id;  // ULID 기반 ID
+    
+    public User(String name, Email email) {
+        this.id = UserId.generate();  // prefix가 포함된 ULID 자동 생성
+        this.name = name;
+        this.email = email;
+    }
+}
+
+// 나쁜 예시
+public class User {
+    private final Long id;  // Auto-increment ID 사용 금지
+    private final String id;  // 단순 String ID 사용 금지
+}
+```
+
+### 규칙 2: 도메인 ID 생성 시 prefix를 사용하라
+```java
+// 도메인 prefix 정의
+public class DomainPrefixes {
+    public static final String USER = "u_";
+    public static final String WORKSPACE = "ws_";
+    public static final String BOARD = "b_";
+    public static final String WORKSPACE_MEMBERSHIP = "wm_";
+    public static final String COLUMN = "col_";
+    public static final String CARD = "c_";
+    public static final String COMMENT = "cm_";
+    public static final String LABEL = "l_";
+    public static final String CHECKLIST_ITEM = "ci_";
+}
+
+// 강타입 ID 객체 구현 예시
+@Value
+public class UserId {
+    String value;
+    
+    public static UserId generate() {
+        return new UserId(DomainPrefixes.USER + Ulid.fast().toString());
+    }
+    
+    public static UserId of(String value) {
+        if (!value.startsWith(DomainPrefixes.USER)) {
+            throw new IllegalArgumentException("Invalid UserId format: must start with 'u_'");
+        }
+        return new UserId(value);
+    }
+    
+    public static UserId from(String value) {
+        return of(value);  // 검증을 포함한 팩토리 메서드
+    }
+}
+
+@Value
+public class BoardId {
+    String value;
+    
+    public static BoardId generate() {
+        return new BoardId(DomainPrefixes.BOARD + Ulid.fast().toString());
+    }
+    
+    public static BoardId of(String value) {
+        if (!value.startsWith(DomainPrefixes.BOARD)) {
+            throw new IllegalArgumentException("Invalid BoardId format: must start with 'b_'");
+        }
+        return new BoardId(value);
+    }
+    
+    public static BoardId from(String value) {
+        return of(value);
+    }
+}
+```
+
+**Prefix 사용의 장점:**
+- **도메인 식별**: ID만 보고도 어떤 도메인 엔티티인지 즉시 파악 가능
+- **디버깅 용이성**: 로그나 에러 메시지에서 ID의 도메인을 쉽게 식별
+- **API 가독성**: API 응답에서 ID의 의미를 명확히 전달
+- **데이터베이스 쿼리 최적화**: prefix 기반 파티셔닝이나 인덱싱 가능
+
+### 규칙 3: 강타입 ID 객체를 사용하라
+```java
+// 좋은 예시 - 강타입 ID
+public class UserId {
+    private final String value;
+    
+    public UserId(String value) {
+        validate(value);
+        this.value = value;
+    }
+    
+    public static UserId generate() {
+        return new UserId(UlidCreator.getUlid().toString());
+    }
+    
+    private void validate(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("UserId cannot be null or empty");
+        }
+        // ULID 형식 검증 로직 추가 가능
+    }
+    
+    public String getValue() {
+        return value;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof UserId)) return false;
+        UserId userId = (UserId) o;
+        return Objects.equals(value, userId.value);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+    
+    @Override
+    public String toString() {
+        return value;
+    }
+}
+
+// 나쁜 예시 - 원시 타입 사용
+public class User {
+    private final String id;  // String 직접 사용 금지
+}
+```
+
+### 규칙 4: 엔티티 생성 시 ULID 자동 생성
+```java
+// 좋은 예시 - 생성자에서 ULID 자동 생성
+public class Board {
+    private final BoardId id;
+    private String title;
+    private UserId ownerId;
+    
+    public Board(String title, UserId ownerId) {
+        this.id = BoardId.generate();  // ULID 자동 생성
+        this.title = title;
+        this.ownerId = ownerId;
+    }
+    
+    // 재구성용 생성자 (Repository에서 사용)
+    public Board(BoardId id, String title, UserId ownerId) {
+        this.id = id;
+        this.title = title;
+        this.ownerId = ownerId;
+    }
+}
+```
+
+### 규칙 5: Repository에서 ID 타입 안전성 보장
+```java
+// 좋은 예시 - 강타입 ID 사용
+public interface UserRepository {
+    Optional<User> findById(UserId userId);
+    void save(User user);
+    void deleteById(UserId userId);
+    List<User> findByIds(List<UserId> userIds);
+}
+
+// 나쁜 예시 - String ID 사용
+public interface UserRepository {
+    Optional<User> findById(String userId);  // 타입 안전성 부족
+}
+```
+
+## 3. ULID ID 객체 구현 패턴
+
+### 3.1 기본 ID 객체 템플릿
+```java
+public abstract class EntityId {
+    private final String value;
+    
+    protected EntityId(String value) {
+        validate(value);
+        this.value = value;
+    }
+    
+    protected static String generateWithPrefix(String prefix) {
+        return prefix + Ulid.fast().toString();
+    }
+    
+    protected abstract String getPrefix();
+    
+    protected void validate(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("EntityId cannot be null or empty");
+        }
+        
+        String prefix = getPrefix();
+        if (!value.startsWith(prefix)) {
+            throw new IllegalArgumentException("Invalid EntityId format: must start with '" + prefix + "'");
+        }
+        
+        // prefix 제외한 부분이 26자 ULID인지 검증
+        String ulidPart = value.substring(prefix.length());
+        if (ulidPart.length() != 26) {
+            throw new IllegalArgumentException("EntityId ULID part must be 26 characters long");
+        }
+    }
+    
+    public String getValue() {
+        return value;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EntityId)) return false;
+        EntityId entityId = (EntityId) o;
+        return Objects.equals(value, entityId.value);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+    
+    @Override
+    public String toString() {
+        return value;
+    }
+}
+```
+
+### 3.2 구체적인 ID 객체들
+```java
+// UserId
+@Value
+public class UserId extends EntityId {
+    
+    public UserId(String value) {
+        super(value);
+    }
+    
+    public static UserId generate() {
+        return new UserId(generateWithPrefix(DomainPrefixes.USER));
+    }
+    
+    public static UserId of(String value) {
+        return new UserId(value);
+    }
+    
+    public static UserId from(String value) {
+        return of(value);
+    }
+    
+    @Override
+    protected String getPrefix() {
+        return DomainPrefixes.USER;
+    }
+}
+
+// BoardId
+@Value
+public class BoardId extends EntityId {
+    
+    public BoardId(String value) {
+        super(value);
+    }
+    
+    public static BoardId generate() {
+        return new BoardId(generateWithPrefix(DomainPrefixes.BOARD));
+    }
+    
+    public static BoardId of(String value) {
+        return new BoardId(value);
+    }
+    
+    public static BoardId from(String value) {
+        return of(value);
+    }
+    
+    @Override
+    protected String getPrefix() {
+        return DomainPrefixes.BOARD;
+    }
+}
+
+// WorkspaceId
+@Value
+public class WorkspaceId extends EntityId {
+    
+    public WorkspaceId(String value) {
+        super(value);
+    }
+    
+    public static WorkspaceId generate() {
+        return new WorkspaceId(generateWithPrefix(DomainPrefixes.WORKSPACE));
+    }
+    
+    public static WorkspaceId of(String value) {
+        return new WorkspaceId(value);
+    }
+    
+    public static WorkspaceId from(String value) {
+        return of(value);
+    }
+    
+    @Override
+    protected String getPrefix() {
+        return DomainPrefixes.WORKSPACE;
+    }
+}
+```
+
+## 4. API 레이어에서의 ULID 처리
+
+### 4.1 요청/응답 DTO에서 ULID 사용
+```java
+// API Request DTO
+public class CreateBoardRequest {
+    @NotBlank
+    private String title;
+    
+    @NotBlank
+    private String description;
+    
+    // getter, setter
+}
+
+// API Response DTO
+public class BoardResponse {
+    private String id;        // ULID 문자열로 노출
+    private String title;
+    private String ownerId;   // ULID 문자열로 노출
+    private Instant createdAt;
+    
+    public BoardResponse(Board board) {
+        this.id = board.getId().getValue();
+        this.title = board.getTitle();
+        this.ownerId = board.getOwnerId().getValue();
+        this.createdAt = board.getCreatedAt();
+    }
+}
+```
+
+### 4.2 Controller에서 ULID 변환
+```java
+@RestController
+@RequestMapping("/api/boards")
+public class BoardController {
+    
+    private final CreateBoardUseCase createBoardUseCase;
+    private final GetBoardUseCase getBoardUseCase;
+    
+    @GetMapping("/{boardId}")
+    public ResponseEntity<BoardResponse> getBoard(@PathVariable String boardId) {
+        BoardId id = BoardId.from(boardId);  // String을 BoardId로 변환
+        Board board = getBoardUseCase.getBoard(id);
+        return ResponseEntity.ok(new BoardResponse(board));
+    }
+    
+    @PostMapping
+    public ResponseEntity<BoardResponse> createBoard(
+        @RequestBody @Valid CreateBoardRequest request,
+        Authentication authentication) {
+        
+        UserId ownerId = UserId.from(authentication.getName());
+        Board board = createBoardUseCase.createBoard(
+            request.getTitle(),
+            request.getDescription(), 
+            ownerId
+        );
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(new BoardResponse(board));
+    }
+}
+```
+
+## 5. 인프라스트럭처 레이어에서의 ULID 처리
+
+### 5.1 JPA Entity에서 ULID 매핑
+```java
+@Entity
+@Table(name = "users")
+public class UserEntity {
+    @Id
+    private String id;  // ULID를 String으로 저장
+    
+    @Column(nullable = false)
+    private String name;
+    
+    @Column(nullable = false, unique = true)
+    private String email;
+    
+    // 기본 생성자, getter, setter
+}
+```
+
+### 5.2 Mapper에서 ID 변환
+```java
+@Component
+public class UserMapper {
+    
+    public User toDomain(UserEntity entity) {
+        return new User(
+            UserId.from(entity.getId()),  // String을 UserId로 변환
+            entity.getName(),
+            new Email(entity.getEmail())
+        );
+    }
+    
+    public UserEntity toEntity(User user) {
+        UserEntity entity = new UserEntity();
+        entity.setId(user.getId().getValue());  // UserId를 String으로 변환
+        entity.setName(user.getName());
+        entity.setEmail(user.getEmail().getValue());
+        return entity;
+    }
+}
+```
+
+### 5.3 Repository 구현에서 ID 타입 안전성
+```java
+@Repository
+public class UserJpaAdapter implements LoadUserPort, SaveUserPort {
+    
+    private final UserJpaRepository repository;
+    private final UserMapper mapper;
+    
+    @Override
+    public Optional<User> loadUser(UserId userId) {
+        return repository.findById(userId.getValue())  // UserId를 String으로 변환
+            .map(mapper::toDomain);
+    }
+    
+    @Override
+    public void saveUser(User user) {
+        UserEntity entity = mapper.toEntity(user);
+        repository.save(entity);
+    }
+}
+```
+
+## 6. 테스트에서의 ULID 사용
+
+### 6.1 테스트 데이터 생성
+```java
+public class TestDataBuilder {
+    
+    public static User.UserBuilder aUser() {
+        return User.builder()
+            .id(UserId.generate())  // 테스트용 prefix 포함 ULID 생성
+            .name("Test User")
+            .email(new Email("test@example.com"));
+    }
+    
+    public static Board.BoardBuilder aBoard() {
+        return Board.builder()
+            .id(BoardId.generate())  // 테스트용 prefix 포함 ULID 생성
+            .title("Test Board")
+            .ownerId(UserId.generate());
+    }
+    
+    // 고정 ID가 필요한 경우 (prefix 포함)
+    public static UserId fixedUserId() {
+        return UserId.of("u_01ARZ3NDEKTSV4RRFFQ69G5FAV");
+    }
+    
+    public static BoardId fixedBoardId() {
+        return BoardId.of("b_01ARZ3NDEKTSV4RRFFQ69G5FAV");
+    }
+    
+    public static WorkspaceId fixedWorkspaceId() {
+        return WorkspaceId.of("ws_01ARZ3NDEKTSV4RRFFQ69G5FAV");
+    }
+}
+```
+
+### 6.2 테스트에서 ID 검증
+```java
+@Test
+void should_create_user_with_valid_prefixed_ulid() {
+    // Given
+    String name = "John Doe";
+    Email email = new Email("john@example.com");
+    
+    // When
+    User user = new User(name, email);
+    
+    // Then
+    assertThat(user.getId()).isNotNull();
+    assertThat(user.getId().getValue()).startsWith("u_");
+    assertThat(user.getId().getValue()).hasSize(29); // "u_" + 26자 ULID
+    assertThat(user.getId().getValue()).matches("u_[0-9A-HJKMNP-TV-Z]{26}");
+}
+
+@Test
+void should_create_board_with_valid_prefixed_ulid() {
+    // Given
+    String title = "Test Board";
+    UserId ownerId = UserId.generate();
+    
+    // When
+    Board board = new Board(title, ownerId);
+    
+    // Then
+    assertThat(board.getId()).isNotNull();
+    assertThat(board.getId().getValue()).startsWith("b_");
+    assertThat(board.getId().getValue()).hasSize(29); // "b_" + 26자 ULID
+    assertThat(board.getId().getValue()).matches("b_[0-9A-HJKMNP-TV-Z]{26}");
+}
+
+@Test
+void should_validate_user_id_format() {
+    // Given & When & Then
+    assertThatThrownBy(() -> UserId.of("invalid_id"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must start with 'u_'");
+    
+    assertThatThrownBy(() -> UserId.of("b_01ARZ3NDEKTSV4RRFFQ69G5FAV"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must start with 'u_'");
+}
+```
+
+## 7. 성능 고려사항
+
+### 7.1 ULID 생성 최적화
+```java
+// 좋은 예시 - 배치 생성
+public class UlidGenerator {
+    
+    public static List<UserId> generateUserIds(int count) {
+        return IntStream.range(0, count)
+            .mapToObj(i -> UserId.generate())
+            .collect(Collectors.toList());
+    }
+}
+
+// 대량 데이터 처리 시 고려사항
+@Service
+public class BulkUserCreationService {
+    
+    public List<User> createUsers(List<CreateUserCommand> commands) {
+        return commands.stream()
+            .map(command -> new User(
+                command.getName(),
+                new Email(command.getEmail())
+            ))
+            .collect(Collectors.toList());
+    }
+}
+```
+
+### 7.2 데이터베이스 인덱스 고려
+```sql
+-- ULID는 시간순 정렬이 가능하므로 클러스터 인덱스에 적합
+CREATE INDEX idx_boards_created_at ON boards(id);  -- ULID 자체가 시간순
+
+-- 복합 인덱스에서도 효과적
+CREATE INDEX idx_board_members_board_user ON board_members(board_id, user_id);
+```
+
+## 8. AI 코딩 가이드라인
+
+### ULID 사용 시 준수사항
+1. **모든 엔티티 ID는 ULID 기반 강타입 객체 사용**
+2. **도메인 ID 생성 시 반드시 prefix 사용 (u_, b_, ws_ 등)**
+3. **ID 생성은 엔티티 생성자에서 자동 처리**
+4. **API 레이어에서는 String으로 노출, 내부적으로는 강타입 사용**
+5. **Repository 인터페이스는 강타입 ID 사용**
+6. **테스트에서는 고정 ULID 또는 자동 생성 ULID 사용**
+7. **ID 검증 시 prefix 형식도 함께 검증**
+
+### 금지사항
+1. **원시 String 타입을 ID로 직접 사용 금지**
+2. **Auto-increment Long ID 사용 금지**
+3. **UUID 사용 금지** (ULID 사용)
+4. **ID 객체에 비즈니스 로직 포함 금지**
+5. **Prefix 없이 ULID만 사용 금지**
+6. **잘못된 prefix로 ID 생성 금지** (예: UserId에 "b_" prefix 사용)
+
+## 9. 마이그레이션 가이드
+
+### 기존 시스템에서 ULID로 전환 시
+1. **새로운 엔티티부터 ULID 적용**
+2. **기존 엔티티는 점진적 마이그레이션**
+3. **API 호환성 유지를 위한 변환 레이어 구현**
+4. **데이터베이스 마이그레이션 스크립트 작성**
+
+```java
+// 마이그레이션 예시
+public class LegacyUserMigrationService {
+    
+    public void migrateLegacyUsersToUlid() {
+        List<LegacyUserEntity> legacyUsers = legacyUserRepository.findAll();
+        
+        for (LegacyUserEntity legacyUser : legacyUsers) {
+            UserEntity newUser = new UserEntity();
+            newUser.setId(UlidCreator.getUlid().toString());  // 새 ULID 생성
+            newUser.setName(legacyUser.getName());
+            newUser.setEmail(legacyUser.getEmail());
+            
+            userRepository.save(newUser);
+            
+            // 매핑 테이블에 기존 ID와 새 ULID 관계 저장
+            saveIdMapping(legacyUser.getId(), newUser.getId());
+        }
+    }
+}
+```

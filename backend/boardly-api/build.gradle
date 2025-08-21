@@ -1,13 +1,23 @@
 plugins {
-    id 'java'
-    id 'io.spring.dependency-management'
+    id 'java-library'
 }
+
+java {
+  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
+}
+
+repositories { mavenCentral() }
 
 dependencies {
     implementation project(':boardly-application')
+    implementation project(':boardly-domain')
     
     // Spring Boot Web
     implementation libs.spring.boot.starter.web
+    
+    // Lombok
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
     
     // Documentation
     implementation libs.springdoc.openapi.starter.webmvc.ui

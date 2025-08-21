@@ -20,13 +20,25 @@ docs/
 │   ├── bounded-contexts.md     # 바운디드 컨텍스트 정의
 │   └── domain-events.md        # 도메인 이벤트 정의
 ├── architecture/               # 아키텍처 설계 문서
-│   ├── system-overview.md      # 시스템 전체 개요
-│   ├── api-design.md           # API 설계
-│   └── database-schema.md      # 데이터베이스 스키마
-└── implementation/             # 구현 가이드
-    ├── coding-standards.md     # 코딩 표준
-    ├── testing-strategy.md     # 테스트 전략
-    └── deployment-guide.md     # 배포 가이드
+│   ├── hexagonal-architecture-guide.md # 헥사고날 아키텍처 가이드
+│   ├── api-response-standards.md       # API 응답 형식 표준
+│   └── error-handling-standards.md     # 에러 처리 표준
+├── implementation/             # 구현 가이드
+│   ├── usecase-pattern-guide.md        # UseCase 패턴 가이드
+│   ├── input-validation-guide.md       # 입력 검증 표준
+│   ├── testing-guide.md                # 테스트 작성 가이드
+│   └── dependency-management-guide.md  # 의존성 관리 가이드
+├── technical/                  # 기술적 세부사항
+│   ├── project-structure.md    # 프로젝트 구조
+│   ├── internationalization.md # 국제화
+│   └── coding-standards.md     # 코딩 표준
+└── api/                        # API 문서
+    ├── README.md               # API 개요
+    ├── openapi.yaml            # OpenAPI 스펙
+    ├── parameters/             # 공통 파라미터
+    ├── paths/                  # API 경로
+    ├── schemas/                # 스키마 정의
+    └── responses/              # 응답 정의
 ```
 
 ## 문서 작성 규칙
@@ -53,7 +65,7 @@ docs/
 - ✅ 외부 초대 유저스토리 작성 완료
 
 ## 다음 단계
-1. 카드 관리 관련 유저스토리 작성
-2. 도메인 분석 문서 작성
-3. 아키텍처 설계 문서 작성
-4. 구현 가이드 문서 작성
+1. 도메인 분석 문서 작성
+2. 아키텍처 설계 문서 작성
+3. 배포 가이드 문서 작성
+4. 모니터링 및 로깅 가이드 작성

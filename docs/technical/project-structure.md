@@ -3,7 +3,7 @@
 ## 🏗️ 전체 프로젝트 구조
 
 ```
-boardly-doc/                           # 🏠 프로젝트 루트
+boardly/                              # 🏠 프로젝트 루트
 ├── 📚 docs/                          # 프로젝트 문서
 │   ├── api/                          # API 설계 문서
 │   │   ├── openapi.yaml              # 메인 OpenAPI 스펙
@@ -29,6 +29,8 @@ boardly-doc/                           # 🏠 프로젝트 루트
 │   │   │       ├── workspace/        # Workspace 도메인
 │   │   │       ├── board/            # Board 도메인
 │   │   │       └── common/           # 공통 도메인
+│   │   ├── src/test/java/
+│   │   │   └── com/boardly/domain/
 │   │   └── build.gradle
 │   ├── boardly-application/          # 애플리케이션 모듈
 │   │   ├── src/main/java/
@@ -36,6 +38,8 @@ boardly-doc/                           # 🏠 프로젝트 루트
 │   │   │       ├── service/          # 서비스 레이어
 │   │   │       ├── dto/              # DTO 클래스
 │   │   │       └── usecase/          # 유스케이스
+│   │   ├── src/test/java/
+│   │   │   └── com/boardly/application/
 │   │   └── build.gradle
 │   ├── boardly-infrastructure/       # 인프라 모듈
 │   │   ├── src/main/java/
@@ -47,18 +51,37 @@ boardly-doc/                           # 🏠 프로젝트 루트
 │   │   │       ├── storage/          # 파일 저장소
 │   │   │       ├── cache/            # Redis 캐시
 │   │   │       └── websocket/        # WebSocket 설정
+│   │   ├── src/test/java/
+│   │   │   └── com/boardly/infrastructure/
 │   │   └── build.gradle
-│   ├── boardly-web/                  # 웹 모듈
+│   ├── boardly-api/                  # API 모듈
 │   │   ├── src/main/java/
-│   │   │   └── com/boardly/web/
+│   │   │   └── com/boardly/api/
 │   │   │       ├── controller/       # REST 컨트롤러
 │   │   │       ├── config/           # 웹 설정
 │   │   │       └── exception/        # 예외 처리
+│   │   ├── src/test/java/
+│   │   │   └── com/boardly/api/
 │   │   └── build.gradle
-│   ├── boardly-test/                 # 테스트 모듈
-│   │   └── src/test/java/
+│   ├── boardly-app/                  # 애플리케이션 실행 모듈
+│   │   ├── src/main/java/
+│   │   │   └── com/boardly/app/
+│   │   │       └── BoardlyApplication.java  # 메인 애플리케이션 클래스
+│   │   ├── src/main/resources/
+│   │   │   └── application.yml       # 애플리케이션 설정
+│   │   ├── src/test/java/
+│   │   │   └── com/boardly/app/
+│   │   └── build.gradle
+│   ├── boardly-schema/               # 데이터베이스 스키마 모듈
+│   │   ├── src/main/resources/
+│   │   │   └── db/
+│   │   │       └── migration/        # Flyway 마이그레이션 스크립트
+│   │   │           └── V1__Create_initial_schema.sql
+│   │   └── build.gradle
 │   ├── build.gradle                  # 루트 build.gradle
 │   ├── settings.gradle               # 멀티모듈 설정
+│   ├── gradlew                       # Gradle Wrapper (Unix)
+│   ├── gradlew.bat                   # Gradle Wrapper (Windows)
 │   └── gradle/                       # Gradle Wrapper
 ├── 🎨 frontend/                      # React 프론트엔드
 │   ├── src/
@@ -77,6 +100,8 @@ boardly-doc/                           # 🏠 프로젝트 루트
 │   │   └── main.tsx
 │   ├── public/                       # 정적 파일
 │   ├── package.json
+│   ├── pnpm-lock.yaml               # pnpm 의존성 잠금 파일
+│   ├── pnpm-workspace.yaml          # pnpm 워크스페이스 설정
 │   ├── vite.config.ts
 │   ├── tailwind.config.js
 │   └── tsconfig.json
@@ -116,11 +141,18 @@ boardly-doc/                           # 🏠 프로젝트 루트
 ### 🖥️ **backend/** - Spring Boot 백엔드
 - **목적**: REST API, 비즈니스 로직, 데이터 처리
 - **아키텍처**: Hexagonal Architecture (Ports & Adapters)
-- **모듈**: Domain, Application, Infrastructure, Web
+- **모듈 구조**:
+  - **boardly-domain**: 도메인 모델, 비즈니스 규칙
+  - **boardly-application**: 유스케이스, 서비스 레이어
+  - **boardly-infrastructure**: 외부 시스템 연동 (DB, 캐시, 파일 저장소)
+  - **boardly-api**: REST API 컨트롤러, 웹 설정
+  - **boardly-app**: 애플리케이션 실행 진입점
+  - **boardly-schema**: 데이터베이스 마이그레이션 스크립트
 
 ### 🎨 **frontend/** - React 프론트엔드
 - **목적**: 사용자 인터페이스, 상태 관리, API 호출
 - **기술**: React 18+, TypeScript, Vite, Zustand
+- **패키지 매니저**: pnpm (빠른 설치, 디스크 공간 절약)
 - **UI**: shadcn/ui + Tailwind CSS
 
 ### 🔄 **shared/** - 공통 리소스 (선택사항)
@@ -144,10 +176,10 @@ boardly-doc/                           # 🏠 프로젝트 루트
 cd backend
 ./gradlew build
 
-# 2. Frontend 프로젝트 생성  
+# 2. Frontend 프로젝트 생성 (pnpm 사용)
 cd ../frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev
 
 # 3. 전체 프로젝트 빌드
 cd ..
@@ -160,9 +192,9 @@ cd ..
 cd backend
 ./gradlew bootRun
 
-# Frontend 개발
+# Frontend 개발 (pnpm 사용)
 cd frontend  
-npm run dev
+pnpm dev
 
 # 전체 테스트
 ./scripts/test.sh
@@ -184,6 +216,7 @@ docker-compose build
 3. **CI/CD 통합**: 전체 프로젝트 빌드/테스트/배포
 4. **개발 편의성**: IDE에서 전체 프로젝트 탐색
 5. **버전 동기화**: Backend/Frontend 버전 관리 용이
+6. **pnpm 장점**: 빠른 패키지 설치, 디스크 공간 절약, 엄격한 의존성 관리
 
 ## ⚠️ 고려사항
 
@@ -191,6 +224,7 @@ docker-compose build
 2. **권한 관리**: Backend/Frontend 팀별 접근 권한 설정 필요
 3. **빌드 시간**: 전체 프로젝트 빌드 시 시간 소요
 4. **복잡성**: 초기 설정이 다소 복잡할 수 있음
+5. **pnpm 호환성**: 일부 레거시 도구나 CI/CD 파이프라인에서 추가 설정 필요할 수 있음
 
 ## 🎯 결론
 
@@ -200,5 +234,6 @@ docker-compose build
 - 타입 안전성 보장  
 - 통합 관리 편의성
 - 팀 협업 개선
+- pnpm을 통한 빠른 의존성 관리
 
 의 장점이 단점을 충분히 상쇄합니다.

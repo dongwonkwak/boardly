@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    implementation project(':boardly-domain')
+    
+    // Spring Boot Starters
+    implementation libs.spring.boot.starter.data.jpa
+    implementation libs.spring.boot.starter.web
+    
+    // Database
+    implementation libs.h2
+    implementation libs.mysql
+    implementation libs.postgresql
+    
+    // JPA & QueryDSL
+    implementation libs.querydsl.jpa
+    annotationProcessor libs.querydsl.apt
+    
+    // Test
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.bundles.testcontainers
+}

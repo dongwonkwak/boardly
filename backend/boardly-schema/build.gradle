@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    // Flyway for database migration
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
+    
+    // Test
+    testImplementation libs.spring.boot.starter.test
+}

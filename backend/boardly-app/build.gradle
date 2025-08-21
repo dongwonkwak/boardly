@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Disable bootJar task to avoid compatibility issues
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+dependencies {
+    implementation project(':boardly-api')
+    implementation project(':boardly-infrastructure')
+    implementation project(':boardly-schema')
+    
+    // Spring Boot Starters
+    implementation libs.bundles.spring.boot.starter
+    implementation libs.spring.boot.starter.actuator
+    
+    // Test
+    testImplementation libs.bundles.spring.boot.test
+    testImplementation libs.bundles.testcontainers
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

@@ -1,0 +1,21 @@
+# Cursor에서 제외할 파일/폴더
+
+# 임시 파일
+*.tmp
+*.log
+.DS_Store
+
+# 자동 생성 파일
+docs/api/openapi.json
+docs/api/index.html
+docs/api/postman-collection.json
+docs/api/types.ts
+
+# 빌드 결과물
+dist/
+build/
+node_modules/
+
+# IDE 설정
+.vscode/
+.idea/

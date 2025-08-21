@@ -1,7 +1,0 @@
-plugins {
-    id 'boardly.java-library-conventions'
-}
-
-dependencies {
-    api libs.bundles.common.dependencies
-}

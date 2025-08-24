@@ -16,18 +16,20 @@ public class User {
 
     private UserId id;
     private String email;
-    private String name;
+    private String username;
+    private String displayName;
     private String profileImageUrl;
     private UserStatus status;
     private Instant createdAt;
     private Instant updatedAt;
 
     @Builder
-    public User(UserId id, String email, String name, String profileImageUrl, UserStatus status,
+    public User(UserId id, String email, String username, String displayName, String profileImageUrl, UserStatus status,
             Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.email = email;
-        this.name = name;
+        this.username = username;
+        this.displayName = displayName;
         this.profileImageUrl = profileImageUrl;
         this.status = status;
         this.createdAt = createdAt;
@@ -37,11 +39,12 @@ public class User {
     /**
      * 사용자 생성 팩토리 메서드
      */
-    public static User create(String email, String name, String profileImageUrl) {
+    public static User create(String email, String username, String displayName, String profileImageUrl) {
         return User.builder()
                 .id(UserId.generate())
                 .email(email)
-                .name(name)
+                .username(username)
+                .displayName(displayName)
                 .profileImageUrl(profileImageUrl)
                 .status(UserStatus.ACTIVE)
                 .createdAt(Instant.now())
@@ -52,8 +55,9 @@ public class User {
     /**
      * 사용자 정보 업데이트
      */
-    public void updateInfo(String name, String profileImageUrl) {
-        this.name = name;
+    public void updateInfo(String username, String displayName, String profileImageUrl) {
+        this.username = username;
+        this.displayName = displayName;
         this.profileImageUrl = profileImageUrl;
         this.updatedAt = Instant.now();
     }
@@ -71,5 +75,19 @@ public class User {
      */
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
+    }
+
+    /**
+     * 표시 이름 반환 (displayName이 없으면 username 반환)
+     */
+    public String getDisplayName() {
+        return displayName != null && !displayName.trim().isEmpty() ? displayName : username;
+    }
+
+    /**
+     * @username 형태로 반환
+     */
+    public String getUsernameWithAt() {
+        return "@" + username;
     }
 }

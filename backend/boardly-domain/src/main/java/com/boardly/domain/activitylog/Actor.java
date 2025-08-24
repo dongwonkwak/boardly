@@ -16,13 +16,13 @@ public class Actor {
 
     private UserId id;
     private String email;
-    private String name;
+    private String displayName;
 
     @Builder
-    public Actor(UserId id, String email, String name) {
+    public Actor(UserId id, String email, String displayName) {
         this.id = id;
         this.email = email;
-        this.name = name;
+        this.displayName = displayName;
     }
 
     /**
@@ -32,7 +32,7 @@ public class Actor {
         return Actor.builder()
                 .id(user.getId())
                 .email(user.getEmail())
-                .name(user.getName())
+                .displayName(user.getDisplayName())
                 .build();
     }
 }

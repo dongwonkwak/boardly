@@ -9,11 +9,16 @@ java {
 repositories { mavenCentral() }
 
 dependencies {
+    // Internal modules
+    implementation project(':boardly-shared')
     implementation project(':boardly-domain')
     
     // Spring Boot Starters
     implementation libs.spring.boot.starter
     implementation libs.spring.boot.starter.validation
+    
+    // Vavr
+    implementation libs.vavr
     
     // Test
     testImplementation libs.spring.boot.starter.test

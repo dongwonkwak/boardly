@@ -9,6 +9,8 @@ java {
 repositories { mavenCentral() }
 
 dependencies {
+    // Internal modules
+    implementation project(':boardly-shared')
     implementation project(':boardly-application')
     implementation project(':boardly-domain')
     

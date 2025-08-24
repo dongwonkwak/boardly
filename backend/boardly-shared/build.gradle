@@ -9,15 +9,15 @@ java {
 repositories { mavenCentral() }
 
 dependencies {
-    // Internal modules
-    implementation project(':boardly-shared')
-    
     // Lombok
     compileOnly libs.lombok
     annotationProcessor libs.lombok
     
     // Validation
     implementation libs.validation.api
+    
+    // ULID
+    implementation libs.ulid.creator
     
     // Test
     testImplementation libs.junit.jupiter

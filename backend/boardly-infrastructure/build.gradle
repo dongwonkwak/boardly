@@ -4,6 +4,8 @@ plugins {
 }
 
 dependencies {
+    // Internal modules
+    implementation project(':boardly-shared')
     implementation project(':boardly-domain')
     
     // Spring Boot Starters

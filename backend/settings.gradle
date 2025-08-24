@@ -1,5 +1,6 @@
 rootProject.name = 'backend'
 
+include 'boardly-shared'
 include 'boardly-app'
 include 'boardly-api'
 include 'boardly-application'

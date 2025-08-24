@@ -1,0 +1,1165 @@
+# 🏗️ Boardly 헥사고날 아키텍처 구조 개선 가이드
+
+## 📋 목차
+1. [현재 구조 분석](#현재-구조-분석)
+2. [개선된 구조 제안](#개선된-구조-제안)
+3. [상세 개선사항](#상세-개선사항)
+4. [구현 가이드라인](#구현-가이드라인)
+5. [마이그레이션 전략](#마이그레이션-전략)
+
+## 📂 모듈 구조 및 네이밍
+
+### 모듈 네이밍 규칙
+```
+boardly/                               # 루트 프로젝트
+├── boardly-shared/                    # 공통 모듈 (새로 추가)
+├── boardly-domain/                    # 도메인 계층
+├── boardly-application/               # 어플리케이션 계층
+├── boardly-infrastructure/            # 인프라스트럭처 계층
+└── boardly-api/                       # API 계층 (인바운드 어댑터)
+```
+
+### 상세 패키지 구조
+```java
+com.boardly
+├── shared                             # boardly-shared 모듈 (공통 모듈)
+│   ├── exception/
+│   │   ├── DomainException.java
+│   │   ├── BusinessException.java
+│   │   ├── ValidationException.java
+│   │   └── InfrastructureException.java
+│   ├── util/
+│   │   ├── DateUtil.java
+│   │   ├── StringUtil.java
+│   │   └── ValidationUtil.java
+│   ├── constant/
+│   │   ├── ErrorCode.java
+│   │   └── SystemConstants.java
+│   ├── type/
+│   │   ├── PageRequest.java
+│   │   └── PageResponse.java
+│   └── annotation/
+│       ├── UseCase.java
+│       ├── Adapter.java
+│       ├── DomainService.java
+│       └── ApplicationService.java
+│
+├── domain                             # boardly-domain 모듈
+│   ├── model/                         # 도메인 모델
+│   │   ├── user/
+│   │   │   ├── User.java
+│   │   │   ├── UserId.java
+│   │   │   ├── UserStatus.java
+│   │   │   └── UserDomainService.java
+│   │   ├── board/
+│   │   │   ├── Board.java
+│   │   │   ├── BoardId.java
+│   │   │   └── BoardDomainService.java
+│   │   └── workspace/
+│   │       ├── Workspace.java
+│   │       ├── WorkspaceId.java
+│   │       └── WorkspaceDomainService.java
+│   │
+│   ├── port/                          # 포트 인터페이스
+│   │   ├── inbound/                   # 인바운드 포트
+│   │   │   ├── user/
+│   │   │   │   ├── CreateUserUseCase.java
+│   │   │   │   ├── UpdateUserUseCase.java
+│   │   │   │   ├── DeleteUserUseCase.java
+│   │   │   │   └── GetUserUseCase.java
+│   │   │   ├── board/
+│   │   │   │   ├── CreateBoardUseCase.java
+│   │   │   │   ├── UpdateBoardUseCase.java
+│   │   │   │   ├── DeleteBoardUseCase.java
+│   │   │   │   └── GetBoardUseCase.java
+│   │   │   └── workspace/
+│   │   │       ├── CreateWorkspaceUseCase.java
+│   │   │       └── GetWorkspaceUseCase.java
+│   │   │
+│   │   └── outbound/                  # 아웃바운드 포트
+│   │       ├── persistence/
+│   │       │   ├── UserRepository.java
+│   │       │   ├── BoardRepository.java
+│   │       │   └── WorkspaceRepository.java
+│   │       ├── messaging/
+│   │       │   ├── EventPublisher.java
+│   │       │   └── EventSubscriber.java
+│   │       └── external/
+│   │           ├── EmailService.java
+│   │           ├── NotificationService.java
+│   │           └── FileStorageService.java
+│   │
+│   ├── event/                         # 도메인 이벤트
+│   │   ├── DomainEvent.java
+│   │   ├── user/
+│   │   │   ├── UserCreatedEvent.java
+│   │   │   ├── UserUpdatedEvent.java
+│   │   │   └── UserDeletedEvent.java
+│   │   └── board/
+│   │       ├── BoardCreatedEvent.java
+│   │       └── BoardDeletedEvent.java
+│   │
+│   └── common/                        # 도메인 공통 요소
+│       ├── EntityId.java
+│       ├── AggregateRoot.java
+│       ├── ValueObject.java
+│       ├── Failure.java
+│       └── DomainPrefixes.java
+│
+├── application                        # boardly-application 모듈
+│   ├── port/                          # 포트 구현체 (인바운드 포트 구현)
+│   │   ├── user/
+│   │   │   ├── UserCrudService.java           # CRUD 서비스
+│   │   │   ├── UserAnalyticsService.java      # 분석/통계 서비스
+│   │   │   ├── UserOnboardingService.java     # 워크플로우 서비스
+│   │   │   └── UserSearchService.java         # 검색/조회 서비스
+│   │   ├── board/
+│   │   │   ├── BoardCrudService.java          # CRUD 서비스
+│   │   │   ├── BoardAnalyticsService.java     # 분석/통계 서비스
+│   │   │   └── BoardCollaborationService.java # 협업 워크플로우 서비스
+│   │   └── workspace/
+│   │       ├── WorkspaceCrudService.java      # CRUD 서비스
+│   │       └── WorkspaceInvitationService.java # 초대 워크플로우 서비스
+│   │
+│   ├── command/                       # 커맨드 객체
+│   │   ├── user/
+│   │   │   ├── CreateUserCommand.java
+│   │   │   ├── UpdateUserCommand.java
+│   │   │   └── DeleteUserCommand.java
+│   │   └── board/
+│   │       ├── CreateBoardCommand.java
+│   │       ├── UpdateBoardCommand.java
+│   │       └── DeleteBoardCommand.java
+│   │
+│   ├── query/                         # 쿼리 객체
+│   │   ├── user/
+│   │   │   ├── GetUserQuery.java
+│   │   │   └── ListUsersQuery.java
+│   │   └── board/
+│   │       ├── GetBoardQuery.java
+│   │       └── ListBoardsQuery.java
+│   │
+│   ├── handler/                       # 이벤트 핸들러
+│   │   ├── user/
+│   │   │   ├── UserCreatedEventHandler.java
+│   │   │   └── UserDeletedEventHandler.java
+│   │   └── board/
+│   │       └── BoardCreatedEventHandler.java
+│   │
+│   └── validator/                     # 입력값 검증
+│       ├── common/
+│       │   ├── CommonFieldValidator.java
+│       │   └── ValidationHelper.java
+│       ├── user/
+│       │   ├── CreateUserCommandValidator.java
+│       │   └── UpdateUserCommandValidator.java
+│       └── board/
+│           ├── CreateBoardCommandValidator.java
+│           └── UpdateBoardCommandValidator.java
+│
+├── infrastructure                     # boardly-infrastructure 모듈
+│   ├── adapter/                       # 아웃바운드 어댑터
+│   │   ├── persistence/
+│   │   │   ├── user/
+│   │   │   │   ├── UserEntity.java
+│   │   │   │   ├── UserJpaRepository.java
+│   │   │   │   ├── UserRepositoryAdapter.java
+│   │   │   │   └── UserMapper.java
+│   │   │   ├── board/
+│   │   │   │   ├── BoardEntity.java
+│   │   │   │   ├── BoardJpaRepository.java
+│   │   │   │   ├── BoardRepositoryAdapter.java
+│   │   │   │   └── BoardMapper.java
+│   │   │   └── workspace/
+│   │   │       ├── WorkspaceEntity.java
+│   │   │       ├── WorkspaceJpaRepository.java
+│   │   │       ├── WorkspaceRepositoryAdapter.java
+│   │   │       └── WorkspaceMapper.java
+│   │   │
+│   │   ├── messaging/
+│   │   │   ├── EventPublisherAdapter.java
+│   │   │   ├── EventSubscriberAdapter.java
+│   │   │   └── handler/
+│   │   │       ├── UserEventHandler.java
+│   │   │       └── BoardEventHandler.java
+│   │   │
+│   │   └── external/
+│   │       ├── email/
+│   │       │   └── EmailServiceAdapter.java
+│   │       ├── notification/
+│   │       │   └── NotificationServiceAdapter.java
+│   │       └── storage/
+│   │           └── FileStorageServiceAdapter.java
+│   │
+│   └── config/                        # 인프라 설정
+│       ├── persistence/
+│       │   ├── DatabaseConfig.java
+│       │   └── JpaConfig.java
+│       ├── messaging/
+│       │   ├── MessagingConfig.java
+│       │   └── EventHandlerConfig.java
+│       ├── external/
+│       │   └── ExternalServicesConfig.java
+│       └── InfrastructureConfig.java
+│
+└── api                                # boardly-api 모듈
+    ├── adapter/                        # 인바운드 어댑터
+    │   └── in/                         # 인바운드 어댑터
+    │       └── rest/                   # REST 어댑터
+    │           ├── user/
+    │           │   └── UserController.java
+    │           ├── board/
+    │           │   └── BoardController.java
+    │           └── workspace/
+    │               └── WorkspaceController.java
+    │
+    ├── dto/                            # 데이터 전송 객체
+    │   ├── in/                         # 인바운드 DTO
+    │   │   ├── user/
+    │   │   │   ├── CreateUserRequest.java
+    │   │   │   └── UpdateUserRequest.java
+    │   │   ├── board/
+    │   │   │   ├── CreateBoardRequest.java
+    │   │   │   └── UpdateBoardRequest.java
+    │   │   └── workspace/
+    │   │       ├── CreateWorkspaceRequest.java
+    │   │       └── UpdateWorkspaceRequest.java
+    │   └── out/                        # 아웃바운드 DTO
+    │       ├── user/
+    │       │   ├── UserResponse.java
+    │       │   └── UserListResponse.java
+    │       ├── board/
+    │       │   ├── BoardResponse.java
+    │       │   └── BoardListResponse.java
+    │       └── workspace/
+    │           ├── WorkspaceResponse.java
+    │           └── WorkspaceListResponse.java
+    │
+    ├── mapper/                         # DTO 매퍼
+    │   ├── UserDtoMapper.java
+    │   ├── BoardDtoMapper.java
+    │   └── WorkspaceDtoMapper.java
+    │
+    ├── exception/                      # API 예외 처리
+    │   ├── ApiException.java
+    │   ├── ErrorResponse.java
+    │   └── GlobalExceptionHandler.java
+    │
+    ├── interceptor/                    # 인터셉터
+    │   ├── LoggingInterceptor.java
+    │   ├── AuthenticationInterceptor.java
+    │   └── ValidationInterceptor.java
+    │
+    └── config/                         # API 설정
+        ├── WebConfig.java
+        ├── SecurityConfig.java
+        ├── SwaggerConfig.java
+        └── ApiConfig.java
+```
+
+## 🔗 의존성 규칙
+
+### 계층별 의존성 방향
+```java
+// ✅ 올바른 의존성 방향
+boardly-api → boardly-application → boardly-domain
+boardly-infrastructure → boardly-application
+boardly-infrastructure → boardly-domain (포트 구현을 위해서만)
+모든 모듈 → boardly-shared
+
+// ❌ 잘못된 의존성 방향
+boardly-domain → boardly-application  // 도메인이 애플리케이션에 의존
+boardly-application → boardly-infrastructure  // 애플리케이션이 인프라에 직접 의존
+boardly-api → boardly-infrastructure  // API가 인프라에 직접 의존
+boardly-api → boardly-domain  // API가 도메인에 직접 의존
+```
+
+### 포트와 어댑터 패턴
+```java
+// 1. 인바운드 포트 (Input Port - Primary Port)
+public interface CreateUserUseCase {
+    Either<Failure, User> createUser(CreateUserCommand command);
+}
+
+// 2. 아웃바운드 포트 (Output Port - Secondary Port)
+public interface UserRepository {
+    Either<Failure, User> save(User user);
+    Optional<User> findById(UserId id);
+    boolean existsByEmail(String email);
+}
+
+// 3. 인바운드 어댑터 (Controller)
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+    private final UserApplicationService userService;  // Application Service에 의존
+    
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody CreateUserRequest request) {
+        CreateUserCommand command = CreateUserCommand.of(request);
+        return userService.createUser(command)
+            .fold(
+                failure -> ResponseEntity.badRequest().body(new ErrorResponse(failure)),
+                user -> ResponseEntity.ok(new UserResponse(user))
+            );
+    }
+}
+
+// 4. 아웃바운드 어댑터 (Repository 구현체)
+@Repository
+public class UserRepositoryAdapter implements UserRepository {
+    private final UserJpaRepository jpaRepository;
+    private final UserMapper mapper;
+    
+    @Override
+    public Either<Failure, User> save(User user) {
+        try {
+            UserEntity entity = mapper.toEntity(user);
+            UserEntity savedEntity = jpaRepository.save(entity);
+            return Either.right(mapper.toDomain(savedEntity));
+        } catch (Exception e) {
+            return Either.left(Failure.SystemError("Failed to save user"));
+        }
+    }
+}
+```
+
+## 🎯 도메인 계층 규칙
+
+### 도메인 모델 설계
+```java
+// ✅ 도메인 엔티티
+public class User {
+    private final UserId id;
+    private String name;
+    private Email email;
+    private UserStatus status;
+    
+    public User(String name, Email email) {
+        this.id = UserId.generate();
+        this.name = name;
+        this.email = email;
+        this.status = UserStatus.ACTIVE;
+    }
+    
+    // 비즈니스 로직
+    public void changeEmail(Email newEmail) {
+        validateEmailChange(newEmail);
+        this.email = newEmail;
+        DomainEvents.publish(new UserEmailChanged(this.id, newEmail));
+    }
+    
+    public void deactivate() {
+        this.status = UserStatus.INACTIVE;
+        DomainEvents.publish(new UserDeactivated(this.id));
+    }
+    
+    private void validateEmailChange(Email newEmail) {
+        if (this.email.equals(newEmail)) {
+            throw new IllegalArgumentException("New email must be different");
+        }
+    }
+}
+
+// ✅ 값 객체
+public class Email {
+    private final String value;
+    
+    public Email(String value) {
+        validate(value);
+        this.value = value;
+    }
+    
+    private void validate(String value) {
+        if (value == null || !value.contains("@")) {
+            throw new InvalidEmailException("Invalid email format");
+        }
+    }
+    
+    public String getValue() {
+        return value;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Email)) return false;
+        Email email = (Email) o;
+        return Objects.equals(value, email.value);
+    }
+}
+```
+
+### 도메인 서비스
+```java
+// ✅ 도메인 서비스
+@DomainService
+public class UserDomainService {
+    
+    public boolean canUserJoinBoard(User user, Board board) {
+        return user.getStatus() == UserStatus.ACTIVE && 
+               !board.hasMember(user.getId());
+    }
+    
+    public void validateUserPermissions(User user, Board board) {
+        if (!board.isOwner(user.getId()) && !board.hasMember(user.getId())) {
+            throw new InsufficientPermissionException("User does not have permission");
+        }
+    }
+}
+```
+
+## 🔧 애플리케이션 계층 규칙
+
+### Use Case 구현체 역할별 분리
+
+#### 서비스 분리 패턴
+```java
+// ✅ 기본 CRUD 서비스 (반복적인 데이터 관리 로직)
+@UseCase
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class UserCrudService implements 
+    CreateUserUseCase, 
+    UpdateUserUseCase, 
+    DeleteUserUseCase, 
+    GetUserUseCase {
+    
+    private final CreateUserCommandValidator createValidator;
+    private final UpdateUserCommandValidator updateValidator;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    
+    @Override
+    public Either<Failure, User> createUser(CreateUserCommand command) {
+        // 1. 입력값 검증
+        Validation<Seq<String>, CreateUserCommand> validation = createValidator.validate(command);
+        if (validation.isInvalid()) {
+            return Either.left(Failure.ofInputError(validation.getError().asJava()));
+        }
+        
+        // 2. 비즈니스 룰 검증
+        if (userRepository.existsByEmail(command.email())) {
+            return Either.left(Failure.ResourceConflict("Email already exists"));
+        }
+        
+        // 3. 도메인 객체 생성
+        User user = new User(command.name(), command.email());
+        
+        // 4. 저장
+        return userRepository.save(user);
+    }
+    
+    @Override
+    public Either<Failure, User> updateUser(UpdateUserCommand command) {
+        // 1. 입력값 검증
+        Validation<Seq<String>, UpdateUserCommand> validation = updateValidator.validate(command);
+        if (validation.isInvalid()) {
+            return Either.left(Failure.ofInputError(validation.getError().asJava()));
+        }
+        
+        // 2. 사용자 조회
+        return userRepository.findById(command.userId())
+            .map(user -> {
+                user.updateName(command.name());
+                user.updateEmail(command.email());
+                return userRepository.save(user);
+            })
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
+    }
+    
+    @Override
+    public Either<Failure, Void> deleteUser(DeleteUserCommand command) {
+        return userRepository.findById(command.userId())
+            .map(user -> {
+                userRepository.delete(user.getId());
+                return Either.<Failure, Void>right(null);
+            })
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
+    }
+    
+    @Override
+    public Either<Failure, User> findById(UserId userId) {
+        return userRepository.findById(userId)
+            .map(Either::<Failure, User>right)
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
+    }
+}
+
+// ✅ 복잡한 비즈니스 로직 서비스 (분석, 통계, 복합 작업)
+@UseCase
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class UserAnalyticsService implements 
+    GetUserStatisticsUseCase,
+    GetUserActivityReportUseCase {
+    
+    private final UserRepository userRepository;
+    private final BoardRepository boardRepository;
+    private final ActivityRepository activityRepository;
+    
+    @Override
+    public Either<Failure, UserStatistics> getUserStatistics(GetUserStatisticsQuery query) {
+        return userRepository.findById(query.userId())
+            .map(user -> {
+                // 복잡한 통계 계산 로직
+                int totalBoards = boardRepository.countByUserId(user.getId());
+                int totalActivities = activityRepository.countByUserId(user.getId());
+                double averageActivityPerDay = calculateAverageActivity(user.getId());
+                
+                return new UserStatistics(totalBoards, totalActivities, averageActivityPerDay);
+            })
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
+    }
+    
+    @Override
+    public Either<Failure, UserActivityReport> getUserActivityReport(GetUserActivityReportQuery query) {
+        // 복잡한 활동 보고서 생성 로직
+        return userRepository.findById(query.userId())
+            .map(user -> {
+                List<Activity> activities = activityRepository.findByUserIdAndDateRange(
+                    user.getId(), query.startDate(), query.endDate());
+                
+                Map<String, Integer> activityByType = activities.stream()
+                    .collect(Collectors.groupingBy(
+                        Activity::getType,
+                        Collectors.collectingAndThen(Collectors.counting(), Long::intValue)
+                    ));
+                
+                return new UserActivityReport(user.getId(), activityByType, activities.size());
+            })
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
+    }
+    
+    private double calculateAverageActivity(UserId userId) {
+        // 복잡한 평균 활동 계산 로직
+        return activityRepository.calculateAverageActivityPerDay(userId);
+    }
+}
+
+// ✅ 워크플로우 서비스 (여러 단계의 복합 작업)
+@UseCase
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class UserOnboardingService implements 
+    CompleteUserOnboardingUseCase,
+    SendWelcomeEmailUseCase {
+    
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final WorkspaceService workspaceService;
+    private final NotificationService notificationService;
+    
+    @Override
+    public Either<Failure, UserOnboardingResult> completeOnboarding(CompleteUserOnboardingCommand command) {
+        return userRepository.findById(command.userId())
+            .map(user -> {
+                // 1. 사용자 프로필 완성
+                user.completeProfile(command.profileData());
+                
+                // 2. 기본 워크스페이스 생성
+                Workspace defaultWorkspace = workspaceService.createDefaultWorkspace(user);
+                
+                // 3. 환영 이메일 발송
+                emailService.sendWelcomeEmail(user.getEmail(), user.getName());
+                
+                // 4. 온보딩 완료 알림
+                notificationService.sendOnboardingCompleteNotification(user.getId());
+                
+                return new UserOnboardingResult(user, defaultWorkspace);
+            })
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
+    }
+    
+    @Override
+    public Either<Failure, Void> sendWelcomeEmail(SendWelcomeEmailCommand command) {
+        return userRepository.findById(command.userId())
+            .map(user -> {
+                emailService.sendWelcomeEmail(user.getEmail(), user.getName());
+                return Either.<Failure, Void>right(null);
+            })
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
+    }
+}
+```
+
+#### 서비스 분리의 장점
+
+**실용성과 생산성 향상:**
+- 간단한 CRUD 기능은 대부분 로직이 비슷하여 `UserCrudService`로 묶으면 반복적인 코드 작성을 크게 줄일 수 있습니다.
+- 개발자는 단순 작업 대신 `UserAnalyticsService`와 같은 핵심 비즈니스 로직에 더 집중할 수 있습니다.
+
+**명확한 역할 구분:**
+- `UserCrudService`: 이름만 봐도 이 서비스는 기본적인 데이터 관리만 한다는 것을 명확히 알 수 있습니다.
+- `UserAnalyticsService`: 복잡한 통계나 분석 로직이 담겨있을 것이라고 쉽게 예측할 수 있습니다.
+- `UserOnboardingService`: 사용자 온보딩 워크플로우를 담당한다는 것을 명확히 알 수 있습니다.
+
+**새로운 팀원의 빠른 적응:**
+- 이러한 명명 규칙은 새로운 팀원이 프로젝트에 합류했을 때 구조를 빠르게 파악하는 데 큰 도움이 됩니다.
+
+#### 서비스 분류 가이드라인
+
+```java
+// 1. CRUD 서비스 (기본 데이터 관리)
+public class UserCrudService implements CreateUserUseCase, UpdateUserUseCase, DeleteUserUseCase, GetUserUseCase
+public class BoardCrudService implements CreateBoardUseCase, UpdateBoardUseCase, DeleteBoardUseCase, GetBoardUseCase
+
+// 2. 분석/통계 서비스 (복잡한 계산 및 분석)
+public class UserAnalyticsService implements GetUserStatisticsUseCase, GetUserActivityReportUseCase
+public class BoardAnalyticsService implements GetBoardStatisticsUseCase, GetBoardPerformanceReportUseCase
+
+// 3. 워크플로우 서비스 (여러 단계의 복합 작업)
+public class UserOnboardingService implements CompleteUserOnboardingUseCase, SendWelcomeEmailUseCase
+public class BoardCollaborationService implements InviteUserToBoardUseCase, ManageBoardPermissionsUseCase
+
+// 4. 검색/조회 서비스 (복잡한 검색 조건)
+public class UserSearchService implements SearchUsersUseCase, GetUserRecommendationsUseCase
+public class BoardSearchService implements SearchBoardsUseCase, GetPopularBoardsUseCase
+```
+
+### Use Case 구현 (기존 패턴)
+```java
+// ✅ Use Case 구현체 (포트 구현체) - 단일 UseCase 구현
+@UseCase
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class CreateUserUseCaseImpl implements CreateUserUseCase {
+    
+    private final CreateUserCommandValidator validator;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    
+    @Override
+    public Either<Failure, User> createUser(CreateUserCommand command) {
+        // 1. 입력값 검증
+        Validation<Seq<String>, CreateUserCommand> validation = validator.validate(command);
+        if (validation.isInvalid()) {
+            return Either.left(Failure.ofInputError(validation.getError().asJava()));
+        }
+        
+        // 2. 비즈니스 룰 검증
+        if (userRepository.existsByEmail(command.email())) {
+            return Either.left(Failure.ResourceConflict("Email already exists"));
+        }
+        
+        // 3. 도메인 객체 생성
+        User user = new User(command.name(), command.email());
+        
+        // 4. 저장
+        return userRepository.save(user);
+    }
+}
+
+// ✅ Application Service (비즈니스 로직 조합)
+@ApplicationService
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class UserApplicationService {
+    
+    private final UserCrudService userCrudService;
+    private final UserAnalyticsService userAnalyticsService;
+    private final UserOnboardingService userOnboardingService;
+    
+    // CRUD 작업
+    public Either<Failure, User> createUser(CreateUserCommand command) {
+        return userCrudService.createUser(command);
+    }
+    
+    public Either<Failure, User> updateUser(UpdateUserCommand command) {
+        return userCrudService.updateUser(command);
+    }
+    
+    public Either<Failure, Void> deleteUser(DeleteUserCommand command) {
+        return userCrudService.deleteUser(command);
+    }
+    
+    public Either<Failure, User> findUser(UserId userId) {
+        return userCrudService.findById(userId);
+    }
+    
+    // 분석 작업
+    public Either<Failure, UserStatistics> getUserStatistics(GetUserStatisticsQuery query) {
+        return userAnalyticsService.getUserStatistics(query);
+    }
+    
+    public Either<Failure, UserActivityReport> getUserActivityReport(GetUserActivityReportQuery query) {
+        return userAnalyticsService.getUserActivityReport(query);
+    }
+    
+    // 워크플로우 작업
+    public Either<Failure, UserOnboardingResult> completeOnboarding(CompleteUserOnboardingCommand command) {
+        return userOnboardingService.completeOnboarding(command);
+    }
+    
+    public Either<Failure, Void> sendWelcomeEmail(SendWelcomeEmailCommand command) {
+        return userOnboardingService.sendWelcomeEmail(command);
+    }
+}
+```
+
+### Command 객체
+```java
+// ✅ Command 객체
+public record CreateUserCommand(
+    String name,
+    String email,
+    String password
+) {
+    public static CreateUserCommand of(CreateUserRequest request) {
+        return new CreateUserCommand(
+            request.getName(),
+            request.getEmail(),
+            request.getPassword()
+        );
+    }
+}
+
+// ✅ Query 객체
+public record GetUserQuery(
+    UserId userId
+) {
+    public static GetUserQuery of(String userId) {
+        return new GetUserQuery(UserId.from(userId));
+    }
+}
+
+public record ListUsersByStatusQuery(
+    UserStatus status,
+    int page,
+    int size
+) {
+    public static ListUsersByStatusQuery of(UserStatus status, int page, int size) {
+        return new ListUsersByStatusQuery(status, page, size);
+    }
+}
+```
+
+// ✅ Validator
+@Component
+@RequiredArgsConstructor
+public class CreateUserCommandValidator {
+    
+    private final CommonFieldValidator commonValidator;
+    
+    public Validation<Seq<String>, CreateUserCommand> validate(CreateUserCommand command) {
+        return Validation.combine(
+            commonValidator.validateNotBlank(command.name(), "name"),
+            commonValidator.validateEmail(command.email(), "email"),
+            commonValidator.validatePassword(command.password(), "password")
+        ).ap(CreateUserCommand::new);
+    }
+}
+```
+
+## 🏗️ 인프라스트럭처 계층 규칙
+
+### Repository 구현
+```java
+// ✅ Repository 어댑터
+@Adapter
+@Repository
+@RequiredArgsConstructor
+public class UserRepositoryAdapter implements UserRepository {
+    
+    private final UserJpaRepository jpaRepository;
+    private final UserMapper mapper;
+    
+    @Override
+    public Either<Failure, User> save(User user) {
+        try {
+            UserEntity entity = mapper.toEntity(user);
+            UserEntity savedEntity = jpaRepository.save(entity);
+            return Either.right(mapper.toDomain(savedEntity));
+        } catch (DataIntegrityViolationException e) {
+            return Either.left(Failure.ResourceConflict("User already exists"));
+        } catch (Exception e) {
+            return Either.left(Failure.SystemError("Failed to save user"));
+        }
+    }
+    
+    @Override
+    public Optional<User> findById(UserId id) {
+        return jpaRepository.findById(id.getValue())
+            .map(mapper::toDomain);
+    }
+    
+    @Override
+    public boolean existsByEmail(String email) {
+        return jpaRepository.existsByEmail(email);
+    }
+}
+```
+
+### Mapper 구현
+```java
+// ✅ Mapper
+@Component
+public class UserMapper {
+    
+    public User toDomain(UserEntity entity) {
+        return new User(
+            UserId.from(entity.getId()),
+            entity.getName(),
+            new Email(entity.getEmail()),
+            UserStatus.valueOf(entity.getStatus())
+        );
+    }
+    
+    public UserEntity toEntity(User user) {
+        UserEntity entity = new UserEntity();
+        entity.setId(user.getId().getValue());
+        entity.setName(user.getName());
+        entity.setEmail(user.getEmail().getValue());
+        entity.setStatus(user.getStatus().name());
+        return entity;
+    }
+}
+```
+
+## 🌐 API 계층 규칙
+
+### Controller 구현
+```java
+// ✅ Controller (인바운드 어댑터)
+@RestController
+@RequestMapping("/api/users")
+@RequiredArgsConstructor
+@Validated
+public class UserController {
+    
+    private final UserApplicationService userService;  // Application Service에 의존
+    
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody @Valid CreateUserRequest request) {
+        CreateUserCommand command = CreateUserCommand.of(request);
+        
+        return userService.createUser(command)
+            .fold(
+                failure -> ResponseEntity.status(failure.getHttpStatus())
+                    .body(new ErrorResponse(failure.getMessage())),
+                user -> ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new UserResponse(user))
+            );
+    }
+    
+    @GetMapping("/{userId}")
+    public ResponseEntity<?> findUser(@PathVariable String userId) {
+        UserId id = UserId.from(userId);
+        
+        return userService.findUser(id)
+            .fold(
+                failure -> ResponseEntity.status(failure.getHttpStatus())
+                    .body(new ErrorResponse(failure.getMessage())),
+                user -> ResponseEntity.ok(new UserResponse(user))
+            );
+    }
+    
+    @PutMapping("/{userId}")
+    public ResponseEntity<?> updateUser(@PathVariable String userId, @RequestBody @Valid UpdateUserRequest request) {
+        UpdateUserCommand command = UpdateUserCommand.of(userId, request);
+        
+        return userService.updateUser(command)
+            .fold(
+                failure -> ResponseEntity.status(failure.getHttpStatus())
+                    .body(new ErrorResponse(failure.getMessage())),
+                user -> ResponseEntity.ok(new UserResponse(user))
+            );
+    }
+    
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<?> deleteUser(@PathVariable String userId) {
+        DeleteUserCommand command = DeleteUserCommand.of(userId);
+        
+        return userService.deleteUser(command)
+            .fold(
+                failure -> ResponseEntity.status(failure.getHttpStatus())
+                    .body(new ErrorResponse(failure.getMessage())),
+                result -> ResponseEntity.noContent().build()
+            );
+    }
+}
+```
+
+### DTO 설계
+```java
+// ✅ Request DTO (인바운드 DTO)
+public record CreateUserRequest(
+    @NotBlank(message = "Name is required")
+    String name,
+    
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
+    String email,
+    
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    String password
+) {}
+
+// ✅ Response DTO (아웃바운드 DTO)
+public record UserResponse(
+    String id,
+    String name,
+    String email,
+    String status,
+    Instant createdAt
+) {
+    public UserResponse(User user) {
+        this(
+            user.getId().getValue(),
+            user.getName(),
+            user.getEmail().getValue(),
+            user.getStatus().name(),
+            user.getCreatedAt()
+        );
+    }
+}
+```
+
+## 🔄 의존성 주입 설정
+
+### Configuration 클래스
+```java
+// ✅ Configuration
+@Configuration
+public class ApplicationConfiguration {
+    
+    @Bean
+    public UserApplicationService userApplicationService(
+        CreateUserUseCase createUserUseCase,
+        UpdateUserUseCase updateUserUseCase,
+        DeleteUserUseCase deleteUserUseCase,
+        GetUserUseCase getUserUseCase
+    ) {
+        return new UserApplicationService(createUserUseCase, updateUserUseCase, deleteUserUseCase, getUserUseCase);
+    }
+    
+    @Bean
+    public UserCrudService userCrudService(
+        CreateUserCommandValidator createValidator,
+        UpdateUserCommandValidator updateValidator,
+        UserRepository userRepository,
+        PasswordEncoder passwordEncoder
+    ) {
+        return new UserCrudService(createValidator, updateValidator, userRepository, passwordEncoder);
+    }
+    
+    @Bean
+    public UserAnalyticsService userAnalyticsService(
+        UserRepository userRepository,
+        BoardRepository boardRepository,
+        ActivityRepository activityRepository
+    ) {
+        return new UserAnalyticsService(userRepository, boardRepository, activityRepository);
+    }
+    
+    @Bean
+    public UserOnboardingService userOnboardingService(
+        UserRepository userRepository,
+        EmailService emailService,
+        WorkspaceService workspaceService,
+        NotificationService notificationService
+    ) {
+        return new UserOnboardingService(userRepository, emailService, workspaceService, notificationService);
+    }
+}
+```
+
+## 🧪 테스트 전략
+
+### 계층별 테스트
+```java
+// ✅ 도메인 테스트
+@Test
+void shouldCreateUserWithValidData() {
+    // Given
+    String name = "John Doe";
+    Email email = new Email("john@example.com");
+    
+    // When
+    User user = new User(name, email);
+    
+    // Then
+    assertThat(user.getName()).isEqualTo(name);
+    assertThat(user.getEmail()).isEqualTo(email);
+    assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+}
+
+// ✅ Use Case 테스트 (CRUD 서비스)
+@Test
+void shouldCreateUserSuccessfully() {
+    // Given
+    CreateUserCommand command = CreateUserCommand.of("John Doe", "john@example.com", "password");
+    User expectedUser = new User("John Doe", new Email("john@example.com"));
+    
+    when(userRepository.existsByEmail(any())).thenReturn(false);
+    when(userRepository.save(any())).thenReturn(Either.right(expectedUser));
+    
+    // When
+    Either<Failure, User> result = userCrudService.createUser(command);
+    
+    // Then
+    assertThat(result.isRight()).isTrue();
+    assertThat(result.get().getName()).isEqualTo("John Doe");
+}
+
+// ✅ Use Case 테스트 (분석 서비스)
+@Test
+void shouldReturnUserStatistics() {
+    // Given
+    UserId userId = UserId.from("user-123");
+    GetUserStatisticsQuery query = new GetUserStatisticsQuery(userId);
+    User user = new User("John Doe", new Email("john@example.com"));
+    
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(boardRepository.countByUserId(userId)).thenReturn(5);
+    when(activityRepository.countByUserId(userId)).thenReturn(100);
+    when(activityRepository.calculateAverageActivityPerDay(userId)).thenReturn(3.5);
+    
+    // When
+    Either<Failure, UserStatistics> result = userAnalyticsService.getUserStatistics(query);
+    
+    // Then
+    assertThat(result.isRight()).isTrue();
+    UserStatistics statistics = result.get();
+    assertThat(statistics.totalBoards()).isEqualTo(5);
+    assertThat(statistics.totalActivities()).isEqualTo(100);
+    assertThat(statistics.averageActivityPerDay()).isEqualTo(3.5);
+}
+
+// ✅ Controller 테스트
+@Test
+void shouldReturnCreatedUser() throws Exception {
+    // Given
+    CreateUserRequest request = new CreateUserRequest("John Doe", "john@example.com", "password");
+    User user = new User("John Doe", new Email("john@example.com"));
+    
+    when(userApplicationService.createUser(any())).thenReturn(Either.right(user));
+    
+    // When & Then
+    mockMvc.perform(post("/api/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.name").value("John Doe"));
+}
+```
+
+## 📋 아키텍처 검증
+
+### ArchUnit 테스트
+```java
+// ✅ 아키텍처 규칙 검증
+@Test
+void hexagonalArchitectureShouldBeRespected() {
+    ArchRule rule = layeredArchitecture()
+        .consideringOnlyDependenciesInLayers()
+        .layer("Shared").definedBy("..shared..")
+        .layer("Domain").definedBy("..domain..")
+        .layer("Application").definedBy("..application..")
+        .layer("Infrastructure").definedBy("..infrastructure..")
+        .layer("API").definedBy("..api..")
+        .whereLayer("Shared").mayOnlyBeAccessedByLayers("Domain", "Application", "Infrastructure", "API")
+        .whereLayer("Domain").mayOnlyBeAccessedByLayers("Application", "Infrastructure")
+        .whereLayer("Application").mayOnlyBeAccessedByLayers("Infrastructure", "API")
+        .whereLayer("Infrastructure").mayNotBeAccessedByAnyLayer()
+        .whereLayer("API").mayNotBeAccessedByAnyLayer();
+
+    rule.check(importedClasses);
+}
+```
+
+## 🚀 마이그레이션 전략
+
+### Phase 1: boardly-shared 모듈 생성
+1. boardly-shared 서브프로젝트 생성
+2. 공통 예외, 유틸리티, 상수 클래스 이동
+3. 공통 어노테이션 및 타입 정의
+4. 모든 모듈의 의존성에 boardly-shared 추가
+
+### Phase 2: 포트 인터페이스 개선
+1. 인바운드 포트 이름을 UseCase로 변경
+2. 기존 Repository를 아웃바운드 포트로 이동
+3. 유스케이스별 인바운드 포트 정리
+
+### Phase 3: API 구조 개선
+1. controller를 adapter/in/rest로 이동
+2. dto/request를 dto/in으로 변경
+3. dto/response를 dto/out으로 변경
+4. 어댑터 구조 명확화
+
+### Phase 4: 어댑터 패턴 적용
+1. 기존 구현체들을 Adapter로 리네이밍
+2. 포트 인터페이스 구현으로 변경
+3. 의존성 주입 구조 개선
+
+### Phase 5: 이벤트 구조 강화
+1. 도메인 이벤트 세분화
+2. 이벤트 핸들러 구조 개선
+3. 메시징 어댑터 구현
+
+### Phase 6: 테스트 구조 정비
+1. 계층별 테스트 전략 수립
+2. 포트 기반 모킹 구조 구축
+3. 통합 테스트 시나리오 작성
+
+## 📝 네이밍 컨벤션
+
+### 클래스 네이밍 규칙
+- **인바운드 포트**: `~UseCase` 접미사
+- **아웃바운드 포트**: `~Repository`, `~Service` 등 역할에 맞는 접미사
+- **어댑터**: `~Adapter` 접미사
+- **유스케이스 구현체**: `~UseCaseImpl` 접미사 (단일 UseCase 구현) 또는 역할별 서비스 (`~CrudService`, `~AnalyticsService`, `~OnboardingService` 등)
+- **커맨드**: `~Command` 접미사
+- **쿼리**: `~Query` 접미사
+- **이벤트**: `~Event` 접미사
+
+### UseCase 서비스 네이밍 규칙
+- **CRUD 서비스**: `{Entity}CrudService` (예: `UserCrudService`, `BoardCrudService`)
+- **분석/통계 서비스**: `{Entity}AnalyticsService` (예: `UserAnalyticsService`, `BoardAnalyticsService`)
+- **워크플로우 서비스**: `{Entity}{Workflow}Service` (예: `UserOnboardingService`, `BoardCollaborationService`)
+- **검색/조회 서비스**: `{Entity}SearchService` (예: `UserSearchService`, `BoardSearchService`)
+
+### 어노테이션 가이드
+```java
+// 도메인 서비스
+@DomainService
+public class UserDomainService { ... }
+
+// 어플리케이션 서비스
+@ApplicationService
+public class UserApplicationService { ... }
+
+// 어댑터
+@Adapter
+public class UserRepositoryAdapter { ... }
+
+// 포트 구현체 (UseCase 구현)
+@UseCase
+public class CreateUserUseCaseImpl { ... }  // 단일 UseCase 구현
+
+// 역할별 서비스 (여러 UseCase 구현)
+@UseCase
+public class UserCrudService { ... }        // CRUD 서비스
+@UseCase
+public class UserAnalyticsService { ... }   // 분석 서비스
+@UseCase
+public class UserOnboardingService { ... }  // 워크플로우 서비스
+```
+
+## 🎯 개선 효과
+
+이번 개선을 통해 다음과 같은 이점을 얻을 수 있습니다:
+
+1. **명확한 의존성 관계**: 포트와 어댑터를 통한 느슨한 결합
+2. **테스트 용이성**: 인터페이스 기반 모킹과 테스트
+3. **확장성**: 새로운 어댑터 추가를 통한 기능 확장
+4. **유지보수성**: 계층별 책임 분리를 통한 코드 관리
+5. **표준화**: 일관된 네이밍과 구조를 통한 개발 표준화
+6. **모듈화**: boardly-shared를 통한 공통 코드 중앙화
+7. **직관성**: UseCase 기반 네이밍으로 비즈니스 의도 명확화

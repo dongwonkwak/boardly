@@ -1,0 +1,573 @@
+# 도메인 주도 설계(DDD) 원칙 및 규칙
+
+## 1. 전략적 설계 (Strategic Design) 규칙
+
+### 1.1 도메인 모델링
+- **규칙 1**: 비즈니스 도메인을 우선으로 설계하라
+  - 기술적 관심사보다 비즈니스 로직을 중심으로 모델링
+  - 도메인 전문가와 지속적으로 소통하여 모델을 발전시킬 것
+
+- **규칙 2**: 유비쿼터스 언어(Ubiquitous Language)를 구축하라
+  - 개발팀과 도메인 전문가가 동일한 용어 사용
+  - 코드, 문서, 대화에서 일관된 언어 사용
+  - 새로운 통찰이 생기면 언어를 발전시킬 것
+
+### 1.2 바운디드 컨텍스트 (Bounded Context)
+- **규칙 3**: 명확한 경계를 설정하라
+  - 각 바운디드 컨텍스트는 하나의 일관된 모델을 가져야 함
+  - 컨텍스트 간의 경계를 명시적으로 정의
+  - 같은 용어라도 컨텍스트마다 다른 의미를 가질 수 있음을 인정
+
+- **규칙 4**: 컨텍스트 맵을 유지하라
+  - 바운디드 컨텍스트 간의 관계를 시각화
+  - 통합 패턴을 명시적으로 정의 (Shared Kernel, Customer-Supplier 등)
+
+## 2. 전술적 설계 (Tactical Design) 규칙
+
+### 2.1 엔티티 (Entity)
+- **규칙 5**: 식별성이 중요한 객체만 엔티티로 설계하라
+  - 생명주기 동안 추적되어야 하는 객체
+  - 고유한 식별자를 반드시 가져야 함
+  - 속성보다 식별성이 더 중요
+
+```java
+// 좋은 예시 - Entity
+public class User {
+    private final UserId id;  // 고유 식별자
+    private String name;
+    private Email email;
+    
+    public User(UserId id, String name, Email email) {
+        this.id = Objects.requireNonNull(id);
+        this.name = Objects.requireNonNull(name);
+        this.email = Objects.requireNonNull(email);
+    }
+    
+    // 비즈니스 로직
+    public void changeEmail(Email newEmail) {
+        validateEmailChange(newEmail);
+        this.email = newEmail;
+        // 도메인 이벤트 발행
+        DomainEvents.publish(new UserEmailChanged(this.id, newEmail));
+    }
+}
+```
+
+### 2.2 값 객체 (Value Object)
+- **규칙 6**: 불변성을 보장하라
+  - 생성 후 상태가 변경되지 않아야 함
+  - 변경이 필요하면 새로운 인스턴스를 생성
+  - 값의 동등성은 모든 속성으로 판단
+
+- **규칙 7**: 도메인 개념을 명시적으로 표현하라
+  - 원시 타입 대신 의미 있는 값 객체 사용
+  - 예: String email → Email 객체
+
+```java
+// 좋은 예시 - Value Object
+public class Email {
+    private final String value;
+    
+    public Email(String value) {
+        validate(value);
+        this.value = value;
+    }
+    
+    private void validate(String value) {
+        if (value == null || !value.contains("@")) {
+            throw new InvalidEmailException("Invalid email format: " + value);
+        }
+    }
+    
+    // 불변성 보장
+    public String getValue() {
+        return value;
+    }
+    
+    // 값 객체 동등성
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Email)) return false;
+        Email email = (Email) o;
+        return Objects.equals(value, email.value);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+}
+```
+
+### 2.3 집계 (Aggregate)
+- **규칙 8**: 일관성 경계를 명확히 하라
+  - 하나의 집계 루트가 전체 집계를 관리
+  - 집계 외부에서는 루트를 통해서만 접근
+  - 트랜잭션 경계와 일치시켜라
+
+```java
+// 좋은 예시 - Aggregate Root
+public class Board {
+    private final BoardId id;
+    private String title;
+    private UserId ownerId;
+    private final Set<BoardMember> members;
+    private final List<Column> columns;
+    
+    public Board(BoardId id, String title, UserId ownerId) {
+        this.id = id;
+        this.title = title;
+        this.ownerId = ownerId;
+        this.members = new HashSet<>();
+        this.columns = new ArrayList<>();
+    }
+    
+    // 집계 루트를 통한 접근
+    public void addMember(UserId userId) {
+        if (members.stream().anyMatch(member -> member.getUserId().equals(userId))) {
+            throw new MemberAlreadyExistsException("User is already a member");
+        }
+        members.add(new BoardMember(userId, BoardRole.MEMBER));
+        DomainEvents.publish(new BoardMemberAdded(this.id, userId));
+    }
+    
+    public void removeMember(UserId userId) {
+        boolean removed = members.removeIf(member -> member.getUserId().equals(userId));
+        if (removed) {
+            DomainEvents.publish(new BoardMemberRemoved(this.id, userId));
+        }
+    }
+    
+    public void addColumn(String title) {
+        Column column = new Column(ColumnId.generate(), title);
+        columns.add(column);
+        DomainEvents.publish(new ColumnAdded(this.id, column.getId()));
+    }
+}
+```
+
+### 2.4 도메인 서비스 (Domain Service)
+- **규칙 9**: 엔티티나 값 객체에 속하지 않는 비즈니스 로직을 도메인 서비스로 분리하라
+  - 여러 집계에 걸친 비즈니스 로직
+  - 외부 시스템과의 협력이 필요한 로직
+  - 복잡한 계산이나 검증 로직
+
+```java
+// 좋은 예시 - Domain Service
+@Component
+public class BoardDomainService {
+    
+    public boolean canUserJoinBoard(User user, Board board) {
+        return user.getStatus() == UserStatus.ACTIVE && 
+               !board.hasMember(user.getId()) &&
+               board.getMembers().size() < BoardConstants.MAX_MEMBERS_COUNT;
+    }
+    
+    public void validateUserPermissions(User user, Board board, BoardAction action) {
+        if (board.isOwner(user.getId())) {
+            return; // 소유자는 모든 권한
+        }
+        
+        if (!board.hasMember(user.getId())) {
+            throw new InsufficientPermissionException("User is not a member of this board");
+        }
+        
+        BoardMember member = board.getMember(user.getId());
+        if (!member.hasPermission(action)) {
+            throw new InsufficientPermissionException("User does not have permission for this action");
+        }
+    }
+}
+```
+
+### 2.5 리포지토리 (Repository)
+- **규칙 10**: 집계 루트만 리포지토리로 관리하라
+  - 집계 내부 객체는 루트를 통해서만 접근
+  - 리포지토리는 도메인 계층에 정의
+  - 구현은 인프라 계층에서 담당
+
+```java
+// 도메인 계층 - Repository 인터페이스
+public interface BoardRepository {
+    Either<Failure, Board> save(Board board);
+    Optional<Board> findById(BoardId id);
+    List<Board> findByOwnerId(UserId ownerId);
+    boolean existsById(BoardId id);
+}
+
+// 인프라 계층 - Repository 구현체
+@Repository
+public class BoardRepositoryImpl implements BoardRepository {
+    private final BoardJpaRepository jpaRepository;
+    private final BoardMapper mapper;
+    
+    @Override
+    public Either<Failure, Board> save(Board board) {
+        try {
+            BoardEntity entity = mapper.toEntity(board);
+            BoardEntity savedEntity = jpaRepository.save(entity);
+            return Either.right(mapper.toDomain(savedEntity));
+        } catch (Exception e) {
+            return Either.left(Failure.SystemError("Failed to save board"));
+        }
+    }
+}
+```
+
+### 2.6 도메인 이벤트 (Domain Event)
+- **규칙 11**: 중요한 도메인 변화를 이벤트로 발행하라
+  - 집계의 상태 변화를 다른 시스템에 알림
+  - 느슨한 결합을 유지
+  - 이벤트는 과거 시제로 명명
+
+```java
+// 도메인 이벤트 정의
+public record UserEmailChanged(UserId userId, Email newEmail) implements DomainEvent {
+    public UserEmailChanged(UserId userId, Email newEmail) {
+        this.userId = Objects.requireNonNull(userId);
+        this.newEmail = Objects.requireNonNull(newEmail);
+    }
+}
+
+public record BoardMemberAdded(BoardId boardId, UserId userId) implements DomainEvent {
+    public BoardMemberAdded(BoardId boardId, UserId userId) {
+        this.boardId = Objects.requireNonNull(boardId);
+        this.userId = Objects.requireNonNull(userId);
+    }
+}
+
+// 엔티티에서 이벤트 발행
+public class User {
+    private final List<DomainEvent> domainEvents = new ArrayList<>();
+    
+    public void changeEmail(Email newEmail) {
+        validateEmailChange(newEmail);
+        this.email = newEmail;
+        domainEvents.add(new UserEmailChanged(this.id, newEmail));
+    }
+    
+    public List<DomainEvent> getDomainEvents() {
+        return new ArrayList<>(domainEvents);
+    }
+    
+    public void clearDomainEvents() {
+        domainEvents.clear();
+    }
+}
+```
+
+## 3. 도메인 모델 설계 패턴
+
+### 3.1 팩토리 패턴 (Factory Pattern)
+```java
+// 도메인 객체 생성 로직을 캡슐화
+public class UserFactory {
+    
+    public static User createUser(String name, String email) {
+        UserId id = UserId.generate();
+        Email emailObj = new Email(email);
+        return new User(id, name, emailObj);
+    }
+    
+    public static User createUserWithRole(String name, String email, UserRole role) {
+        User user = createUser(name, email);
+        user.assignRole(role);
+        return user;
+    }
+}
+
+// 또는 엔티티 내부에 정적 팩토리 메서드
+public class Board {
+    public static Board create(String title, UserId ownerId) {
+        BoardId id = BoardId.generate();
+        return new Board(id, title, ownerId);
+    }
+    
+    public static Board createWithDefaultColumns(String title, UserId ownerId) {
+        Board board = create(title, ownerId);
+        board.addColumn("To Do");
+        board.addColumn("In Progress");
+        board.addColumn("Done");
+        return board;
+    }
+}
+```
+
+### 3.2 스펙 패턴 (Specification Pattern)
+```java
+// 복잡한 검색 조건을 캡슐화
+public interface Specification<T> {
+    boolean isSatisfiedBy(T entity);
+    
+    default Specification<T> and(Specification<T> other) {
+        return entity -> this.isSatisfiedBy(entity) && other.isSatisfiedBy(entity);
+    }
+    
+    default Specification<T> or(Specification<T> other) {
+        return entity -> this.isSatisfiedBy(entity) || other.isSatisfiedBy(entity);
+    }
+    
+    default Specification<T> not() {
+        return entity -> !this.isSatisfiedBy(entity);
+    }
+}
+
+// 구체적인 스펙 구현
+public class ActiveUserSpecification implements Specification<User> {
+    @Override
+    public boolean isSatisfiedBy(User user) {
+        return user.getStatus() == UserStatus.ACTIVE;
+    }
+}
+
+public class UserByEmailSpecification implements Specification<User> {
+    private final String email;
+    
+    public UserByEmailSpecification(String email) {
+        this.email = email;
+    }
+    
+    @Override
+    public boolean isSatisfiedBy(User user) {
+        return user.getEmail().getValue().equals(email);
+    }
+}
+
+// Repository에서 사용
+public interface UserRepository {
+    List<User> findAll(Specification<User> spec);
+}
+
+@Repository
+public class UserRepositoryImpl implements UserRepository {
+    @Override
+    public List<User> findAll(Specification<User> spec) {
+        return jpaRepository.findAll().stream()
+            .map(mapper::toDomain)
+            .filter(spec::isSatisfiedBy)
+            .collect(Collectors.toList());
+    }
+}
+```
+
+## 4. 도메인 모델 검증
+
+### 4.1 불변 조건 (Invariant)
+```java
+// 엔티티의 불변 조건 검증
+public class Board {
+    private final BoardId id;
+    private String title;
+    private final Set<BoardMember> members;
+    
+    public Board(BoardId id, String title, UserId ownerId) {
+        this.id = Objects.requireNonNull(id);
+        setTitle(title); // 검증 로직 포함
+        this.members = new HashSet<>();
+        addOwner(ownerId);
+    }
+    
+    private void setTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Board title cannot be empty");
+        }
+        if (title.length() > BoardConstants.MAX_TITLE_LENGTH) {
+            throw new IllegalArgumentException("Board title too long");
+        }
+        this.title = title.trim();
+    }
+    
+    public void addMember(UserId userId) {
+        // 불변 조건 검증
+        if (members.size() >= BoardConstants.MAX_MEMBERS_COUNT) {
+            throw new BoardFullException("Board has reached maximum member count");
+        }
+        
+        if (members.stream().anyMatch(member -> member.getUserId().equals(userId))) {
+            throw new MemberAlreadyExistsException("User is already a member");
+        }
+        
+        members.add(new BoardMember(userId, BoardRole.MEMBER));
+    }
+}
+```
+
+### 4.2 비즈니스 룰 검증
+```java
+// 복잡한 비즈니스 룰을 별도 클래스로 분리
+public class BoardBusinessRules {
+    
+    public static void validateBoardCreation(UserId ownerId, String title) {
+        if (ownerId == null) {
+            throw new IllegalArgumentException("Board owner is required");
+        }
+        
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Board title is required");
+        }
+        
+        if (title.length() > BoardConstants.MAX_TITLE_LENGTH) {
+            throw new IllegalArgumentException("Board title exceeds maximum length");
+        }
+    }
+    
+    public static void validateMemberAddition(Board board, UserId userId) {
+        if (board.hasMember(userId)) {
+            throw new MemberAlreadyExistsException("User is already a member");
+        }
+        
+        if (board.getMembers().size() >= BoardConstants.MAX_MEMBERS_COUNT) {
+            throw new BoardFullException("Board has reached maximum member count");
+        }
+    }
+}
+```
+
+## 5. 도메인 모델 테스트
+
+### 5.1 도메인 객체 테스트
+```java
+@Test
+void shouldCreateUserWithValidData() {
+    // Given
+    String name = "John Doe";
+    String email = "john@example.com";
+    
+    // When
+    User user = UserFactory.createUser(name, email);
+    
+    // Then
+    assertThat(user.getName()).isEqualTo(name);
+    assertThat(user.getEmail().getValue()).isEqualTo(email);
+    assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+}
+
+@Test
+void shouldFailToCreateUserWithInvalidEmail() {
+    // Given & When & Then
+    assertThatThrownBy(() -> UserFactory.createUser("John Doe", "invalid-email"))
+        .isInstanceOf(InvalidEmailException.class)
+        .hasMessageContaining("Invalid email format");
+}
+
+@Test
+void shouldChangeUserEmail() {
+    // Given
+    User user = UserFactory.createUser("John Doe", "john@example.com");
+    Email newEmail = new Email("john.doe@example.com");
+    
+    // When
+    user.changeEmail(newEmail);
+    
+    // Then
+    assertThat(user.getEmail()).isEqualTo(newEmail);
+    assertThat(user.getDomainEvents()).hasSize(1);
+    assertThat(user.getDomainEvents().get(0)).isInstanceOf(UserEmailChanged.class);
+}
+```
+
+### 5.2 도메인 서비스 테스트
+```java
+@Test
+void shouldAllowUserToJoinBoard() {
+    // Given
+    User user = UserFactory.createUser("John Doe", "john@example.com");
+    Board board = Board.create("Test Board", UserId.generate());
+    
+    // When
+    boolean canJoin = boardDomainService.canUserJoinBoard(user, board);
+    
+    // Then
+    assertThat(canJoin).isTrue();
+}
+
+@Test
+void shouldPreventUserFromJoiningFullBoard() {
+    // Given
+    User user = UserFactory.createUser("John Doe", "john@example.com");
+    Board board = createFullBoard();
+    
+    // When
+    boolean canJoin = boardDomainService.canUserJoinBoard(user, board);
+    
+    // Then
+    assertThat(canJoin).isFalse();
+}
+```
+
+## 6. 도메인 모델 리팩토링
+
+### 6.1 점진적 개선
+```java
+// 1단계: 원시 타입 사용
+public class User {
+    private String email;  // String 직접 사용
+}
+
+// 2단계: 값 객체 도입
+public class User {
+    private Email email;  // Email 값 객체 사용
+}
+
+// 3단계: 도메인 이벤트 추가
+public class User {
+    private Email email;
+    
+    public void changeEmail(Email newEmail) {
+        this.email = newEmail;
+        domainEvents.add(new UserEmailChanged(this.id, newEmail));
+    }
+}
+
+// 4단계: 비즈니스 룰 강화
+public class User {
+    private Email email;
+    
+    public void changeEmail(Email newEmail) {
+        validateEmailChange(newEmail);
+        this.email = newEmail;
+        domainEvents.add(new UserEmailChanged(this.id, newEmail));
+    }
+    
+    private void validateEmailChange(Email newEmail) {
+        if (this.email.equals(newEmail)) {
+            throw new IllegalArgumentException("New email must be different");
+        }
+    }
+}
+```
+
+### 6.2 도메인 모델 진화
+```java
+// 초기 모델
+public class Board {
+    private String title;
+    private UserId ownerId;
+    private List<String> memberIds;
+}
+
+// 개선된 모델
+public class Board {
+    private String title;
+    private UserId ownerId;
+    private Set<BoardMember> members;
+    private List<Column> columns;
+    
+    public void addMember(UserId userId) {
+        validateMemberAddition(userId);
+        members.add(new BoardMember(userId, BoardRole.MEMBER));
+        domainEvents.add(new BoardMemberAdded(this.id, userId));
+    }
+    
+    public void addColumn(String title) {
+        Column column = new Column(ColumnId.generate(), title);
+        columns.add(column);
+        domainEvents.add(new ColumnAdded(this.id, column.getId()));
+    }
+}
+```
+description:
+globs:
+alwaysApply: false
+---

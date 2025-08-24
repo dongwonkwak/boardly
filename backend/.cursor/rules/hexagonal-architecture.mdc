@@ -411,11 +411,15 @@ public class UserDomainService {
 
 ## 🔧 애플리케이션 계층 규칙
 
-### Use Case 구현체 역할별 분리
+## 🎯 UseCase 서비스 패턴 가이드
 
-#### 서비스 분리 패턴
+### 📋 개요
+UseCase 구현체를 역할별로 분리하여 실용성과 가독성을 향상시키는 패턴
+
+### 🏗️ 서비스 분리 패턴
+
+#### 1. CRUD 서비스 (기본 데이터 관리)
 ```java
-// ✅ 기본 CRUD 서비스 (반복적인 데이터 관리 로직)
 @UseCase
 @Service
 @Transactional
@@ -429,7 +433,6 @@ public class UserCrudService implements
     private final CreateUserCommandValidator createValidator;
     private final UpdateUserCommandValidator updateValidator;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     
     @Override
     public Either<Failure, User> createUser(CreateUserCommand command) {
@@ -486,8 +489,10 @@ public class UserCrudService implements
             .orElse(Either.left(Failure.ResourceNotFound("User not found")));
     }
 }
+```
 
-// ✅ 복잡한 비즈니스 로직 서비스 (분석, 통계, 복합 작업)
+#### 2. 분석/통계 서비스 (복잡한 계산 및 분석)
+```java
 @UseCase
 @Service
 @Transactional
@@ -538,8 +543,10 @@ public class UserAnalyticsService implements
         return activityRepository.calculateAverageActivityPerDay(userId);
     }
 }
+```
 
-// ✅ 워크플로우 서비스 (여러 단계의 복합 작업)
+#### 3. 워크플로우 서비스 (여러 단계의 복합 작업)
+```java
 @UseCase
 @Service
 @Transactional
@@ -586,75 +593,90 @@ public class UserOnboardingService implements
 }
 ```
 
-#### 서비스 분리의 장점
-
-**실용성과 생산성 향상:**
-- 간단한 CRUD 기능은 대부분 로직이 비슷하여 `UserCrudService`로 묶으면 반복적인 코드 작성을 크게 줄일 수 있습니다.
-- 개발자는 단순 작업 대신 `UserAnalyticsService`와 같은 핵심 비즈니스 로직에 더 집중할 수 있습니다.
-
-**명확한 역할 구분:**
-- `UserCrudService`: 이름만 봐도 이 서비스는 기본적인 데이터 관리만 한다는 것을 명확히 알 수 있습니다.
-- `UserAnalyticsService`: 복잡한 통계나 분석 로직이 담겨있을 것이라고 쉽게 예측할 수 있습니다.
-- `UserOnboardingService`: 사용자 온보딩 워크플로우를 담당한다는 것을 명확히 알 수 있습니다.
-
-**새로운 팀원의 빠른 적응:**
-- 이러한 명명 규칙은 새로운 팀원이 프로젝트에 합류했을 때 구조를 빠르게 파악하는 데 큰 도움이 됩니다.
-
-#### 서비스 분류 가이드라인
-
+#### 4. 검색/조회 서비스 (복잡한 검색 조건)
 ```java
-// 1. CRUD 서비스 (기본 데이터 관리)
-public class UserCrudService implements CreateUserUseCase, UpdateUserUseCase, DeleteUserUseCase, GetUserUseCase
-public class BoardCrudService implements CreateBoardUseCase, UpdateBoardUseCase, DeleteBoardUseCase, GetBoardUseCase
-
-// 2. 분석/통계 서비스 (복잡한 계산 및 분석)
-public class UserAnalyticsService implements GetUserStatisticsUseCase, GetUserActivityReportUseCase
-public class BoardAnalyticsService implements GetBoardStatisticsUseCase, GetBoardPerformanceReportUseCase
-
-// 3. 워크플로우 서비스 (여러 단계의 복합 작업)
-public class UserOnboardingService implements CompleteUserOnboardingUseCase, SendWelcomeEmailUseCase
-public class BoardCollaborationService implements InviteUserToBoardUseCase, ManageBoardPermissionsUseCase
-
-// 4. 검색/조회 서비스 (복잡한 검색 조건)
-public class UserSearchService implements SearchUsersUseCase, GetUserRecommendationsUseCase
-public class BoardSearchService implements SearchBoardsUseCase, GetPopularBoardsUseCase
-```
-
-### Use Case 구현 (기존 패턴)
-```java
-// ✅ Use Case 구현체 (포트 구현체) - 단일 UseCase 구현
 @UseCase
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class CreateUserUseCaseImpl implements CreateUserUseCase {
+public class UserSearchService implements 
+    SearchUsersUseCase, 
+    GetUserRecommendationsUseCase {
     
-    private final CreateUserCommandValidator validator;
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final SearchEngine searchEngine;
+    private final UserRecommendationEngine recommendationEngine;
     
     @Override
-    public Either<Failure, User> createUser(CreateUserCommand command) {
-        // 1. 입력값 검증
-        Validation<Seq<String>, CreateUserCommand> validation = validator.validate(command);
-        if (validation.isInvalid()) {
-            return Either.left(Failure.ofInputError(validation.getError().asJava()));
-        }
-        
-        // 2. 비즈니스 룰 검증
-        if (userRepository.existsByEmail(command.email())) {
-            return Either.left(Failure.ResourceConflict("Email already exists"));
-        }
-        
-        // 3. 도메인 객체 생성
-        User user = new User(command.name(), command.email());
-        
-        // 4. 저장
-        return userRepository.save(user);
+    public Either<Failure, List<User>> searchUsers(SearchUsersQuery query) {
+        // 복잡한 검색 로직
+        return searchEngine.searchUsers(query.getKeyword(), query.getFilters())
+            .map(userIds -> userRepository.findAllById(userIds))
+            .map(Either::<Failure, List<User>>right)
+            .orElse(Either.left(Failure.SystemError("Search failed")));
+    }
+    
+    @Override
+    public Either<Failure, List<User>> getUserRecommendations(GetUserRecommendationsQuery query) {
+        return userRepository.findById(query.userId())
+            .map(user -> {
+                // 복잡한 추천 알고리즘
+                List<UserId> recommendedUserIds = recommendationEngine.getRecommendations(
+                    user.getId(), query.limit());
+                
+                return userRepository.findAllById(recommendedUserIds);
+            })
+            .map(Either::<Failure, List<User>>right)
+            .orElse(Either.left(Failure.ResourceNotFound("User not found")));
     }
 }
+```
 
-// ✅ Application Service (비즈니스 로직 조합)
+### 🎯 서비스 분리의 장점
+
+#### 실용성과 생산성 향상
+- 간단한 CRUD 기능은 대부분 로직이 비슷하여 `UserCrudService`로 묶으면 반복적인 코드 작성을 크게 줄일 수 있습니다.
+- 개발자는 단순 작업 대신 `UserAnalyticsService`와 같은 핵심 비즈니스 로직에 더 집중할 수 있습니다.
+
+#### 명확한 역할 구분
+- `UserCrudService`: 이름만 봐도 이 서비스는 기본적인 데이터 관리만 한다는 것을 명확히 알 수 있습니다.
+- `UserAnalyticsService`: 복잡한 통계나 분석 로직이 담겨있을 것이라고 쉽게 예측할 수 있습니다.
+- `UserOnboardingService`: 사용자 온보딩 워크플로우를 담당한다는 것을 명확히 알 수 있습니다.
+
+#### 새로운 팀원의 빠른 적응
+- 이러한 명명 규칙은 새로운 팀원이 프로젝트에 합류했을 때 구조를 빠르게 파악하는 데 큰 도움이 됩니다.
+
+### 📝 네이밍 컨벤션
+
+#### 서비스 클래스 네이밍
+- **CRUD 서비스**: `{Entity}CrudService`
+- **분석 서비스**: `{Entity}AnalyticsService`
+- **워크플로우 서비스**: `{Entity}{Workflow}Service`
+- **검색 서비스**: `{Entity}SearchService`
+
+#### 예시
+```java
+// User 도메인
+UserCrudService
+UserAnalyticsService
+UserOnboardingService
+UserSearchService
+
+// Board 도메인
+BoardCrudService
+BoardAnalyticsService
+BoardCollaborationService
+BoardSearchService
+
+// Workspace 도메인
+WorkspaceCrudService
+WorkspaceAnalyticsService
+WorkspaceInvitationService
+```
+
+### 🔄 Application Service에서의 사용
+
+```java
 @ApplicationService
 @Service
 @Transactional
@@ -664,6 +686,7 @@ public class UserApplicationService {
     private final UserCrudService userCrudService;
     private final UserAnalyticsService userAnalyticsService;
     private final UserOnboardingService userOnboardingService;
+    private final UserSearchService userSearchService;
     
     // CRUD 작업
     public Either<Failure, User> createUser(CreateUserCommand command) {
@@ -699,8 +722,215 @@ public class UserApplicationService {
     public Either<Failure, Void> sendWelcomeEmail(SendWelcomeEmailCommand command) {
         return userOnboardingService.sendWelcomeEmail(command);
     }
+    
+    // 검색 작업
+    public Either<Failure, List<User>> searchUsers(SearchUsersQuery query) {
+        return userSearchService.searchUsers(query);
+    }
+    
+    public Either<Failure, List<User>> getUserRecommendations(GetUserRecommendationsQuery query) {
+        return userSearchService.getUserRecommendations(query);
+    }
 }
 ```
+
+### ⚠️ 주의사항
+
+#### 1. 단일 책임 원칙
+- 각 서비스는 명확한 하나의 책임만 가져야 합니다.
+- 너무 많은 UseCase를 하나의 서비스에 묶지 않도록 주의합니다.
+
+#### 2. 의존성 관리
+- 서비스 간의 의존성을 최소화하고, 필요한 경우에만 의존하도록 합니다.
+- 순환 의존성을 피합니다.
+
+#### 3. 테스트 용이성
+- 각 서비스는 독립적으로 테스트할 수 있어야 합니다.
+- Mock 객체를 사용하여 의존성을 격리합니다.
+
+#### 4. 성능 고려
+- 너무 많은 UseCase를 하나의 서비스에 묶으면 성능에 영향을 줄 수 있습니다.
+- 필요한 경우에만 트랜잭션을 사용합니다.
+
+#### 5. 패키지 구조
+```java
+com.boardly.application.port
+├── user/
+│   ├── UserCrudService.java
+│   ├── UserAnalyticsService.java
+│   ├── UserOnboardingService.java
+│   └── UserSearchService.java
+├── board/
+│   ├── BoardCrudService.java
+│   ├── BoardAnalyticsService.java
+│   └── BoardCollaborationService.java
+└── workspace/
+    ├── WorkspaceCrudService.java
+    └── WorkspaceInvitationService.java
+```
+
+### 🧪 테스트 예시
+
+```java
+@Test
+void userCrudService_shouldCreateUserSuccessfully() {
+    // Given
+    CreateUserCommand command = CreateUserCommand.of("John Doe", "john@example.com", "password");
+    User expectedUser = new User("John Doe", new Email("john@example.com"));
+    
+    when(userRepository.existsByEmail(any())).thenReturn(false);
+    when(userRepository.save(any())).thenReturn(Either.right(expectedUser));
+    
+    // When
+    Either<Failure, User> result = userCrudService.createUser(command);
+    
+    // Then
+    assertThat(result.isRight()).isTrue();
+    assertThat(result.get().getName()).isEqualTo("John Doe");
+}
+
+@Test
+void userAnalyticsService_shouldReturnUserStatistics() {
+    // Given
+    UserId userId = UserId.from("user-123");
+    GetUserStatisticsQuery query = new GetUserStatisticsQuery(userId);
+    User user = new User("John Doe", new Email("john@example.com"));
+    
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(boardRepository.countByUserId(userId)).thenReturn(5);
+    when(activityRepository.countByUserId(userId)).thenReturn(100);
+    when(activityRepository.calculateAverageActivityPerDay(userId)).thenReturn(3.5);
+    
+    // When
+    Either<Failure, UserStatistics> result = userAnalyticsService.getUserStatistics(query);
+    
+    // Then
+    assertThat(result.isRight()).isTrue();
+    UserStatistics statistics = result.get();
+    assertThat(statistics.totalBoards()).isEqualTo(5);
+    assertThat(statistics.totalActivities()).isEqualTo(100);
+    assertThat(statistics.averageActivityPerDay()).isEqualTo(3.5);
+}
+```
+
+### 📚 관련 패턴
+
+- **Command Pattern**: 각 UseCase는 명확한 Command 객체를 받습니다.
+- **Repository Pattern**: 데이터 접근을 추상화합니다.
+- **Strategy Pattern**: 다양한 분석 알고리즘을 전략으로 구현할 수 있습니다.
+- **Template Method Pattern**: 공통 워크플로우를 템플릿으로 정의할 수 있습니다.
+
+### Use Case 구현 패턴
+
+#### 1. 역할별 서비스 패턴 (권장)
+위의 UseCase 서비스 패턴 가이드에서 설명한 대로 역할별로 서비스를 분리하여 구현합니다.
+
+#### 2. 단일 UseCase 구현 패턴 (특수한 경우)
+```java
+// ✅ 단일 UseCase 구현체 (특수한 복잡한 로직이 있는 경우)
+@UseCase
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class CreateUserUseCaseImpl implements CreateUserUseCase {
+    
+    private final CreateUserCommandValidator validator;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    
+    @Override
+    public Either<Failure, User> createUser(CreateUserCommand command) {
+        // 1. 입력값 검증
+        Validation<Seq<String>, CreateUserCommand> validation = validator.validate(command);
+        if (validation.isInvalid()) {
+            return Either.left(Failure.ofInputError(validation.getError().asJava()));
+        }
+        
+        // 2. 비즈니스 룰 검증
+        if (userRepository.existsByEmail(command.email())) {
+            return Either.left(Failure.ResourceConflict("Email already exists"));
+        }
+        
+        // 3. 도메인 객체 생성
+        User user = new User(command.name(), command.email());
+        
+        // 4. 저장
+        return userRepository.save(user);
+    }
+}
+```
+
+#### 3. Application Service (비즈니스 로직 조합)
+```java
+// ✅ Application Service (역할별 서비스들을 조합)
+@ApplicationService
+@Service
+@Transactional
+@RequiredArgsConstructor
+public class UserApplicationService {
+    
+    private final UserCrudService userCrudService;
+    private final UserAnalyticsService userAnalyticsService;
+    private final UserOnboardingService userOnboardingService;
+    private final UserSearchService userSearchService;
+    
+    // CRUD 작업
+    public Either<Failure, User> createUser(CreateUserCommand command) {
+        return userCrudService.createUser(command);
+    }
+    
+    public Either<Failure, User> updateUser(UpdateUserCommand command) {
+        return userCrudService.updateUser(command);
+    }
+    
+    public Either<Failure, Void> deleteUser(DeleteUserCommand command) {
+        return userCrudService.deleteUser(command);
+    }
+    
+    public Either<Failure, User> findUser(UserId userId) {
+        return userCrudService.findById(userId);
+    }
+    
+    // 분석 작업
+    public Either<Failure, UserStatistics> getUserStatistics(GetUserStatisticsQuery query) {
+        return userAnalyticsService.getUserStatistics(query);
+    }
+    
+    public Either<Failure, UserActivityReport> getUserActivityReport(GetUserActivityReportQuery query) {
+        return userAnalyticsService.getUserActivityReport(query);
+    }
+    
+    // 워크플로우 작업
+    public Either<Failure, UserOnboardingResult> completeOnboarding(CompleteUserOnboardingCommand command) {
+        return userOnboardingService.completeOnboarding(command);
+    }
+    
+    public Either<Failure, Void> sendWelcomeEmail(SendWelcomeEmailCommand command) {
+        return userOnboardingService.sendWelcomeEmail(command);
+    }
+    
+    // 검색 작업
+    public Either<Failure, List<User>> searchUsers(SearchUsersQuery query) {
+        return userSearchService.searchUsers(query);
+    }
+    
+    public Either<Failure, List<User>> getUserRecommendations(GetUserRecommendationsQuery query) {
+        return userSearchService.getUserRecommendations(query);
+    }
+}
+```
+
+#### 4. 패턴 선택 가이드
+
+**역할별 서비스 패턴을 사용하는 경우:**
+- 같은 도메인의 여러 UseCase가 비슷한 복잡도를 가질 때
+- CRUD, 분석, 워크플로우 등 역할이 명확히 구분될 때
+- 코드 재사용성과 가독성을 높이고 싶을 때
+
+**단일 UseCase 구현 패턴을 사용하는 경우:**
+- 특정 UseCase가 매우 복잡하고 독특한 로직을 가질 때
+- 다른 UseCase와 공통점이 거의 없을 때
+- 특별한 성능 최적화나 보안 요구사항이 있을 때
 
 ### Command 객체
 ```java
@@ -992,7 +1222,7 @@ void shouldCreateUserWithValidData() {
 
 // ✅ Use Case 테스트 (CRUD 서비스)
 @Test
-void shouldCreateUserSuccessfully() {
+void userCrudService_shouldCreateUserSuccessfully() {
     // Given
     CreateUserCommand command = CreateUserCommand.of("John Doe", "john@example.com", "password");
     User expectedUser = new User("John Doe", new Email("john@example.com"));
@@ -1010,7 +1240,7 @@ void shouldCreateUserSuccessfully() {
 
 // ✅ Use Case 테스트 (분석 서비스)
 @Test
-void shouldReturnUserStatistics() {
+void userAnalyticsService_shouldReturnUserStatistics() {
     // Given
     UserId userId = UserId.from("user-123");
     GetUserStatisticsQuery query = new GetUserStatisticsQuery(userId);
@@ -1030,6 +1260,49 @@ void shouldReturnUserStatistics() {
     assertThat(statistics.totalBoards()).isEqualTo(5);
     assertThat(statistics.totalActivities()).isEqualTo(100);
     assertThat(statistics.averageActivityPerDay()).isEqualTo(3.5);
+}
+
+// ✅ Use Case 테스트 (워크플로우 서비스)
+@Test
+void userOnboardingService_shouldCompleteOnboarding() {
+    // Given
+    UserId userId = UserId.from("user-123");
+    CompleteUserOnboardingCommand command = new CompleteUserOnboardingCommand(userId, profileData);
+    User user = new User("John Doe", new Email("john@example.com"));
+    Workspace workspace = new Workspace("Default Workspace");
+    
+    when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(workspaceService.createDefaultWorkspace(user)).thenReturn(workspace);
+    when(emailService.sendWelcomeEmail(any(), any())).thenReturn(Either.right(null));
+    when(notificationService.sendOnboardingCompleteNotification(userId)).thenReturn(Either.right(null));
+    
+    // When
+    Either<Failure, UserOnboardingResult> result = userOnboardingService.completeOnboarding(command);
+    
+    // Then
+    assertThat(result.isRight()).isTrue();
+    UserOnboardingResult onboardingResult = result.get();
+    assertThat(onboardingResult.user()).isEqualTo(user);
+    assertThat(onboardingResult.workspace()).isEqualTo(workspace);
+}
+
+// ✅ Use Case 테스트 (검색 서비스)
+@Test
+void userSearchService_shouldSearchUsers() {
+    // Given
+    SearchUsersQuery query = new SearchUsersQuery("john", filters);
+    List<UserId> userIds = Arrays.asList(UserId.from("user-1"), UserId.from("user-2"));
+    List<User> users = Arrays.asList(user1, user2);
+    
+    when(searchEngine.searchUsers(query.getKeyword(), query.getFilters())).thenReturn(Optional.of(userIds));
+    when(userRepository.findAllById(userIds)).thenReturn(users);
+    
+    // When
+    Either<Failure, List<User>> result = userSearchService.searchUsers(query);
+    
+    // Then
+    assertThat(result.isRight()).isTrue();
+    assertThat(result.get()).hasSize(2);
 }
 
 // ✅ Controller 테스트
@@ -1114,7 +1387,9 @@ void hexagonalArchitectureShouldBeRespected() {
 - **인바운드 포트**: `~UseCase` 접미사
 - **아웃바운드 포트**: `~Repository`, `~Service` 등 역할에 맞는 접미사
 - **어댑터**: `~Adapter` 접미사
-- **유스케이스 구현체**: `~UseCaseImpl` 접미사 (단일 UseCase 구현) 또는 역할별 서비스 (`~CrudService`, `~AnalyticsService`, `~OnboardingService` 등)
+- **유스케이스 구현체**: 
+  - 역할별 서비스 패턴: `~CrudService`, `~AnalyticsService`, `~OnboardingService`, `~SearchService` 등
+  - 단일 UseCase 구현: `~UseCaseImpl` 접미사
 - **커맨드**: `~Command` 접미사
 - **쿼리**: `~Query` 접미사
 - **이벤트**: `~Event` 접미사
@@ -1150,6 +1425,8 @@ public class UserCrudService { ... }        // CRUD 서비스
 public class UserAnalyticsService { ... }   // 분석 서비스
 @UseCase
 public class UserOnboardingService { ... }  // 워크플로우 서비스
+@UseCase
+public class UserSearchService { ... }      // 검색 서비스
 ```
 
 ## 🎯 개선 효과

@@ -17,7 +17,7 @@ docs/api/
 │   ├── workspaces.yaml      # 워크스페이스 관리 API
 │   ├── boards.yaml          # 보드 관리 API
 │   ├── cards.yaml           # 카드 관리 API
-│   ├── columns.yaml         # 컬럼 관리 API
+│   ├── lists.yaml           # 리스트 관리 API
 │   ├── comments.yaml        # 댓글 관리 API
 │   ├── labels.yaml          # 라벨 관리 API
 │   └── invitations.yaml     # 초대 관리 API
@@ -45,7 +45,7 @@ docs/api/
 ### 3. 보드 관리
 - 보드 생성/수정/삭제
 - 공개/비공개 설정
-- 컬럼 및 카드 관리
+- 리스트 및 카드 관리
 
 ### 4. 카드 관리
 - 카드 생성/수정/삭제

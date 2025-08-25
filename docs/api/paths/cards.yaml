@@ -37,9 +37,9 @@ post:
   tags:
     - Cards
   summary: 새로운 카드 생성
-  description: 컬럼에 새로운 카드를 생성합니다.
+  description: 리스트에 새로운 카드를 생성합니다.
   parameters:
-    - $ref: '#/components/parameters/columnId'
+    - $ref: '#/components/parameters/listId'
   requestBody:
     required: true
     content:
@@ -58,16 +58,22 @@ post:
             description:
               type: string
               description: 카드 설명
-              example: "사용자 로그인 기능을 구현합니다"
+              example: "사용자 로그인 기능을 구현합니다."
+            startDate:
+              type: string
+              format: date-time
+              description: 시작일
+              example: "2024-01-01T00:00:00Z"
             dueDate:
               type: string
               format: date-time
               description: 마감일
-              example: "2024-12-31T23:59:59Z"
+              example: "2024-01-15T00:00:00Z"
         example:
           title: "로그인 기능 구현"
-          description: "사용자 로그인 기능을 구현합니다"
-          dueDate: "2024-12-31T23:59:59Z"
+          description: "사용자 로그인 기능을 구현합니다."
+          startDate: "2024-01-01T00:00:00Z"
+          dueDate: "2024-01-15T00:00:00Z"
   responses:
     '201':
       description: 카드 생성 성공
@@ -140,6 +146,11 @@ post:
                 type: string
                 description: 카드 설명
                 example: "사용자 로그인 기능을 구현합니다 (수정)"
+              startDate:
+                type: string
+                format: date-time
+                description: 시작일
+                example: "2024-01-01T00:00:00Z"
               dueDate:
                 type: string
                 format: date-time

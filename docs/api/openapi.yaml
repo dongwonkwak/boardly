@@ -60,9 +60,9 @@ paths:
   /cards:
     $ref: './paths/cards.yaml'
   
-  # 컬럼 관련
-  /columns:
-    $ref: './paths/columns.yaml'
+  # 리스트 관련
+  /lists:
+    $ref: './paths/lists.yaml'
   
   # 댓글 관련
   /comments:
@@ -75,6 +75,14 @@ paths:
   # 초대 관련
   /invitations:
     $ref: './paths/invitations.yaml'
+  
+  # 첨부파일 관련
+  /attachments:
+    $ref: './paths/attachments.yaml'
+  
+  # 활동 로그 관련
+  /activity-logs:
+    $ref: './paths/activity-logs.yaml'
 
 components:
   securitySchemes:
@@ -102,10 +110,28 @@ tags:
     description: 워크스페이스 관리 API
   - name: Boards
     description: 보드 관리 API
+  - name: Lists
+    description: 리스트 관리 API
   - name: Cards
     description: 카드 관리 API
-  - name: Columns
-    description: 컬럼 관리 API
+  - name: Comments
+    description: 댓글 관리 API
+  - name: Labels
+    description: 라벨 관리 API
+  - name: Invitations
+    description: 초대 관리 API
+  - name: Attachments
+    description: 첨부파일 관리 API
+  - name: Activity Logs
+    description: 활동 로그 관리 API
+  - name: Workspaces
+    description: 워크스페이스 관리 API
+  - name: Boards
+    description: 보드 관리 API
+  - name: Cards
+    description: 카드 관리 API
+  - name: Lists
+    description: 리스트 관리 API
   - name: Comments
     description: 댓글 관리 API
   - name: Labels

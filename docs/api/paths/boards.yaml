@@ -50,27 +50,28 @@ post:
         schema:
           type: object
           required:
-            - title
+            - name
           properties:
-            title:
+            name:
               type: string
               minLength: 1
               maxLength: 100
-              description: 보드 제목
+              description: 보드 이름
               example: "프로젝트 A"
             description:
               type: string
               maxLength: 500
               description: 보드 설명 (선택사항)
               example: "프로젝트 A 관리 보드"
-            isPublic:
-              type: boolean
-              description: 공개 여부 (기본값: false)
-              example: false
+            visibility:
+              type: string
+              enum: [PRIVATE, WORKSPACE, PUBLIC]
+              description: 공개 범위 (기본값: PRIVATE)
+              example: "PRIVATE"
         example:
-          title: "프로젝트 A"
+          name: "프로젝트 A"
           description: "프로젝트 A 관리 보드"
-          isPublic: false
+          visibility: "PRIVATE"
   responses:
     '201':
       description: 보드 생성 성공
@@ -133,11 +134,11 @@ post:
           schema:
             type: object
             properties:
-              title:
+              name:
                 type: string
                 minLength: 1
                 maxLength: 100
-                description: 보드 제목
+                description: 보드 이름
                 example: "프로젝트 A (수정)"
               description:
                 type: string

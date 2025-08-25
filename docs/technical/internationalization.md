@@ -298,7 +298,7 @@ public class WorkspaceController {
 | 워크스페이스 | Workspace | |
 | 보드 | Board | |
 | 카드 | Card | |
-| 컬럼 | Column | |
+| 리스트 | List | |
 | 담당자 | Assignee | |
 | 라벨 | Label | |
 | 댓글 | Comment | |

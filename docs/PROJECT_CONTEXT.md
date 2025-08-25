@@ -33,26 +33,29 @@ Database (PostgreSQL/MySQL)
 ### 핵심 엔티티
 ```
 User (사용자)
-├── WorkspaceMembership (워크스페이스 멤버십)
+├── WorkspaceMember (워크스페이스 멤버)
 │   └── Workspace (워크스페이스)
 │       └── Board (보드)
-│           ├── Column (컬럼)
+│           ├── List (리스트)
 │           │   └── Card (카드)
 │           │       ├── Comment (댓글)
-│           │       ├── CardAssignee (담당자)
-│           │       └── ChecklistItem (체크리스트)
+│           │       ├── CardMember (담당자)
+│           │       ├── CardLabel (카드 라벨)
+│           │       └── Attachment (첨부파일)
 │           ├── Label (라벨)
-│           └── Invitation (초대)
+│           ├── BoardMember (보드 멤버)
+│           ├── ActivityLog (활동 로그)
+│           └── Invite (초대)
 ```
 
 ### 권한 모델
 ```
 워크스페이스 레벨:
-- 소유권: Workspace.ownerId (소유자 사용자 ID)
-- 권한: WorkspaceMembership.role
+- 소유권: Workspace.createdBy (생성자 사용자 ID)
+- 권한: WorkspaceMember.role
   - ADMIN (관리자): 워크스페이스 설정, 멤버 관리, 모든 보드 관리
   - MEMBER (멤버): 보드 생성, 카드 관리
-- 소유자 특별 권한: 워크스페이스 삭제, 소유권 이전
+- 생성자 특별 권한: 워크스페이스 삭제, 생성자 이전
 
 보드 레벨:
 - ADMIN: 보드 설정, 멤버 관리
@@ -141,7 +144,7 @@ User (사용자)
 ### Phase 1: 핵심 기능
 - [ ] 사용자 인증 (OAuth2)
 - [ ] 워크스페이스 관리 (최대 5개 제한)
-- [ ] 보드 및 컬럼 관리 (워크스페이스당 최대 20개 제한)
+- [ ] 보드 및 리스트 관리 (워크스페이스당 최대 20개 제한)
 - [ ] 카드 생성, 수정, 이동
 - [ ] 기본 권한 관리
 - [ ] 파일 첨부 (10MB-50MB 제한)
@@ -236,7 +239,7 @@ User (사용자)
   - [ ] 사용자 인증 및 권한 관리
   - [ ] 워크스페이스 CRUD
   - [ ] 보드 CRUD
-  - [ ] 컬럼 및 카드 CRUD
+  - [ ] 리스트 및 카드 CRUD
   - [ ] 권한 기반 접근 제어
 
 - [ ] **Frontend 핵심 기능**
@@ -348,7 +351,7 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom
 
 ### 시나리오 1: 개인 사용자
 1. 개인 워크스페이스에서 프로젝트 관리
-2. 할 일, 진행중, 완료 컬럼으로 작업 추적
+2. 할 일, 진행중, 완료 리스트로 작업 추적
 3. 마감일과 라벨로 우선순위 관리
 
 ### 시나리오 2: 소규모 팀

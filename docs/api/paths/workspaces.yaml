@@ -227,7 +227,7 @@ post:
                 data:
                   type: array
                   items:
-                    $ref: '#/components/schemas/WorkspaceMembership'
+                    $ref: '#/components/schemas/WorkspaceMember'
                 pagination:
                   $ref: '#/components/schemas/Pagination'
       '401':
@@ -281,7 +281,7 @@ post:
                   type: boolean
                   example: true
                 data:
-                  $ref: '#/components/schemas/WorkspaceMembership'
+                  $ref: '#/components/schemas/WorkspaceMember'
       '400':
         $ref: '#/components/responses/BadRequest'
       '401':

@@ -133,39 +133,66 @@ Workspace:
       description: 수정일시
       example: "2024-01-01T00:00:00Z"
 
-WorkspaceMembership:
+WorkspaceMember:
   type: object
   required:
-    - id
-    - userId
     - workspaceId
+    - userId
     - role
-    - joinedAt
+    - status
+    - createdBy
+    - createdAt
+    - updatedAt
   properties:
-    id:
-      type: string
-      format: uuid
-      description: 멤버십 고유 식별자
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    userId:
-      type: string
-      format: uuid
-      description: 사용자 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
     workspaceId:
       type: string
       format: uuid
-      description: 워크스페이스 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
+      description: 워크스페이스 ID (합성키 일부)
+      example: "wks_1234567890abcdef"
+    userId:
+      type: string
+      format: uuid
+      description: 사용자 ID (합성키 일부)
+      example: "usr_1234567890abcdef"
     role:
       type: string
       enum: [ADMIN, MEMBER]
       description: 멤버 역할
       example: "MEMBER"
+    invitedBy:
+      type: string
+      format: uuid
+      description: 초대한 사용자 ID
+      example: "usr_1234567890abcdef"
+    invitedAt:
+      type: string
+      format: date-time
+      description: 초대일시
+      example: "2024-01-01T00:00:00Z"
     joinedAt:
       type: string
       format: date-time
       description: 가입일시
+      example: "2024-01-01T00:00:00Z"
+    status:
+      type: string
+      enum: [ACTIVE, INVITED, REMOVED]
+      description: 멤버 상태
+      example: "ACTIVE"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
+    createdAt:
+      type: string
+      format: date-time
+      description: 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
       example: "2024-01-01T00:00:00Z"
     user:
       $ref: '#/components/schemas/User'
@@ -174,21 +201,23 @@ Board:
   type: object
   required:
     - id
-    - title
+    - name
     - workspaceId
-    - isPublic
+    - visibility
+    - createdBy
     - createdAt
+    - updatedAt
   properties:
     id:
       type: string
       format: uuid
       description: 보드 고유 식별자
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    title:
+      example: "brd_1234567890abcdef"
+    name:
       type: string
       minLength: 1
       maxLength: 100
-      description: 보드 제목
+      description: 보드 이름
       example: "프로젝트 A"
     description:
       type: string
@@ -199,11 +228,17 @@ Board:
       type: string
       format: uuid
       description: 소속 워크스페이스 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    isPublic:
-      type: boolean
-      description: 공개 여부
-      example: false
+      example: "wks_1234567890abcdef"
+    visibility:
+      type: string
+      enum: [PRIVATE, WORKSPACE, PUBLIC]
+      description: 공개 범위
+      example: "PRIVATE"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
     createdAt:
       type: string
       format: date-time
@@ -215,40 +250,130 @@ Board:
       description: 수정일시
       example: "2024-01-01T00:00:00Z"
 
-Column:
+BoardMember:
+  type: object
+  required:
+    - boardId
+    - userId
+    - role
+    - status
+    - isFavorite
+    - createdBy
+    - createdAt
+    - updatedAt
+  properties:
+    boardId:
+      type: string
+      format: uuid
+      description: 보드 ID (합성키 일부)
+      example: "brd_1234567890abcdef"
+    userId:
+      type: string
+      format: uuid
+      description: 사용자 ID (합성키 일부)
+      example: "usr_1234567890abcdef"
+    role:
+      type: string
+      enum: [ADMIN, MEMBER, VIEWER]
+      description: 멤버 역할
+      example: "MEMBER"
+    status:
+      type: string
+      enum: [ACTIVE]
+      description: 멤버 상태
+      example: "ACTIVE"
+    addedBy:
+      type: string
+      format: uuid
+      description: 추가한 사용자 ID
+      example: "usr_1234567890abcdef"
+    addedAt:
+      type: string
+      format: date-time
+      description: 추가일시
+      example: "2024-01-01T00:00:00Z"
+    isFavorite:
+      type: boolean
+      description: 즐겨찾기 여부
+      example: false
+    favoriteAt:
+      type: string
+      format: date-time
+      description: 즐겨찾기 등록일시
+      example: "2024-01-01T00:00:00Z"
+    lastAccessAt:
+      type: string
+      format: date-time
+      description: 최근 접근일시
+      example: "2024-01-01T00:00:00Z"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
+    createdAt:
+      type: string
+      format: date-time
+      description: 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
+      example: "2024-01-01T00:00:00Z"
+    user:
+      $ref: '#/components/schemas/User'
+
+List:
   type: object
   required:
     - id
     - name
     - boardId
-    - order
+    - position
+    - createdBy
     - createdAt
+    - updatedAt
   properties:
     id:
       type: string
       format: uuid
-      description: 컬럼 고유 식별자
-      example: "123e4567-e89b-12d3-a456-426614174000"
+      description: 리스트 고유 식별자
+      example: "lst_1234567890abcdef"
     name:
       type: string
       minLength: 1
       maxLength: 50
-      description: 컬럼 이름
+      description: 리스트 이름
       example: "할 일"
     boardId:
       type: string
       format: uuid
       description: 소속 보드 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    order:
+      example: "brd_1234567890abcdef"
+    position:
       type: integer
-      minimum: 0
-      description: 컬럼 순서
-      example: 0
+      description: 리스트 순서
+      example: 1
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
     createdAt:
       type: string
       format: date-time
       description: 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
+      example: "2024-01-01T00:00:00Z"
+    archivedAt:
+      type: string
+      format: date-time
+      description: 아카이브일시
       example: "2024-01-01T00:00:00Z"
 
 Card:
@@ -256,15 +381,18 @@ Card:
   required:
     - id
     - title
-    - columnId
-    - order
+    - boardId
+    - listId
+    - position
+    - createdBy
     - createdAt
+    - updatedAt
   properties:
     id:
       type: string
       format: uuid
       description: 카드 고유 식별자
-      example: "123e4567-e89b-12d3-a456-426614174000"
+      example: "crd_1234567890abcdef"
     title:
       type: string
       minLength: 1
@@ -274,22 +402,36 @@ Card:
     description:
       type: string
       description: 카드 설명
-      example: "사용자 로그인 기능을 구현합니다"
-    columnId:
+      example: "사용자 로그인 기능을 구현합니다."
+    boardId:
       type: string
       format: uuid
-      description: 소속 컬럼 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    order:
+      description: 소속 보드 ID
+      example: "brd_1234567890abcdef"
+    listId:
+      type: string
+      format: uuid
+      description: 소속 리스트 ID
+      example: "lst_1234567890abcdef"
+    position:
       type: integer
-      minimum: 0
       description: 카드 순서
-      example: 0
+      example: 1
+    startDate:
+      type: string
+      format: date-time
+      description: 시작일
+      example: "2024-01-01T00:00:00Z"
     dueDate:
       type: string
       format: date-time
       description: 마감일
-      example: "2024-12-31T23:59:59Z"
+      example: "2024-01-15T00:00:00Z"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
     createdAt:
       type: string
       format: date-time
@@ -300,37 +442,96 @@ Card:
       format: date-time
       description: 수정일시
       example: "2024-01-01T00:00:00Z"
+    archivedAt:
+      type: string
+      format: date-time
+      description: 아카이브일시
+      example: "2024-01-01T00:00:00Z"
+
+CardMember:
+  type: object
+  required:
+    - cardId
+    - userId
+    - createdBy
+    - createdAt
+    - updatedAt
+  properties:
+    cardId:
+      type: string
+      format: uuid
+      description: 카드 ID (합성키 일부)
+      example: "crd_1234567890abcdef"
+    userId:
+      type: string
+      format: uuid
+      description: 사용자 ID (합성키 일부)
+      example: "usr_1234567890abcdef"
+    addedBy:
+      type: string
+      format: uuid
+      description: 할당한 사용자 ID
+      example: "usr_1234567890abcdef"
+    addedAt:
+      type: string
+      format: date-time
+      description: 할당일시
+      example: "2024-01-01T00:00:00Z"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
+    createdAt:
+      type: string
+      format: date-time
+      description: 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
+      example: "2024-01-01T00:00:00Z"
+    user:
+      $ref: '#/components/schemas/User'
 
 Comment:
   type: object
   required:
     - id
-    - content
+    - body
     - cardId
-    - userId
+    - authorId
+    - createdBy
     - createdAt
+    - updatedAt
   properties:
     id:
       type: string
       format: uuid
       description: 댓글 고유 식별자
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    content:
+      example: "cmt_1234567890abcdef"
+    body:
       type: string
       minLength: 1
       maxLength: 1000
       description: 댓글 내용
-      example: "이 작업은 다음 주까지 완료하겠습니다"
+      example: "이 작업은 다음 주까지 완료하겠습니다."
     cardId:
       type: string
       format: uuid
       description: 소속 카드 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    userId:
+      example: "crd_1234567890abcdef"
+    authorId:
       type: string
       format: uuid
       description: 작성자 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
+      example: "usr_1234567890abcdef"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
     createdAt:
       type: string
       format: date-time
@@ -341,7 +542,12 @@ Comment:
       format: date-time
       description: 수정일시
       example: "2024-01-01T00:00:00Z"
-    user:
+    deletedAt:
+      type: string
+      format: date-time
+      description: 삭제일시
+      example: "2024-01-01T00:00:00Z"
+    author:
       $ref: '#/components/schemas/User'
 
 Label:
@@ -349,15 +555,16 @@ Label:
   required:
     - id
     - name
-    - color
     - boardId
+    - createdBy
     - createdAt
+    - updatedAt
   properties:
     id:
       type: string
       format: uuid
       description: 라벨 고유 식별자
-      example: "123e4567-e89b-12d3-a456-426614174000"
+      example: "lbl_1234567890abcdef"
     name:
       type: string
       minLength: 1
@@ -366,63 +573,261 @@ Label:
       example: "긴급"
     color:
       type: string
-      pattern: '^#[0-9A-Fa-f]{6}$'
-      description: 라벨 색상 (hex)
-      example: "#FF0000"
+      description: 라벨 색상
+      example: "#ff0000"
     boardId:
       type: string
       format: uuid
       description: 소속 보드 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
+      example: "brd_1234567890abcdef"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
+    createdAt:
+      type: string
+      format: date-time
+      description: 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
+      example: "2024-01-01T00:00:00Z"
+
+CardLabel:
+  type: object
+  required:
+    - cardId
+    - labelId
+    - createdBy
+    - createdAt
+    - updatedAt
+  properties:
+    cardId:
+      type: string
+      format: uuid
+      description: 카드 ID (합성키 일부)
+      example: "crd_1234567890abcdef"
+    labelId:
+      type: string
+      format: uuid
+      description: 라벨 ID (합성키 일부)
+      example: "lbl_1234567890abcdef"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
+    createdAt:
+      type: string
+      format: date-time
+      description: 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
+      example: "2024-01-01T00:00:00Z"
+
+Attachment:
+  type: object
+  required:
+    - id
+    - cardId
+    - filename
+    - storageUrl
+    - createdBy
+    - createdAt
+    - updatedAt
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: 첨부파일 고유 식별자
+      example: "att_1234567890abcdef"
+    cardId:
+      type: string
+      format: uuid
+      description: 소속 카드 ID
+      example: "crd_1234567890abcdef"
+    filename:
+      type: string
+      description: 파일명
+      example: "document.pdf"
+    mimeType:
+      type: string
+      description: MIME 타입
+      example: "application/pdf"
+    sizeBytes:
+      type: integer
+      description: 파일 크기 (바이트)
+      example: 1024000
+    storageUrl:
+      type: string
+      description: 저장소 URL
+      example: "https://storage.example.com/files/document.pdf"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
+    createdAt:
+      type: string
+      format: date-time
+      description: 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
+      example: "2024-01-01T00:00:00Z"
+
+ActivityLog:
+  type: object
+  required:
+    - id
+    - actorId
+    - type
+    - createdBy
+    - createdAt
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: 활동 로그 고유 식별자
+      example: "act_1234567890abcdef"
+    actorId:
+      type: string
+      format: uuid
+      description: 활동 수행자 ID
+      example: "usr_1234567890abcdef"
+    workspaceId:
+      type: string
+      format: uuid
+      description: 관련 워크스페이스 ID
+      example: "wks_1234567890abcdef"
+    boardId:
+      type: string
+      format: uuid
+      description: 관련 보드 ID
+      example: "brd_1234567890abcdef"
+    cardId:
+      type: string
+      format: uuid
+      description: 관련 카드 ID
+      example: "crd_1234567890abcdef"
+    type:
+      type: string
+      description: 활동 타입
+      example: "CARD_CREATED"
+    payload:
+      type: string
+      description: 활동 상세 정보 (JSON)
+      example: '{"cardTitle": "새 카드", "listName": "할 일"}'
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
     createdAt:
       type: string
       format: date-time
       description: 생성일시
       example: "2024-01-01T00:00:00Z"
 
-Invitation:
+Invite:
   type: object
   required:
     - id
+    - scope
     - email
-    - boardId
     - role
-    - status
+    - token
+    - inviteUrl
     - expiresAt
+    - invitedBy
+    - status
+    - createdBy
     - createdAt
+    - updatedAt
   properties:
     id:
       type: string
       format: uuid
       description: 초대 고유 식별자
-      example: "123e4567-e89b-12d3-a456-426614174000"
-    email:
+      example: "inv_1234567890abcdef"
+    scope:
       type: string
-      format: email
-      description: 초대받을 이메일
-      example: "guest@example.com"
+      enum: [WORKSPACE, BOARD]
+      description: 초대 범위
+      example: "WORKSPACE"
+    workspaceId:
+      type: string
+      format: uuid
+      description: 초대할 워크스페이스 ID
+      example: "wks_1234567890abcdef"
     boardId:
       type: string
       format: uuid
       description: 초대할 보드 ID
-      example: "123e4567-e89b-12d3-a456-426614174000"
+      example: "brd_1234567890abcdef"
+    email:
+      type: string
+      format: email
+      description: 초대받을 사용자 이메일
+      example: "user@example.com"
     role:
       type: string
-      enum: [MEMBER, VIEWER]
+      enum: [ADMIN, MEMBER, VIEWER]
       description: 초대할 역할
       example: "MEMBER"
-    status:
+    token:
       type: string
-      enum: [PENDING, ACCEPTED, EXPIRED]
-      description: 초대 상태
-      example: "PENDING"
+      description: 초대 토큰 (고유값)
+      example: "abc123def456"
+    inviteUrl:
+      type: string
+      description: 초대 URL
+      example: "https://boardly.com/invite/abc123def456"
     expiresAt:
       type: string
       format: date-time
-      description: 만료일시
+      description: 초대 만료일시
       example: "2024-01-08T00:00:00Z"
+    invitedBy:
+      type: string
+      format: uuid
+      description: 초대한 사용자 ID
+      example: "usr_1234567890abcdef"
+    acceptedBy:
+      type: string
+      format: uuid
+      description: 수락한 사용자 ID
+      example: "usr_1234567890abcdef"
+    acceptedAt:
+      type: string
+      format: date-time
+      description: 수락일시
+      example: "2024-01-01T00:00:00Z"
+    status:
+      type: string
+      enum: [PENDING, ACCEPTED, DECLINED, EXPIRED]
+      description: 초대 상태
+      example: "PENDING"
+    createdBy:
+      type: string
+      format: uuid
+      description: 생성자 사용자 ID
+      example: "usr_1234567890abcdef"
     createdAt:
       type: string
       format: date-time
-      description: 생성일시
+      description: 초대 생성일시
+      example: "2024-01-01T00:00:00Z"
+    updatedAt:
+      type: string
+      format: date-time
+      description: 수정일시
       example: "2024-01-01T00:00:00Z"

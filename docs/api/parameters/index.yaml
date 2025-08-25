@@ -8,7 +8,7 @@ workspaceId:
   schema:
     type: string
     format: uuid
-  example: "123e4567-e89b-12d3-a456-426614174000"
+  example: "wks_1234567890abcdef"
 
 boardId:
   name: boardId
@@ -18,7 +18,7 @@ boardId:
   schema:
     type: string
     format: uuid
-  example: "123e4567-e89b-12d3-a456-426614174000"
+  example: "brd_1234567890abcdef"
 
 cardId:
   name: cardId
@@ -28,17 +28,17 @@ cardId:
   schema:
     type: string
     format: uuid
-  example: "123e4567-e89b-12d3-a456-426614174000"
+  example: "crd_1234567890abcdef"
 
-columnId:
-  name: columnId
+listId:
+  name: listId
   in: path
   required: true
-  description: 컬럼 ID
+  description: 리스트 ID
   schema:
     type: string
     format: uuid
-  example: "123e4567-e89b-12d3-a456-426614174000"
+  example: "lst_1234567890abcdef"
 
 commentId:
   name: commentId
@@ -48,7 +48,7 @@ commentId:
   schema:
     type: string
     format: uuid
-  example: "123e4567-e89b-12d3-a456-426614174000"
+  example: "cmt_1234567890abcdef"
 
 labelId:
   name: labelId
@@ -58,7 +58,7 @@ labelId:
   schema:
     type: string
     format: uuid
-  example: "123e4567-e89b-12d3-a456-426614174000"
+  example: "lbl_1234567890abcdef"
 
 invitationId:
   name: invitationId
@@ -68,7 +68,27 @@ invitationId:
   schema:
     type: string
     format: uuid
-  example: "123e4567-e89b-12d3-a456-426614174000"
+  example: "inv_1234567890abcdef"
+
+attachmentId:
+  name: attachmentId
+  in: path
+  required: true
+  description: 첨부파일 ID
+  schema:
+    type: string
+    format: uuid
+  example: "att_1234567890abcdef"
+
+userId:
+  name: userId
+  in: path
+  required: true
+  description: 사용자 ID
+  schema:
+    type: string
+    format: uuid
+  example: "usr_1234567890abcdef"
 
 page:
   name: page

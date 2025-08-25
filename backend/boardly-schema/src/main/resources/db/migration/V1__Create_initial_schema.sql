@@ -5,8 +5,12 @@
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
-    name VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    display_name VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    failed_login_attempts INT DEFAULT 0,
+    account_locked_at TIMESTAMP NULL,
+    last_failed_login_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -38,3 +42,5 @@ CREATE TABLE board_members (
 CREATE INDEX idx_boards_owner_id ON boards(owner_id);
 CREATE INDEX idx_board_members_board_id ON board_members(board_id);
 CREATE INDEX idx_board_members_user_id ON board_members(user_id);
+CREATE INDEX idx_users_account_locked_at ON users(account_locked_at);
+CREATE INDEX idx_users_failed_login_attempts ON users(failed_login_attempts);

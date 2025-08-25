@@ -8,7 +8,7 @@ spring-dependency-management = "1.1.7"
 
 # Database
 h2 = "2.3.232"
-postgres = "42.7.8"
+postgres = "42.7.7"
 
 # Lombok
 lombok = "1.18.38"

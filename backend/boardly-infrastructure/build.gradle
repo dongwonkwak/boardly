@@ -16,10 +16,6 @@ dependencies {
     implementation libs.h2
     implementation libs.postgres
     
-    // JPA & QueryDSL
-    implementation libs.querydsl.jpa
-    annotationProcessor libs.querydsl.apt
-    
     // Test
     testImplementation libs.spring.boot.starter.test
     testImplementation libs.bundles.testcontainers

@@ -43,8 +43,7 @@ public Either<Failure, User> createUser(CreateUserCommand command) {
     
     // 2. 비즈니스 룰 위반 → Either.left()
     if (userRepository.existsByEmail(command.email())) {
-        return Either.left(Failure.ResourceConflict(
-            messageResolver.getMessage("user.email.already.exists")));
+        return Either.left(Failure.ResourceConflict("user.email.already.exists"));
     }
     
     // 3. 정상 처리 → Either.right()
@@ -74,30 +73,26 @@ public Either<Failure, User> createUser(CreateUserCommand command) {
 public Either<Failure, User> updateUser(UpdateUserCommand command) {
     // 400 - 입력 형식 오류
     if (command.userId() == null) {
-        return Either.left(Failure.InputError(
-            messageResolver.getMessage("user.id.required")));
+        return Either.left(Failure.InputError("user.id.required"));
     }
     
     // 404 - 리소스 미발견
     Optional<User> userOpt = userRepository.findById(command.userId());
     if (userOpt.isEmpty()) {
-        return Either.left(Failure.NotFound(
-            messageResolver.getMessage("user.not.found")));
+        return Either.left(Failure.NotFound("user.not.found"));
     }
     
     User user = userOpt.get();
     
     // 403 - 권한 거부
     if (!hasPermissionToUpdate(command.requesterId(), user)) {
-        return Either.left(Failure.PermissionDenied(
-            messageResolver.getMessage("user.update.permission.denied")));
+        return Either.left(Failure.PermissionDenied("user.update.permission.denied"));
     }
     
     // 409 - 리소스 충돌 (이메일 중복)
     if (!user.getEmail().equals(command.email()) && 
         userRepository.existsByEmail(command.email())) {
-        return Either.left(Failure.ResourceConflict(
-            messageResolver.getMessage("user.email.already.exists")));
+        return Either.left(Failure.ResourceConflict("user.email.already.exists"));
     }
     
     // 500 - 시스템 오류
@@ -105,8 +100,7 @@ public Either<Failure, User> updateUser(UpdateUserCommand command) {
         User updatedUser = user.update(command);
         return userRepository.save(updatedUser);
     } catch (Exception e) {
-        return Either.left(Failure.SystemError(
-            messageResolver.getMessage("user.update.system.error")));
+        return Either.left(Failure.SystemError("user.update.system.error"));
     }
 }
 ```
@@ -384,5 +378,5 @@ public class MigrationGuide {
 ```
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---

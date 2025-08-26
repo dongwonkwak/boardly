@@ -11,7 +11,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public abstract class Failure {
 
-    private final String message;
+    private final String messageKey; // 기존 message를 messageKey로 변경
+    private final String errorCode; // 공통 errorCode 필드 추가
 
     /**
      * 필드 위반 정보
@@ -20,7 +21,7 @@ public abstract class Failure {
     @Builder
     public static class FieldViolation {
         String field;
-        String message;
+        String messageKey; // 기존 message를 messageKey로 변경
         Object rejectedValue;
     }
 
@@ -34,12 +35,10 @@ public abstract class Failure {
      */
     @Getter
     public static class InputError extends Failure {
-        private final String errorCode;
         private final List<FieldViolation> violations;
 
-        public InputError(String message, String errorCode, List<FieldViolation> violations) {
-            super(message);
-            this.errorCode = errorCode;
+        public InputError(String messageKey, List<FieldViolation> violations) {
+            super(messageKey, ErrorCode.VALIDATION_ERROR.getCode());
             this.violations = violations != null ? violations : List.of();
         }
     }
@@ -53,12 +52,10 @@ public abstract class Failure {
      */
     @Getter
     public static class PermissionDenied extends Failure {
-        private final String errorCode;
         private final Object context;
 
-        public PermissionDenied(String message, String errorCode, Object context) {
-            super(message);
-            this.errorCode = errorCode;
+        public PermissionDenied(String messageKey, Object context) {
+            super(messageKey, ErrorCode.PERMISSION_DENIED.getCode());
             this.context = context;
         }
     }
@@ -69,12 +66,10 @@ public abstract class Failure {
      */
     @Getter
     public static class NotFound extends Failure {
-        private final String errorCode;
         private final Object context;
 
-        public NotFound(String message, String errorCode, Object context) {
-            super(message);
-            this.errorCode = errorCode;
+        public NotFound(String messageKey, Object context) {
+            super(messageKey, ErrorCode.NOT_FOUND.getCode());
             this.context = context;
         }
     }
@@ -88,12 +83,10 @@ public abstract class Failure {
      */
     @Getter
     public static class ResourceConflict extends Failure {
-        private final String errorCode;
         private final Object context;
 
-        public ResourceConflict(String message, String errorCode, Object context) {
-            super(message);
-            this.errorCode = errorCode;
+        public ResourceConflict(String messageKey, Object context) {
+            super(messageKey, ErrorCode.RESOURCE_CONFLICT.getCode());
             this.context = context;
         }
     }
@@ -107,12 +100,10 @@ public abstract class Failure {
      */
     @Getter
     public static class PreconditionFailed extends Failure {
-        private final String errorCode;
         private final Object context;
 
-        public PreconditionFailed(String message, String errorCode, Object context) {
-            super(message);
-            this.errorCode = errorCode;
+        public PreconditionFailed(String messageKey, Object context) {
+            super(messageKey, ErrorCode.PRECONDITION_FAILED.getCode());
             this.context = context;
         }
     }
@@ -127,12 +118,10 @@ public abstract class Failure {
      */
     @Getter
     public static class BusinessRuleViolation extends Failure {
-        private final String errorCode;
         private final Object context;
 
-        public BusinessRuleViolation(String message, String errorCode, Object context) {
-            super(message);
-            this.errorCode = errorCode;
+        public BusinessRuleViolation(String messageKey, Object context) {
+            super(messageKey, ErrorCode.BUSINESS_RULE_VIOLATION.getCode());
             this.context = context;
         }
     }
@@ -143,17 +132,15 @@ public abstract class Failure {
      */
     @Getter
     public static class InternalError extends Failure {
-        private final String errorCode;
         private final Object context;
 
-        public InternalError(String message, String errorCode, Object context) {
-            super(message);
-            this.errorCode = errorCode;
+        public InternalError(String messageKey, Object context) {
+            super(messageKey, ErrorCode.INTERNAL_ERROR.getCode());
             this.context = context;
         }
 
-        public InternalError(String message) {
-            this(message, "INTERNAL_ERROR", null);
+        public InternalError(String messageKey) {
+            this(messageKey, null);
         }
     }
 
@@ -162,119 +149,120 @@ public abstract class Failure {
     /**
      * 입력 형식/데이터 오류 생성 (400 Bad Request)
      */
-    public static InputError ofInputError(String message, String errorCode, List<FieldViolation> violations) {
-        return new InputError(message, errorCode, violations);
+    public static InputError ofInputError(String messageKey, List<FieldViolation> violations) {
+        return new InputError(messageKey, violations);
     }
 
-    public static InputError ofInputError(String message) {
-        return new InputError(message, "INVALID_INPUT", null);
+    public static InputError ofInputError(String messageKey) {
+        return new InputError(messageKey, null);
     }
 
-    public static InputError ofValidation(String message, List<FieldViolation> violations) {
-        return new InputError(message, "VALIDATION_ERROR", violations);
+    public static InputError ofValidation(String messageKey, List<FieldViolation> violations) {
+        return new InputError(messageKey, violations);
     }
 
     /**
      * 권한 거부 생성 (403 Forbidden)
      */
-    public static PermissionDenied ofPermissionDenied(String message, String errorCode, Object context) {
-        return new PermissionDenied(message, errorCode, context);
+    public static PermissionDenied ofPermissionDenied(String messageKey, Object context) {
+        return new PermissionDenied(messageKey, context);
     }
 
-    public static PermissionDenied ofPermissionDenied(String message) {
-        return new PermissionDenied(message, "PERMISSION_DENIED", null);
+    public static PermissionDenied ofPermissionDenied(String messageKey) {
+        return new PermissionDenied(messageKey, null);
     }
 
-    public static PermissionDenied ofForbidden(String errorCode) {
-        return new PermissionDenied("접근이 거부되었습니다.", errorCode, null);
+    public static PermissionDenied ofForbidden() {
+        return new PermissionDenied("error.access.denied", null);
     }
 
     /**
      * 리소스 미발견 생성 (404 Not Found)
      */
-    public static NotFound ofNotFound(String message, String errorCode, Object context) {
-        return new NotFound(message, errorCode, context);
+    public static NotFound ofNotFound(String messageKey, Object context) {
+        return new NotFound(messageKey, context);
     }
 
-    public static NotFound ofNotFound(String message) {
-        return new NotFound(message, "NOT_FOUND", null);
+    public static NotFound ofNotFound(String messageKey) {
+        return new NotFound(messageKey, null);
     }
 
     /**
      * 리소스 충돌 생성 (409 Conflict)
      */
-    public static ResourceConflict ofResourceConflict(String message, String errorCode, Object context) {
-        return new ResourceConflict(message, errorCode, context);
+    public static ResourceConflict ofResourceConflict(String messageKey, Object context) {
+        return new ResourceConflict(messageKey, context);
     }
 
-    public static ResourceConflict ofConflict(String message) {
-        return new ResourceConflict(message, "RESOURCE_CONFLICT", null);
+    public static ResourceConflict ofConflict(String messageKey) {
+        return new ResourceConflict(messageKey, null);
     }
 
     /**
      * 전제 조건 실패 생성 (412 Precondition Failed)
      */
-    public static PreconditionFailed ofPreconditionFailed(String message, String errorCode, Object context) {
-        return new PreconditionFailed(message, errorCode, context);
+    public static PreconditionFailed ofPreconditionFailed(String messageKey, Object context) {
+        return new PreconditionFailed(messageKey, context);
     }
 
-    public static PreconditionFailed ofPreconditionFailed(String message) {
-        return new PreconditionFailed(message, "PRECONDITION_FAILED", null);
+    public static PreconditionFailed ofPreconditionFailed(String messageKey) {
+        return new PreconditionFailed(messageKey, null);
     }
 
     /**
      * 비즈니스 룰 위반 생성 (422 Unprocessable Entity)
      */
-    public static BusinessRuleViolation ofBusinessRuleViolation(String message, String errorCode, Object context) {
-        return new BusinessRuleViolation(message, errorCode, context);
+    public static BusinessRuleViolation ofBusinessRuleViolation(String messageKey, Object context) {
+        return new BusinessRuleViolation(messageKey, context);
     }
 
-    public static BusinessRuleViolation ofBusinessRuleViolation(String message) {
-        return new BusinessRuleViolation(message, "BUSINESS_RULE_VIOLATION", null);
+    public static BusinessRuleViolation ofBusinessRuleViolation(String messageKey) {
+        return new BusinessRuleViolation(messageKey, null);
     }
 
     /**
      * 내부 서버 오류 생성 (500 Internal Server Error)
      */
-    public static InternalError ofInternalError(String message, String errorCode, Object context) {
-        return new InternalError(message, errorCode, context);
+    public static InternalError ofInternalError(String messageKey, Object context) {
+        return new InternalError(messageKey, context);
     }
 
-    public static InternalError ofInternalServerError(String message) {
-        return new InternalError(message, "INTERNAL_ERROR", null);
+    public static InternalError ofInternalServerError(String messageKey) {
+        return new InternalError(messageKey, null);
     }
 
-    // ======================== 기존 메서드 호환성 유지 ========================
+    // ======================== 기존 메서드 호환성 유지 (Deprecated) ========================
+    // 기존 코드가 동작할 수 있도록 유지하되, 파라미터를 messageKey로 해석
 
     /**
-     * @deprecated 대신 ofInputError 사용
+     * @deprecated 이제 message가 아닌 messageKey를 전달해야 합니다
      */
     @Deprecated
-    public static InputError ofValidationFailure(String message, List<FieldViolation> violations) {
-        return ofValidation(message, violations);
-    }
-
-    /**
-     * @deprecated 대신 ofResourceConflict 사용
-     */
-    @Deprecated
-    public static ResourceConflict ofConflictFailure(String message) {
-        return ofConflict(message);
+    public static InputError ofValidationFailure(String messageKey, List<FieldViolation> violations) {
+        return ofValidation(messageKey, violations);
     }
 
     /**
-     * @deprecated 대신 ofNotFound 사용
+     * @deprecated 이제 message가 아닌 messageKey를 전달해야 합니다
      */
     @Deprecated
-    public static NotFound ofNotFoundFailure(String message) {
-        return ofNotFound(message);
+    public static ResourceConflict ofConflictFailure(String messageKey) {
+        return ofConflict(messageKey);
     }
 
     /**
-     * @deprecated 대신 ofPermissionDenied 사용
+     * @deprecated 이제 message가 아닌 messageKey를 전달해야 합니다
      */
     @Deprecated
-    public static PermissionDenied ofForbiddenFailure(String message) {
-        return ofPermissionDenied(message);
+    public static NotFound ofNotFoundFailure(String messageKey) {
+        return ofNotFound(messageKey);
+    }
+
+    /**
+     * @deprecated 이제 message가 아닌 messageKey를 전달해야 합니다
+     */
+    @Deprecated
+    public static PermissionDenied ofForbiddenFailure(String messageKey) {
+        return ofPermissionDenied(messageKey);
     }
 }

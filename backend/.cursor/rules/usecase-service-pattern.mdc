@@ -7,7 +7,7 @@ UseCase 구현체를 역할별로 분리하여 실용성과 가독성을 향상�
 
 ### 1. CRUD 서비스 (기본 데이터 관리)
 ```java
-@UseCase
+@UseCase(category = "CRUD")
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -80,7 +80,7 @@ public class UserCrudService implements
 
 ### 2. 분석/통계 서비스 (복잡한 계산 및 분석)
 ```java
-@UseCase
+@UseCase(category = "Analytics")
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -134,7 +134,7 @@ public class UserAnalyticsService implements
 
 ### 3. 워크플로우 서비스 (여러 단계의 복합 작업)
 ```java
-@UseCase
+@UseCase(category = "Workflow")
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -182,7 +182,7 @@ public class UserOnboardingService implements
 
 ### 4. 검색/조회 서비스 (복잡한 검색 조건)
 ```java
-@UseCase
+@UseCase(category = "Search")
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -236,29 +236,56 @@ public class UserSearchService implements
 ## 📝 네이밍 컨벤션
 
 ### 서비스 클래스 네이밍
-- **CRUD 서비스**: `{Entity}CrudService`
-- **분석 서비스**: `{Entity}AnalyticsService`
-- **워크플로우 서비스**: `{Entity}{Workflow}Service`
-- **검색 서비스**: `{Entity}SearchService`
+- **CRUD 서비스**: `{Entity}CrudService` → `@UseCase(category = "CRUD")`
+- **분석 서비스**: `{Entity}AnalyticsService` → `@UseCase(category = "Analytics")`
+- **워크플로우 서비스**: `{Entity}{Workflow}Service` → `@UseCase(category = "Workflow")`
+- **검색 서비스**: `{Entity}SearchService` → `@UseCase(category = "Search")`
+
+### 카테고리 자동 지정 규칙
+서비스 클래스 이름을 기반으로 UseCase 카테고리가 자동으로 지정됩니다:
+
+- **CrudService** → `@UseCase(category = "CRUD")`
+- **AnalyticsService** → `@UseCase(category = "Analytics")`
+- **SearchService** → `@UseCase(category = "Search")`
+- **OnboardingService, InvitationService, CollaborationService** 등 → `@UseCase(category = "Workflow")`
 
 ### 예시
 ```java
 // User 도메인
-UserCrudService
-UserAnalyticsService
-UserOnboardingService
-UserSearchService
+@UseCase(category = "CRUD")
+public class UserCrudService
+
+@UseCase(category = "Analytics")
+public class UserAnalyticsService
+
+@UseCase(category = "Workflow")
+public class UserOnboardingService
+
+@UseCase(category = "Search")
+public class UserSearchService
 
 // Board 도메인
-BoardCrudService
-BoardAnalyticsService
-BoardCollaborationService
-BoardSearchService
+@UseCase(category = "CRUD")
+public class BoardCrudService
+
+@UseCase(category = "Analytics")
+public class BoardAnalyticsService
+
+@UseCase(category = "Workflow")
+public class BoardCollaborationService
+
+@UseCase(category = "Search")
+public class BoardSearchService
 
 // Workspace 도메인
-WorkspaceCrudService
-WorkspaceAnalyticsService
-WorkspaceInvitationService
+@UseCase(category = "CRUD")
+public class WorkspaceCrudService
+
+@UseCase(category = "Analytics")
+public class WorkspaceAnalyticsService
+
+@UseCase(category = "Workflow")
+public class WorkspaceInvitationService
 ```
 
 ## 🔄 Application Service에서의 사용
@@ -343,17 +370,17 @@ public class UserApplicationService {
 ```java
 com.boardly.application.port
 ├── user/
-│   ├── UserCrudService.java
-│   ├── UserAnalyticsService.java
-│   ├── UserOnboardingService.java
-│   └── UserSearchService.java
+│   ├── UserCrudService.java          // @UseCase(category = "CRUD")
+│   ├── UserAnalyticsService.java     // @UseCase(category = "Analytics")
+│   ├── UserOnboardingService.java    // @UseCase(category = "Workflow")
+│   └── UserSearchService.java        // @UseCase(category = "Search")
 ├── board/
-│   ├── BoardCrudService.java
-│   ├── BoardAnalyticsService.java
-│   └── BoardCollaborationService.java
+│   ├── BoardCrudService.java         // @UseCase(category = "CRUD")
+│   ├── BoardAnalyticsService.java    // @UseCase(category = "Analytics")
+│   └── BoardCollaborationService.java // @UseCase(category = "Workflow")
 └── workspace/
-    ├── WorkspaceCrudService.java
-    └── WorkspaceInvitationService.java
+    ├── WorkspaceCrudService.java     // @UseCase(category = "CRUD")
+    └── WorkspaceInvitationService.java // @UseCase(category = "Workflow")
 ```
 
 ## 🧪 테스트 예시
@@ -408,5 +435,7 @@ void userAnalyticsService_shouldReturnUserStatistics() {
 - **Template Method Pattern**: 공통 워크플로우를 템플릿으로 정의할 수 있습니다.
 description:
 globs:
-alwaysApply: false
+  - "**/application/**/*Service.java"
+  - "**/application/**/*UseCase.java"
+alwaysApply: true
 ---

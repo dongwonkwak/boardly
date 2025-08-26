@@ -6,7 +6,7 @@
 public class User { }                    // 명사, PascalCase
 public record UserId(Long value) { }     // 명사 + Id
 
-// Use Case (인바운드 포트)
+// Use Case (인바운드 포트) - Either<Failure, T> 리턴
 public interface CreateUserUseCase { }   // 동사 + 명사 + UseCase
 public interface FindUserUseCase { }
 
@@ -17,7 +17,7 @@ public interface UserRepository { }      // 명사 + Repository
 public class UserDomainService { }       // 명사 + DomainService
 public class CreateUserUseCaseImpl { }   // UseCase 구현체는 Impl 접미사
 
-// 컨트롤러 (항상 ResponseEntity<?> 리턴)
+// 컨트롤러 (Either<Failure, T>를 ResponseEntity<?>로 변환)
 public class UserController { }          // 명사 + Controller
 // 모든 메서드는 public ResponseEntity<?> methodName() 형식
 
@@ -261,6 +261,13 @@ void shouldReturnUserWhenUserExists() { }
 @Test
 void shouldReturnEmptyWhenUserDoesNotExist() { }
 
+// ✅ Either 테스트 메서드 네이밍
+@Test
+void shouldReturnRightWhenUserCreationSucceeds() { }
+
+@Test
+void shouldReturnLeftWithFailureWhenUserCreationFails() { }
+
 // ❌ 나쁜 예시
 public class UserTest { }  // 너무 일반적
 public class TestUser { }  // Test 접두사 금지
@@ -409,5 +416,5 @@ find . -name "*Validator.java"
 ```
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---

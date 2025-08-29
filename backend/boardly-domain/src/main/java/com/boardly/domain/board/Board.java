@@ -1,5 +1,6 @@
 package com.boardly.domain.board;
 
+import com.boardly.domain.user.UserId;
 import com.boardly.domain.workspace.WorkspaceId;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -19,34 +20,42 @@ public class Board {
     private String title;
     private String description;
     private WorkspaceId workspaceId;
+    private UserId ownerId;
     private boolean isPublic;
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant lastAccessedAt;
 
     @Builder
     public Board(BoardId id, String title, String description, WorkspaceId workspaceId,
-            boolean isPublic, Instant createdAt, Instant updatedAt) {
+            UserId ownerId, boolean isPublic, Instant createdAt, Instant updatedAt, Instant lastAccessedAt) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.workspaceId = workspaceId;
+        this.ownerId = ownerId;
         this.isPublic = isPublic;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.lastAccessedAt = lastAccessedAt;
     }
 
     /**
      * 보드 생성 팩토리 메서드
      */
-    public static Board create(String title, String description, WorkspaceId workspaceId, boolean isPublic) {
+    public static Board create(String title, String description, WorkspaceId workspaceId, UserId ownerId,
+            boolean isPublic) {
+        Instant now = Instant.now();
         return Board.builder()
                 .id(BoardId.generate())
                 .title(title)
                 .description(description)
                 .workspaceId(workspaceId)
+                .ownerId(ownerId)
                 .isPublic(isPublic)
-                .createdAt(Instant.now())
-                .updatedAt(Instant.now())
+                .createdAt(now)
+                .updatedAt(now)
+                .lastAccessedAt(now)
                 .build();
     }
 
@@ -65,5 +74,48 @@ public class Board {
      */
     public boolean isPublic() {
         return this.isPublic;
+    }
+
+    /**
+     * 보드 제목 유효성 검증
+     */
+    public boolean isValidTitle() {
+        return title != null && !title.trim().isEmpty() && title.length() <= 100;
+    }
+
+    /**
+     * 보드 설명 유효성 검증
+     */
+    public boolean isValidDescription() {
+        return description == null || description.length() <= 500;
+    }
+
+    /**
+     * 보드가 특정 워크스페이스에 속하는지 확인
+     */
+    public boolean belongsToWorkspace(WorkspaceId workspaceId) {
+        return this.workspaceId.equals(workspaceId);
+    }
+
+    /**
+     * 최근 접근 시간 업데이트
+     */
+    public void updateLastAccessedAt() {
+        this.lastAccessedAt = Instant.now();
+    }
+
+    /**
+     * 특정 사용자가 보드 소유자인지 확인
+     */
+    public boolean isOwnedBy(UserId userId) {
+        return this.ownerId.equals(userId);
+    }
+
+    /**
+     * 보드 소유권 이전
+     */
+    public void transferOwnership(UserId newOwnerId) {
+        this.ownerId = newOwnerId;
+        this.updatedAt = Instant.now();
     }
 }

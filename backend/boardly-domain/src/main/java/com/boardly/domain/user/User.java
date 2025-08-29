@@ -17,6 +17,7 @@ public class User {
     private UserId id;
     private String email;
     private String username;
+    private String password;
     private String displayName;
     private String profileImageUrl;
     private UserStatus status;
@@ -27,12 +28,14 @@ public class User {
     private Instant updatedAt;
 
     @Builder
-    public User(UserId id, String email, String username, String displayName, String profileImageUrl, UserStatus status,
+    public User(UserId id, String email, String username, String password, String displayName, String profileImageUrl,
+            UserStatus status,
             int failedLoginAttempts, Instant accountLockedAt, Instant lastFailedLoginAt, Instant createdAt,
             Instant updatedAt) {
         this.id = id;
         this.email = email;
         this.username = username;
+        this.password = password;
         this.displayName = displayName;
         this.profileImageUrl = profileImageUrl;
         this.status = status;
@@ -46,11 +49,13 @@ public class User {
     /**
      * 사용자 생성 팩토리 메서드
      */
-    public static User create(String email, String username, String displayName, String profileImageUrl) {
+    public static User create(String email, String username, String password, String displayName,
+            String profileImageUrl) {
         return User.builder()
                 .id(UserId.generate())
                 .email(email)
                 .username(username)
+                .password(password)
                 .displayName(displayName)
                 .profileImageUrl(profileImageUrl)
                 .status(UserStatus.ACTIVE)

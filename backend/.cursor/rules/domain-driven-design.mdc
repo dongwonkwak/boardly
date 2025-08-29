@@ -186,34 +186,7 @@ public class BoardDomainService {
   - 집계 내부 객체는 루트를 통해서만 접근
   - 리포지토리는 도메인 계층에 정의
   - 구현은 인프라 계층에서 담당
-
-```java
-// 도메인 계층 - Repository 인터페이스
-public interface BoardRepository {
-    Either<Failure, Board> save(Board board);
-    Optional<Board> findById(BoardId id);
-    List<Board> findByOwnerId(UserId ownerId);
-    boolean existsById(BoardId id);
-}
-
-// 인프라 계층 - Repository 구현체
-@Repository
-public class BoardRepositoryImpl implements BoardRepository {
-    private final BoardJpaRepository jpaRepository;
-    private final BoardMapper mapper;
-    
-    @Override
-    public Either<Failure, Board> save(Board board) {
-        try {
-            BoardEntity entity = mapper.toEntity(board);
-            BoardEntity savedEntity = jpaRepository.save(entity);
-            return Either.right(mapper.toDomain(savedEntity));
-        } catch (Exception e) {
-            return Either.left(Failure.SystemError("Failed to save board"));
-        }
-    }
-}
-```
+  - **상세한 Repository 패턴 규칙은 `repository-pattern.mdc` 참조**
 
 ### 2.6 도메인 이벤트 (Domain Event)
 - **규칙 11**: 중요한 도메인 변화를 이벤트로 발행하라
@@ -569,5 +542,5 @@ public class Board {
 ```
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---

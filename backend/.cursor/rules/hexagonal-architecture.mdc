@@ -989,41 +989,7 @@ public class CreateUserCommandValidator {
 ## 🏗️ 인프라스트럭처 계층 규칙
 
 ### Repository 구현
-```java
-// ✅ Repository 어댑터
-@Adapter
-@Repository
-@RequiredArgsConstructor
-public class UserRepositoryAdapter implements UserRepository {
-    
-    private final UserJpaRepository jpaRepository;
-    private final UserMapper mapper;
-    
-    @Override
-    public Either<Failure, User> save(User user) {
-        try {
-            UserEntity entity = mapper.toEntity(user);
-            UserEntity savedEntity = jpaRepository.save(entity);
-            return Either.right(mapper.toDomain(savedEntity));
-        } catch (DataIntegrityViolationException e) {
-            return Either.left(Failure.ResourceConflict("User already exists"));
-        } catch (Exception e) {
-            return Either.left(Failure.SystemError("Failed to save user"));
-        }
-    }
-    
-    @Override
-    public Optional<User> findById(UserId id) {
-        return jpaRepository.findById(id.getValue())
-            .map(mapper::toDomain);
-    }
-    
-    @Override
-    public boolean existsByEmail(String email) {
-        return jpaRepository.existsByEmail(email);
-    }
-}
-```
+Repository 구현체(어댑터)의 상세한 패턴과 규칙은 `repository-pattern.mdc`를 참조하세요.
 
 ### Mapper 구현
 ```java

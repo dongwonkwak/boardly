@@ -282,15 +282,105 @@ void shouldNotHaveCircularDependencies() {
   run: ./gradlew test --tests "*ArchitectureTest" --no-daemon
 ```
 
-## 9. 아키텍처 위반 시 대응
+## 9. Either<Failure, T> 패턴 검증
 
-### 9.1 위반 사항 해결 방법
+### 9.1 UseCase 리턴 타입 검증
+```java
+@Test
+@DisplayName("UseCase는 Either<Failure, T> 타입을 반환해야 함")
+void useCasesShouldReturnEitherType() {
+    ArchRule rule = methods()
+            .that().areDeclaredInClassesThat().resideInAPackage("..application..usecase..")
+            .and().arePublic()
+            .should().haveRawReturnType("io.vavr.control.Either");
+
+    rule.check(importedClasses);
+}
+
+@Test
+@DisplayName("UseCase 인터페이스는 Either<Failure, T> 타입을 반환해야 함")
+void useCaseInterfacesShouldReturnEitherType() {
+    ArchRule rule = methods()
+            .that().areDeclaredInClassesThat().resideInAPackage("..application..port..in..")
+            .and().areDeclaredInClassesThat().areInterfaces()
+            .should().haveRawReturnType("io.vavr.control.Either");
+
+    rule.check(importedClasses);
+}
+```
+
+### 9.2 예외 처리 금지 검증
+```java
+@Test
+@DisplayName("UseCase는 예외를 던지지 않고 Either로 처리해야 함")
+void useCasesShouldNotThrowExceptions() {
+    ArchRule rule = noMethods()
+            .that().areDeclaredInClassesThat().resideInAPackage("..application..usecase..")
+            .and().arePublic()
+            .should().declareThrowableOfType(Exception.class);
+
+    rule.check(importedClasses);
+}
+```
+
+## 10. DDD 패턴 검증
+
+### 10.1 엔티티 검증
+```java
+@Test
+@DisplayName("도메인 엔티티는 식별자를 가져야 함")
+void domainEntitiesShouldHaveId() {
+    ArchRule rule = classes()
+            .that().resideInAPackage("..domain..")
+            .and().doNotHaveSimpleNameEndingWith("Id")
+            .and().doNotHaveSimpleNameEndingWith("Status")
+            .and().doNotHaveSimpleNameEndingWith("Event")
+            .should().haveAFieldWithName("id");
+
+    rule.check(importedClasses);
+}
+```
+
+### 10.2 값 객체 검증
+```java
+@Test
+@DisplayName("값 객체는 불변이어야 함")
+void valueObjectsShouldBeImmutable() {
+    ArchRule rule = classes()
+            .that().resideInAPackage("..domain..")
+            .and().haveSimpleNameEndingWith("Id")
+            .should().beRecords()
+            .orShould().haveOnlyFinalFields();
+
+    rule.check(importedClasses);
+}
+```
+
+### 10.3 도메인 서비스 검증
+```java
+@Test
+@DisplayName("도메인 서비스는 @Component 어노테이션을 사용해야 함")
+void domainServicesShouldUseComponentAnnotation() {
+    ArchRule rule = classes()
+            .that().resideInAPackage("..domain..service..")
+            .and().haveSimpleNameEndingWith("DomainService")
+            .should().beAnnotatedWith(Component.class);
+
+    rule.check(importedClasses);
+}
+```
+
+## 11. 아키텍처 위반 시 대응
+
+### 11.1 위반 사항 해결 방법
 1. **의존성 방향 위반**: 의존성 주입 방향 재검토
 2. **네이밍 위반**: 클래스명 변경 또는 패키지 이동
 3. **어노테이션 위반**: 적절한 어노테이션 추가/제거
 4. **패키지 구조 위반**: 클래스를 올바른 패키지로 이동
+5. **Either 패턴 위반**: 예외 던지기를 Either 반환으로 변경
+6. **DDD 패턴 위반**: 도메인 모델 구조 재설계
 
-### 9.2 예외 처리
+### 11.2 예외 처리
 ```java
 // 특정 클래스에 대해 규칙 예외 처리
 @Test
@@ -311,7 +401,61 @@ void hexagonalLayerArchitectureShouldBeRespectedWithExceptions() {
     rule.check(importedClasses);
 }
 ```
-description:
+
+## 12. 자동 테스트 생성 가이드
+
+### 12.1 새로운 ArchUnit 테스트 클래스 템플릿
+```java
+package com.boardly.architecture;
+
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.*;
+
+/**
+ * [모듈명] 아키텍처 테스트
+ * - 이 템플릿을 사용하여 새로운 모듈의 아키텍처 테스트를 작성하세요
+ */
+public class [ModuleName]ArchitectureTest {
+
+    private static JavaClasses importedClasses;
+
+    @BeforeAll
+    static void setup() {
+        importedClasses = new ClassFileImporter()
+                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                .importPackages("com.boardly.[module]");
+    }
+
+    @Test
+    @DisplayName("[모듈] 계층 구조 검증")
+    void moduleShouldFollowLayerArchitecture() {
+        // TODO: 모듈별 계층 구조 규칙 정의
+    }
+
+    @Test
+    @DisplayName("[모듈] 네이밍 규칙 검증")
+    void moduleShouldFollowNamingConvention() {
+        // TODO: 모듈별 네이밍 규칙 정의
+    }
+}
+```
+
+### 12.2 테스트 코드 작성 시 자동 적용 규칙
+- **테스트 파일 명명**: `*Test.java`, `*Tests.java` 패턴
+- **패키지 구조**: `src/test/java/com/boardly/architecture/`
+- **베이스 클래스**: 공통 설정을 위한 `BaseArchitectureTest` 상속 권장
+- **테스트 범위**: 각 모듈별로 독립적인 아키텍처 테스트 클래스 생성
+description: Boardly 프로젝트의 헥사고날 아키텍처 및 DDD 구조를 검증하는 ArchUnit 테스트 규칙입니다. 테스트 코드 작성 시 이 규칙들을 자동으로 적용하여 아키텍처 일관성을 보장합니다.
 globs:
-alwaysApply: false
+  - "**/*Test.java"
+  - "**/*Tests.java"
+  - "**/test/**/*.java"
+alwaysApply: true
 ---

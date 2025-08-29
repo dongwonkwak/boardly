@@ -176,20 +176,8 @@ public class Board {
 ```
 
 ### 규칙 5: Repository에서 ID 타입 안전성 보장
-```java
-// 좋은 예시 - 강타입 ID 사용
-public interface UserRepository {
-    Optional<User> findById(UserId userId);
-    void save(User user);
-    void deleteById(UserId userId);
-    List<User> findByIds(List<UserId> userIds);
-}
-
-// 나쁜 예시 - String ID 사용
-public interface UserRepository {
-    Optional<User> findById(String userId);  // 타입 안전성 부족
-}
-```
+Repository에서는 반드시 강타입 ULID 기반 ID를 사용해야 합니다.
+상세한 Repository 패턴 규칙은 `repository-pattern.mdc`를 참조하세요.
 
 ## 3. ULID ID 객체 구현 패턴
 
@@ -440,26 +428,8 @@ public class UserMapper {
 ```
 
 ### 5.3 Repository 구현에서 ID 타입 안전성
-```java
-@Repository
-public class UserJpaAdapter implements LoadUserPort, SaveUserPort {
-    
-    private final UserJpaRepository repository;
-    private final UserMapper mapper;
-    
-    @Override
-    public Optional<User> loadUser(UserId userId) {
-        return repository.findById(userId.getValue())  // UserId를 String으로 변환
-            .map(mapper::toDomain);
-    }
-    
-    @Override
-    public void saveUser(User user) {
-        UserEntity entity = mapper.toEntity(user);
-        repository.save(entity);
-    }
-}
-```
+Repository 구현체에서도 강타입 ULID ID를 사용해야 합니다.
+상세한 구현 패턴은 `repository-pattern.mdc`를 참조하세요.
 
 ## 6. 테스트에서의 ULID 사용
 
@@ -588,7 +558,7 @@ CREATE INDEX idx_board_members_board_user ON board_members(board_id, user_id);
 2. **도메인 ID 생성 시 반드시 prefix 사용 (u_, b_, ws_ 등)**
 3. **ID 생성은 엔티티 생성자에서 자동 처리**
 4. **API 레이어에서는 String으로 노출, 내부적으로는 강타입 사용**
-5. **Repository 인터페이스는 강타입 ID 사용**
+5. **Repository 패턴은 repository-pattern.mdc 규칙 준수**
 6. **테스트에서는 고정 ULID 또는 자동 생성 ULID 사용**
 7. **ID 검증 시 prefix 형식도 함께 검증**
 
@@ -629,3 +599,102 @@ public class LegacyUserMigrationService {
     }
 }
 ```
+
+## 10. Domain 클래스 ID 필드 자동 생성 규칙
+
+### 10.1 엔티티 ID 필드 템플릿
+```java
+// 새로운 도메인 엔티티 생성 시 사용할 ID 필드 템플릿
+public class [EntityName] {
+    private final [EntityName]Id id;
+    
+    // 생성자에서 자동 ID 생성
+    public [EntityName]([parameters]) {
+        this.id = [EntityName]Id.generate();  // ULID 기반 자동 생성
+        // 기타 필드 초기화
+    }
+    
+    // 기존 ID로 생성하는 팩토리 메서드
+    public static [EntityName] withId([EntityName]Id id, [parameters]) {
+        [EntityName] entity = new [EntityName]([parameters]);
+        entity.id = id;  // 기존 ID 사용
+        return entity;
+    }
+}
+```
+
+### 10.2 ID 클래스 자동 생성 템플릿
+```java
+// 새로운 ID 클래스 템플릿
+@Value
+public class [EntityName]Id {
+    String value;
+    
+    public static [EntityName]Id generate() {
+        return new [EntityName]Id(DomainPrefixes.[ENTITY_CONSTANT] + Ulid.fast().toString());
+    }
+    
+    public static [EntityName]Id of(String value) {
+        if (!value.startsWith(DomainPrefixes.[ENTITY_CONSTANT])) {
+            throw new IllegalArgumentException("Invalid [EntityName]Id format: must start with '[prefix]'");
+        }
+        return new [EntityName]Id(value);
+    }
+    
+    public static [EntityName]Id from(String value) {
+        return of(value);
+    }
+}
+```
+
+### 10.3 새로운 도메인 엔티티 생성 체크리스트
+새로운 도메인 엔티티를 생성할 때 반드시 확인해야 할 사항들:
+
+1. **ID 클래스 생성**: `[EntityName]Id` 클래스 생성
+2. **Prefix 정의**: `DomainPrefixes`에 새로운 상수 추가
+3. **ID 필드 선언**: 엔티티에 `private final [EntityName]Id id` 필드 추가
+4. **자동 생성 로직**: 생성자에서 `[EntityName]Id.generate()` 호출
+5. **팩토리 메서드**: 기존 ID로 생성하는 `withId()` 메서드 추가
+6. **검증 로직**: ID 클래스에 prefix 검증 로직 포함
+
+### 10.4 Domain 클래스 작성 시 필수 패턴
+```java
+// 필수 패턴: 모든 도메인 엔티티는 이 구조를 따라야 함
+public class [EntityName] {
+    // 1. ULID 기반 강타입 ID 필드 (필수)
+    private final [EntityName]Id id;
+    
+    // 2. 도메인 속성들
+    private [Type] field1;
+    private [Type] field2;
+    
+    // 3. 자동 ID 생성 생성자 (필수)
+    public [EntityName]([parameters]) {
+        this.id = [EntityName]Id.generate();
+        // 속성 초기화
+    }
+    
+    // 4. 기존 ID 사용 팩토리 메서드 (권장)
+    public static [EntityName] withId([EntityName]Id id, [parameters]) {
+        // 구현
+    }
+    
+    // 5. ID getter (필수)
+    public [EntityName]Id getId() {
+        return id;
+    }
+    
+    // 6. 비즈니스 메서드들
+    public void businessMethod() {
+        // 도메인 로직
+    }
+}
+```
+
+description: Boardly 프로젝트의 모든 도메인 엔티티 ID 필드에 ULID를 사용하기 위한 규칙입니다. 새로운 도메인 클래스 생성 시 자동으로 적용되어 일관된 ID 생성 패턴을 보장합니다.
+globs:
+  - "**/domain/**/*.java"
+  - "**/domain/**/*Id.java"
+  - "**/src/main/java/**/domain/**/*.java"
+alwaysApply: true
+---

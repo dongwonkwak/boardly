@@ -1,85 +1,49 @@
-# Issue Tracker — Boardly (Issues × Linear × GitHub)
+# Issue Tracker — Boardly (Stories × Linear × GitHub)
 
-프로젝트의 Issue 단위 진행 현황을 추적하는 문서입니다. Epic & Issue 문서와 Cycle Plan, Task Tracker와 연결됩니다.
+기능별 진행 현황을 한눈에 관리하는 문서입니다. 사용자 스토리 문서(캔버스)와 Linear 이슈, PR을 서로 링크합니다. Epic & Issues, Task Tracker, Cycle Plan과는 달리 **상태 추적**에 초점이 맞춰져 있습니다.
 
 ---
 
-## 사용법
+## 0) 사용법
 
-1. Epic & Issue 문서에서 정의된 Issue를 기반으로 Linear에 등록합니다.
-2. 각 Issue는 Cycle에 할당되고, Task Tracker의 세부 Task와 연결됩니다.
-3. Linear의 상태(Triage → Backlog → Todo → In Progress → In Review → Done)를 반영하여 업데이트합니다.
-4. GitHub 브랜치/PR 상태와도 동기화합니다.
+1. 새로운 기능을 시작할 때 사용자 스토리 문서를 먼저 만들고, 아래 표에 링크합니다.
+2. 스토리에서 파생된 Linear 이슈를 등록해 링크합니다. (예: BRD-123)
+3. 브랜치/PR에 이슈 키를 포함하여 자동으로 연계합니다.
+4. 진행 상태를 Triage → Backlog → Todo → In Progress → In Review → Done 흐름에 맞춰 업데이트합니다.
 
-### 상태 범례
+### 상태 범례 (Linear 워크플로우 기준)
 
-* **Triage**: 새로 생성된 Issue, 아직 분류 전
+* **Triage**: 새로 생성된 이슈, 아직 분류 전
 * **Backlog**: 우선순위 정리만 된 상태
 * **Todo**: 바로 착수할 준비 완료
 * **In Progress**: 개발/테스트 진행 중
 * **In Review**: PR 리뷰/QA 중
 * **Done**: 배포/문서 반영 완료
+* **Canceled/Duplicate**: 사용하지 않음(특수 상황만)
 
 ---
 
-## Cycle 1 (2025-08-28 \~ 2025-09-04)
+## 1) 사이클별 진행 현황
 
-### Epic: 사용자 인증/인가
-
-* **Issue: 로그인 기능 구현 (BRD-101)**
-
-  * 상태: Todo
-  * Task: [Task Tracker](task-tracker.md#issue-로그인-기능-구현-brd-101)
-* **Issue: 회원가입 기능 구현 (BRD-102)**
-
-  * 상태: Todo
-  * Task: [Task Tracker](task-tracker.md#issue-회원가입-기능-구현-brd-102)
+| Cycle   | Epic      | Issue            | Linear Key | PR 링크       | 상태          |
+| ------- | --------- | ---------------- | ---------- | ----------- | ----------- |
+| Cycle 1 | 사용자 인증/인가 | 회원가입 기능 구현       | BRD-101    | - | 📝 Backlog |
+| Cycle 1 | 사용자 인증/인가 | 로그인 기능 구현        | BRD-102    | - | 📝 Backlog |
+| Cycle 2 | 사용자 인증/인가 | Refresh Token 갱신 | BRD-103    | - | 📝 Backlog |
 
 ---
 
-## Cycle 2 (예정)
+## 2) 관리 원칙
 
-### Epic: 워크스페이스 관리
-
-* **Issue: 워크스페이스 생성/삭제 (BRD-103)**
-
-  * 상태: Backlog
-* **Issue: 워크스페이스 멤버 초대 (BRD-104)**
-
-  * 상태: Backlog
+* Issue Tracker는 **상태만** 기록하며, 세부 Task는 Task Tracker 참조
+* Epic & Issues 문서의 Issue ID ↔ Linear Key를 항상 매핑
+* GitHub PR은 Linear Key를 브랜치/커밋 메시지에 포함해 자동 연결
+* 문서 내 상태는 최소 주 2회 업데이트
 
 ---
 
-## Cycle 3 (예정)
+## Notes
 
-### Epic: 보드 관리
-
-* **Issue: 보드 생성/삭제 (BRD-105)**
-
-  * 상태: Backlog
-* **Issue: 보드 멤버 관리 (BRD-106)**
-
-  * 상태: Backlog
-
----
-
-## Cycle 4 (예정)
-
-### Epic: 카드/리스트 관리
-
-* **Issue: 리스트 관리 (BRD-107)**
-
-  * 상태: Backlog
-* **Issue: 카드 관리 (BRD-108)**
-
-  * 상태: Backlog
-
----
-
-## Cycle 5 (예정)
-
-### Epic: i18n 및 UX 개선
-
-* **Issue: 다국어 지원 MVP (BRD-109)**
-
-  * 상태: Backlog
+* Issue Tracker는 Roadmap/Epic & Issues/Task Tracker/Cycle Plan 문서와 병렬적으로 운영됨
+* 불필요한 라벨 표기를 제거하고, 진행 현황 중심으로 단순화
+* Linear와 GitHub를 연결하는 **운영 중심 문서**로만 활용

@@ -7,7 +7,6 @@ erDiagram
   USERS {
     VARCHAR(32) id
     VARCHAR(255) email
-    VARCHAR(100) username
     VARCHAR(255) password_hash
     VARCHAR(120) display_name
     TIMESTAMPTZ created_at
@@ -200,7 +199,7 @@ erDiagram
 ### users
 
 * ULID prefix usr\_
-* email/username unique (citext 또는 LOWER 함수 인덱스)
+* email unique (citext 또는 LOWER 함수 인덱스)
 * created\_at/updated\_at TIMESTAMPTZ
 
 ### workspaces

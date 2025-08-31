@@ -6,23 +6,23 @@
 
 **리소스 중심의 URL 구조**
 ```
-# 올바른 예시
-GET    /api/workspaces                    # 워크스페이스 목록
-POST   /api/workspaces                    # 워크스페이스 생성
-GET    /api/workspaces/{id}               # 특정 워크스페이스 조회
-PUT    /api/workspaces/{id}               # 워크스페이스 수정
-DELETE /api/workspaces/{id}               # 워크스페이스 삭제
+# 올바른 예시 (v1 API)
+GET    /api/v1/workspaces                    # 워크스페이스 목록
+POST   /api/v1/workspaces                    # 워크스페이스 생성
+GET    /api/v1/workspaces/{id}               # 특정 워크스페이스 조회
+PUT    /api/v1/workspaces/{id}               # 워크스페이스 수정
+DELETE /api/v1/workspaces/{id}               # 워크스페이스 삭제
 
 # 중첩 리소스
-GET    /api/workspaces/{id}/boards        # 워크스페이스의 보드 목록
-POST   /api/workspaces/{id}/boards        # 워크스페이스에 보드 생성
-GET    /api/boards/{id}/lists             # 보드의 리스트 목록
-POST   /api/lists/{id}/cards              # 리스트에 카드 생성
+GET    /api/v1/workspaces/{id}/boards        # 워크스페이스의 보드 목록
+POST   /api/v1/workspaces/{id}/boards        # 워크스페이스에 보드 생성
+GET    /api/v1/boards/{id}/lists             # 보드의 리스트 목록
+POST   /api/v1/lists/{id}/cards              # 리스트에 카드 생성
 
 # 잘못된 예시 (동사 사용)
-POST   /api/workspaces/create             # ❌
-POST   /api/cards/move                    # ❌
-GET    /api/users/getProfile              # ❌
+POST   /api/v1/workspaces/create             # ❌
+POST   /api/v1/cards/move                    # ❌
+GET    /api/v1/users/getProfile              # ❌
 ```
 
 **URL 명명 규칙**
@@ -30,6 +30,16 @@ GET    /api/users/getProfile              # ❌
 - 복수형 사용 (`/users`, `/workspaces`)
 - 소문자 + 하이픈 (`/workspace-members`)
 - 계층 구조 반영
+- 버전 정보 포함 (`/api/v1/`, `/api/v2/`)
+
+### 1.1. 도메인 ID 체계
+
+> 📘 **참고**: 상세한 도메인 ID 체계는 [`design/domain-id-specification.md`](../design/domain-id-specification.md) 문서를 참조하세요.
+
+**ULID 기반 도메인 ID 형식**
+- **구조**: `{prefix}_{ulid}` (예: `usr_01ARZ3NDEKTSV4RRFFQ69G5FAV`)
+- **길이**: 30자 (prefix 3자 + underscore 1자 + ULID 26자)
+- **패턴**: 각 도메인별 고유 prefix 사용 (`usr_`, `wsp_`, `brd_` 등)
 
 ### 2. HTTP 메서드 활용
 
@@ -44,36 +54,40 @@ GET    /api/users/getProfile              # ❌
 **특수 동작 처리**
 ```
 # 카드 이동 (PATCH 사용)
-PATCH  /api/cards/{id}/position
-Body: { listId: "list-2", position: 3 }
+PATCH  /api/v1/cards/{id}/position
+Body: { listId: "lst_01ARZ3NDEKTSV4RRFFQ69G5FAV", position: 3 }
 
 # 멤버 초대 (POST 사용)  
-POST   /api/workspaces/{id}/invitations
+POST   /api/v1/workspaces/{id}/invitations
 Body: { email: "user@example.com", role: "member" }
 
 # 복합 검색 (GET with Query Parameters)
-GET    /api/search?q=keyword&type=card&workspace=123
+GET    /api/v1/search?q=keyword&type=card&workspace=wsp_01ARZ3NDEKTSV4RRFFQ69G5FAV
 ```
 
 ### 3. 응답 구조 표준화
 
-**성공 응답**
+> 📋 **참고**: UseCase 반환 타입 정책에 따라 UseCase는 도메인 객체를 반환하고, Controller에서 응답 DTO로 변환합니다.
+
+**단일 리소스 응답**
 ```json
 {
   "data": {
-    "id": "01HQ8K2N3M4P5Q6R7S8T9U0V1",
+    "id": "wsp_01HQ8K2N3M4P5Q6R7S8T9U0V1",
     "name": "개발팀",
     "description": "개발팀 워크스페이스",
+    "type": "TEAM",
     "createdAt": "2025-01-01T00:00:00Z",
     "owner": {
-      "id": "01HQ8K2N3M4P5Q6R7S8T9U0V2",
-      "name": "홍길동",
+      "id": "usr_01HQ8K2N3M4P5Q6R7S8T9U0V2",
+      "displayName": "홍길동",
       "email": "hong@example.com"
     }
   },
   "meta": {
-    "timestamp": "2025-01-01T00:00:00Z",
-    "version": "1.0.0"
+    "timestamp": "2025-01-01T12:34:56Z",
+    "apiVersion": "v1",
+    "requestId": "req-12345678-1234-1234-1234-123456789abc"
   }
 }
 ```
@@ -82,9 +96,23 @@ GET    /api/search?q=keyword&type=card&workspace=123
 ```json
 {
   "data": {
-    "workspaces": [
-      { "id": "01HQ8K2N3M4P5Q6R7S8T9U0V1", "name": "워크스페이스1" },
-      { "id": "01HQ8K2N3M4P5Q6R7S8T9U0V3", "name": "워크스페이스2" }
+    "items": [
+      { 
+        "id": "wsp_01HQ8K2N3M4P5Q6R7S8T9U0V1", 
+        "name": "워크스페이스1",
+        "type": "TEAM",
+        "memberCount": 5,
+        "boardCount": 12,
+        "createdAt": "2025-01-01T00:00:00Z"
+      },
+      { 
+        "id": "wsp_01HQ8K2N3M4P5Q6R7S8T9U0V3", 
+        "name": "워크스페이스2",
+        "type": "PERSONAL",
+        "memberCount": 1,
+        "boardCount": 3,
+        "createdAt": "2025-01-01T00:00:00Z"
+      }
     ],
     "pagination": {
       "page": 1,
@@ -98,11 +126,27 @@ GET    /api/search?q=keyword&type=card&workspace=123
     }
   },
   "meta": {
-    "timestamp": "2025-01-01T00:00:00Z",
-    "version": "1.0.0"
+    "timestamp": "2025-01-01T12:34:56Z",
+    "apiVersion": "v1",
+    "requestId": "req-12345678-1234-1234-1234-123456789abc"
   }
 }
 ```
+
+**Meta 필드 상세 정의**
+
+| 필드 | 설명 | 예시 | 필수 여부 |
+|------|------|------|-----------|
+| `timestamp` | 응답 생성 시점 (서버 시간, UTC) | `"2025-01-01T12:34:56Z"` | ✅ |
+| `apiVersion` | API 버전 (URL path 버전과 동일) | `"v1"`, `"v2"` | ✅ |
+| `requestId` | 요청 추적 ID (로깅/디버깅용) | `"req-xxx-xxx-xxx"` | ✅ |
+| `etag` | 리소스 버전 (캐싱용, 조건부 요청) | `"33a64df551425fcc"` | 조건부 |
+| `deprecation` | API 지원 중단 경고 | `{"version": "v2", "sunset": "2025-12-31"}` | 선택적 |
+
+> 📋 **Meta 버전 정책**: 
+> - `apiVersion`: URL path의 버전과 동일 (`/api/v1/users` → `"v1"`)
+> - 리소스 자체의 버전이 필요한 경우 `etag` 사용
+> - 애플리케이션 버전은 별도 엔드포인트 제공 (`/api/version`)
 
 **에러 응답**
 ```json
@@ -111,13 +155,14 @@ GET    /api/search?q=keyword&type=card&workspace=123
     "code": "WORKSPACE_NOT_FOUND",
     "message": "워크스페이스를 찾을 수 없습니다.",
     "context": {
-      "workspaceId": "01HQ8K2N3M4P5Q6R7S8T9U0V1"
+      "workspaceId": "wsp_01ARZ3NDEKTSV4RRFFQ69G5FAV"
     }
   },
   "meta": {
-    "timestamp": "2025-01-01T00:00:00Z",
-    "path": "/api/workspaces/01HQ8K2N3M4P5Q6R7S8T9U0V1",
-    "version": "1.0.0"
+    "timestamp": "2025-01-01T12:34:56Z",
+    "path": "/api/v1/workspaces/wsp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "apiVersion": "v1",
+    "requestId": "req-12345678-1234-1234-1234-123456789abc"
   }
 }
 ```
@@ -142,9 +187,10 @@ GET    /api/search?q=keyword&type=card&workspace=123
     ]
   },
   "meta": {
-    "timestamp": "2025-01-01T00:00:00Z",
-    "path": "/api/workspaces",
-    "version": "1.0.0"
+    "timestamp": "2025-01-01T12:34:56Z",
+    "path": "/api/v1/workspaces",
+    "apiVersion": "v1",
+    "requestId": "req-12345678-1234-1234-1234-123456789abc"
   }
 }
 ```
@@ -183,430 +229,85 @@ Accept: application/vnd.boardly.v1+json
 
 ## 인증 및 보안
 
-### JWT 토큰 기반 인증
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+> 📘 **참고**: 상세한 보안 정책 및 설정은 [`principles/security-principles.md`](./security-principles.md) 문서를 참조하세요.
 
-### CORS 설정
-```yaml
-# application.yml
-cors:
-  allowed-origins: 
-    - http://localhost:3000
-    - https://boardly.example.com
-  allowed-methods:
-    - GET
-    - POST
-    - PUT
-    - PATCH
-    - DELETE
-    - OPTIONS
-  allowed-headers:
-    - Authorization
-    - Content-Type
-    - X-Request-ID
-  exposed-headers:
-    - X-Request-ID
-    - X-Rate-Limit-Remaining
-    - X-Rate-Limit-Reset
-```
+**주요 보안 정책**:
+- **인증**: JWT 토큰 기반 인증 (`Authorization: Bearer {token}`)
+- **CORS**: 환경별 허용 도메인 설정
+- **Rate Limiting**: 사용자별 API 요청 제한
+- **보안 헤더**: XSS, CSRF, Content-Type 보호
 
-### Rate Limiting
-```
-# 응답 헤더 예시
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1609459200
-X-Request-ID: req-12345678-1234-1234-1234-123456789abc
-```
+## 데이터 검증 및 응답 원칙
 
-## 데이터 검증
+> 📘 **참고**: 상세한 구현 방법은 [`architecture/backend-api-implementation.md`](../architecture/backend-api-implementation.md) 문서를 참조하세요.
 
-### Vavr Validation을 통한 요청 데이터 검증
-
-**Validation 클래스 예시**
-```java
-public class CreateWorkspaceRequestValidator {
-    
-    public static Validation<Seq<String>, CreateWorkspaceCommand> validate(
-            CreateWorkspaceRequest request) {
-        
-        return Validation
-            .combine(
-                validateName(request.getName()),
-                validateDescription(request.getDescription())
-            )
-            .ap(CreateWorkspaceCommand::new);
-    }
-    
-    private static Validation<String, String> validateName(String name) {
-        return name == null || name.trim().isEmpty() 
-            ? Validation.invalid("워크스페이스 이름은 필수입니다")
-            : name.length() > 100
-                ? Validation.invalid("이름은 100자 이하여야 합니다") 
-                : Validation.valid(name.trim());
-    }
-    
-    private static Validation<String, String> validateDescription(String description) {
-        if (description == null) {
-            return Validation.valid(null);
-        }
-        return description.length() > 500
-            ? Validation.invalid("설명은 500자 이하여야 합니다")
-            : Validation.valid(description);
-    }
-}
-```
-
-**Controller에서 Validation 사용**
-```java
-@PostMapping
-public ResponseEntity<ApiResponse<WorkspaceResponse>> createWorkspace(
-        @RequestBody CreateWorkspaceRequest request) {
-    
-    return CreateWorkspaceRequestValidator.validate(request)
-        .fold(
-            errors -> {
-                List<FieldViolation> violations = errors.map(error -> 
-                    FieldViolation.builder()
-                        .field("name") // 실제로는 필드명 매핑 로직 필요
-                        .message(error)
-                        .rejectedValue(request.getName())
-                        .build()
-                ).toJavaList();
-                
-                throw new ValidationException(violations);
-            },
-            command -> {
-                Workspace workspace = workspaceService.createWorkspace(command);
-                return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success(WorkspaceResponse.from(workspace)));
-            }
-        );
-}
-```
-
-**도메인 객체 검증**
-```java
-public class Workspace {
-    
-    public static Validation<Seq<String>, Workspace> create(
-            WorkspaceId id, 
-            String name, 
-            String description, 
-            UserId ownerId) {
-        
-        return Validation
-            .combine(
-                validateId(id),
-                validateName(name),
-                validateDescription(description),
-                validateOwnerId(ownerId)
-            )
-            .ap(Workspace::new);
-    }
-    
-    private static Validation<String, WorkspaceId> validateId(WorkspaceId id) {
-        return id == null 
-            ? Validation.invalid("워크스페이스 ID는 필수입니다")
-            : Validation.valid(id);
-    }
-    
-    private static Validation<String, String> validateName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return Validation.invalid("워크스페이스 이름은 필수입니다");
-        }
-        if (name.length() > 100) {
-            return Validation.invalid("워크스페이스 이름은 100자 이하여야 합니다");
-        }
-        return Validation.valid(name.trim());
-    }
-}
-```
-
-### 응답 데이터 검증
-```java
-// 민감한 정보 제외
-public class UserResponse {
-    private String id;
-    private String email;
-    private String name;
-    private String profileImageUrl;
-    // password, refreshToken 필드 제외
-    
-    public static UserResponse from(User user) {
-        return UserResponse.builder()
-            .id(user.getId().getValue())
-            .email(user.getEmail())
-            .name(user.getName())
-            .profileImageUrl(user.getProfileImageUrl())
-            .build();
-    }
-}
-```
-
-## API 문서화
-
-### OpenAPI 3.0 스펙
-```yaml
-# 자동 생성되는 OpenAPI 스펙 예시
-/api/workspaces:
-  get:
-    summary: 워크스페이스 목록 조회
-    tags: [Workspace]
-    security:
-      - bearerAuth: []
-    parameters:
-      - name: page
-        in: query
-        schema:
-          type: integer
-          default: 1
-    responses:
-      200:
-        description: 성공
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WorkspaceListResponse'
-```
-
-### 주석 기반 문서화
-```java
-@RestController
-@RequestMapping("/api/workspaces")
-@Tag(name = "Workspace", description = "워크스페이스 관리 API")
-public class WorkspaceController {
-    
-    @Operation(summary = "워크스페이스 생성", description = "새로운 워크스페이스를 생성합니다")
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "생성 성공"),
-        @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-        @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    @PostMapping
-    public ResponseEntity<WorkspaceResponse> createWorkspace(
-            @Valid @RequestBody CreateWorkspaceRequest request) {
-        // 구현
-    }
-}
-```
-
-## 성능 최적화
-
-### 페이징
-```
-GET /api/workspaces?page=1&size=20&sort=name,asc
-```
-
-### 필드 선택 (Sparse Fieldsets)
-```
-GET /api/workspaces?fields=id,name,createdAt
-```
-
-### 관계 데이터 로딩
-```
-GET /api/workspaces/{id}?include=boards,members
-```
-
-### 조건부 요청 (ETag)
-```
-# 응답 헤더
-ETag: "33a64df551425fcc55e4d42a148795d9f25f89d4"
-
-# 클라이언트 요청
-If-None-Match: "33a64df551425fcc55e4d42a148795d9f25f89d4"
-
-# 304 Not Modified 응답
-```
+**핵심 원칙**:
+- **검증 정책**: Service(UseCase) 레벨에서만 검증 수행 (Controller 검증 금지)
+- **응답 데이터**: 민감 정보 제외, 도메인 객체를 응답 DTO로 변환
+- **에러 처리**: 각 Controller에서 직접 처리 (글로벌 에러 핸들러 사용 안함)
 
 ## 에러 처리 전략
 
-### 표준 에러 코드 체계
+> 📘 **참고**: 상세한 에러 코드 목록은 [`design/error-code-specification.md`](../design/error-code-specification.md) 문서를 참조하세요.
 
-**일반 에러 코드**
-| 코드 | 설명 | HTTP 상태 코드 |
-|------|------|----------------|
-| `VALIDATION_ERROR` | 입력 검증 실패 | 400 |
-| `UNAUTHORIZED` | 인증 실패 | 401 |
-| `PERMISSION_DENIED` | 권한 부족 | 403 |
-| `NOT_FOUND` | 리소스 미발견 | 404 |
-| `RESOURCE_CONFLICT` | 리소스 충돌 | 409 |
-| `PRECONDITION_FAILED` | 전제 조건 실패 | 412 |
-| `BUSINESS_RULE_VIOLATION` | 비즈니스 룰 위반 | 422 |
-| `INTERNAL_ERROR` | 내부 서버 오류 | 500 |
+### 에러 응답 구조
 
-**도메인별 에러 코드**
-```
-# 워크스페이스 관련
-WORKSPACE_NOT_FOUND
-WORKSPACE_ACCESS_DENIED  
-WORKSPACE_NAME_DUPLICATE
-WORKSPACE_ARCHIVED
-
-# 보드 관련
-BOARD_NOT_FOUND
-BOARD_ACCESS_DENIED
-BOARD_ARCHIVED
-BOARD_LIMIT_EXCEEDED
-
-# 카드 관련
-CARD_NOT_FOUND
-CARD_POSITION_INVALID
-CARD_STATUS_INVALID
-CARD_LIMIT_EXCEEDED
-
-# 사용자 관련
-USER_NOT_FOUND
-USER_EMAIL_DUPLICATE
-USER_INACTIVE
-USER_NOT_WORKSPACE_MEMBER
-```
-
-### 전역 에러 핸들러
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-    
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            ValidationException ex, HttpServletRequest request) {
-        
-        ErrorResponse response = ErrorResponse.builder()
-            .error(ErrorInfo.builder()
-                .code("VALIDATION_ERROR")
-                .message("입력 데이터가 유효하지 않습니다.")
-                .details(ex.getViolations())
-                .build())
-            .meta(MetaInfo.builder()
-                .timestamp(Instant.now())
-                .path(request.getRequestURI())
-                .version("1.0.0")
-                .build())
-            .build();
-            
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+**표준 에러 응답**
+```json
+{
+  "error": {
+    "code": "WORKSPACE_NOT_FOUND",
+    "message": "워크스페이스를 찾을 수 없습니다.",
+    "context": {
+      "workspaceId": "wsp_01ARZ3NDEKTSV4RRFFQ69G5FAV"
     }
-    
-    @ExceptionHandler(WorkspaceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleWorkspaceNotFound(
-            WorkspaceNotFoundException ex, HttpServletRequest request) {
-        
-        ErrorResponse response = ErrorResponse.builder()
-            .error(ErrorInfo.builder()
-                .code("WORKSPACE_NOT_FOUND")
-                .message("워크스페이스를 찾을 수 없습니다.")
-                .context(Map.of("workspaceId", ex.getWorkspaceId()))
-                .build())
-            .meta(MetaInfo.builder()
-                .timestamp(Instant.now())
-                .path(request.getRequestURI())
-                .version("1.0.0")
-                .build())
-            .build();
-            
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-    }
-    
-    @ExceptionHandler(BusinessRuleViolationException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessRuleViolation(
-            BusinessRuleViolationException ex, HttpServletRequest request) {
-        
-        ErrorResponse response = ErrorResponse.builder()
-            .error(ErrorInfo.builder()
-                .code(ex.getErrorCode())
-                .message(ex.getMessage())
-                .context(ex.getContext())
-                .build())
-            .meta(MetaInfo.builder()
-                .timestamp(Instant.now())
-                .path(request.getRequestURI())
-                .version("1.0.0")
-                .build())
-            .build();
-            
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
-    }
+  },
+  "meta": {
+    "timestamp": "2025-01-01T12:34:56Z",
+    "path": "/api/v1/workspaces/wsp_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+    "apiVersion": "v1",
+    "requestId": "req-12345678-1234-1234-1234-123456789abc"
+  }
 }
 ```
 
-### 응답 DTO 구조
-```java
-@Value
-@Builder
-public class ApiResponse<T> {
-    T data;
-    MetaInfo meta;
-    
-    @Value
-    @Builder
-    public static class MetaInfo {
-        Instant timestamp;
-        String version;
-    }
-    
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
-            .data(data)
-            .meta(MetaInfo.builder()
-                .timestamp(Instant.now())
-                .version("1.0.0")
-                .build())
-            .build();
-    }
-}
+### 에러 처리 정책
 
-@Value
-@Builder
-public class ErrorResponse {
-    ErrorInfo error;
-    MetaInfo meta;
-    
-    @Value
-    @Builder
-    public static class ErrorInfo {
-        String code;
-        String message;
-        List<FieldViolation> details;
-        Object context;
-    }
-    
-    @Value
-    @Builder
-    public static class FieldViolation {
-        String field;
-        String message;
-        Object rejectedValue;
-    }
-    
-    @Value
-    @Builder
-    public static class MetaInfo {
-        Instant timestamp;
-        String path;
-        String version;
-    }
-}
-```
+> 📘 **프로젝트 정책**: 글로벌 에러 핸들러 사용하지 않음. 각 Controller에서 직접 에러 처리 수행.
+
+**핵심 원칙**:
+- Controller에서 `Either<Failure, Domain>` 결과를 직접 처리
+- Failure 타입별 적절한 HTTP 상태 코드 매핑 (400, 401, 403, 404, 409, 422, 500)
+- 일관된 에러 응답 구조 유지 (`error` + `meta` 필드)
 
 ## API 설계 체크리스트
 
 ### 설계 단계
 - [ ] RESTful URL 구조 준수
 - [ ] 적절한 HTTP 메서드 선택
-- [ ] 일관된 응답 구조
+- [ ] 헥사고날 아키텍처 기반 UseCase → Controller 흐름 설계
+- [ ] 일관된 응답 구조 (data + meta)
 - [ ] 적절한 HTTP 상태 코드
-- [ ] 보안 고려사항 반영
+- [ ] 보안 고려사항 반영 (JWT, CORS, Rate Limiting)
 
 ### 구현 단계  
-- [ ] 요청/응답 검증 구현
-- [ ] 에러 처리 구현
+- [ ] UseCase는 `Either<Failure, Domain>` 반환 구조 적용
+- [ ] **Service 레벨에서만 검증 수행** (Controller 검증 금지)
+- [ ] Controller에서 도메인 객체를 응답 DTO로 변환
+- [ ] Controller에서 직접 에러 처리 (글로벌 에러 처리 사용 안함)
 - [ ] OpenAPI 문서 자동 생성
 - [ ] 테스트 케이스 작성
 
-### 배포 단계
-- [ ] API 문서 배포
-- [ ] 모니터링 설정
-- [ ] 로깅 설정
-- [ ] 성능 테스트
+### 응답 구조 검증
+- [ ] 모든 성공 응답에 `data` + `meta` 구조 적용
+- [ ] Meta 필드: timestamp, apiVersion, requestId 필수 포함
+- [ ] 에러 응답에 `error` + `meta` 구조 적용
+- [ ] 페이징 응답에 `data.items` + `data.pagination` 구조 적용
+- [ ] ULID 기반 도메인 ID 사용 (prefix + ULID 형식)
+- [ ] 도메인 ID 형식 검증 (정규식 패턴 적용)
+- [ ] API URL에 버전 정보 포함 (`/api/v1/`)
+
+### 문서화 및 테스트
+- [ ] API 문서 작성 (OpenAPI 3.0)
+- [ ] API 명세서 검토
+- [ ] 성능 요구사항 정의

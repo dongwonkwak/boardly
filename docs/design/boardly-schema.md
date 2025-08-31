@@ -13,7 +13,6 @@
 CREATE TABLE users (
   id             VARCHAR(32) PRIMARY KEY,
   email          VARCHAR(255) NOT NULL UNIQUE,
-  username       VARCHAR(100) NOT NULL UNIQUE,
   password_hash  VARCHAR(255) NOT NULL,
   display_name   VARCHAR(120),
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -24,10 +23,8 @@ CREATE TABLE users (
 -- (Optional, PostgreSQL) 대소문자 무시 유니크를 원하면 citext/함수 인덱스 사용
 -- CREATE EXTENSION IF NOT EXISTS citext;
 -- ALTER TABLE users ALTER COLUMN email TYPE citext;
--- ALTER TABLE users ALTER COLUMN username TYPE citext;
 -- 또는
 -- CREATE UNIQUE INDEX users_email_lower_uk ON users (LOWER(email));
--- CREATE UNIQUE INDEX users_username_lower_uk ON users (LOWER(username));
 
 
 -- ========== WORKSPACES ==========
@@ -307,14 +304,12 @@ DO $$ BEGIN
   IF NOT FOUND THEN CREATE EXTENSION pg_trgm; END IF;
 END $$;
 
--- 2) (선택) 이메일/유저네임 대소문자 무시 유니크 ------------------------------
+-- 2) (선택) 이메일 대소문자 무시 유니크 ------------------------------
 -- 2-A) citext 사용(권장)
-ALTER TABLE users ALTER COLUMN email   TYPE CITEXT;
-ALTER TABLE users ALTER COLUMN username TYPE CITEXT;
+ALTER TABLE users ALTER COLUMN email TYPE CITEXT;
 
 -- 2-B) (대안) citext 불가 환경이면 함수 인덱스 유니크 사용
--- CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uk   ON users (LOWER(email));
--- CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_uk ON users (LOWER(username));
+-- CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_uk ON users (LOWER(email));
 
 -- 3) (PostgreSQL) 검색/정렬 최적화 -------------------------------------------
 -- 제목/이름 부분 검색을 위한 trigram 인덱스 (필요 시 활성화)

@@ -67,11 +67,11 @@ git commit -m "[BRD-102] 로그인 API 및 UI 구현"
 
 예시:
 
-```markdown
+
 | Cycle | Epic | Issue | Linear Key | GitHub 브랜치/PR | 상태 |
 |-------|------|-------|------------|------------------|------|
 | Cycle 1 | 사용자 인증/인가 | 로그인 기능 구현 | BRD-102 | `feat/auth-login` → [PR #15](https://github.com/org/repo/pull/15) | In Review |
-```
+
 
 ---
 

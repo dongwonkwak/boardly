@@ -27,10 +27,11 @@ Boardly 프로젝트의 전체 문서 구조와 목적을 정리한 가이드입
 │   └── roadmap.md                 # 로드맵
 └── principles/                     # 원칙 및 가이드라인
     ├── api-design-principles.md    # API 설계 원칙
+    ├── backend-api-implementation.md # 백엔드 API 구현 가이드
     └── testing-strategy.md         # 테스트 전략
 ```
 
-총 6개 디렉토리, 15개 파일
+총 6개 디렉토리, 16개 파일
 
 ---
 
@@ -64,6 +65,7 @@ Boardly 프로젝트의 전체 문서 구조와 목적을 정리한 가이드입
 ### 5. `principles/`
 
 * **api-design-principles.md**: API 설계 원칙 및 규칙
+* **backend-api-implementation.md**: 백엔드 API 구현 가이드 (헥사고날 아키텍처 기반)
 * **testing-strategy.md**: 테스트 전략, 커버리지 목표 및 도구
 
 ---

@@ -9,9 +9,9 @@ Boardly 프로젝트의 문서, 라벨, 워크플로우를 통합적으로 관�
 | 문서                   | 역할                          | 위치                                        |
 | -------------------- | --------------------------- | ----------------------------------------- |
 | Roadmap              | 프로젝트 단계별 목표 정의              | `docs/planning/roadmap.md`                |
-| Epic & Issues        | Epic 선정 및 세부 Issue 정의       | `docs/planning/epic-issues.md`            |
+| Epic & Issues        | Epic 선정 및 세부 Issue 정의       | `docs/planning/epics-issues.md`            |
 | Task Tracker         | Issue를 Task 단위로 세분화         | `docs/management/task-tracker.md`         |
-| Cycle Plan           | Task를 Cycle 단위로 운영 계획화      | `docs/planning/development-cycle-plan.md` |
+| Cycle Plan           | Task를 Cycle 단위로 운영 계획화      | `docs/planning/cycle-plan.md` |
 | Issue Tracker        | Issue/PR 진행 상태 추적           | `docs/management/issue-tracker.md`        |
 | Linear Labels        | Linear 라벨 체계 정의             | `docs/management/linear-labels.md`        |
 | Development Workflow | 개발 워크플로우 정의 (PR, bugbot 포함) | `docs/management/development-workflow.md` |

@@ -19,9 +19,10 @@ docs/
 
 ## 동기화 트리거
 
-### 자동 동기화 상황
-- `.md` 파일 생성, 수정, 삭제
-- 폴더 구조 변경
+### Git Commit 기반 자동 동기화
+- **Git commit 완료 후** docs 폴더의 `.md` 파일 변경사항 자동 감지
+- **변경된 파일들만** 선별적으로 Notion과 동기화  
+- **`[skip-notion]` 태그**가 있는 commit은 동기화 건너뛰기
 - 사용자 명시적 요청
 
 ### Cursor AI 지원
@@ -53,9 +54,26 @@ docs/
 - **루트 페이지**: 공유된 문서
 - **페이지 ID**: `260c6221-cd14-80a9-bb57-cf1a235c5834`
 
-## 수동 동기화
+## 사용법
 
-필요시 Cursor AI에게 다음과 같이 요청하세요:
+### 일반적인 워크플로우
+```bash
+# 1. 문서 수정
+vim docs/architecture/new-feature.md
+
+# 2. Git에 변경사항 커밋
+git add docs/architecture/new-feature.md
+git commit -m "Add new feature architecture documentation"
+
+# 3. 자동 동기화 (post-commit hook이 실행됨)
+# → Notion에 자동으로 업데이트됨
+
+# 4. 동기화 건너뛰기 (필요시)
+git commit -m "Fix typo [skip-notion]"
+```
+
+### 수동 동기화
+Git hook을 거치지 않고 즉시 동기화가 필요한 경우:
 ```
 "docs/[파일명].md를 Notion과 동기화해주세요"
 ```
@@ -74,3 +92,7 @@ docs/
 ---
 
 > 💡 **참고**: 상세한 기술적 설정은 `.cursor/rules/notion-documentation-sync.mdc` 파일을 참조하세요.
+
+## 테스트 노트
+
+- 2024-12-19: Git commit 기반 동기화 설정 완료 및 테스트 수행

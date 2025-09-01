@@ -1,77 +1,143 @@
 [versions]
-# Spring Boot 관련 버전
-spring-boot = "3.5.4"
-spring-dependency-management = "1.1.7"
-
-# Java 버전
+# Java
 java = "21"
 
+# Spring Boot
+spring-boot = "3.5.5"
+spring-dependency-management = "1.1.7"
+
+# Database
 h2 = "2.3.232"
 postgres = "42.7.7"
+
+# Lombok
 lombok = "1.18.38"
 lombok-mapstruct-binding = "0.2.0"
-spring-security-test = "6.5.1"
-commons-lang3 = "3.17.0"
-vavr = "0.10.6"
 
-springdoc-openapi-starter-webmvc-ui = "2.8.9"
-openapi-gradle-plugin = "1.9.0"
-ulid-creator = "5.2.3"
-caffeine = "3.2.2"
-version-catalog-update = "0.52.0"
-flyway = "11.10.5"
+# JPA & QueryDSL
+querydsl = "5.0.0:jakarta"
+
+# Test
+junit-jupiter = "5.11.4"
+mockito = "5.14.2"
+testcontainers = "1.20.4"
+archunit = "1.4.1"
+assertj = "3.24.2"
+
+# Logging
+logback = "1.5.12"
+
+# Validation
+validation = "3.1.0"
+
+# Security
+spring-security = "6.4.2"
+
+# Web
+spring-web = "6.2.1"
+
+# JSON
+jackson = "2.18.2"
+
+# Documentation
+springdoc-openapi = "2.8.9"
+
+# Monitoring
+actuator = "3.4.1"
+
+# Database Migration
+flyway = "11.1.1"
+
+# MapStruct
 mapstruct = "1.6.3"
-jackson = "2.17.2"
-micrometer = "1.14.3"
-jacoco = "0.8.12"
+
+# Vavr
+vavr = "0.10.7"
+
+# ULID
+ulid-creator = "5.2.3"
 
 [libraries]
-# Spring Boot Starters
-spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
-spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf", version.ref = "spring-boot" }
+# Spring Boot
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa", version.ref = "spring-boot" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "spring-boot" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security", version.ref = "spring-boot" }
-spring-boot-starter-oauth2-authorization-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-authorization-server", version.ref = "spring-boot" }
-spring-security-test = { module = "org.springframework.security:spring-security-test", version.ref = "spring-security-test" }
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator", version.ref = "spring-boot" }
+spring-boot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "spring-boot" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test", version.ref = "spring-boot" }
+spring-boot-starter-oauth2-authorization-server = { module = "org.springframework.boot:spring-boot-starter-oauth2-authorization-server", version.ref = "spring-boot" }
+spring-boot-starter-thymeleaf = { module = "org.springframework.boot:spring-boot-starter-thymeleaf", version.ref = "spring-boot" }
 
+# Database
 h2 = { module = "com.h2database:h2", version.ref = "h2" }
 postgres = { module = "org.postgresql:postgresql", version.ref = "postgres" }
-lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
-lombok-mapstruct-binding = { module = "org.projectlombok:lombok-mapstruct-binding", version.ref = "lombok-mapstruct-binding" }
-commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
-vavr = { module = "io.vavr:vavr", version.ref = "vavr" }
-springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi-starter-webmvc-ui" }
-ulid-creator = { module = "com.github.f4b6a3:ulid-creator", version.ref = "ulid-creator" }
-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+# JPA & QueryDSL
+querydsl-apt = { module = "com.querydsl:querydsl-apt", version.ref = "querydsl" }
+querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
+
+# Test
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit-jupiter" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "mockito" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
+archunit = { module = "com.tngtech.archunit:archunit", version.ref = "archunit" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+
+# Logging
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+# Validation
+validation-api = { module = "jakarta.validation:jakarta.validation-api", version.ref = "validation" }
+
+# Security
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
+
+# Web
+spring-web = { module = "org.springframework:spring-web", version.ref = "spring-web" }
+
+# JSON
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+
+# Documentation
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
+
+# Monitoring
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
+
+# Database Migration
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
-flyway-postgres = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+
+# Lombok
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
+
+# MapStruct
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
-jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson" }
-micrometer-commons = { module = "io.micrometer:micrometer-commons", version.ref = "micrometer" }
+
+# Vavr
+vavr = { module = "io.vavr:vavr", version.ref = "vavr" }
+
+# ULID
+ulid-creator = { module = "com.github.f4b6a3:ulid-creator", version.ref = "ulid-creator" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
-openapi-gradle-plugin = { id = "org.springdoc.openapi-gradle-plugin", version.ref = "openapi-gradle-plugin" }
-version-catalog-update = { id = "com.github.ben-manes.versions", version.ref = "version-catalog-update" }
+querydsl = { id = "com.ewerk.gradle.plugins.querydsl", version = "1.0.10" }
 
 [bundles]
-spring-boot-dependencies = [
+spring-boot-starter = [
+    "spring-boot-starter",
     "spring-boot-starter-web",
-    "spring-boot-starter-thymeleaf",
     "spring-boot-starter-data-jpa",
-    "spring-boot-starter-security",
-    "spring-boot-starter-oauth2-authorization-server",
-    "spring-boot-starter-actuator",
+    "spring-boot-starter-validation",
 ]
-
-spring-test-dependencies = ["spring-boot-starter-test", "spring-security-test"]
-
-common-dependencies = ["commons-lang3", "vavr", "ulid-creator", "caffeine"]
-
-springdoc-dependencies = ["springdoc-openapi-starter-webmvc-ui"]
-
-flyway-dependencies = ["flyway-core", "flyway-postgres"]
+spring-boot-test = ["spring-boot-starter-test", "spring-security-test"]
+testcontainers = ["testcontainers-junit-jupiter", "testcontainers-postgresql"]
+archunit-test = ["archunit", "archunit-junit5"]

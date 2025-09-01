@@ -1,0 +1,183 @@
+# 🏗️ Boardly 헥사고날 아키텍처 가이드
+
+## 📋 개요
+Boardly 프로젝트의 헥사고날 아키텍처 구조와 핵심 원칙을 정의합니다.
+
+## 📂 모듈 구조
+
+### 모듈 네이밍 규칙
+```
+boardly/                               # 루트 프로젝트
+├── boardly-shared/                    # 공통 모듈
+├── boardly-domain/                    # 도메인 계층
+├── boardly-application/               # 애플리케이션 계층
+├── boardly-infrastructure/            # 인프라스트럭처 계층
+└── boardly-api/                       # API 계층 (인바운드 어댑터)
+```
+
+## 🔗 의존성 규칙
+
+### 계층별 의존성 방향
+```java
+// ✅ 올바른 의존성 방향
+boardly-api → boardly-application → boardly-domain
+boardly-infrastructure → boardly-application
+boardly-infrastructure → boardly-domain (포트 구현을 위해서만)
+모든 모듈 → boardly-shared
+
+// ❌ 잘못된 의존성 방향
+boardly-domain → boardly-application  // 도메인이 애플리케이션에 의존
+boardly-application → boardly-infrastructure  // 애플리케이션이 인프라에 직접 의존
+boardly-api → boardly-infrastructure  // API가 인프라에 직접 의존
+boardly-api → boardly-domain  // API가 도메인에 직접 의존
+```
+
+## 🏛️ 포트와 어댑터 패턴
+
+### 포트 (Port)
+애플리케이션의 경계를 정의하는 인터페이스
+
+#### 1. 인바운드 포트 (Input Port - Primary Port)
+```java
+// UseCase 인터페이스 - 애플리케이션이 제공하는 기능
+public interface CreateUserUseCase {
+    Either<Failure, User> createUser(CreateUserCommand command);
+}
+```
+
+#### 2. 아웃바운드 포트 (Output Port - Secondary Port)
+```java
+// Repository 인터페이스 - 외부 시스템 의존성 추상화
+public interface UserRepository {
+    Either<Failure, User> save(User user);
+    Optional<User> findById(UserId id);
+    boolean existsByEmail(String email);
+}
+```
+
+### 어댑터 (Adapter)
+포트를 구현하는 실제 구현체
+
+#### 3. 인바운드 어댑터 (Controller)
+```java
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+    private final UserApplicationService userService;  // Application Service에 의존
+    
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody CreateUserRequest request) {
+        CreateUserCommand command = CreateUserCommand.of(request);
+        return userService.createUser(command)
+            .fold(
+                failure -> ResponseEntity.badRequest().body(new ErrorResponse(failure)),
+                user -> ResponseEntity.ok(new UserResponse(user))
+            );
+    }
+}
+```
+
+#### 4. 아웃바운드 어댑터 (Repository 구현체)
+```java
+@Repository
+public class UserRepositoryAdapter implements UserRepository {
+    private final UserJpaRepository jpaRepository;
+    private final UserMapper mapper;
+    
+    @Override
+    public Either<Failure, User> save(User user) {
+        try {
+            UserEntity entity = mapper.toEntity(user);
+            UserEntity savedEntity = jpaRepository.save(entity);
+            return Either.right(mapper.toDomain(savedEntity));
+        } catch (Exception e) {
+            return Either.left(Failure.SystemError("Failed to save user"));
+        }
+    }
+}
+```
+
+## 🎯 계층별 핵심 원칙
+
+### Domain Layer (도메인 계층)
+- **순수한 비즈니스 로직만 포함**
+- 외부 프레임워크나 라이브러리에 의존하지 않음
+- 도메인 모델, 도메인 서비스, Repository 인터페이스 포함
+- 상세 내용: `domain-driven-design.mdc` 참조
+
+### Application Layer (애플리케이션 계층)
+- **UseCase 구현과 비즈니스 로직 조합**
+- 도메인 계층만 의존
+- 트랜잭션 경계 관리
+- 상세 내용: `usecase-service-pattern.mdc` 참조
+
+### Infrastructure Layer (인프라 계층)
+- **외부 시스템과의 실제 통신 구현**
+- Repository 구현체, 외부 API 클라이언트 등
+- 상세 내용: `repository-pattern.mdc` 참조
+
+### API Layer (프레젠테이션 계층)
+- **HTTP 요청/응답 처리**
+- DTO 변환
+- 인증/인가 처리
+
+## 📝 네이밍 컨벤션
+
+### 클래스 네이밍 규칙
+- **인바운드 포트**: `~UseCase` 접미사
+- **아웃바운드 포트**: `~Repository`, `~Service` 등 역할에 맞는 접미사
+- **어댑터**: `~Adapter` 접미사
+- **유스케이스 구현체**: `~Service` 접미사 (역할별 분리)
+- **커맨드**: `~Command` 접미사
+- **쿼리**: `~Query` 접미사
+- **이벤트**: `~Event` 접미사
+
+### 어노테이션 가이드
+```java
+// 도메인 서비스
+@DomainService
+public class UserDomainService { ... }
+
+// 애플리케이션 서비스
+@ApplicationService
+public class UserApplicationService { ... }
+
+// 어댑터
+@Adapter
+public class UserRepositoryAdapter { ... }
+
+// UseCase 구현체
+@UseCase
+public class UserCrudService { ... }
+```
+
+## 🚀 마이그레이션 전략
+
+### Phase 1: 기본 구조 정비
+1. 의존성 방향 검증 및 수정
+2. 포트 인터페이스 명확화
+3. 어댑터 패턴 적용
+
+### Phase 2: 패키지 구조 개선
+1. 계층별 패키지 분리
+2. 네이밍 컨벤션 적용
+3. 어노테이션 표준화
+
+### Phase 3: 테스트 구조 정비
+1. 계층별 테스트 전략 수립
+2. 포트 기반 모킹 구조 구축
+3. 아키텍처 검증 테스트 작성 (`archunit-rules.mdc` 참조)
+
+## 🎯 핵심 원칙 요약
+
+1. **의존성 역전**: 도메인이 중심이 되고, 외부 계층이 도메인에 의존
+2. **포트와 어댑터**: 명확한 인터페이스로 경계 정의
+3. **단일 책임**: 각 계층은 고유한 책임만 가짐
+4. **테스트 용이성**: 인터페이스 기반으로 독립적 테스트 가능
+5. **확장성**: 새로운 어댑터 추가로 기능 확장 용이
+
+description: Boardly 프로젝트의 헥사고날 아키텍처 핵심 원칙과 구조를 정의합니다. 상세 구현 패턴은 각 전문 룰 파일에서 다룹니다.
+globs:
+  - "**/*.java"
+alwaysApply: true
+---

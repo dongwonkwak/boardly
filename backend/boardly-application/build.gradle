@@ -1,10 +1,6 @@
 plugins {
-  id 'java-library'
-  id 'jacoco'
+    id 'java-library'
 }
-
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
 
 java {
   toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
@@ -13,40 +9,23 @@ java {
 repositories { mavenCentral() }
 
 dependencies {
-  api project(':boardly-shared')
-  implementation project(':boardly-domain')
-  implementation project(':boardly-infrastructure')
-
-  implementation libs.bundles.spring.boot.dependencies
-  // Gradle가 자체 JUnit Platform 런처를 사용하도록 강제하기 위해 launcher 제외
-  testImplementation(libs.spring.boot.starter.test) {
-    exclude group: 'org.junit.platform', module: 'junit-platform-launcher'
-  }
-  // 엔진(1.12.x)과 런처 정렬
-  testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.12.2'
-
-  compileOnly libs.lombok
-  annotationProcessor libs.lombok
-}
-
-tasks.named('test') { useJUnitPlatform() }
-
-// JaCoCo coverage configuration
-jacoco { toolVersion = '0.8.12' }
-
-tasks.test {
-  finalizedBy(tasks.jacocoTestReport)
-}
-
-tasks.named('jacocoTestReport', JacocoReport) {
-  dependsOn(tasks.test)
-  reports {
-    html.required = true
-    xml.required = true
-    csv.required = false
-  }
-  sourceDirectories.setFrom(files('src/main/java'))
-  classDirectories.setFrom(files(layout.buildDirectory.dir('classes/java/main')))
-  // Prefer JaCoCo .exec produced by test task
-  executionData.setFrom(fileTree(layout.buildDirectory.dir('jacoco')) { include '**/*.exec' })
+    // Internal modules
+    implementation project(':boardly-shared')
+    implementation project(':boardly-domain')
+    
+    // Spring Boot Starters
+    implementation libs.spring.boot.starter
+    implementation libs.spring.boot.starter.validation
+    
+    // Lombok
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+    
+    // Vavr
+    implementation libs.vavr
+    
+    // Test
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.mockito.junit.jupiter
+    testImplementation 'org.assertj:assertj-core:3.24.2'
 }

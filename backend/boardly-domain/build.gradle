@@ -2,38 +2,24 @@ plugins {
     id 'java-library'
 }
 
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
-
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
-    }
+  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
 }
 
-repositories {
-    mavenCentral()
-}
-
-// Pure domain model: no Spring or other module linkage
-// Keep dependencies minimal and focused on value-objects and domain services
+repositories { mavenCentral() }
 
 dependencies {
-    api project(':boardly-shared')
-    api libs.vavr
-
-    // Optional: common utility libs used across domain code
-    api libs.commons.lang3
-
-    // Lombok for boilerplate reduction
+    // Internal modules
+    implementation project(':boardly-shared')
+    
+    // Lombok
     compileOnly libs.lombok
     annotationProcessor libs.lombok
-
-    // Keep domain free from serialization/metrics libs
-
-    testImplementation libs.spring.boot.starter.test
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
+    
+    // Validation
+    implementation libs.validation.api
+    
+    // Test
+    testImplementation libs.junit.jupiter
+    testImplementation libs.mockito.core
 }

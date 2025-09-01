@@ -1,2 +1,4 @@
 .DS_Store
 frontend/.env.development
+docs/backup
+.vscode

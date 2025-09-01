@@ -1,8 +1,9 @@
 rootProject.name = 'backend'
 
-include(':boardly-shared')
-include(':boardly-api')
-include(':boardly-infrastructure')
-include(':boardly-domain')
-include(':boardly-application')
-include(':boardly-app')
+include 'boardly-shared'
+include 'boardly-app'
+include 'boardly-api'
+include 'boardly-application'
+include 'boardly-domain'
+include 'boardly-infrastructure'
+include 'boardly-schema'

@@ -2,29 +2,24 @@ plugins {
     id 'java-library'
 }
 
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
-
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(libs.versions.java.get())
-    }
+  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
 }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
-    api libs.bundles.common.dependencies
-
-    // Lombok for boilerplate reduction
+    // Lombok
     compileOnly libs.lombok
     annotationProcessor libs.lombok
-
-    testImplementation libs.spring.boot.starter.test
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
+    
+    // Validation
+    implementation libs.validation.api
+    
+    // ULID
+    implementation libs.ulid.creator
+    
+    // Test
+    testImplementation libs.junit.jupiter
+    testImplementation libs.mockito.core
 }

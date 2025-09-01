@@ -1,0 +1,23 @@
+{
+  "name": "boardly-docs",
+  "version": "1.0.0",
+  "description": "Boardly 프로젝트 문서화 및 Notion 동기화",
+  "scripts": {
+    "notion:sync": "node .github/scripts/notion-sync.js",
+    "notion:sync:local": "node scripts/local-notion-sync.js",
+    "notion:sync:force": "node scripts/local-notion-sync.js force"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^16.3.1"
+  },
+  "keywords": [
+    "notion",
+    "sync",
+    "documentation",
+    "markdown",
+    "git-hooks"
+  ],
+  "author": "Boardly Team",
+  "license": "MIT"
+}

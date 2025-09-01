@@ -1,0 +1,619 @@
+# 🛡️ Command 검증 패턴 가이드
+
+## 📋 개요
+애플리케이션 레이어에서 Command 객체의 입력값을 검증하기 위한 체계적인 패턴과 구조를 정의합니다.
+
+## 🎯 핵심 원칙
+
+### 1. Command별 Validator 조합 패턴
+- **타입 안전성**: Switch expression을 사용하여 컴파일 타임에 모든 Command 타입 검증 보장
+- **검증 전략 선택**: `combine` (모든 오류 수집) 또는 `chain` (첫 실패에서 중단) 방식 선택 가능
+- **검증기 조합**: 여러 개별 검증기를 조합하여 복합 검증 수행
+- **재사용성**: Command별로 최적화된 검증 로직 재사용
+
+## 🏗️ 구현 패턴
+
+### Command별 Validator 조합 클래스
+```java
+/**
+ * 사용자 관련 Validator 모음
+ * Command별로 필요한 Validator들을 조합하여 제공합니다.
+ */
+public final class UserValidators {
+
+    private UserValidators() {
+        // 유틸리티 클래스
+    }
+
+    /**
+     * UserCommand의 타입에 따라 적절한 검증을 수행합니다.
+     * 
+     * @param command 사용자 관련 명령
+     * @return 검증 결과
+     */
+    public static ValidationResult<UserCommand> validate(UserCommand command) {
+        return switch (command) {
+            case CreateUserCommand createCmd ->
+                CreateUserValidator.validate().validate(createCmd)
+                        .map(result -> (UserCommand) result);
+            case ChangePasswordCommand changeCmd ->
+                ChangePasswordValidator.validate().validate(changeCmd)
+                        .map(result -> (UserCommand) result);
+        };
+    }
+
+    /**
+     * CreateUserCommand 전용 검증기
+     * <p>
+     * EmailValidator + PasswordValidator + DisplayNameValidator를 조합합니다.
+     * 모든 검증을 수행하고 실패한 검증 결과를 모두 수집합니다.
+     * </p>
+     */
+    public static final class CreateUserValidator {
+
+        private CreateUserValidator() {
+            // 유틸리티 클래스
+        }
+
+        public static Validator<CreateUserCommand> validate() {
+            return Validator.combine(
+                    EmailValidator.validate(),
+                    PasswordValidator.validate(),
+                    DisplayNameValidator.validate());
+        }
+
+        /**
+         * 첫 번째 실패에서 중단하는 방식
+         */
+        public static Validator<CreateUserCommand> validateFailFast() {
+            return Validator.chain(
+                    EmailValidator.validate(),
+                    PasswordValidator.validate(),
+                    DisplayNameValidator.validate());
+        }
+    }
+
+    /**
+     * ChangePasswordCommand 전용 검증기
+     * <p>
+     * IdValidator + PasswordValidator를 조합합니다.
+     * 모든 검증을 수행하고 실패한 검증 결과를 모두 수집합니다.
+     * </p>
+     */
+    public static final class ChangePasswordValidator {
+
+        private ChangePasswordValidator() {
+            // 유틸리티 클래스
+        }
+
+        public static Validator<ChangePasswordCommand> validate() {
+            return Validator.combine(
+                    IdValidator.validate(),
+                    PasswordValidator.validate());
+        }
+
+        /**
+         * 첫 번째 실패에서 중단하는 방식
+         */
+        public static Validator<ChangePasswordCommand> validateFailFast() {
+            return Validator.chain(
+                    IdValidator.validate(),
+                    PasswordValidator.validate());
+        }
+    }
+}
+```
+
+### 개별 Validator 구현
+```java
+/**
+ * 이메일 검증기
+ */
+public final class EmailValidator {
+    
+    private EmailValidator() {
+        // 유틸리티 클래스
+    }
+    
+    public static <T extends HasEmail> Validator<T> validate() {
+        return command -> {
+            String email = command.getEmail();
+            
+            if (email == null || email.trim().isEmpty()) {
+                return ValidationResult.failure("validation.email.required");
+            }
+            
+            if (!isValidEmailFormat(email)) {
+                return ValidationResult.failure("validation.email.invalid");
+            }
+            
+            return ValidationResult.success(command);
+        };
+    }
+    
+    private static boolean isValidEmailFormat(String email) {
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    }
+}
+
+/**
+ * 패스워드 검증기
+ */
+public final class PasswordValidator {
+    
+    private PasswordValidator() {
+        // 유틸리티 클래스
+    }
+    
+    public static <T extends HasPassword> Validator<T> validate() {
+        return command -> {
+            String password = command.getPassword();
+            
+            if (password == null || password.isEmpty()) {
+                return ValidationResult.failure("validation.password.required");
+            }
+            
+            if (password.length() < 8) {
+                return ValidationResult.failure("validation.password.tooShort");
+            }
+            
+            if (!hasRequiredCharacters(password)) {
+                return ValidationResult.failure("validation.password.tooWeak");
+            }
+            
+            return ValidationResult.success(command);
+        };
+    }
+    
+    private static boolean hasRequiredCharacters(String password) {
+        return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+    }
+}
+
+/**
+ * 표시명 검증기
+ */
+public final class DisplayNameValidator {
+    
+    private DisplayNameValidator() {
+        // 유틸리티 클래스
+    }
+    
+    public static <T extends HasDisplayName> Validator<T> validate() {
+        return command -> {
+            String displayName = command.getDisplayName();
+            
+            if (displayName == null || displayName.trim().isEmpty()) {
+                return ValidationResult.failure("validation.displayName.required");
+            }
+            
+            if (displayName.length() > 50) {
+                return ValidationResult.failure("validation.displayName.tooLong");
+            }
+            
+            return ValidationResult.success(command);
+        };
+    }
+}
+```
+
+## 🎯 UseCase에서의 사용
+
+### 기본 사용 패턴
+```java
+@Service
+@RequiredArgsConstructor
+public class UserCrudService implements CreateUserUseCase {
+    
+    private final UserRepository userRepository;
+    
+    @Override
+    public Either<Failure, User> createUser(CreateUserCommand command) {
+        // 1. 입력값 검증 (Command별 Validator 조합 패턴 사용)
+        ValidationResult<CreateUserCommand> validation = 
+            UserValidators.CreateUserValidator.validate().validate(command);
+        
+        if (validation.isFailure()) {
+            return Either.left(Failure.ofInputError(validation.getErrors()));
+        }
+        
+        // 2. 비즈니스 룰 검증
+        if (userRepository.existsByEmail(command.getEmail())) {
+            return Either.left(Failure.ofConflict("user.email.already.exists"));
+        }
+        
+        // 3. 도메인 객체 생성
+        User user = User.create(command);
+        
+        // 4. 저장
+        return userRepository.save(user);
+    }
+}
+```
+
+### 검증 전략 선택
+```java
+public class ValidationStrategyExample {
+    
+    /**
+     * 모든 오류를 수집하는 방식 (UI/UX 개선)
+     * 사용자에게 모든 입력 오류를 한 번에 보여줄 때 사용
+     */
+    public Either<Failure, User> createUserWithAllErrors(CreateUserCommand command) {
+        ValidationResult<CreateUserCommand> validation = 
+            UserValidators.CreateUserValidator.validate().validate(command);
+        
+        if (validation.isFailure()) {
+            // 모든 오류 메시지가 포함됨
+            return Either.left(Failure.ofInputError(validation.getErrors()));
+        }
+        
+        return processCreateUser(command);
+    }
+    
+    /**
+     * 첫 번째 오류에서 중단하는 방식 (성능 최적화)
+     * 빠른 실패가 필요할 때 사용
+     */
+    public Either<Failure, User> createUserFailFast(CreateUserCommand command) {
+        ValidationResult<CreateUserCommand> validation = 
+            UserValidators.CreateUserValidator.validateFailFast().validate(command);
+        
+        if (validation.isFailure()) {
+            // 첫 번째 오류만 포함됨
+            return Either.left(Failure.ofInputError(validation.getErrors()));
+        }
+        
+        return processCreateUser(command);
+    }
+}
+```
+
+## 📁 패키지 구조
+
+### 권장 패키지 구조
+```
+com.boardly.application
+├── {domain}/                    // 도메인별 패키지 (예: user, board, workspace)
+│   ├── port/
+│   │   ├── in/                 // Inbound Port
+│   │   │   ├── {UseCase}.java          // UseCase 인터페이스
+│   │   │   ├── {Command}.java          // Command 객체
+│   │   │   └── validation/             // Command 검증 관련
+│   │   │       ├── {Domain}Validators.java   // Command별 Validator 조합
+│   │   │       └── validators/         // 개별 Validator 구현체
+│   │   │           ├── EmailValidator.java
+│   │   │           ├── PasswordValidator.java
+│   │   │           ├── IdValidator.java
+│   │   │           └── DisplayNameValidator.java
+│   │   └── out/                // Outbound Port
+│   └── {Domain}Service.java    // UseCase 구현체
+└── port/                       // 공통 port 기능
+    └── in/
+        └── validation/         // 공통 Validation 인터페이스
+            ├── Validator.java
+            ├── ValidationResult.java
+            └── ValidationError.java
+```
+
+### User 도메인 예시
+```
+com.boardly.application.user
+├── port/
+│   ├── in/
+│   │   ├── CreateUserUseCase.java
+│   │   ├── ChangePasswordUseCase.java
+│   │   ├── CreateUserCommand.java
+│   │   ├── ChangePasswordCommand.java
+│   │   └── validation/
+│   │       ├── UserValidators.java     // Command별 Validator 조합
+│   │       └── validators/             // 개별 Validator 구현체
+│   │           ├── EmailValidator.java
+│   │           ├── PasswordValidator.java
+│   │           ├── IdValidator.java
+│   │           └── DisplayNameValidator.java
+│   └── out/
+├── UserCrudService.java
+└── UserSecurityService.java
+```
+
+## 🔧 공통 Validation 인터페이스
+
+### Validator 인터페이스
+```java
+@FunctionalInterface
+public interface Validator<T> {
+    
+    ValidationResult<T> validate(T input);
+    
+    /**
+     * 여러 Validator를 조합하여 모든 검증 실행 (모든 오류 수집)
+     */
+    static <T> Validator<T> combine(Validator<T>... validators) {
+        return input -> {
+            List<String> errors = new ArrayList<>();
+            
+            for (Validator<T> validator : validators) {
+                ValidationResult<T> result = validator.validate(input);
+                if (result.isFailure()) {
+                    errors.addAll(result.getErrors());
+                }
+            }
+            
+            return errors.isEmpty() 
+                ? ValidationResult.success(input)
+                : ValidationResult.failure(errors);
+        };
+    }
+    
+    /**
+     * 여러 Validator를 체인으로 연결 (첫 번째 실패에서 중단)
+     */
+    static <T> Validator<T> chain(Validator<T>... validators) {
+        return input -> {
+            for (Validator<T> validator : validators) {
+                ValidationResult<T> result = validator.validate(input);
+                if (result.isFailure()) {
+                    return result;
+                }
+            }
+            return ValidationResult.success(input);
+        };
+    }
+}
+```
+
+### ValidationResult 클래스
+```java
+public sealed interface ValidationResult<T> {
+    
+    boolean isSuccess();
+    boolean isFailure();
+    T getValue();
+    List<String> getErrors();
+    <R> ValidationResult<R> map(Function<T, R> mapper);
+    
+    static <T> ValidationResult<T> success(T value) {
+        return new Success<>(value);
+    }
+    
+    static <T> ValidationResult<T> failure(String error) {
+        return new Failure<>(List.of(error));
+    }
+    
+    static <T> ValidationResult<T> failure(List<String> errors) {
+        return new Failure<>(errors);
+    }
+    
+    record Success<T>(T value) implements ValidationResult<T> {
+        @Override
+        public boolean isSuccess() { return true; }
+        
+        @Override
+        public boolean isFailure() { return false; }
+        
+        @Override
+        public T getValue() { return value; }
+        
+        @Override
+        public List<String> getErrors() { return List.of(); }
+        
+        @Override
+        public <R> ValidationResult<R> map(Function<T, R> mapper) {
+            return success(mapper.apply(value));
+        }
+    }
+    
+    record Failure<T>(List<String> errors) implements ValidationResult<T> {
+        @Override
+        public boolean isSuccess() { return false; }
+        
+        @Override
+        public boolean isFailure() { return true; }
+        
+        @Override
+        public T getValue() { 
+            throw new IllegalStateException("Cannot get value from failure result");
+        }
+        
+        @Override
+        public List<String> getErrors() { return errors; }
+        
+        @Override
+        public <R> ValidationResult<R> map(Function<T, R> mapper) {
+            return new Failure<>(errors);
+        }
+    }
+}
+```
+
+## 🧪 테스트 패턴
+
+### Validator 단위 테스트
+```java
+@Test
+@DisplayName("이메일 검증 - 성공")
+void emailValidator_shouldPassWithValidEmail() {
+    // Given
+    TestCommand command = new TestCommand("test@example.com");
+    
+    // When
+    ValidationResult<TestCommand> result = EmailValidator.validate().validate(command);
+    
+    // Then
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getValue()).isEqualTo(command);
+}
+
+@Test
+@DisplayName("이메일 검증 - 실패 (잘못된 형식)")
+void emailValidator_shouldFailWithInvalidFormat() {
+    // Given
+    TestCommand command = new TestCommand("invalid-email");
+    
+    // When
+    ValidationResult<TestCommand> result = EmailValidator.validate().validate(command);
+    
+    // Then
+    assertThat(result.isFailure()).isTrue();
+    assertThat(result.getErrors()).contains("validation.email.invalid");
+}
+```
+
+### Command별 Validator 조합 테스트
+```java
+@Test
+@DisplayName("CreateUserCommand 검증 - 성공")
+void createUserValidator_shouldValidateSuccessfully() {
+    // Given
+    CreateUserCommand validCommand = CreateUserCommand.of(
+        "John Doe", 
+        "john@example.com", 
+        "SecurePass123!"
+    );
+    
+    // When
+    ValidationResult<CreateUserCommand> result = 
+        UserValidators.CreateUserValidator.validate().validate(validCommand);
+    
+    // Then
+    assertThat(result.isSuccess()).isTrue();
+    assertThat(result.getValue()).isEqualTo(validCommand);
+}
+
+@Test
+@DisplayName("CreateUserCommand 검증 - 모든 오류 수집")
+void createUserValidator_shouldCollectAllErrors() {
+    // Given
+    CreateUserCommand invalidCommand = CreateUserCommand.of("", "invalid", "weak");
+    
+    // When
+    ValidationResult<CreateUserCommand> result = 
+        UserValidators.CreateUserValidator.validate().validate(invalidCommand);
+    
+    // Then
+    assertThat(result.isFailure()).isTrue();
+    assertThat(result.getErrors()).hasSize(3); // displayName, email, password 오류
+    assertThat(result.getErrors()).contains(
+        "validation.displayName.required",
+        "validation.email.invalid",
+        "validation.password.tooWeak"
+    );
+}
+
+@Test
+@DisplayName("CreateUserCommand 검증 - 첫 번째 오류에서 중단")
+void createUserValidator_shouldFailFast() {
+    // Given
+    CreateUserCommand invalidCommand = CreateUserCommand.of("", "invalid", "weak");
+    
+    // When
+    ValidationResult<CreateUserCommand> result = 
+        UserValidators.CreateUserValidator.validateFailFast().validate(invalidCommand);
+    
+    // Then
+    assertThat(result.isFailure()).isTrue();
+    assertThat(result.getErrors()).hasSize(1); // 첫 번째 오류만
+}
+```
+
+### UseCase 통합 테스트
+```java
+@Test
+@DisplayName("UseCase 검증 실패 - 입력값 오류")
+void useCase_shouldFailWithValidationErrors() {
+    // Given
+    CreateUserCommand invalidCommand = CreateUserCommand.of("", "invalid-email", "weak");
+    
+    // When
+    Either<Failure, User> result = userCrudService.createUser(invalidCommand);
+    
+    // Then
+    assertThat(result.isLeft()).isTrue();
+    assertThat(result.getLeft().getType()).isEqualTo(Failure.Type.INPUT_ERROR);
+    
+    Failure failure = result.getLeft();
+    assertThat(failure.getDetails()).isInstanceOf(List.class);
+    
+    @SuppressWarnings("unchecked")
+    List<String> errors = (List<String>) failure.getDetails();
+    assertThat(errors).isNotEmpty();
+}
+```
+
+## 💡 검증 전략 선택 가이드
+
+### combine 방식 (권장)
+- **사용 시기**: 사용자에게 모든 입력 오류를 한 번에 보여주고 싶을 때
+- **장점**: 사용자 경험 향상, 폼 검증에 적합
+- **단점**: 모든 검증을 수행하므로 약간의 성능 오버헤드
+
+### chain 방식
+- **사용 시기**: 첫 번째 오류에서 빠르게 실패하고 싶을 때
+- **장점**: 성능 최적화, 빠른 실패
+- **단점**: 사용자가 모든 오류를 한 번에 볼 수 없음
+
+## 🔗 관련 패턴
+
+- **Composite Pattern**: Validator들을 조합하여 복합 검증 로직을 구성
+- **Strategy Pattern**: `combine`과 `chain` 같은 다른 검증 전략을 선택
+- **Chain of Responsibility Pattern**: `chain` 방식에서 각 검증기가 순차적으로 책임을 넘김
+- **Command Pattern**: 검증 대상이 되는 Command 객체와의 연계
+- **Template Method Pattern**: 개별 Validator의 공통 검증 로직 추상화
+
+## 📚 메시지 키 규칙
+
+### 네이밍 컨벤션
+```
+validation.{field}.{rule}
+
+예시:
+- validation.email.required
+- validation.email.invalid
+- validation.password.required
+- validation.password.tooShort
+- validation.password.tooWeak
+- validation.displayName.required
+- validation.displayName.tooLong
+```
+
+### 메시지 파일 예시
+```properties
+# ValidationMessages.properties
+validation.email.required=이메일을 입력해주세요.
+validation.email.invalid=올바른 이메일 형식이 아닙니다.
+validation.password.required=비밀번호를 입력해주세요.
+validation.password.tooShort=비밀번호는 최소 8자 이상이어야 합니다.
+validation.password.tooWeak=비밀번호는 대소문자, 숫자, 특수문자를 포함해야 합니다.
+validation.displayName.required=표시명을 입력해주세요.
+validation.displayName.tooLong=표시명은 50자를 초과할 수 없습니다.
+```
+
+## ⚠️ 주의사항
+
+### 1. 성능 고려사항
+- 대량 데이터 처리 시 `combine` 방식보다 `chain` 방식 고려
+- 불필요한 검증 로직 중복 방지
+- 검증 실패 시 빠른 반환
+
+### 2. 타입 안전성
+- Switch expression에서 모든 Command 타입을 처리해야 함
+- 새로운 Command 추가 시 컴파일 에러로 누락 방지
+
+### 3. 테스트 커버리지
+- 각 개별 Validator 단위 테스트
+- Command별 조합 Validator 테스트
+- UseCase 통합 테스트에서 검증 실패 케이스 포함
+
+### 4. 메시지 국제화
+- 모든 검증 오류 메시지는 메시지 키 사용
+- 필드명도 메시지 파일에서 관리
+- 컨텍스트 정보가 필요한 경우 파라미터 활용
+
+description: Command 객체의 입력값 검증을 위한 체계적인 패턴과 구조를 정의합니다. Command별 Validator 조합 패턴을 통해 타입 안전하고 재사용 가능한 검증 로직을 구현합니다.
+globs:
+  - "**/application/**/validation/**/*Validators.java"
+  - "**/application/**/validation/validators/**/*Validator.java"
+  - "**/application/port/in/validation/**/*.java"
+alwaysApply: true
+---

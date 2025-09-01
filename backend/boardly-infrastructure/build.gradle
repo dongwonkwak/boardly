@@ -1,31 +1,27 @@
 plugins {
-  id 'java-library'
+    id 'java'
+    id 'io.spring.dependency-management'
 }
-
-group = 'com.boardly'
-version = '0.0.1-SNAPSHOT'
-
-java {
-  toolchain { languageVersion = JavaLanguageVersion.of(libs.versions.java.get()) }
-}
-
-repositories { mavenCentral() }
 
 dependencies {
-  api project(':boardly-shared')
-  implementation project(':boardly-domain')
-  implementation libs.bundles.spring.boot.dependencies
-  implementation libs.bundles.flyway.dependencies
-  implementation libs.bundles.springdoc.dependencies
-  // MapStruct for mapping between domain <-> entity and domain <-> dto
-  implementation libs.mapstruct
-  annotationProcessor libs.mapstruct.processor
-  runtimeOnly libs.postgres
-
-  compileOnly libs.lombok
-  annotationProcessor libs.lombok
-
-  testImplementation libs.spring.boot.starter.test
+    // Internal modules
+    implementation project(':boardly-shared')
+    implementation project(':boardly-domain')
+    implementation project(':boardly-application')
+    
+    // Spring Boot Starters
+    implementation libs.spring.boot.starter.data.jpa
+    implementation libs.spring.boot.starter.web
+    
+    // Lombok
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+    
+    // Database
+    implementation libs.h2
+    implementation libs.postgres
+    
+    // Test
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.bundles.testcontainers
 }
-
-tasks.named('test') { useJUnitPlatform() }

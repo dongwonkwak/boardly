@@ -1,0 +1,65 @@
+# 국제화 메시지 파일 관리 규칙
+
+## 메시지 파일 분리 원칙
+
+### Validation 위반 메시지 (InputError 사용 시)
+[Failure.java](mdc:boardly-domain/src/main/java/com/boardly/domain/common/Failure.java)의 `InputError` 클래스를 사용하는 경우에는 다음 파일들에 메시지를 추가해야 합니다:
+
+- **영어**: [ValidationMessages.properties](mdc:boardly-infrastructure/src/main/resources/messages/ValidationMessages.properties)
+- **한국어**: [ValidationMessages_ko.properties](mdc:boardly-infrastructure/src/main/resources/messages/ValidationMessages_ko.properties)
+
+### 일반 메시지 (기타 Failure 타입 사용 시)
+`InputError` 외의 다른 Failure 타입(`PermissionDenied`, `NotFound`, `ResourceConflict`, `BusinessRuleViolation`, `InternalError` 등)을 사용하는 경우에는 다음 파일들에 메시지를 추가해야 합니다:
+
+- **영어**: [messages.properties](mdc:boardly-infrastructure/src/main/resources/messages/messages.properties)
+- **한국어**: [messages_ko.properties](mdc:boardly-infrastructure/src/main/resources/messages/messages_ko.properties)
+
+## 메시지 키 명명 규칙
+
+### Validation 메시지 키
+- 형식: `error.validation.{도메인}.{필드}.{규칙}`
+- 예시: `error.validation.user.email.invalid`, `error.validation.board.title.required`
+
+### 일반 메시지 키
+- 형식: `error.{도메인}.{상황}`
+- 예시: `error.user.not.found`, `error.board.permission.denied`
+
+## 사용 예시
+
+### Validation 위반 시 (InputError)
+```java
+// ValidationMessages.properties에 추가
+error.validation.user.email.invalid=Invalid email format
+
+// ValidationMessages_ko.properties에 추가  
+error.validation.user.email.invalid=유효하지 않은 이메일 형식입니다
+
+// 코드에서 사용
+return Failure.ofInputError("error.validation.user.email.invalid", violations);
+```
+
+### 일반 오류 시 (기타 Failure 타입)
+```java
+// messages.properties에 추가
+error.user.not.found=User not found
+
+// messages_ko.properties에 추가
+error.user.not.found=사용자를 찾을 수 없습니다
+
+// 코드에서 사용
+return Failure.ofNotFound("error.user.not.found", userId);
+```
+
+## 파일 위치
+모든 국제화 메시지 파일은 다음 경로에 위치합니다:
+`boardly-infrastructure/src/main/resources/messages/`
+
+## 주의사항
+1. 새로운 메시지 키를 추가할 때는 반드시 영어와 한국어 버전을 모두 추가해야 합니다
+2. Validation 위반과 일반 오류를 구분하여 적절한 파일에 추가해야 합니다
+3. 메시지 키는 일관된 명명 규칙을 따라야 합니다
+4. 기존 메시지 키와 중복되지 않도록 주의해야 합니다
+description:
+globs:
+alwaysApply: true
+---

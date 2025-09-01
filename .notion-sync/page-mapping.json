@@ -1,0 +1,12 @@
+{
+  "docs/README.md": "260c6221-cd14-80a9-bb57-cf1a235c5834",
+  "docs/architecture/backend-architecture.md": "260c6221-cd14-8163-b220-e57168ceb3a4",
+  "docs/architecture/frontend-architecture.md": "260c6221-cd14-81e7-8b8c-fed9f0910613",
+  "docs/architecture/system-architecture.md": "260c6221-cd14-81ca-a3db-e77ff3ac3afe",
+  "docs/architecture/backend-api-implementation.md": "260c6221-cd14-81fa-92e1-eb4041d83e94",
+  "docs/design/boardly-schema.md": "260c6221-cd14-8147-9835-c5b38327efbb",
+  "docs/design/domain-id-specification.md": "260c6221-cd14-815a-b30b-d77913d97c8e",
+  "docs/design/erd.md": "260c6221-cd14-8110-9498-e02f9639400f",
+  "docs/design/error-code-specification.md": "260c6221-cd14-81b3-9bb9-ff9558030106",
+  "docs/management/notion-sync-guide.md": "260c6221-cd14-8194-92af-f3d8a8a5bef4"
+}

@@ -1,0 +1,10 @@
+---
+description: 패키지 설치 방법
+alwaysApply: false
+---
+
+- `pnpm`을 사용해서 패키지를 설치한다.
+
+```sh
+pnpm add ...
+```

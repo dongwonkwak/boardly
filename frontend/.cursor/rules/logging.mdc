@@ -1,0 +1,26 @@
+---
+description: 로깅하기
+alwaysApply: false
+---
+
+로깅을 하기 위해서는 `log`를 사용한다:
+
+```typescript
+import log from "./utils/logger";
+
+log.debug("디버그 로그"); // 디버그 로그
+log.info("인포 로그"); // 인포 로그
+log.warn("경고 로그"); // 경고 로그
+log.error("에러 로그"); // 에러 로그
+```
+
+예외 발생시에 `log`를 사용해 에러를 출력한다:
+
+```typescript
+try {
+  // ...
+} catch (error) {
+  log.error(error);
+  // ...
+}
+```

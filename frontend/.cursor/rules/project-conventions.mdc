@@ -1,0 +1,57 @@
+## Boardly 모노레포 규칙 (Frontend 관점)
+
+- 이 문서는 Cursor가 `frontend/`에서 작업할 때 따라야 할 공통 규칙을 정의합니다.
+- 프론트엔드는 React 19 + TypeScript + Vite 7, 패키지 매니저는 pnpm 고정.
+
+### 공통 원칙
+- **가독성/명확성 우선**: 축약/매직 최소화, 의도 드러내기.
+- **작은 변경 단위**: 기능별 작은 PR. 디자인 리팩터는 범위 합의.
+- **비밀정보 금지**: `.env*` 실 비밀값/토큰 커밋 금지. `VITE_` 접두 필요.
+- **생성물 금지**: `dist/` 등 빌드 산출물 커밋 금지.
+- **커밋 메시지**: Conventional Commits. 예) `feat(frontend/board): add drag reorder`.
+- **패키지 매니저**: pnpm만 사용. npm/yarn 혼용 금지.
+
+### 실행/빌드/테스트
+- 의존성 설치: ```bash
+pnpm install
+```
+- 개발 실행: ```bash
+pnpm dev
+```
+- 빌드: ```bash
+pnpm build
+```
+- 테스트: ```bash
+pnpm test:run
+```
+- 린트/포맷/체크: ```bash
+pnpm lint && pnpm format && pnpm check
+```
+- OpenAPI 클라이언트 생성: ```bash
+pnpm generate-api
+```
+
+### 코드/설계 가이드
+- 경로 별칭 `@/` 사용. UI 프리미티브와 도메인 컴포넌트 분리.
+- 상태/폼: Zustand + React Hook Form + Zod 조합 권장. 서버 타입은 OpenAPI 생성물 사용.
+- 스타일: Tailwind 4 + `cn()` + `class-variance-authority`.
+- i18n: `react-i18next` 패턴 준수, 하드코딩 키 금지.
+
+### 자동 생성물/금지 파일
+- `src/services/api/client.ts`는 `pnpm generate-api`로 생성. 수동 수정 금지.
+- `../docs/api/openapi.json`은 백엔드에서 동기화됨. 직접 편집 금지.
+
+### 리뷰 체크리스트
+- 접근성: 시맨틱 태그, 라벨링, 키보드 탐색.
+- 성능: 불필요한 리렌더/메모이제이션 점검.
+- 테스트: RTL 쿼리 중심, 상호작용 케이스 포함.
+- 코드 품질: Biome 경고/에러 0.
+
+### 도구 사용 규칙(에이전트)
+- dev/watch 장시간 프로세스 자동 실행 금지.
+- 패키지 추가는 pnpm 스크립트에 한정. lock 파일 일관성 유지.
+
+### 복붙용 명령
+```bash
+pnpm install && pnpm generate-api && pnpm build
+```

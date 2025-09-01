@@ -1,0 +1,240 @@
+package com.boardly.features.board.domain;
+
+import java.time.Instant;
+import java.util.Objects;
+
+import com.boardly.shared.domain.BaseEntity;
+import com.boardly.shared.common.value.BoardId;
+import com.boardly.shared.common.value.UserId;
+import com.boardly.shared.common.value.BoardRole;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
+import lombok.Builder;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Board extends BaseEntity {
+
+    private BoardId boardId;
+    private String title;
+    private String description;
+    private boolean isArchived;
+    private UserId ownerId;
+    private boolean isStarred;
+
+    @Builder
+    private Board(BoardId boardId, String title, String description,
+            boolean isArchived, UserId ownerId, boolean isStarred,
+            Instant createdAt, Instant updatedAt) {
+
+        super(createdAt, updatedAt);
+        this.boardId = boardId;
+        this.title = title;
+        this.description = description;
+        this.isArchived = isArchived;
+        this.ownerId = ownerId;
+        this.isStarred = isStarred;
+    }
+
+    /**
+     * 새로운 보드를 생성합니다. (UTC 기준)
+     */
+    public static Board create(String title, String description, UserId ownerId) {
+        Instant now = Instant.now();
+        return Board.builder()
+                .boardId(new BoardId())
+                .title(title)
+                .description(description)
+                .isArchived(false)
+                .ownerId(ownerId)
+                .isStarred(false)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    /**
+     * 보드 제목을 수정합니다.
+     */
+    public void updateTitle(String title) {
+        this.title = title;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드 설명을 수정합니다.
+     */
+    public void updateDescription(String description) {
+        this.description = description;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드 즐겨찾기 상태를 수정합니다.
+     */
+    public void updateStarred(boolean isStarred) {
+        this.isStarred = isStarred;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드를 수정합니다.
+     */
+    public void update(String title, String description) {
+        this.title = title;
+        this.description = description;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드를 아카이브합니다.
+     */
+    public void archive() {
+        this.isArchived = true;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드를 언아카이브합니다.
+     */
+    public void unarchive() {
+        this.isArchived = false;
+        markAsUpdated();
+    }
+
+    /**
+     * 보드가 활성 상태인지 확인합니다.
+     */
+    public boolean isActive() {
+        return !isArchived;
+    }
+
+    /**
+     * 보드가 수정된 적이 있는지 확인
+     * (생성 시간과 수정 시간이 다른 경우)
+     */
+    public boolean hasBeenModified() {
+        return !getCreatedAt().equals(getUpdatedAt());
+    }
+
+    /**
+     * 사용자가 이 보드에 접근할 수 있는지 확인
+     */
+    public boolean canAccess(UserId userId) {
+        return this.ownerId.equals(userId);
+    }
+
+    /**
+     * 사용자가 이 보드를 수정할 수 있는지 확인
+     */
+    public boolean canModify(UserId userId) {
+        return canAccess(userId) && !isArchived;
+    }
+
+    /**
+     * 사용자가 이 보드를 아카이브할 수 있는지 확인
+     */
+    public boolean canArchive(UserId userId) {
+        return canAccess(userId);
+    }
+
+    /**
+     * 사용자가 이 보드의 즐겨찾기를 변경할 수 있는지 확인
+     */
+    public boolean canToggleStar(UserId userId) {
+        return canAccess(userId);
+    }
+
+    /**
+     * 사용자가 이 보드에 접근할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canAccessWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasReadPermission() && !isArchived;
+    }
+
+    /**
+     * 사용자가 이 보드를 수정할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canModifyWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId) && !isArchived;
+        }
+        return role.hasWritePermission() && !isArchived;
+    }
+
+    /**
+     * 사용자가 이 보드를 아카이브할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canArchiveWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
+    /**
+     * 사용자가 이 보드의 즐겨찾기를 변경할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canToggleStarWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasWritePermission();
+    }
+
+    /**
+     * 사용자가 보드 멤버를 관리할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canManageMembersWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
+    /**
+     * 사용자가 보드 설정을 변경할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canManageBoardSettingsWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
+    /**
+     * 사용자가 보드를 삭제할 수 있는지 확인 (멤버 권한 기반)
+     */
+    public boolean canDeleteWithRole(UserId userId, BoardRole role) {
+        if (role == null) {
+            return this.ownerId.equals(userId);
+        }
+        return role.hasAdminPermission();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || getClass() != obj.getClass())
+            return false;
+        Board board = (Board) obj;
+        return Objects.equals(boardId, board.boardId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(boardId);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Board{boardId=%s, title='%s', isArchived=%s, ownerId=%s, createdAt=%s, updatedAt=%s}",
+                boardId, title, isArchived, ownerId, getCreatedAt(), getUpdatedAt());
+    }
+}

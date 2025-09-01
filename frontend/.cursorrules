@@ -1,0 +1,33 @@
+# Frontend Project Cursor Rules
+
+## Commit Message Generation Rules
+
+When generating commit messages for this frontend project, ALWAYS follow these rules:
+
+1. **MANDATORY PREFIX**: All commit messages MUST start with `[Frontend]` prefix
+2. **Format**: `[Frontend] <type>: <description>`
+3. **Types**: Use conventional commit types (feat, fix, refactor, docs, test, style, chore)
+4. **Description**: Write in Korean using imperative mood, no period at end
+5. **Length**: Keep under 50 characters total
+
+### Examples:
+
+- `[Frontend] feat: 사용자 인증 플로우 추가`
+- `[Frontend] fix: 대시보드 라우팅 문제 해결`
+- `[Frontend] refactor: 컴포넌트 성능 최적화`
+- `[Frontend] docs: API 문서 업데이트`
+- `[Frontend] test: 인증 컴포넌트 단위 테스트 추가`
+
+### Commit Message Generation:
+
+When I ask you to generate a commit message or when using Cursor's commit message generation feature, automatically prepend `[Frontend]` to every commit message and write the description in Korean without asking.
+
+## General Coding Rules
+
+- Use TypeScript for all new code
+- Follow React best practices with hooks
+- Use Tailwind CSS for styling
+- Use lucide-react for icons and UI components
+- Implement proper error handling and logging
+- Write unit tests for components (except @/ui folder components)
+- Use Korean for all user-facing text and comments

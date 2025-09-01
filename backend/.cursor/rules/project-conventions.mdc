@@ -1,0 +1,56 @@
+## Boardly 모노레포 규칙 (Backend 관점)
+
+- 이 문서는 Cursor가 `backend/`에서 작업할 때 따라야 할 공통 규칙을 정의합니다.
+- 모노레포 구조(`backend`, `frontend`, `docs`) 전제. 백엔드는 Java 21 + Spring Boot 3.5 + Gradle.
+
+### 공통 원칙
+- **가독성/명확성 우선**: 축약/매직 최소화, 의도 드러내기.
+- **작은 변경 단위**: 기능별 작은 PR. 대규모 리팩터는 범위 합의.
+- **비밀정보 금지**: `application-*.yml` 실 비밀값/토큰 커밋 금지.
+- **생성물 금지**: 빌드 결과물/캐시/IDE 파일 커밋 금지.
+- **커밋 메시지**: Conventional Commits. 예) `feat(backend/board): add duplication usecase`.
+
+### 실행/빌드/테스트
+- 개발 실행: ```bash
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+- 빌드: ```bash
+./gradlew build
+```
+- 테스트: ```bash
+./gradlew test
+```
+- 코드 포맷: ```bash
+./gradlew spotlessApply
+```
+- OpenAPI 스펙 생성/복사: ```bash
+./gradlew generateOpenApiDocs copyOpenApiToStatic copyOpenApiToProjectRoot
+```
+
+### 아키텍처 가드레일
+- 레이어 경계 유지: Presentation → Application → Domain → Infrastructure.
+- Validator 책임 분리: Controller(Bean Validation) → Application(Validator) → Domain(불변식).
+- 에러 처리: 예외 남발 금지, Vavr `Either` 기반 플로우 우선.
+- 트랜잭션: Application 서비스 레이어에서 시작. 도메인 모델은 순수하게.
+
+### 데이터/마이그레이션
+- Flyway 스크립트는 점증적 버전 명명 사용. `schema.sql`/`data.sql` 수정보다 마이그레이션 추가를 우선.
+
+### 자동 생성물/금지 파일
+- `../docs/api/openapi.json`은 백엔드 태스크로 동기화. 직접 편집 금지.
+- `src/main/resources/static/docs/openapi.json`도 자동 복사 산출물. 수동 수정 금지.
+
+### 리뷰 체크리스트
+- 테스트: 핵심 규칙/검증/보안 경로에 테스트 동반.
+- 성능: N+1, 불필요한 로깅/직렬화 방지.
+- 보안: CORS/인증 흐름/민감정보 노출 점검.
+- 포맷: `spotlessApply` 통과.
+
+### 도구 사용 규칙(에이전트)
+- dev/watch 장시간 프로세스 자동 실행 금지.
+- OpenAPI 재생성은 Gradle 태스크 사용. 수동 편집 금지.
+
+### 복붙용 명령
+```bash
+./gradlew clean build && ./gradlew generateOpenApiDocs copyOpenApiToProjectRoot
+```

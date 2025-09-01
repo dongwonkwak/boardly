@@ -1,0 +1,53 @@
+## Backend 테스트 코드 작성 규칙
+
+- 단위 테스트는 순수 자바 테스트로 작성하며, 스프링 컨텍스트 로딩은 지양합니다.
+- JUnit 5 + Mockito(+ AssertJ) 조합을 기본값으로 사용합니다.
+
+### Mockito 사용
+- `@MockBean` 사용 금지. 스프링 컨텍스트를 올리지 않습니다.
+- `@Mock`을 사용하고, 필요 시 `@InjectMocks` 또는 생성자 주입으로 테스트 대상에 주입합니다.
+- 테스트 클래스에는 `@ExtendWith(MockitoExtension.class)`를 사용합니다.
+
+```java
+@ExtendWith(MockitoExtension.class)
+class CreateBoardServiceTest {
+    @Mock private BoardRepository boardRepository;
+    @InjectMocks private CreateBoardService createBoardService;
+}
+```
+
+### 컴파일 경고 억제 (unchecked)
+- `any(Map.class)` 등 제네릭 소거로 인해 경고가 발생하는 스텁/검증이 있는 경우, 가장 좁은 범위(메서드 또는 로컬)에서 `@SuppressWarnings("unchecked")`를 추가합니다.
+
+```java
+@ExtendWith(MockitoExtension.class)
+class SomeServiceTest {
+    @Mock private ExternalClient externalClient;
+    @InjectMocks private SomeService someService;
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void should_call_with_map_argument_without_warnings() {
+        doReturn("ok").when(externalClient).call(any(Map.class));
+        String result = someService.process();
+        assertThat(result).isEqualTo("ok");
+    }
+}
+```
+
+### null 가능성 경고 처리
+- 널 가능성이 있는 값을 다룰 때는 즉시 널 검증을 수행합니다. 아래와 같이 캐스팅/추출 직후 `assertThat(...).isNotNull()`로 방어적 단언을 추가합니다.
+
+```java
+ResponseEntity<?> response = controller.createBoard(request);
+BoardResponse boardResponse = (BoardResponse) response.getBody();
+assertThat(boardResponse).isNotNull();
+// 이후 boardResponse 사용
+assertThat(boardResponse.getTitle()).isEqualTo("테스트 보드");
+```
+
+### 기타 권장 사항
+- 테스트 메서드 네이밍: `methodName_State_ExpectedBehavior` 또는 한글 `설명적 문장` + `@DisplayName` 사용.
+- 구조: Given/When/Then 단계가 드러나도록 구성.
+- 스텁은 필요한 최소 범위에만 정의하고, 검증은 `verify(...)`로 상호작용을 명확히 표현.
+- 컬렉션/Optional 검증 시 `isNotEmpty()/isPresent()`로 명시적 단언.

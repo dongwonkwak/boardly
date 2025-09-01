@@ -1,0 +1,8 @@
+---
+description: Service 클래스에서 Either.left()로 실패를 리턴하는 경우, ValidationMessageResolver를 사용하여 다국어 처리된 메시지를 제공해야 합니다. 하드코딩된 한국어 메시지 대신 메시지 키를 사용하고, messages 파일에서 해당 메시지를 정의해야 합니다.
+alwaysApply: false
+---
+- Service 클래스는 ValidationMessageResolver를 의존성으로 주입받아야 합니다
+- Failure 객체 생성 시 messageResolver.getMessage("메시지키") 또는 messageResolver.getMessageWithDefault("메시지키", "기본메시지") 사용
+- 메시지 키 형식: "error.service.도메인.동작.실패유형" (예: "error.service.board.get.validation", "error.service.board.get.internal")
+- ValidationFailure의 FieldViolation도 messageResolver 사용

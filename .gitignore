@@ -1,2 +1,7 @@
 .DS_Store
 frontend/.env.development
+.vscode
+docs/backup
+node_modules
+scripts/notion-mapping.json
+.env

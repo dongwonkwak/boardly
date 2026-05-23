@@ -558,7 +558,7 @@
 
 ### 백엔드 구현
 
-1. **인증**: JWT Bearer Token을 통한 사용자 인증
+1. **인증**: OAuth2/OIDC 액세스 토큰을 통한 사용자 인증
 2. **권한 확인**: 사용자가 접근할 수 있는 카드만 조회/수정 가능
 3. **트랜잭션**: 카드 이동 시 원자적 처리
 4. **성능 최적화**: 인덱스를 활용한 빠른 조회 (listId, position)
@@ -571,14 +571,14 @@
 ### 카드 조회
 ```bash
 curl -X GET "https://api.boardly.com/api/cards/card_123" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ```
 
 ### 카드 생성
 ```bash
 curl -X POST "https://api.boardly.com/api/cards" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "새로운 카드",
@@ -590,7 +590,7 @@ curl -X POST "https://api.boardly.com/api/cards" \
 ### 카드 우선순위 업데이트
 ```bash
 curl -X PUT "https://api.boardly.com/api/cards/card_123/priority" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "priority": "high"
@@ -600,7 +600,7 @@ curl -X PUT "https://api.boardly.com/api/cards/card_123/priority" \
 ### 카드 시작일 업데이트
 ```bash
 curl -X PUT "https://api.boardly.com/api/cards/card_123/start-date" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "startDate": "2024-01-01T00:00:00Z"
@@ -610,7 +610,7 @@ curl -X PUT "https://api.boardly.com/api/cards/card_123/start-date" \
 ### 카드 완료 상태 업데이트
 ```bash
 curl -X PUT "https://api.boardly.com/api/cards/card_123/completed" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "isCompleted": true
@@ -620,7 +620,7 @@ curl -X PUT "https://api.boardly.com/api/cards/card_123/completed" \
 ### 카드 이동
 ```bash
 curl -X PUT "https://api.boardly.com/api/cards/card_123/move" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "targetListId": "list_789",
@@ -631,6 +631,6 @@ curl -X PUT "https://api.boardly.com/api/cards/card_123/move" \
 ### 카드 검색
 ```bash
 curl -X GET "https://api.boardly.com/api/cards/lists/list_456/search?searchTerm=API" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ``` 

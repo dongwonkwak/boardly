@@ -247,7 +247,7 @@
 
 ### 백엔드 구현
 
-1. **인증**: JWT Bearer Token을 통한 사용자 인증
+1. **인증**: OAuth2/OIDC 액세스 토큰을 통한 사용자 인증
 2. **권한 확인**: 사용자가 접근할 수 있는 보드의 리스트만 조회/수정 가능
 3. **트랜잭션**: 리스트 위치 변경 시 원자적 처리
 4. **성능 최적화**: 인덱스를 활용한 빠른 조회 (boardId, position)
@@ -257,14 +257,14 @@
 ### 리스트 목록 조회
 ```bash
 curl -X GET "https://api.boardly.com/api/board-lists/board_456" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ```
 
 ### 리스트 생성
 ```bash
 curl -X POST "https://api.boardly.com/api/board-lists/board_456" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "할 일",
@@ -276,7 +276,7 @@ curl -X POST "https://api.boardly.com/api/board-lists/board_456" \
 ### 리스트 수정
 ```bash
 curl -X PUT "https://api.boardly.com/api/board-lists/list_123" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "수정된 할 일",
@@ -288,7 +288,7 @@ curl -X PUT "https://api.boardly.com/api/board-lists/list_123" \
 ### 리스트 위치 변경
 ```bash
 curl -X PUT "https://api.boardly.com/api/board-lists/list_123/position" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "position": 2
@@ -298,6 +298,6 @@ curl -X PUT "https://api.boardly.com/api/board-lists/list_123/position" \
 ### 리스트 삭제
 ```bash
 curl -X DELETE "https://api.boardly.com/api/board-lists/list_123" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ``` 

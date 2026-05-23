@@ -243,7 +243,7 @@
 
 ### 백엔드 구현
 
-1. **인증**: JWT Bearer Token을 통한 사용자 인증
+1. **인증**: OAuth2/OIDC 액세스 토큰을 통한 사용자 인증
 2. **권한 확인**: 사용자가 접근할 수 있는 보드들만 필터링하여 반환
 3. **활동 로그**: 최근 20개 활동만 반환 (페이지네이션 고려)
 4. **성능 최적화**: 보드별 리스트/카드 개수는 캐싱 또는 집계 테이블 활용
@@ -258,6 +258,6 @@
 
 ```bash
 curl -X GET "https://api.boardly.com/api/dashboard" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ```

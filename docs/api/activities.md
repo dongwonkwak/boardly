@@ -300,7 +300,7 @@
 
 ### 백엔드 구현
 
-1. **인증**: JWT Bearer Token을 통한 사용자 인증
+1. **인증**: OAuth2/OIDC 액세스 토큰을 통한 사용자 인증
 2. **권한 확인**: 사용자가 접근할 수 있는 보드의 활동만 필터링하여 반환
 3. **성능 최적화**: 인덱스를 활용한 빠른 조회 (timestamp, boardId, userId)
 4. **캐싱**: 자주 조회되는 활동 데이터는 Redis 캐싱 활용
@@ -311,13 +311,13 @@
 ### 내 활동 목록 조회
 ```bash
 curl -X GET "https://api.boardly.com/api/activities/me?page=0&size=20" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ```
 
 ### 보드 활동 목록 조회
 ```bash
 curl -X GET "https://api.boardly.com/api/activities/boards/board_123?page=0&size=20&since=2025-01-01T00:00:00Z" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ``` 

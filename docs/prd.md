@@ -9,13 +9,13 @@
 개인 및 소규모 팀이 작업을 시각적으로 관리하고 협업할 수 있는 칸반(Kanban) 보드 스타일의 웹 애플리케이션 개발
 
 ### 기술 스택
-- **백엔드**: Spring Boot 3
-- **프론트엔드**: React
-- **데이터베이스**: PostgreSQL
+- **백엔드**: Spring Boot 3.5.x, Java 21
+- **프론트엔드**: React 19, TypeScript, Vite
+- **데이터베이스**: PostgreSQL, H2(local/dev)
 - **API 명세**: OpenAPI 3.0
 - **다국어 지원**: 영어(English), 한국어(Korean)
-- **상태 관리**: Redux Toolkit 또는 Zustand
-- **UI 라이브러리**: Material-UI 또는 Ant Design
+- **상태 관리**: Zustand
+- **UI 구성**: Tailwind CSS, shadcn/ui 스타일 컴포넌트
 
 ## 2. 타겟 사용자
 
@@ -43,7 +43,7 @@ Boardly는 다음과 같은 사용자들을 대상으로 합니다:
 
 #### 로그인/로그아웃
 - 이메일과 비밀번호를 통한 인증
-- JWT 토큰 기반 인증
+- OAuth2/OIDC Authorization Code + PKCE 기반 인증
 - 세션 관리 및 안전한 로그아웃
 
 #### 프로필 관리
@@ -133,7 +133,7 @@ Boardly는 다음과 같은 사용자들을 대상으로 합니다:
 - RESTful API 원칙 준수
 - OpenAPI 3.0 명세 작성
 - JSON 형태의 데이터 교환
-- API 버전 관리 (v1, v2 등)
+- 현재 API prefix는 `/api` 사용
 - 적절한 HTTP 상태 코드 사용
 
 ### 5.2 데이터베이스 설계
@@ -144,7 +144,8 @@ Boardly는 다음과 같은 사용자들을 대상으로 합니다:
 
 ### 5.3 보안
 - 사용자 인증 및 권한 관리
-- JWT 토큰 기반 인증
+- Spring Authorization Server 기반 OAuth2/OIDC 인증
+- Authorization Code + PKCE 플로우 적용
 - 비밀번호 암호화 (BCrypt)
 - CSRF 보호
 - XSS 방지

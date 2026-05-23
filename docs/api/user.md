@@ -155,14 +155,14 @@
 
 ### 백엔드 구현
 
-1. **인증**: JWT Bearer Token을 통한 사용자 인증
+1. **인증**: OAuth2/OIDC 액세스 토큰을 통한 사용자 인증
 2. **트랜잭션**: 사용자 등록 시 원자적 처리
 
 ### 보안 고려사항
 
 - **비밀번호 정책**: 최소 8자, 영문/숫자/특수문자 조합
 - **이메일 인증**: 회원가입 후 이메일 인증 절차
-- **세션 관리**: JWT 토큰 만료 시간 설정
+- **세션 관리**: OIDC 클라이언트의 토큰 만료 및 갱신 정책 설정
 - **데이터 암호화**: 민감한 사용자 정보 암호화 저장
 
 ## 예시 cURL 요청
@@ -170,7 +170,7 @@
 ### 사용자 정보 수정
 ```bash
 curl -X PUT "https://api.boardly.com/api/users" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "firstName": "개발",

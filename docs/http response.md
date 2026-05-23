@@ -34,7 +34,7 @@ Failure.InternalError       // 500 - 내부 서버 오류
   "code": "CARD_LIMIT_EXCEEDED",
   "message": "리스트당 최대 100개의 카드만 생성할 수 있습니다",
   "timestamp": "2025-07-20T10:30:00Z",
-  "path": "/api/v1/cards",
+  "path": "/api/cards",
   "details": [...],  // 400일 때만 검증 상세 정보
   "context": {...}   // 추가 컨텍스트 정보
 }

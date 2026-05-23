@@ -49,17 +49,17 @@
 - [ ] Spring Boot 3 프로젝트 초기 설정
 - [ ] PostgreSQL 데이터베이스 연결 설정
 - [ ] User 엔티티 및 Repository 구현
-- [ ] Spring Security + JWT 설정
+- [ ] Spring Security + OAuth2 Authorization Server 설정
 - [ ] 회원가입 API 구현 (이메일 중복 검증, 비밀번호 복잡도 검증)
 - [ ] 로그인/로그아웃 API 구현
-- [ ] JWT 토큰 기반 인증 구현
+- [ ] Authorization Code + PKCE 기반 인증 구현
 - [ ] 프로필 조회/수정 API 구현
 - [ ] 비밀번호 변경 API 구현
 
 #### 프론트엔드 작업
 - [ ] React 프로젝트 초기 설정
 - [ ] 라우팅 설정 (React Router)
-- [ ] 상태 관리 설정 (Redux Toolkit 또는 Zustand)
+- [ ] 상태 관리 설정 (Zustand)
 - [ ] 회원가입 페이지 구현 (검증 로직 포함)
 - [ ] 로그인 페이지 구현
 - [ ] 프로필 페이지 구현
@@ -67,7 +67,7 @@
 
 #### 완료 기준
 - 회원가입/로그인/프로필 관리가 정상 동작
-- JWT 토큰 기반 인증 시스템 작동
+- OAuth2/OIDC 인증 시스템 작동
 - 입력 검증 및 에러 처리 완료
 
 ---

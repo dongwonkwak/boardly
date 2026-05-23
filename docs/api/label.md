@@ -237,7 +237,7 @@
 
 ### 백엔드 구현
 
-1. **인증**: JWT Bearer Token을 통한 사용자 인증
+1. **인증**: OAuth2/OIDC 액세스 토큰을 통한 사용자 인증
 2. **권한 확인**: 사용자가 접근할 수 있는 보드의 라벨만 조회/수정 가능
 3. **색상 검증**: HEX 코드 형식 검증
 4. **성능 최적화**: 인덱스를 활용한 빠른 조회 (boardId)
@@ -248,14 +248,14 @@
 ### 보드 라벨 목록 조회
 ```bash
 curl -X GET "https://api.boardly.com/api/labels/board/board_456" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ```
 
 ### 라벨 생성
 ```bash
 curl -X POST "https://api.boardly.com/api/labels" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "boardId": "board_456",
@@ -267,14 +267,14 @@ curl -X POST "https://api.boardly.com/api/labels" \
 ### 라벨 조회
 ```bash
 curl -X GET "https://api.boardly.com/api/labels/label_123" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ```
 
 ### 라벨 수정
 ```bash
 curl -X PUT "https://api.boardly.com/api/labels/label_123" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "수정된 라벨",
@@ -285,6 +285,6 @@ curl -X PUT "https://api.boardly.com/api/labels/label_123" \
 ### 라벨 삭제
 ```bash
 curl -X DELETE "https://api.boardly.com/api/labels/label_123" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json"
 ``` 

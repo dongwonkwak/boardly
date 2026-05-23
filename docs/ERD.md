@@ -55,11 +55,12 @@ erDiagram
         text description "카드 설명 (마크다운 지원)"
         int position "NOT NULL, 카드 순서 (0부터 시작)"
         datetime due_date "마감일시"
+        datetime start_date "시작일시"
         boolean archived "DEFAULT false, 카드 아카이브 상태"
+        varchar priority "카드 우선순위"
+        boolean is_completed "DEFAULT false, 완료 상태"
         varchar list_id FK "NOT NULL, 소속 리스트"
-        int comments_count "DEFAULT 0, 댓글 수"
-        int attachments_count "DEFAULT 0, 첨부파일 수"
-        int labels_count "DEFAULT 0, 라벨 수"
+        varchar created_by FK "NOT NULL, 생성자"
         datetime created_at "NOT NULL, 생성일시"
         datetime updated_at "NOT NULL, 수정일시"
         bigint version "DEFAULT 0, 낙관적 락 버전"
@@ -131,6 +132,7 @@ erDiagram
     %% 기본 관계 정의
     USERS ||--o{ BOARDS : "owns"
     USERS ||--o{ BOARD_MEMBERS : "joins"
+    USERS ||--o{ CARDS : "creates"
     BOARDS ||--o{ BOARD_MEMBERS : "includes"
     BOARDS ||--o{ BOARD_LISTS : "contains"
     BOARD_LISTS ||--o{ CARDS : "contains"
@@ -181,9 +183,12 @@ erDiagram
 - **카드 설명**: 마크다운 지원
 - **순서**: 0부터 시작하는 정수, 필수
 - **마감일**: 선택사항
+- **시작일**: 선택사항
 - **아카이브 상태**: 기본값 false
+- **우선순위**: 선택사항
+- **완료 상태**: 기본값 false
 - **리스트**: 필수 (board_lists 테이블 참조)
-- **카운터 필드**: comments_count, attachments_count, labels_count
+- **생성자**: 필수 (users 테이블 참조)
 
 ### 6. 카드 멤버 제약 조건
 - **카드-사용자 조합**: 중복 불가 (UNIQUE)
@@ -239,7 +244,11 @@ CREATE INDEX idx_board_lists_position ON board_lists(board_id, position);
 CREATE INDEX idx_cards_list_id ON cards(list_id);
 CREATE INDEX idx_cards_position ON cards(list_id, position);
 CREATE INDEX idx_cards_due_date ON cards(due_date);
+CREATE INDEX idx_cards_start_date ON cards(start_date);
 CREATE INDEX idx_cards_archived ON cards(archived);
+CREATE INDEX idx_cards_priority ON cards(priority);
+CREATE INDEX idx_cards_completed ON cards(is_completed);
+CREATE INDEX idx_cards_created_by ON cards(created_by);
 
 -- 카드 멤버 관련 인덱스
 CREATE INDEX idx_card_members_card_id ON card_members(card_id);
@@ -297,5 +306,5 @@ CREATE INDEX idx_activity_type ON user_activity(activity_type);
 ---
 
 **문서 버전**: v2.0  
-**최종 수정일**: 2025년 1월 17일  
-**기반 스키마**: schema.sql
+**최종 수정일**: 2026년 5월 23일  
+**기반 스키마**: `backend/boardly-infrastructure/src/main/resources/db/migration/common/V1__create_tables.sql`
